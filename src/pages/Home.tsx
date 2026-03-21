@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 
-const API_URL = 'http://localhost:5000';
+const ASSETS_URL = import.meta.env.VITE_ASSETS_BASE_URL || 'https://assets.pumpkinmc.org/icons';
 
 const Home = () => {
     const { t, i18n } = useTranslation();
@@ -243,17 +243,24 @@ const Home = () => {
                         const priceInfo = getEffectivePrice(plugin);
                         const isSale = plugin.type === 'paid' && priceInfo.isSale;
 
+                        const imageUrl = plugin.preview_path;
+                            console.log(imageUrl);
+
                         return (
                             <Link to={`/plugin/${plugin.id}`} key={plugin.id} className="plugin-card-link">
                                 <div className="plugin-card-v2">
 
                                     {/* Preview image */}
                                     <div className="pcv2-preview">
-                                        {plugin.preview_path ? (
+                                        {imageUrl ? (
                                             <img
                                                 className="pcv2-preview-img"
-                                                src={plugin.preview_path}
+                                                src={imageUrl}
                                                 alt={plugin.name}
+                                                onError={(e) => {
+                                                    // Fallback if image 404s
+                                                    (e.target as HTMLImageElement).style.display = 'none';
+                                                }}
                                             />
                                         ) : (
                                             <div
