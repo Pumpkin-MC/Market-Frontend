@@ -1,20 +1,14 @@
 import React, { useState } from 'react';
-import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { Upload, FileCode, Send, CheckCircle} from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
 
 type ReleaseTrack = 'stable' | 'beta' | 'alpha';
 type Props = { plugin: PluginData; onSaved: () => void };
 
-const TRACKS: { key: ReleaseTrack; label: string; desc: string }[] = [
-    { key: 'stable',  label: 'Stable',  desc: 'Released to all users. Thoroughly tested.' },
-    { key: 'beta',    label: 'Beta',    desc: 'Opt-in testers only. Wider feedback loop.' },
-    { key: 'alpha',   label: 'Internal', desc: 'Team or whitelist access only.' },
-];
-
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [wasmFile, setWasmFile] = useState<File | null>(null);
-    const [track, setTrack] = useState<ReleaseTrack>('stable');
+    const [track] = useState<ReleaseTrack>('stable');
     const [version, setVersion] = useState('');
     const [releaseNotes, setReleaseNotes] = useState('');
     const [dragOver, setDragOver] = useState(false);

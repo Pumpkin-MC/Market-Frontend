@@ -166,7 +166,7 @@ const DashboardLayout = () => {
 
 // --- Components ---
 const Navbar = ({ user }: any) => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
   const navigate = useNavigate();
 
@@ -175,10 +175,6 @@ const Navbar = ({ user }: any) => {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
     }
-  };
-
-  const changeLanguage = (lng: string) => {
-    i18n.changeLanguage(lng);
   };
 
   return (

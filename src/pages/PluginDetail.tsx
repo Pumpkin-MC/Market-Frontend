@@ -6,8 +6,6 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 
-const API_URL = 'http://localhost:5000';
-
 const REPORT_REASONS = [
   'Malware or malicious code',
   'Stolen or plagiarised content',
@@ -71,9 +69,9 @@ const PluginDetail = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [adShown, setAdShown] = useState(false);
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState('en');
+  const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [setLoading] = useState(true);
 
   // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);

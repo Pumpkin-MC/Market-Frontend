@@ -3,8 +3,6 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../App';
 
-const API_URL = 'http://localhost:5000';
-
 interface LibraryEntry {
   plugin_id:    number;
   name:         string;

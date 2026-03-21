@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Trash2, EyeOff, AlertTriangle } from 'lucide-react';
+import { useState } from 'react';
+import { Trash2,AlertTriangle } from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
 import { useNavigate } from 'react-router-dom';
@@ -9,25 +9,7 @@ type Props = { plugin: PluginData };
 const DangerZone = ({ plugin }: Props) => {
     const navigate = useNavigate();
     const [deleteConfirm, setDeleteConfirm] = useState('');
-    const [unpublishing, setUnpublishing] = useState(false);
     const [deleting, setDeleting] = useState(false);
-
-    const handleUnpublish = async () => {
-        if (!window.confirm('Unpublish this plugin? It will be hidden from the store but not deleted.')) return;
-        setUnpublishing(true);
-        try {
-            const fd = new FormData();
-            fd.append('status', 'draft');
-            await api.put(`/plugins/${plugin.id}`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
-            alert('Plugin unpublished.');
-        } catch {
-            alert('Failed to unpublish.');
-        } finally {
-            setUnpublishing(false);
-        }
-    };
 
     const handleDelete = async () => {
         if (deleteConfirm !== plugin.name) return;

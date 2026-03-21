@@ -3,8 +3,6 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 
-const ASSETS_URL = import.meta.env.VITE_ASSETS_BASE_URL || 'https://assets.pumpkinmc.org/icons';
-
 const Home = () => {
     const { t, i18n } = useTranslation();
     const [plugins, setPlugins] = useState<any[]>([]);

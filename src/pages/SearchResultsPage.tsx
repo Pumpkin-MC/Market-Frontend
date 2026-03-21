@@ -2,8 +2,6 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
 
-const API_URL = 'http://localhost:5000';
-
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
