@@ -1,0 +1,35 @@
+{
+  "welcome": "Bienvenido a PumpkinMarket",
+  "search": "Buscar plugins...",
+  "login": "Iniciar sesión",
+  "register": "Registrarse",
+  "home": "Inicio",
+  "dashboard": "Panel de control",
+  "profile": "Perfil",
+  "logout": "Cerrar sesión",
+  "loading": "Cargando...",
+  "error": "Algo salió mal. Por favor, inténtalo de nuevo más tarde.",
+  "plugins": {
+    "title": "Explorar Plugins",
+    "upload": "Subir Plugin",
+    "manage": "Gestionar Plugin",
+    "price": "Precio",
+    "downloads": "Descargas",
+    "views": "Vistas"
+  },
+  "auth": {
+    "email": "Correo electrónico",
+    "username": "Nombre de usuario",
+    "password": "Contraseña",
+    "confirm_password": "Confirmar contraseña",
+    "create_account": "Crear cuenta",
+    "sign_in": "Iniciar sesión"
+  },
+  "common": {
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "back": "Volver"
+  }
+}

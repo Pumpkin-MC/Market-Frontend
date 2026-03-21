@@ -1,0 +1,52 @@
+.check-email-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 70vh;
+    background-color: #f9f9f9;
+    font-family: sans-serif;
+}
+
+.check-email-box {
+    background: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    text-align: center;
+    max-width: 450px;
+    width: 100%;
+}
+
+.check-email-icon {
+    margin-bottom: 20px;
+    color: #4CAF50; /* A nice green */
+}
+
+.check-email-box h1 {
+    font-size: 24px;
+    margin-bottom: 15px;
+    color: #333;
+}
+
+.check-email-box p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: #666;
+    margin-bottom: 25px;
+}
+
+.check-email-box strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.check-email-box hr {
+    border: none;
+    border-top: 1px solid #eee;
+    margin: 25px 0;
+}
+
+.check-email-footer {
+    font-size: 14px;
+    color: #999;
+}
