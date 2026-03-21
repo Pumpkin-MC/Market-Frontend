@@ -3,7 +3,6 @@ name: Deploy React Frontend
 on:
   push:
     branches: [ master ] 
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
