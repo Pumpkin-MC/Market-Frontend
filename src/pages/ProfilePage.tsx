@@ -53,7 +53,7 @@ const ProfilePage = () => {
     setLibraryLoading(true);
     setLibraryError(null);
     api.get('/user/library')
-      .then(res => setLibrary(res.data))
+      .then(res => setLibrary(Array.isArray(res.data) ? res.data : []))
       .catch(() => setLibraryError('Failed to load your library. Please try again.'))
       .finally(() => setLibraryLoading(false));
   }, [activeTab]);

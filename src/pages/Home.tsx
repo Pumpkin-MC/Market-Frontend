@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
+import SEO from '../components/SEO';
 
 const Home = () => {
     const { t, i18n } = useTranslation();
@@ -12,10 +13,13 @@ const Home = () => {
         if (hasFetched.current) return;
         api.get('/plugins', { params: { q: '', sort: 'newest' } })
             .then(res => {
-                setPlugins(res.data);
+                setPlugins(Array.isArray(res.data) ? res.data : []);
                 hasFetched.current = true;
             })
-            .catch(err => console.error('Fetch error:', err));
+            .catch(err => {
+                console.error('Fetch error:', err);
+                setPlugins([]);
+            });
     }, []);
 
     const getDescription = (translatedStr: string) => {
@@ -59,6 +63,10 @@ const Home = () => {
 
     return (
         <>
+            <SEO 
+                title="Home" 
+                description="Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place." 
+            />
             <style>{`
                 .home-plugin-grid {
                     display: grid;

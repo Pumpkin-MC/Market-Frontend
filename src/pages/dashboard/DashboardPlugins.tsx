@@ -59,23 +59,23 @@ const DashboardPlugins = () => {
                     <tbody>
                         {plugins.map((p: any) => (
                             <tr key={p.id}>
-                                <td>
+                                <td data-label="Name">
                                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                                         <strong>{p.name}</strong>
                                         <span style={{ fontSize: '0.75rem', color: 'var(--dash-text-muted)' }}>ID: {p.id}</span>
                                     </div>
                                 </td>
-                                <td className="mono">{p.downloads.toLocaleString()}</td>
-                                <td className="mono" style={{ color: 'var(--success)' }}>
+                                <td data-label="Downloads" className="mono">{p.downloads.toLocaleString()}</td>
+                                <td data-label="Earnings" className="mono" style={{ color: 'var(--success)' }}>
                                     +${p.earnings.toFixed(2)}
                                 </td>
-                                <td>
+                                <td data-label="Dates">
                                     <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted)' }}>
                                         <div>Created: {formatDate(p.createdAt)}</div>
                                         <div>Updated: {formatDate(p.updatedAt)}</div>
                                     </div>
                                 </td>
-                                <td style={{ textAlign: 'right' }}>
+                                <td data-label="Actions" style={{ textAlign: 'right' }}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                                         {/* View on Marketplace */}
                                         <button 

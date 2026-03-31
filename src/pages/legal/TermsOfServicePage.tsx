@@ -288,7 +288,7 @@ const TermsOfServicePage = () => {
         /* ── Sidebar ── */
         .tos-sidebar {
           position: sticky;
-          top: 76px;
+          top: 100px;
         }
 
         .sidebar-label {
@@ -337,9 +337,9 @@ const TermsOfServicePage = () => {
           padding: 28px 32px;
           margin-bottom: 16px;
           transition: border-color 0.2s;
-          scroll-margin-top: 80px;
+          scroll-margin-top: 100px;
+          cursor: default;
         }
-
         .tos-section:hover { border-color: rgba(255, 107, 0, 0.2); }
 
         .tos-section.active { border-color: rgba(255, 107, 0, 0.35); }

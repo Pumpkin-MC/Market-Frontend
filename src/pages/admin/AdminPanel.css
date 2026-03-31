@@ -121,3 +121,55 @@
     padding: 4rem;
     opacity: 0.6;
 }
+
+@media (max-width: 768px) {
+    .admin-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+    .admin-tabs {
+        width: 100%;
+        justify-content: center;
+    }
+    .admin-tabs button {
+        flex: 1;
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+    .admin-table thead {
+        display: none;
+    }
+    .admin-table, .admin-table tbody, .admin-table tr, .admin-table td {
+        display: block;
+        width: 100%;
+    }
+    .admin-table tr {
+        margin-bottom: 1.5rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+    .admin-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: right;
+    }
+    .admin-table td:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+    .admin-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-muted, #888);
+        margin-right: 1rem;
+        text-align: left;
+    }
+}

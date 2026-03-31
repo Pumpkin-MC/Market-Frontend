@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import api from '../api';
+import SEO from '../components/SEO';
 
 const SearchResultsPage = () => {
   const [searchParams] = useSearchParams();
@@ -19,7 +20,7 @@ const SearchResultsPage = () => {
         const response = await api.get('/plugins', {
           params: { sort: sort || undefined },
         });
-        setPlugins(response.data);
+        setPlugins(Array.isArray(response.data) ? response.data : []);
       } catch (err: any) {
         console.error('Error fetching plugins:', err);
         setError('Failed to load plugins. Please try again.');
@@ -57,6 +58,10 @@ const SearchResultsPage = () => {
 
   return (
     <div className="container">
+      <SEO 
+        title={searchQuery ? `Search results for "${searchQuery}"` : "All Plugins"}
+        description={`Browse our collection of Minecraft plugins. ${searchQuery ? `Showing results for ${searchQuery}.` : ''}`}
+      />
       <h1 className="section-title">
         {searchQuery
           ? <>Search Results <span>for "{searchQuery}"</span></>

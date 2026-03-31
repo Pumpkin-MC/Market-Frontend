@@ -168,48 +168,65 @@ const DashboardLayout = () => {
 const Navbar = ({ user }: any) => {
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'Enter' && searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
       setSearchQuery('');
+      setIsMenuOpen(false);
     }
   };
+
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <nav className="navbar">
       <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
-        <Link to="/">
+        <Link to="/" onClick={() => setIsMenuOpen(false)}>
           <img src="/icon.png" alt="Market Logo" style={{ height: '50px', marginRight: '0px', verticalAlign: 'middle' }} />
           <span>MARKET</span>
         </Link>
       </div>
-      <div className="nav-links">
-        <NavLink to="/">{t('home')}</NavLink>
-        {user && <NavLink to="/dashboard">{t('dashboard')}</NavLink>}
-        {user && user.role === 'admin' && <NavLink to="/admin">Admin</NavLink>}
-      </div>
-      <div className="nav-search">
-        <input
-          type="text"
-          placeholder={t('search')}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={handleSearch}
-        />
-      </div>
-      <div className="nav-actions">
-        {user ? (
-          <>
-            <NavLink to="/settings" className="nav-user-link">{user.username}</NavLink>
-          </>
-        ) : (
-          <>
-            <Link to="/login" className="btn btn-secondary">{t('login')}</Link>
-            <Link to="/register" className="btn">{t('register')}</Link>
-          </>
-        )}
+
+      <button className="mobile-menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {isMenuOpen ? (
+            <path d="M18 6L6 18M6 6l12 12" />
+          ) : (
+            <path d="M3 12h18M3 6h18M3 18h18" />
+          )}
+        </svg>
+      </button>
+
+      <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
+        <div className="nav-links">
+          <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
+          {user && <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>}
+          {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
+        </div>
+        <div className="nav-search">
+          <input
+            type="text"
+            placeholder={t('search')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={handleSearch}
+          />
+        </div>
+        <div className="nav-actions">
+          {user ? (
+            <>
+              <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('login')}</Link>
+              <Link to="/register" className="btn" onClick={() => setIsMenuOpen(false)}>{t('register')}</Link>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );

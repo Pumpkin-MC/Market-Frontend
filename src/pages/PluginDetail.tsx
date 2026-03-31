@@ -5,6 +5,7 @@ import { useAuth } from '../App';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
+import SEO from '../components/SEO';
 
 const REPORT_REASONS = [
   'Malware or malicious code',
@@ -138,12 +139,12 @@ const PluginDetail = () => {
   }, [plugin, selectedLanguage]);
 
   const hasReviewed = useMemo(() => {
-    if (!user || !plugin?.reviews) return false;
+    if (!user || !plugin?.reviews || !Array.isArray(plugin.reviews)) return false;
     return plugin.reviews.some((r: any) => r.username === user.username);
   }, [plugin?.reviews, user]);
 
   const stats = useMemo(() => {
-    if (!plugin?.reviews || plugin.reviews.length === 0) return null;
+    if (!plugin?.reviews || !Array.isArray(plugin.reviews) || plugin.reviews.length === 0) return null;
     const total = plugin.reviews.length;
     const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     let sum = 0;
@@ -257,8 +258,39 @@ const PluginDetail = () => {
     return 'Download Latest WASM';
   })();
 
+  const productSchema = {
+    "@context": "https://schema.org/",
+    "@type": "SoftwareApplication",
+    "name": plugin.name,
+    "operatingSystem": "Minecraft",
+    "applicationCategory": "GameApplication",
+    "offers": {
+      "@type": "Offer",
+      "price": plugin.type === 'paid' ? (plugin.price_cents / 100).toFixed(2) : "0.00",
+      "priceCurrency": "EUR"
+    },
+    "aggregateRating": stats ? {
+      "@type": "AggregateRating",
+      "ratingValue": stats.avg,
+      "reviewCount": stats.total
+    } : undefined,
+    "author": {
+      "@type": "Person",
+      "name": plugin.dev_name
+    }
+  };
+
   return (
     <div className="container">
+      <SEO 
+        title={plugin.name}
+        description={currentDescription.substring(0, 160)}
+        ogType="product"
+        ogImage={plugin.preview_path || "/icon.png"}
+      />
+      <script type="application/ld+json">
+        {JSON.stringify(productSchema)}
+      </script>
 
       {/* ── Payment success banner ── */}
       {showPaymentSuccess && (
@@ -301,7 +333,7 @@ const PluginDetail = () => {
         <div className="plugin-main-content">
 
           {/* SCREENSHOTS */}
-          {plugin.screenshots && plugin.screenshots.length > 0 && (
+          {Array.isArray(plugin.screenshots) && plugin.screenshots.length > 0 && (
             <div className="screenshot-gallery">
               <img
                 src={mainScreenshot || plugin.screenshots[0].path}
@@ -366,7 +398,7 @@ const PluginDetail = () => {
             )}
 
             <div className="review-list-premium">
-              {plugin.reviews?.map((r: any) => (
+              {Array.isArray(plugin.reviews) && plugin.reviews.map((r: any) => (
                 <div key={r.id} className="review-item-premium">
                   <div className="review-item-top">
                     <div className={`review-avatar ${getAvatarClass(r.username)}`}>

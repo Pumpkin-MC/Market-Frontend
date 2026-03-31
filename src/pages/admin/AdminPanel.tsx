@@ -19,13 +19,15 @@ const AdminPanel = () => {
         try {
             if (activeTab === 'users') {
                 const res = await api.get('/admin/users');
-                setUsers(res.data);
+                setUsers(Array.isArray(res.data) ? res.data : []);
             } else {
                 const res = await api.get('/admin/plugins');
-                setPlugins(res.data);
+                setPlugins(Array.isArray(res.data) ? res.data : []);
             }
         } catch (err: any) {
             setError(err.response?.data?.error || 'Failed to fetch data');
+            setUsers([]);
+            setPlugins([]);
         } finally {
             setLoading(false);
         }
@@ -92,13 +94,13 @@ const AdminPanel = () => {
                         <tbody>
                             {users.map(u => (
                                 <tr key={u.id}>
-                                    <td>{u.id}</td>
-                                    <td>{u.username}</td>
-                                    <td>{u.email}</td>
-                                    <td><span className={`role-badge ${u.role}`}>{u.role}</span></td>
-                                    <td>{u.stripe_ready ? '✅' : '❌'}</td>
-                                    <td>{new Date(u.created_at).toLocaleDateString()}</td>
-                                    <td>
+                                    <td data-label="ID">{u.id}</td>
+                                    <td data-label="Username">{u.username}</td>
+                                    <td data-label="Email">{u.email}</td>
+                                    <td data-label="Role"><span className={`role-badge ${u.role}`}>{u.role}</span></td>
+                                    <td data-label="Stripe">{u.stripe_ready ? '✅' : '❌'}</td>
+                                    <td data-label="Created">{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td data-label="Actions">
                                         <button className="btn-delete" onClick={() => deleteUser(u.id)}>Delete</button>
                                     </td>
                                 </tr>
@@ -122,14 +124,14 @@ const AdminPanel = () => {
                         <tbody>
                             {plugins.map(p => (
                                 <tr key={p.id}>
-                                    <td>{p.id}</td>
-                                    <td>{p.name}</td>
-                                    <td><span className={`type-badge ${p.type}`}>{p.type}</span></td>
-                                    <td>€{(p.price_cents / 100).toFixed(2)}</td>
-                                    <td>{p.dev_name}</td>
-                                    <td>{p.downloads}</td>
-                                    <td>{p.views}</td>
-                                    <td>
+                                    <td data-label="ID">{p.id}</td>
+                                    <td data-label="Name">{p.name}</td>
+                                    <td data-label="Type"><span className={`type-badge ${p.type}`}>{p.type}</span></td>
+                                    <td data-label="Price">€{(p.price_cents / 100).toFixed(2)}</td>
+                                    <td data-label="Developer">{p.dev_name}</td>
+                                    <td data-label="Downloads">{p.downloads}</td>
+                                    <td data-label="Views">{p.views}</td>
+                                    <td data-label="Actions">
                                         <button className="btn-delete" onClick={() => deletePlugin(p.id)}>Delete</button>
                                     </td>
                                 </tr>

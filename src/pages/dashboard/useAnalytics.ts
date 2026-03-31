@@ -18,14 +18,15 @@ export const useAnalytics = () => {
       });
       
       // Ensure we are accessing the correct keys from your Express res.json
-      setTimeSeries(res.data.timeSeries || []);
-      setMapData(res.data.mapData || []);
-      setBreakdowns(res.data.breakdowns || []);
+      setTimeSeries(Array.isArray(res.data.timeSeries) ? res.data.timeSeries : []);
+      setMapData(Array.isArray(res.data.mapData) ? res.data.mapData : []);
+      setBreakdowns(Array.isArray(res.data.breakdowns) ? res.data.breakdowns : []);
     } catch (error) {
       console.error("Analytics Fetch Error:", error);
       // Reset data on error so the UI doesn't show stale/broken stats
       setTimeSeries([]);
       setMapData([]);
+      setBreakdowns([]);
     } finally {
       setLoading(false);
     }
