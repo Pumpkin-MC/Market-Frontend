@@ -351,7 +351,7 @@ const PluginDetail = () => {
                 src={mainScreenshot || plugin.screenshots[0].path}
                 alt="Main"
                 className="main-screenshot"
-                style={{ cursor: 'zoom-in' }} // Suggests it can be expanded
+                style={{ cursor: 'pointer' }} 
                 onClick={() => setLightboxImage(mainScreenshot || plugin.screenshots[0].path)}
               />
               <div className="thumbnail-strip">
@@ -611,9 +611,9 @@ const PluginDetail = () => {
       {/* LIGHTBOX MODAL */}
       {lightboxImage && (
         <div className="lightbox-overlay" onClick={() => setLightboxImage(null)}>
-          <div className="lightbox-content">
-            <img src={lightboxImage} alt="Expanded" />
-            <button className="lightbox-close">×</button>
+          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxImage} alt="Expanded view" className="lightbox-img" />
+            <button className="lightbox-close" onClick={() => setLightboxImage(null)}>×</button>
           </div>
         </div>
       )}
