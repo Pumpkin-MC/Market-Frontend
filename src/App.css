@@ -522,10 +522,60 @@ h1, h2, h3 { font-weight: 900; letter-spacing: -1px; }
 .screenshot-gallery {
     margin-bottom: 3rem;
 }
+.lightbox-overlay {
+  position: fixed; /* Fixes it to the screen, not the page */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9); /* Dark background like Steam */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999; /* Higher than your navbar */
+  cursor: pointer; /* Click anywhere to close */
+  backdrop-filter: blur(4px); /* Modern touch */
+}
+
+/* The container for the image */
+.lightbox-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default; /* Don't show pointer on the image itself */
+}
+
+/* The image itself */
+.lightbox-img {
+  max-width: 100%;
+  max-height: 85vh;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+/* The close button */
+.lightbox-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 2.5rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+/* Update your main screenshot cursor to pointer */
 .main-screenshot {
   width: 100%;
   border-radius: 8px;
-  transition: opacity 0.2s;
+  cursor: pointer; /* Steam uses a pointer, not a zoom cursor */
+  transition: opacity 0.2s ease;
 }
 
 .main-screenshot:hover {

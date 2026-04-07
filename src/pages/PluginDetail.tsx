@@ -351,7 +351,7 @@ const PluginDetail = () => {
                 src={mainScreenshot || plugin.screenshots[0].path}
                 alt="Main"
                 className="main-screenshot"
-                style={{ cursor: 'pointer' }} 
+                style={{ cursor: 'pointer' }}
                 onClick={() => setLightboxImage(mainScreenshot || plugin.screenshots[0].path)}
               />
               <div className="thumbnail-strip">
@@ -613,7 +613,9 @@ const PluginDetail = () => {
         <div className="lightbox-overlay" onClick={() => setLightboxImage(null)}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <img src={lightboxImage} alt="Expanded view" className="lightbox-img" />
-            <button className="lightbox-close" onClick={() => setLightboxImage(null)}>×</button>
+            <button className="lightbox-close" onClick={() => setLightboxImage(null)}>
+              &times;
+            </button>
           </div>
         </div>
       )}
