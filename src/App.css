@@ -891,6 +891,30 @@ h1, h2, h3 { font-weight: 900; letter-spacing: -1px; }
   border-top: 1px solid var(--border);
 }
  
+
+.github-link-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  color: var(--text-muted, #888);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+}
+
+.github-link-secondary:hover {
+  color: var(--text-main, #ffffff);
+  text-decoration: underline;
+}
+
+.github-link-secondary svg {
+  opacity: 0.8;
+}
+
 .review-already-icon {
   width: 36px;
   height: 36px;

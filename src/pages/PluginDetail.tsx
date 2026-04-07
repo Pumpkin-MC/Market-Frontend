@@ -249,13 +249,24 @@ const PluginDetail = () => {
 
   if (!plugin) return <div className="container"><h2>LOADING...</h2></div>;
 
+  const formatSize = (bytes: number) => {
+    if (!bytes) return '';
+    if (bytes >= 1048576) return `(${(bytes / 1048576).toFixed(2)} MB)`;
+    if (bytes >= 1024) return `(${(bytes / 1024).toFixed(1)} KB)`;
+    return `(${bytes} B)`;
+  };
+
   const downloadLabel = (() => {
+    const sizeStr = plugin.file_size ? ` ${formatSize(plugin.file_size)}` : '';
+
     if (plugin.type === 'paid') {
       if (!ownershipChecked) return 'Loading…';
-      return ownsPlugin ? 'Download Latest WASM' : 'Purchase Plugin';
+      return ownsPlugin ? `Download ${sizeStr}` : 'Purchase Plugin';
     }
+
     if (plugin.type === 'adwall' && !adShown) return 'Watch Ad to Download';
-    return 'Download Latest WASM';
+
+    return `Download ${sizeStr}`;
   })();
 
   const productSchema = {
@@ -282,7 +293,7 @@ const PluginDetail = () => {
 
   return (
     <div className="container">
-      <SEO 
+      <SEO
         title={plugin.name}
         description={currentDescription.substring(0, 160)}
         ogType="product"
@@ -502,7 +513,24 @@ const PluginDetail = () => {
             </button>
 
             {plugin.source_link && (
-              <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="btn btn-outline">
+              <a
+                href={plugin.source_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="github-link-secondary"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
+                </svg>
                 View Source Code
               </a>
             )}
@@ -515,17 +543,6 @@ const PluginDetail = () => {
               {/* ADD THESE TWO */}
               {plugin.version && (
                 <div className="stat-item">Version: <strong>{plugin.version}</strong></div>
-              )}
-              {plugin.file_size != null && (
-                <div className="stat-item">
-                  File Size: <strong>
-                    {plugin.file_size >= 1_048_576
-                      ? `${(plugin.file_size / 1_048_576).toFixed(2)} MB`
-                      : plugin.file_size >= 1_024
-                        ? `${(plugin.file_size / 1_024).toFixed(1)} KB`
-                        : `${plugin.file_size} B`}
-                  </strong>
-                </div>
               )}
 
               <div className="divider-sm" />
