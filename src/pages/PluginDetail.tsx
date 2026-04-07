@@ -70,6 +70,7 @@ const PluginDetail = () => {
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [adShown, setAdShown] = useState(false);
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
   const [setLoading] = useState(true);
@@ -350,6 +351,8 @@ const PluginDetail = () => {
                 src={mainScreenshot || plugin.screenshots[0].path}
                 alt="Main"
                 className="main-screenshot"
+                style={{ cursor: 'zoom-in' }} // Suggests it can be expanded
+                onClick={() => setLightboxImage(mainScreenshot || plugin.screenshots[0].path)}
               />
               <div className="thumbnail-strip">
                 {plugin.screenshots.map((shot: any) => (
@@ -604,6 +607,16 @@ const PluginDetail = () => {
           </div>
         </aside>
       </div>
+
+      {/* LIGHTBOX MODAL */}
+      {lightboxImage && (
+        <div className="lightbox-overlay" onClick={() => setLightboxImage(null)}>
+          <div className="lightbox-content">
+            <img src={lightboxImage} alt="Expanded" />
+            <button className="lightbox-close">×</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -469,6 +469,14 @@ h1, h2, h3 { font-weight: 900; letter-spacing: -1px; }
     flex-direction: column;
     gap: 0.75rem;
 }
+
+.btn-download-main {
+    width: 100%;       /* Makes it fill the entire sidebar width */
+    padding: 16px;     /* Optional: makes it slightly taller/chunkier */
+    font-size: 1rem;   /* Optional: makes the text more prominent */
+    margin-bottom: 12px; /* Spacing between this and the GitHub link */
+}
+
 .stat-item {
     font-size: 0.9rem;
     color: var(--text-muted);
