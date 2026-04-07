@@ -17,6 +17,8 @@ const REPORT_REASONS = [
   'Other',
 ];
 
+const MAX_REVIEW_LENGTH = 2000;
+
 const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number; onRate?: (n: number) => void }) => (
   <div className="star-rating-container">
     {[...Array(max)].map((_, i) => (
@@ -219,7 +221,10 @@ const PluginDetail = () => {
 
   const submitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reviewForm.comment.trim()) return;
+    const comment = reviewForm.comment.trim();
+    if (!comment || comment.length > MAX_REVIEW_LENGTH) {
+      return;
+    }
     await api.post(`/plugins/${id}/reviews`, reviewForm);
     fetchPlugin();
     setReviewForm({ rating: 5, comment: '' });
@@ -454,6 +459,7 @@ const PluginDetail = () => {
                     <textarea
                       placeholder="What did you like? What could be better?"
                       value={reviewForm.comment}
+                      maxLength={MAX_REVIEW_LENGTH}
                       onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
                       required
                     />
