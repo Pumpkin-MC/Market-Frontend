@@ -818,6 +818,7 @@ h3 {
   display: grid;
   grid-template-columns: 1fr 400px;
   gap: 4rem;
+  min-width: 0;
 }
 
 .plugin-title {
@@ -1408,6 +1409,8 @@ h3 {
   color: var(--text-muted);
   line-height: 1.65;
   margin: 0;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Empty state */
