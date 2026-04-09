@@ -61,7 +61,7 @@ Violation of these prohibitions may result in immediate account termination and,
 
 Prices are displayed in EUR and may be subject to applicable taxes depending on your jurisdiction. PumpkinMC is not responsible for currency conversion fees charged by your bank or payment provider.
 
-In the event of a disputed charge, please contact support@pumpkinmc.net before initiating a chargeback with your payment provider. Chargebacks initiated without prior contact may result in account suspension.`
+In the event of a disputed charge, please contact support@pumpkinmc.org before initiating a chargeback with your payment provider. Chargebacks initiated without prior contact may result in account suspension.`
   },
   {
     id: 'refunds',
@@ -72,7 +72,7 @@ In the event of a disputed charge, please contact support@pumpkinmc.net before i
 • The Plugin contains malicious code or functionality that harms your server or players.
 • A duplicate purchase was made in error within 24 hours.
 
-To request a refund, contact support@pumpkinmc.net with your order details and a description of the issue. PumpkinMC will review all refund requests and respond within 5 business days.`
+To request a refund, contact support@pumpkinmc.org with your order details and a description of the issue. PumpkinMC will review all refund requests and respond within 5 business days.`
   },
   {
     id: 'sellers',
@@ -122,7 +122,7 @@ In no event shall PumpkinMC's total liability to you for all claims exceed the g
 
 Upon termination, your right to use the Marketplace ceases immediately. Provisions of these Terms that by their nature should survive termination — including intellectual property, disclaimers, and limitations of liability — shall survive.
 
-You may close your account at any time by contacting support@pumpkinmc.net. Closing your account does not entitle you to a refund of any purchases.`
+You may close your account at any time by contacting support@pumpkinmc.org. Closing your account does not entitle you to a refund of any purchases.`
   },
   {
     id: 'governing',
@@ -136,9 +136,9 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
     title: '15. Contact',
     content: `If you have any questions about these Terms or the Marketplace, please contact us at:
 
-Email: support@pumpkinmc.net
+Email: support@pumpkinmc.org
 Discord: discord.gg/pumpkinmc
-Website: pumpkinmc.net
+Website: pumpkinmc.org
 
 We aim to respond to all inquiries within 3 business days.`
   }
@@ -477,7 +477,7 @@ const TermsOfServicePage = () => {
         <footer className="tos-footer">
           <p className="tos-footer-text">
             Questions about these terms? Reach us at{' '}
-            <a href="mailto:support@pumpkinmc.net">support@pumpkinmc.net</a>{' '}
+            <a href="mailto:support@pumpkinmc.org">support@pumpkinmc.org</a>{' '}
             or join our <a href="https://discord.gg/pumpkinmc">Discord server</a>.
           </p>
           <Link to="/register" className="accept-btn">

@@ -9,7 +9,7 @@ const sections = [
 
 We are committed to protecting your privacy. We will never sell your personal information to third parties, and we only collect what is necessary to operate and improve the Service. By using the Service, you agree to the collection and use of information in accordance with this policy.
 
-If you have questions or concerns about this policy, please contact us at privacy@pumpkinmc.net.`
+If you have questions or concerns about this policy, please contact us at privacy@pumpkinmc.org.`
   },
   {
     id: 'information-collected',
@@ -77,7 +77,7 @@ We may share your information in other ways with your explicit consent.`
 • Support communications are retained for up to 3 years.
 • Usage and analytics data is retained in aggregated, anonymized form indefinitely.
 
-You may request deletion of your account and associated personal data at any time by contacting privacy@pumpkinmc.net. Note that we may be unable to delete information that we are legally required to retain.`
+You may request deletion of your account and associated personal data at any time by contacting privacy@pumpkinmc.org. Note that we may be unable to delete information that we are legally required to retain.`
   },
   {
     id: 'security',
@@ -90,7 +90,7 @@ You may request deletion of your account and associated personal data at any tim
 • Access to personal data is restricted to authorized personnel who require it to perform their job functions.
 • We conduct regular security reviews and promptly address identified vulnerabilities.
 
-Despite these measures, no method of transmission over the internet is 100% secure. We cannot guarantee absolute security, and you use the Service at your own risk. If you believe your account has been compromised, contact support@pumpkinmc.net immediately.`
+Despite these measures, no method of transmission over the internet is 100% secure. We cannot guarantee absolute security, and you use the Service at your own risk. If you believe your account has been compromised, contact support@pumpkinmc.org immediately.`
   },
   {
     id: 'cookies',
@@ -113,7 +113,7 @@ You can control cookies through your browser settings. Disabling certain cookies
     title: '8. Children\'s Privacy',
     content: `The Service is not directed at children under the age of 13. We do not knowingly collect personal information from children under 13. If we become aware that we have collected personal data from a child under 13 without verifiable parental consent, we will take steps to delete that information as quickly as possible.
 
-If you are a parent or guardian and believe your child has provided us with personal information without your consent, please contact us at privacy@pumpkinmc.net.`
+If you are a parent or guardian and believe your child has provided us with personal information without your consent, please contact us at privacy@pumpkinmc.org.`
   },
   {
     id: 'rights',
@@ -135,7 +135,7 @@ You may unsubscribe from marketing emails at any time using the unsubscribe link
 Restriction & Objection
 In certain circumstances, you may request that we restrict or stop processing your personal data.
 
-To exercise any of these rights, contact privacy@pumpkinmc.net. We will respond within 30 days. We may need to verify your identity before processing your request.`
+To exercise any of these rights, contact privacy@pumpkinmc.org. We will respond within 30 days. We may need to verify your identity before processing your request.`
   },
   {
     id: 'third-party',
@@ -165,10 +165,10 @@ We encourage you to review this Privacy Policy periodically to stay informed abo
     title: '13. Contact Us',
     content: `If you have any questions, concerns, or requests regarding this Privacy Policy or our data practices, please reach out to us:
 
-Email: privacy@pumpkinmc.net
-Support: support@pumpkinmc.net
+Email: privacy@pumpkinmc.org
+Support: support@pumpkinmc.org
 Discord: discord.gg/pumpkinmc
-Website: pumpkinmc.net
+Website: pumpkinmc.org
 
 We take privacy seriously and will respond to all inquiries within 5 business days.`
   }
@@ -544,7 +544,7 @@ const PrivacyPolicyPage = () => {
         <footer className="pp-footer">
           <p className="pp-footer-text">
             Questions about your privacy? Contact us at{' '}
-            <a href="mailto:privacy@pumpkinmc.net">privacy@pumpkinmc.net</a>
+            <a href="mailto:privacy@pumpkinmc.org">privacy@pumpkinmc.org</a>
           </p>
           <div className="pp-footer-links">
             <Link to="/terms" className="pp-footer-link">Terms of Service</Link>

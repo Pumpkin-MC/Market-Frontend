@@ -21,7 +21,7 @@ const SEO = ({
   const location = useLocation();
   const siteName = "Pumpkin Market";
   const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - WASM Minecraft Plugin Marketplace`;
-  const url = canonical || `https://pumpkinmc.net${location.pathname}`;
+  const url = canonical || `https://pumpkinmc.org${location.pathname}`;
 
   useEffect(() => {
     // Update Title

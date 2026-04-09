@@ -3,4 +3,4 @@ Allow: /
 Disallow: /admin
 Disallow: /dashboard
 
-Sitemap: https://pumpkinmc.net/sitemap.xml
+Sitemap: https://pumpkinmc.org/sitemap.xml
