@@ -2082,3 +2082,72 @@ h3 {
   max-width: 280px;
   line-height: 1.6;
 }
+
+/* ── Lightbox navigation arrows ─────────────────────────────────────────── */
+
+.lightbox-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 2.2rem;
+  line-height: 1;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease, transform 0.18s ease;
+  z-index: 10;
+  /* prevent text selection on rapid clicks */
+  user-select: none;
+}
+
+.lightbox-arrow:hover {
+  background: rgba(0, 0, 0, 0.82);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.lightbox-arrow-left {
+  left: 16px;
+}
+
+.lightbox-arrow-right {
+  right: 16px;
+}
+
+/* ── Lightbox dot indicators ─────────────────────────────────────────────── */
+
+.lightbox-dots {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.lightbox-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.18s ease, transform 0.18s ease;
+}
+
+.lightbox-dot.active {
+  background: #fff;
+  transform: scale(1.25);
+}
+
+.lightbox-dot:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.7);
+}
