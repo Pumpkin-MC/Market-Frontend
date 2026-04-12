@@ -9,14 +9,21 @@ import SEO from '../components/SEO';
 
 const REPORT_REASONS = [
   'Malware or malicious code',
-'Stolen or plagiarised content',
-'Misleading description',
-'Broken / non-functional',
-'Inappropriate content',
-'Spam or fake listing',
-'Other',
+  'Stolen or plagiarised content',
+  'Misleading description',
+  'Broken / non-functional',
+  'Inappropriate content',
+  'Spam or fake listing',
+  'Other',
 ];
 
+const REVIEW_REPORT_REASONS = [
+  'Inappropriate language',
+  'Spam or advertising',
+  'Hate speech or harassment',
+  'Off-topic or irrelevant',
+  'Other',
+];
 const MAX_REVIEW_LENGTH = 2000;
 
 const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number; onRate?: (n: number) => void }) => (
@@ -76,7 +83,7 @@ const PluginDetail = () => {
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
-  const [setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);
@@ -91,6 +98,13 @@ const PluginDetail = () => {
   const [reportCustom, setReportCustom] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+
+  // Review Report State
+  const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
+  const [reviewReportSelected, setReviewReportSelected] = useState<string>('');
+  const [reviewReportCustom, setReviewReportCustom] = useState('');
+  const [reviewReportSubmitting, setReviewReportSubmitting] = useState(false);
+  const [reportedReviews, setReportedReviews] = useState<Set<number>>(new Set());
 
   // ── Detect ?payment=success and strip from URL ───────────────────────────
   useEffect(() => {
@@ -290,6 +304,28 @@ const PluginDetail = () => {
     setReportCustom('');
   };
 
+  const submitReviewReport = async (e: React.FormEvent, reviewId: number) => {
+    e.preventDefault();
+    const reason = reviewReportSelected === 'Other' ? reviewReportCustom.trim() : reviewReportSelected;
+    if (!reason) return;
+    setReviewReportSubmitting(true);
+    try {
+      await api.post(`/plugins/${id}/reviews/${reviewId}/report`, { reason });
+      setReportedReviews(prev => new Set(prev).add(reviewId));
+      resetReviewReport();
+    } catch {
+      alert('Failed to submit report. Please try again.');
+    } finally {
+      setReviewReportSubmitting(false);
+    }
+  };
+
+  const resetReviewReport = () => {
+    setReviewReportOpen(null);
+    setReviewReportSelected('');
+    setReviewReportCustom('');
+  };
+
   if (!plugin) return <div className="container"><h2>LOADING...</h2></div>;
 
   const formatSize = (bytes: number) => {
@@ -379,7 +415,7 @@ const PluginDetail = () => {
     </div>
     <div>
     <h1 className="plugin-title">{plugin.name}</h1>
-    <p className="dev-name">by {plugin.dev_name}</p>
+    <p className="dev-name">by <Link to={`/profile/${plugin.dev_name}`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')} onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}>{plugin.dev_name}</Link></p>
     </div>
     </div>
 
@@ -474,6 +510,63 @@ const PluginDetail = () => {
       ))}
       </div>
       <p className="review-item-body">{r.comment}</p>
+      
+      {/* Review Report Button/Form */}
+      <div style={{ marginTop: '0.75rem' }}>
+        {reportedReviews.has(r.id) ? (
+          <p style={{ fontSize: '0.75rem', color: 'var(--success)', margin: 0 }}>✓ Report submitted</p>
+        ) : reviewReportOpen === r.id ? (
+          <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px' }}>
+            <label className="report-form-label">Reason for reporting this review</label>
+            <div className="report-reasons" style={{ transform: 'scale(0.9)', originX: 'left' }}>
+              {REVIEW_REPORT_REASONS.map(reason => (
+                <button
+                  key={reason}
+                  type="button"
+                  className={`report-reason-chip ${reviewReportSelected === reason ? 'selected' : ''}`}
+                  onClick={() => { setReviewReportSelected(reason); setReviewReportCustom(''); }}
+                >
+                  {reason}
+                </button>
+              ))}
+            </div>
+            {reviewReportSelected === 'Other' && (
+              <textarea
+                className="report-textarea"
+                placeholder="Describe the issue…"
+                value={reviewReportCustom}
+                onChange={e => setReviewReportCustom(e.target.value)}
+                rows={2}
+                autoFocus
+                style={{ fontSize: '0.8rem' }}
+              />
+            )}
+            <div className="report-form-actions">
+              <button type="button" className="btn-report-cancel" onClick={resetReviewReport} style={{ padding: '4px 8px', fontSize: '0.7rem' }}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn-report-submit"
+                disabled={
+                  reviewReportSubmitting ||
+                  !reviewReportSelected ||
+                  (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
+                }
+                style={{ padding: '4px 8px', fontSize: '0.7rem' }}
+              >
+                {reviewReportSubmitting ? 'Sending…' : 'Submit'}
+              </button>
+            </div>
+          </form>
+        ) : (
+          user && user.username !== r.username && (
+            <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem' }}>
+              🚩 Report review
+            </button>
+          )
+        )}
+      </div>
       </div>
     ))}
     </div>
@@ -586,9 +679,10 @@ const PluginDetail = () => {
 
     <div className="sidebar-stats">
     <div className="stat-item"><strong>{plugin.downloads.toLocaleString()}</strong> Downloads</div>
-    <div className="stat-item"><strong>{plugin.views.toLocaleString()}</strong> Views</div>
+    {plugin.created_at && (
+      <div className="stat-item">Released: <strong>{new Date(plugin.created_at).toLocaleDateString()}</strong></div>
+    )}
     <div className="stat-item">Category: <strong>{plugin.category}</strong></div>
-
     {plugin.version && (
       <div className="stat-item">Version: <strong>{plugin.version}</strong></div>
     )}

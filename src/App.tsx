@@ -8,6 +8,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import CheckEmailPage from './pages/auth/CheckEmailPage';
 import ProfilePage from './pages/ProfilePage';
+import AuthorProfilePage from './pages/AuthorProfilePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import DashboardOverview from './pages/dashboard/DashboardOverview';
 import DashboardAudience from './pages/dashboard/DashboardAudience';
@@ -113,6 +114,7 @@ const App = () => (
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="plugin/:id" element={<PluginDetail />} />
+          <Route path="profile/:username" element={<AuthorProfilePage />} />
           <Route path="search" element={<SearchResultsPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />
