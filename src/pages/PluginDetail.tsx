@@ -69,6 +69,14 @@ const getInitials = (username: string) => {
   return username.slice(0, 2).toUpperCase();
 };
 
+const formatDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const day = d.getDate();
+  const month = d.toLocaleString('en-US', { month: 'short' });
+  const year = d.getFullYear();
+  return `${day} ${month}, ${year}`;
+};
+
 const PluginDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -680,7 +688,7 @@ const PluginDetail = () => {
     <div className="sidebar-stats">
     <div className="stat-item"><strong>{plugin.downloads.toLocaleString()}</strong> Downloads</div>
     {plugin.created_at && (
-      <div className="stat-item">Released: <strong>{new Date(plugin.created_at).toLocaleDateString()}</strong></div>
+      <div className="stat-item">Released: <strong>{formatDate(plugin.created_at)}</strong></div>
     )}
     <div className="stat-item">Category: <strong>{plugin.category}</strong></div>
     {plugin.version && (
