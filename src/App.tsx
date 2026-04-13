@@ -5,6 +5,8 @@ import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
 import LoginPage from './pages/auth/LoginPage'; 
 import RegisterPage from './pages/auth/RegisterPage'; 
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
 import CheckEmailPage from './pages/auth/CheckEmailPage';
 import ProfilePage from './pages/ProfilePage';
@@ -120,6 +122,8 @@ const App = () => (
           <Route path="privacy" element={<PrivacyPolicyPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="verify-email" element={<VerifyEmailPage />} />
           <Route path="check-email" element={<CheckEmailPage />} />
           <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
