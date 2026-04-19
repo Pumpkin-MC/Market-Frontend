@@ -392,23 +392,19 @@ const PluginDetail = () => {
 
     {/* ── Payment success banner ── */}
     {showPaymentSuccess && (
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: '0.75rem',
-        background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.35)',
-                            borderRadius: 10, padding: '1rem 1.25rem', marginBottom: '1.5rem',
-      }}>
-      <span style={{ fontSize: '1.4rem' }}>🎉</span>
-      <div>
-      <div style={{ fontWeight: 700, color: 'var(--success, #4ade80)', marginBottom: '0.15rem' }}>
+      <div className="payment-success-banner">
+      <span className="success-icon">🎉</span>
+      <div className="banner-content">
+      <div className="banner-title">
       Purchase successful!
       </div>
-      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+      <div className="banner-text">
       You now own <strong>{plugin.name}</strong>. Click the download button to get your WASM file.
       </div>
       </div>
       <button
       onClick={() => setShowPaymentSuccess(false)}
-      style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: '1.1rem', lineHeight: 1 }}
+      className="banner-close"
       >×</button>
       </div>
     )}

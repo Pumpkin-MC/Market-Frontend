@@ -321,25 +321,66 @@ h3 {
 
   .plugin-detail-layout {
     grid-template-columns: 1fr;
-    gap: 2rem;
+    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .plugin-sidebar {
+    order: -1; /* Download button at the top for mobile */
   }
 
   .sidebar-widget {
     position: static;
+    padding: 1.5rem;
   }
 
   .plugin-title {
-    font-size: 2.5rem;
+    font-size: 2.25rem;
   }
 
   .plugin-detail-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .plugin-icon.large {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    font-size: 2.5rem;
+    border-radius: 16px;
+  }
+
+  .main-screenshot {
+    max-height: 300px;
   }
 
   .container {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
+  }
+
+  .price-hero-section {
+    margin: 0.5rem 0 1rem 0;
+  }
+
+  .thumbnail {
+    width: 100px;
+    height: 66px;
+  }
+
+  .markdown-content {
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .lightbox-close {
+    top: 10px;
+    right: 10px;
+    font-size: 2.25rem;
+    z-index: 10001;
   }
 
   .hero {
@@ -806,6 +847,71 @@ h3 {
 }
 
 
+/* --- Payment Success Banner --- */
+.payment-success-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.35);
+  border-radius: 12px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.payment-success-banner .success-icon {
+  font-size: 1.8rem;
+}
+
+.payment-success-banner .banner-content {
+  flex-grow: 1;
+}
+
+.payment-success-banner .banner-title {
+  font-weight: 700;
+  color: var(--success, #4ade80);
+  margin-bottom: 0.25rem;
+  font-size: 1.1rem;
+}
+
+.payment-success-banner .banner-text {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.payment-success-banner .banner-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  line-height: 1;
+  padding: 0.5rem;
+  margin-right: -0.5rem;
+  transition: color 0.2s;
+}
+
+.payment-success-banner .banner-close:hover {
+  color: var(--text);
+}
+
+@media (max-width: 480px) {
+  .payment-success-banner {
+    padding: 1rem;
+    gap: 0.75rem;
+  }
+  .payment-success-banner .success-icon {
+    font-size: 1.5rem;
+  }
+  .payment-success-banner .banner-title {
+    font-size: 1rem;
+  }
+  .payment-success-banner .banner-text {
+    font-size: 0.8rem;
+  }
+}
+
+
 /* --- Plugin Detail Page --- */
 .plugin-detail-header {
   display: flex;
@@ -830,6 +936,56 @@ h3 {
   font-size: 1.2rem;
   color: var(--text-muted);
   line-height: 1.8;
+}
+
+.markdown-content {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-muted);
+}
+
+.markdown-content h1, 
+.markdown-content h2, 
+.markdown-content h3 {
+  color: var(--text);
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.markdown-content p {
+  margin-bottom: 1.25rem;
+}
+
+.markdown-content ul, 
+.markdown-content ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-content li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-content code {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
+
+.markdown-content pre {
+  background: var(--surface-light);
+  padding: 1.5rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid var(--border);
+}
+
+.markdown-content pre code {
+  background: none;
+  padding: 0;
 }
 
 .divider {
