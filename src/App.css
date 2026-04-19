@@ -224,6 +224,7 @@ h3 {
   display: flex;
   align-items: center;
   gap: 1rem;
+  margin-left: auto;
 }
 
 .nav-user-link {
@@ -264,9 +265,41 @@ h3 {
   .nav-search {
     margin: 0 1rem;
   }
+
+  .plugin-detail-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .plugin-sidebar {
+    order: -1;
+    width: 100%;
+  }
+
+  .sidebar-widget {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: 0;
+  }
+
+  .plugin-main-content {
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 768px) {
+  body, #root {
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
+  }
+
   .mobile-menu-toggle {
     display: block;
   }
@@ -313,6 +346,7 @@ h3 {
     flex-direction: column;
     width: 100%;
     gap: 1rem;
+    margin-left: 0;
   }
 
   .nav-actions .btn {
@@ -320,19 +354,33 @@ h3 {
   }
 
   .plugin-detail-layout {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
     display: flex;
     flex-direction: column;
+    grid-template-columns: 1fr; /* Override grid */
+    gap: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .plugin-sidebar {
-    order: -1; /* Download button at the top for mobile */
+    order: -1;
+    width: 100%;
+    margin: 0;
   }
 
   .sidebar-widget {
     position: static;
     padding: 1.5rem;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .plugin-main-content {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .plugin-title {
@@ -356,6 +404,12 @@ h3 {
 
   .main-screenshot {
     max-height: 300px;
+  }
+
+  main {
+    display: block;
+    width: 100%;
+    min-height: auto;
   }
 
   .container {
