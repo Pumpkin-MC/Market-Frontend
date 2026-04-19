@@ -361,9 +361,9 @@ const AddPlugin = () => {
             screenshots.forEach(f => fd.append('screenshots', f));
             await api.post('/plugins', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
             setDone(true);
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
-            alert('Failed to publish. Please try again.');
+            alert(err.response?.data || 'Failed to publish.');
         } finally { setSubmitting(false); }
     };
 
