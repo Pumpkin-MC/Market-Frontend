@@ -50,10 +50,13 @@ const LoginPage = () => {
         email: form.email,
         password: form.password,
       });
-      login(res.data.token);
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid credentials.');
+      login(res.data.token, res.data.user);
+      navigate('/');
+    } catch (err: unknown) {
+      const msg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        ?? 'Login failed. Please try again.';
+      setError(msg);
     } finally {
       setIsSubmitting(false);
     }
@@ -65,124 +68,98 @@ const LoginPage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-        *, *::before, *::after {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-
-        body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          -webkit-font-smoothing: antialiased;
-        }
-
         .login-page {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 40px 20px;
+          min-height: 60vh;
         }
 
         .login-card {
           width: 100%;
-          max-width: 440px;
-          background: #ffffff;
-          border-radius: 12px;
-          box-shadow:
-            0 0 0 1px rgba(60, 66, 87, 0.08),
-            0 2px 4px rgba(60, 66, 87, 0.04),
-            0 8px 24px rgba(60, 66, 87, 0.08);
+          max-width: 460px;
+          background: #161616;
+          border: 1px solid #2a2a2a;
+          border-radius: 20px;
           padding: 40px;
           animation: cardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         @keyframes cardIn {
-          from { opacity: 0; transform: translateY(12px); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        .card-header { margin-bottom: 28px; }
-
-        .card-title {
-          font-size: 22px;
-          font-weight: 600;
-          color: #0a2540;
-          letter-spacing: -0.4px;
-          line-height: 1.3;
+        .login-title {
+          font-size: 2rem;
+          font-weight: 800;
+          color: #f0f0f0;
+          letter-spacing: -0.04em;
+          margin-bottom: 28px;
+          line-height: 1.1;
         }
 
-        .card-subtitle {
-          margin-top: 6px;
-          font-size: 14px;
-          color: #697386;
-          line-height: 1.5;
+        .login-field {
+          margin-bottom: 12px;
         }
 
-        .form-field { margin-bottom: 18px; }
-
-        .field-label {
-          display: block;
-          font-size: 13px;
-          font-weight: 500;
-          color: #3c4257;
-          margin-bottom: 6px;
-          letter-spacing: 0.01em;
+        .login-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
         }
 
-        .field-input-wrapper { position: relative; }
+        .login-input-icon {
+          position: absolute;
+          left: 16px;
+          color: #555;
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+        }
 
         .login-input {
           width: 100%;
-          height: 44px;
-          padding: 0 40px 0 14px;
+          height: 52px;
+          padding: 0 16px 0 48px;
           font-size: 15px;
           font-family: inherit;
-          color: #0a2540;
-          background: #ffffff;
-          border: 1.5px solid #e0e5ec;
-          border-radius: 7px;
+          color: #c0c0c0;
+          background: #1e1e1e;
+          border: 1.5px solid #2a2a2a;
+          border-radius: 14px;
           outline: none;
           transition: border-color 0.15s ease, box-shadow 0.15s ease;
-          -webkit-appearance: none;
+          box-sizing: border-box;
         }
 
-        .login-input::placeholder { color: #a3acb9; font-size: 14px; }
-        .login-input:hover:not(:disabled) { border-color: #c1c9d5; }
+        .login-input::placeholder { color: #555; }
+        .login-input:hover:not(:disabled) { border-color: #3a3a3a; }
 
         .login-input:focus {
-          border-color: #ff6b00;
-          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.16);
+          border-color: var(--primary, #ff6b00);
+          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12);
         }
 
-        .login-input:disabled {
-          background: #f7fafc;
-          color: #a3acb9;
-          cursor: not-allowed;
-        }
+        .login-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .login-input.email-invalid {
           border-color: #df1b41 !important;
-          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.1) !important;
         }
 
         .login-input.email-valid {
           border-color: #1a9e5f !important;
-          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.1) !important;
         }
 
-        /* no-icon variant (password field) */
-        .login-input.no-icon { padding-right: 14px; }
-
-        .field-status-icon {
+        .login-field-status {
           position: absolute;
-          right: 13px;
+          right: 14px;
           top: 50%;
           transform: translateY(-50%);
-          width: 17px;
-          height: 17px;
           pointer-events: none;
           animation: iconPop 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) both;
         }
@@ -192,12 +169,13 @@ const LoginPage = () => {
           to   { opacity: 1; transform: translateY(-50%) scale(1); }
         }
 
-        .field-message {
+        .login-field-msg {
           display: flex;
           align-items: center;
           gap: 5px;
-          margin-top: 5px;
-          font-size: 12.5px;
+          margin-top: 6px;
+          margin-left: 4px;
+          font-size: 12px;
           font-weight: 500;
           animation: msgSlide 0.18s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
@@ -207,18 +185,20 @@ const LoginPage = () => {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        .field-message.invalid { color: #df1b41; }
-        .field-message.valid   { color: #1a9e5f; }
+        .login-field-msg.invalid { color: #df1b41; }
+        .login-field-msg.valid   { color: #1a9e5f; }
 
-        .error-banner {
+        .login-error {
           display: flex;
           align-items: flex-start;
           gap: 10px;
-          background: #fff8f8;
-          border: 1.5px solid #fecdd3;
-          border-radius: 7px;
+          background: rgba(223, 27, 65, 0.08);
+          border: 1.5px solid rgba(223, 27, 65, 0.25);
+          border-radius: 10px;
           padding: 12px 14px;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: #df1b41;
           animation: shake 0.3s cubic-bezier(0.36, 0.07, 0.19, 0.97);
         }
 
@@ -230,42 +210,38 @@ const LoginPage = () => {
           80%       { transform: translateX(3px); }
         }
 
-        .error-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; color: #df1b41; }
-        .error-text { font-size: 13px; color: #df1b41; line-height: 1.5; }
-
-        .submit-btn {
-          width: 100%;
-          height: 46px;
-          background: #ff6b00;
-          color: white;
-          border: none;
-          border-radius: 7px;
-          font-size: 15px;
-          font-weight: 500;
-          font-family: inherit;
-          letter-spacing: -0.1px;
-          cursor: pointer;
-          transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+        .login-submit {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
-          margin-top: 8px;
+          margin: 24px auto 0;
+          padding: 0 36px;
+          height: 50px;
+          background: var(--primary, #ff6b00);
+          color: white;
+          border: none;
+          border-radius: 999px;
+          font-size: 15px;
+          font-weight: 700;
+          font-family: inherit;
+          letter-spacing: -0.02em;
+          cursor: pointer;
+          transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
         }
 
-        .submit-btn:hover:not(:disabled) {
+        .login-submit:hover:not(:disabled) {
           background: #e85d00;
-          box-shadow: 0 4px 12px rgba(255, 107, 0, 0.35);
+          box-shadow: 0 4px 16px rgba(255, 107, 0, 0.35);
           transform: translateY(-1px);
         }
 
-        .submit-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+        .login-submit:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 
-        .submit-btn:disabled {
-          background: #ffb380;
+        .login-submit:disabled {
+          opacity: 0.5;
           cursor: not-allowed;
           transform: none;
-          box-shadow: none;
         }
 
         .spinner {
@@ -278,49 +254,62 @@ const LoginPage = () => {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .divider { height: 1px; background: #e8ecf1; margin: 24px 0; }
+        .login-footer {
+          text-align: center;
+          margin-top: 24px;
+          font-size: 13.5px;
+          color: #555;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
 
-        .card-footer { text-align: center; font-size: 13.5px; color: #697386; }
-
-        .card-footer a {
-          color: #ff6b00;
+        .login-footer a {
+          color: var(--primary, #ff6b00);
           text-decoration: none;
           font-weight: 500;
+          transition: opacity 0.15s;
+        }
+
+        .login-footer a:hover { opacity: 0.75; }
+
+        .login-footer-dot { color: #333; }
+
+        .login-forgot {
+          display: block;
+          text-align: right;
+          font-size: 12.5px;
+          color: #555;
+          text-decoration: none;
+          margin-top: 6px;
           transition: color 0.15s;
         }
 
-        .card-footer a:hover { color: #e85d00; text-decoration: underline; }
+        .login-forgot:hover { color: var(--primary, #ff6b00); }
       `}</style>
 
       <div className="login-page">
         <div className="login-card">
-          <div className="card-header">
-            <h1 className="card-title">Welcome back</h1>
-            <p className="card-subtitle">Sign in to your PumpkinMC account.</p>
-          </div>
+          <h1 className="login-title">Welcome back</h1>
 
           <form onSubmit={handleSubmit} noValidate>
-            {error && (
-              <div className="error-banner">
-                <svg className="error-icon" viewBox="0 0 16 16" fill="currentColor">
-                  <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.75 4.75a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5zm-.75 6a1 1 0 110 2 1 1 0 010-2z"/>
-                </svg>
-                <span className="error-text">{error}</span>
-              </div>
-            )}
 
-            {/* Honeypot */}
             <input type="text" style={{ display: 'none' }} tabIndex={-1}
               onChange={e => setForm({ ...form, website: e.target.value })} />
 
-            <div className="form-field">
-              <label className="field-label" htmlFor="email">{t('auth.email')}</label>
-              <div className="field-input-wrapper">
+            <div className="login-field">
+              <div className="login-input-wrap">
+                <span className="login-input-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
                 <input
                   id="email"
                   className={`login-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="Email or username"
                   value={form.email}
                   onChange={handleEmailChange}
                   onBlur={handleEmailBlur}
@@ -329,62 +318,59 @@ const LoginPage = () => {
                   autoComplete="email"
                 />
                 {emailIsInvalid && (
-                  <svg key="x" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
-                    <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <span className="login-field-status">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
+                      <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </span>
                 )}
                 {emailIsValid && (
-                  <svg key="check" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
-                    <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <span className="login-field-status">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
+                      <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
                 )}
               </div>
               {emailIsInvalid && (
-                <p className="field-message invalid">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                    <path d="M6 0a6 6 0 100 12A6 6 0 006 0zm.5 3.5a.5.5 0 00-1 0v3a.5.5 0 001 0v-3zm-.5 5a.75.75 0 110 1.5.75.75 0 010-1.5z"/>
-                  </svg>
-                  Please enter a valid email address
-                </p>
+                <p className="login-field-msg invalid">Please enter a valid email address</p>
               )}
             </div>
 
-            <div className="form-field">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label className="field-label" htmlFor="password" style={{ marginBottom: 0 }}>{t('auth.password')}</label>
-                <Link to="/forgot-password" style={{ fontSize: '13px', color: '#ff6b00', textDecoration: 'none', fontWeight: 500 }}>
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="field-input-wrapper">
+            <div className="login-field">
+              <div className="login-input-wrap">
+                <span className="login-input-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="7.5" cy="15.5" r="5.5"/><path d="M10.85 9.65 19 1.5l3 3-1.5 1.5-1.5-1-1.5 1.5-1-1L16 7l-1.15 1.15"/>
+                  </svg>
+                </span>
                 <input
                   id="password"
-                  className="login-input no-icon"
+                  className="login-input"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="Password"
                   onChange={e => setForm({ ...form, password: e.target.value })}
                   required
                   disabled={isSubmitting}
                   autoComplete="current-password"
                 />
               </div>
+              <Link to="/forgot-password" className="login-forgot">Forgot password?</Link>
             </div>
 
-            <button className="submit-btn" type="submit" disabled={isSubmitting}>
+            <button className="login-submit" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <><span className="spinner" />{t('loading')}</>
               ) : (
-                t('auth.sign_in')
+                <>Sign in <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
               )}
             </button>
           </form>
 
-          <div className="divider" />
-
-          <div className="card-footer">
-            Don't have an account? <Link to="/register">Create one</Link>
+          <div className="login-footer">
+            <Link to="/register">Create an account</Link>
           </div>
         </div>
       </div>

@@ -18,9 +18,7 @@ const ForgotPasswordPage = () => {
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setEmail(val);
-    if (emailTouched) {
-      setEmailValid(val === '' ? null : validateEmail(val));
-    }
+    if (emailTouched) setEmailValid(val === '' ? null : validateEmail(val));
   };
 
   const handleEmailBlur = () => {
@@ -30,15 +28,10 @@ const ForgotPasswordPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     setEmailTouched(true);
     const isEmailValid = validateEmail(email);
     setEmailValid(isEmailValid);
-
-    if (!isEmailValid) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+    if (!isEmailValid) return;
 
     setIsSubmitting(true);
     setError('');
@@ -46,8 +39,11 @@ const ForgotPasswordPage = () => {
     try {
       await api.post('/auth/forgot-password', { email });
       setMessage('If an account exists with that email, a reset link has been sent.');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+    } catch (err: unknown) {
+      setError(
+        (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+        ?? 'Something went wrong. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -59,154 +55,166 @@ const ForgotPasswordPage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
-        .auth-page {
+        .forgot-page {
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           padding: 40px 20px;
+          min-height: 60vh;
         }
 
-        .auth-card {
+        .forgot-card {
           width: 100%;
-          max-width: 440px;
-          background: #ffffff;
-          border-radius: 12px;
-          box-shadow:
-            0 0 0 1px rgba(60, 66, 87, 0.08),
-            0 2px 4px rgba(60, 66, 87, 0.04),
-            0 8px 24px rgba(60, 66, 87, 0.08);
+          max-width: 460px;
+          background: #161616;
+          border: 1px solid #2a2a2a;
+          border-radius: 20px;
           padding: 40px;
           animation: cardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
 
         @keyframes cardIn {
-          from { opacity: 0; transform: translateY(12px); }
+          from { opacity: 0; transform: translateY(14px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        .card-header { margin-bottom: 28px; }
-
-        .card-title {
-          font-size: 22px;
-          font-weight: 600;
-          color: #0a2540;
-          letter-spacing: -0.4px;
-          line-height: 1.3;
+        .forgot-title {
+          font-size: 2rem;
+          font-weight: 800;
+          color: #f0f0f0;
+          letter-spacing: -0.04em;
+          margin-bottom: 8px;
+          line-height: 1.1;
         }
 
-        .card-subtitle {
-          margin-top: 6px;
+        .forgot-subtitle {
           font-size: 14px;
-          color: #697386;
+          color: #666;
+          margin-bottom: 28px;
           line-height: 1.5;
         }
 
-        .form-field { margin-bottom: 18px; }
+        .forgot-field { margin-bottom: 12px; }
 
-        .field-label {
-          display: block;
-          font-size: 13px;
-          font-weight: 500;
-          color: #3c4257;
-          margin-bottom: 6px;
-          letter-spacing: 0.01em;
+        .forgot-input-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
         }
 
-        .field-input-wrapper { position: relative; }
+        .forgot-input-icon {
+          position: absolute;
+          left: 16px;
+          color: #555;
+          pointer-events: none;
+          display: flex;
+          align-items: center;
+        }
 
-        .auth-input {
+        .forgot-input {
           width: 100%;
-          height: 44px;
-          padding: 0 40px 0 14px;
+          height: 52px;
+          padding: 0 16px 0 48px;
           font-size: 15px;
           font-family: inherit;
-          color: #0a2540;
-          background: #ffffff;
-          border: 1.5px solid #e0e5ec;
-          border-radius: 7px;
+          color: #c0c0c0;
+          background: #1e1e1e;
+          border: 1.5px solid #2a2a2a;
+          border-radius: 14px;
           outline: none;
           transition: border-color 0.15s ease, box-shadow 0.15s ease;
-          -webkit-appearance: none;
+          box-sizing: border-box;
         }
 
-        .auth-input:focus {
-          border-color: #ff6b00;
-          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.16);
+        .forgot-input::placeholder { color: #555; }
+        .forgot-input:hover:not(:disabled) { border-color: #3a3a3a; }
+        .forgot-input:focus {
+          border-color: var(--primary, #ff6b00);
+          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.12);
         }
+        .forgot-input:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .auth-input.email-invalid {
+        .forgot-input.email-invalid {
           border-color: #df1b41 !important;
-          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.1) !important;
         }
 
-        .auth-input.email-valid {
+        .forgot-input.email-valid {
           border-color: #1a9e5f !important;
-          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.12) !important;
+          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.1) !important;
         }
 
-        .field-status-icon {
+        .forgot-status-icon {
           position: absolute;
-          right: 13px;
+          right: 14px;
           top: 50%;
           transform: translateY(-50%);
-          width: 17px;
-          height: 17px;
           pointer-events: none;
         }
 
-        .field-message {
+        .forgot-field-msg {
+          margin-top: 6px;
+          margin-left: 4px;
+          font-size: 12px;
+          font-weight: 500;
+        }
+        .forgot-field-msg.invalid { color: #df1b41; }
+
+        .forgot-error {
           display: flex;
-          align-items: center;
-          gap: 5px;
-          margin-top: 5px;
-          font-size: 12.5px;
-          font-weight: 500;
-        }
-
-        .field-message.invalid { color: #df1b41; }
-
-        .error-banner {
-          background: #fff8f8;
-          border: 1.5px solid #fecdd3;
-          border-radius: 7px;
+          align-items: flex-start;
+          gap: 10px;
+          background: rgba(223, 27, 65, 0.08);
+          border: 1.5px solid rgba(223, 27, 65, 0.25);
+          border-radius: 10px;
           padding: 12px 14px;
-          margin-bottom: 20px;
+          margin-bottom: 16px;
+          font-size: 13px;
           color: #df1b41;
-          font-size: 13px;
         }
 
-        .success-banner {
-          background: #f0fff4;
-          border: 1.5px solid #c6f6d5;
-          border-radius: 7px;
+        .forgot-success {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          background: rgba(26, 158, 95, 0.08);
+          border: 1.5px solid rgba(26, 158, 95, 0.25);
+          border-radius: 10px;
           padding: 12px 14px;
-          margin-bottom: 20px;
-          color: #2f855a;
+          margin-bottom: 16px;
           font-size: 13px;
+          color: #1a9e5f;
         }
 
-        .submit-btn {
-          width: 100%;
-          height: 46px;
-          background: #ff6b00;
-          color: white;
-          border: none;
-          border-radius: 7px;
-          font-size: 15px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background 0.15s ease;
+        .forgot-submit {
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
+          margin: 24px auto 0;
+          padding: 0 36px;
+          height: 50px;
+          background: var(--primary, #ff6b00);
+          color: white;
+          border: none;
+          border-radius: 999px;
+          font-size: 15px;
+          font-weight: 700;
+          font-family: inherit;
+          letter-spacing: -0.02em;
+          cursor: pointer;
+          transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
         }
 
-        .submit-btn:hover:not(:disabled) { background: #e85d00; }
-        .submit-btn:disabled { background: #ffb380; cursor: not-allowed; }
+        .forgot-submit:hover:not(:disabled) {
+          background: #e85d00;
+          box-shadow: 0 4px 16px rgba(255, 107, 0, 0.35);
+          transform: translateY(-1px);
+        }
+
+        .forgot-submit:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+        .forgot-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
         .spinner {
           width: 16px; height: 16px;
@@ -218,69 +226,89 @@ const ForgotPasswordPage = () => {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .divider { height: 1px; background: #e8ecf1; margin: 24px 0; }
+        .forgot-footer {
+          text-align: center;
+          margin-top: 24px;
+          font-size: 13.5px;
+          color: #555;
+        }
 
-        .card-footer { text-align: center; font-size: 13.5px; color: #697386; }
-
-        .card-footer a {
-          color: #ff6b00;
+        .forgot-footer a {
+          color: var(--primary, #ff6b00);
           text-decoration: none;
           font-weight: 500;
+          transition: opacity 0.15s;
         }
+
+        .forgot-footer a:hover { opacity: 0.75; }
       `}</style>
 
-      <div className="auth-page">
-        <div className="auth-card">
-          <div className="card-header">
-            <h1 className="card-title">Reset your password</h1>
-            <p className="card-subtitle">Enter your email and we'll send you a link to reset your password.</p>
-          </div>
+      <div className="forgot-page">
+        <div className="forgot-card">
+          <h1 className="forgot-title">Forgot password?</h1>
+          <p className="forgot-subtitle">Enter your email and we'll send you a reset link.</p>
 
           <form onSubmit={handleSubmit} noValidate>
-            {error && <div className="error-banner">{error}</div>}
-            {message && <div className="success-banner">{message}</div>}
+            {message && (
+              <div className="forgot-success">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style={{ flexShrink: 0, marginTop: 1 }}>
+                  <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm3.78 6.237-4.5 4.5a.75.75 0 01-1.06 0l-2-2a.75.75 0 111.06-1.06l1.47 1.47 3.97-3.97a.75.75 0 111.06 1.06z"/>
+                </svg>
+                {message}
+              </div>
+            )}
 
-            <div className="form-field">
-              <label className="field-label" htmlFor="email">{t('auth.email')}</label>
-              <div className="field-input-wrapper">
+            <div className="forgot-field">
+              <div className="forgot-input-wrap">
+                <span className="forgot-input-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+                  </svg>
+                </span>
                 <input
                   id="email"
-                  className={`auth-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
+                  className={`forgot-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
                   type="email"
-                  placeholder="you@company.com"
+                  placeholder="your@email.com"
                   value={email}
                   onChange={handleEmailChange}
                   onBlur={handleEmailBlur}
                   required
                   disabled={isSubmitting}
+                  autoComplete="email"
                 />
                 {emailIsInvalid && (
-                  <svg className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
-                    <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
+                  <span className="forgot-status-icon">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
+                      <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </span>
                 )}
                 {emailIsValid && (
-                  <svg className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
-                    <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <span className="forgot-status-icon">
+                    <svg width="17" height="17" viewBox="0 0 20 20" fill="none">
+                      <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
+                      <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </span>
                 )}
               </div>
               {emailIsInvalid && (
-                <p className="field-message invalid">Please enter a valid email address</p>
+                <p className="forgot-field-msg invalid">Please enter a valid email address</p>
               )}
             </div>
 
-            <button className="submit-btn" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <><span className="spinner" />Sending...</> : 'Send reset link'}
+            <button className="forgot-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting
+                ? <><span className="spinner" />Sending...</>
+                : <>Send reset link <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></>
+              }
             </button>
           </form>
 
-          <div className="divider" />
-
-          <div className="card-footer">
-            Remembered your password? <Link to="/login">Sign in</Link>
+          <div className="forgot-footer">
+            <Link to="/login">Back to sign in</Link>
           </div>
         </div>
       </div>

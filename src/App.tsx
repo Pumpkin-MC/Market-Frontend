@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, Outlet, Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
@@ -20,6 +20,7 @@ import AddPlugin from './pages/dashboard/plugin/AddPlugin';
 import TermsOfServicePage from './pages/legal/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import AdminPanel from './pages/admin/AdminPanel';
+import VeinminerMockup from './pages/VeinminerMockup';
 import './App.css';
 
 import api from './api';
@@ -133,6 +134,7 @@ const App = () => (
             <Route path="add-plugin" element={<AddPlugin />} />
             <Route path="manage-plugin/:id" element={<ManagePlugin />} />
           </Route>
+          <Route path="mockup" element={<VeinminerMockup />} />
           <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
           <Route path="settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         </Route>
@@ -172,66 +174,46 @@ const DashboardLayout = () => {
 
 // --- Components ---
 const Navbar = ({ user }: any) => {
-  const { t } = useTranslation();
-  const [searchQuery, setSearchQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery('');
-      setIsMenuOpen(false);
-    }
-  };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <nav className="navbar">
-      <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
-        <Link to="/" onClick={() => setIsMenuOpen(false)}>
-          <img src="/icon.png" alt="Market Logo" style={{ height: '50px', marginRight: '0px', verticalAlign: 'middle' }} />
-          <span>MARKET</span>
-        </Link>
-      </div>
-
-      <button className="mobile-menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          {isMenuOpen ? (
-            <path d="M18 6L6 18M6 6l12 12" />
-          ) : (
-            <path d="M3 12h18M3 6h18M3 18h18" />
-          )}
-        </svg>
-      </button>
-
-      <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
-        <div className="nav-links">
-          <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
-          {user && <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>}
-          {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
+      <div className="navbar-inner">
+        <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
+          <Link to="/" onClick={() => setIsMenuOpen(false)}>
+            <img src="/icon.png" alt="Market Logo" style={{ height: '36px' }} />
+            <span>MARKET</span>
+          </Link>
         </div>
-        <div className="nav-search">
-          <input
-            type="text"
-            placeholder={t('search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch}
-          />
-        </div>
-        <div className="nav-actions">
-          {user ? (
-            <>
-              <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
-            </>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('login')}</Link>
-              <Link to="/register" className="btn" onClick={() => setIsMenuOpen(false)}>{t('register')}</Link>
-            </>
-          )}
+
+        <button className="mobile-menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isMenuOpen ? (
+              <path d="M18 6L6 18M6 6l12 12" />
+            ) : (
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            )}
+          </svg>
+        </button>
+
+        <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
+          <div className="nav-links">
+            {user && <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>Dashboard</NavLink>}
+            {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
+          </div>
+          <div className="nav-actions">
+            {user ? (
+              <>
+                <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="btn nav-sign-in" onClick={() => setIsMenuOpen(false)}>Sign in</Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>
