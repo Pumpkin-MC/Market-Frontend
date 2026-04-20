@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Download, Heart, ExternalLink, Github, Tag, Clock,
+  Download, Heart, ExternalLink, Globe, Tag, Clock,
   RefreshCw, Star, ChevronRight, AlertCircle, Share2,
   Flag, Shield, Pickaxe
 } from 'lucide-react';
@@ -387,7 +387,7 @@ const VeinminerMockup = () => {
 
             <div className="vm-sidebar-card">
               <p className="vm-sidebar-title">Links</p>
-              <a className="vm-link-btn" href="#"><Github size={14} /> Source code</a>
+              <a className="vm-link-btn" href="#"><Globe size={14} /> Source code</a>
               <a className="vm-link-btn" href="#"><ExternalLink size={14} /> Wiki</a>
               <a className="vm-link-btn" href="#"><Shield size={14} /> Issue tracker</a>
             </div>
