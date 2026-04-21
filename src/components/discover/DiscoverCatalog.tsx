@@ -360,11 +360,20 @@ const DiscoverCatalog = ({
   const [sort, setSort] = useState('newest');
   const [view, setView] = useState('20');
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('list');
-  const [showAllVersions, setShowAllVersions] = useState(false);
+  const [versionSearch, setVersionSearch] = useState('');
   const [categoriesCollapsed, setCategoriesCollapsed] = useState(false);
   const [versionsCollapsed, setVersionsCollapsed] = useState(false);
   const [sortOpen, setSortOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  // Lock background page scroll while drawer is open
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [mobileFiltersOpen]);
 
   useEffect(() => {
     setSearchQuery(initialSearchQuery);
@@ -417,7 +426,10 @@ const DiscoverCatalog = ({
   }, [sort]);
 
   const categories = modrinthPluginCategories;
-  const visibleVersions = showAllVersions ? modrinthPluginVersions : modrinthPluginVersions.slice(0, 24);
+  const normalizedVersionSearch = versionSearch.trim().toLowerCase();
+  const visibleVersions = normalizedVersionSearch
+    ? modrinthPluginVersions.filter((version) => version.toLowerCase().includes(normalizedVersionSearch))
+    : modrinthPluginVersions;
 
   const displayPlugins = plugins.length > 0 ? plugins : mockPlugins;
 
@@ -484,9 +496,157 @@ const DiscoverCatalog = ({
     });
   };
 
+  const activeFilterCount =
+    Object.keys(categoryFilters).length + (versionFilter ? 1 : 0);
+
   return (
     <div className="discover-shell">
       <SEO title={seoTitle} description={seoDescription} />
+
+      {/* Mobile filter drawer */}
+      {mobileFiltersOpen && (
+        <div className="discover-filter-overlay" onClick={() => setMobileFiltersOpen(false)} />
+      )}
+      <div className={mobileFiltersOpen ? 'discover-filter-drawer open' : 'discover-filter-drawer'}>
+        <div className="discover-filter-drawer-header">
+          <span>Filters</span>
+          <div className="discover-filter-drawer-header-actions">
+            {activeFilterCount > 0 && (
+              <button
+                type="button"
+                className="discover-filter-drawer-clear"
+                onClick={() => { setCategoryFilters({}); setVersionFilter(null); }}
+              >
+                Clear all
+              </button>
+            )}
+            <button
+              type="button"
+              className="discover-filter-drawer-close"
+              onClick={() => setMobileFiltersOpen(false)}
+              aria-label="Close filters"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="discover-filter-drawer-body">
+          {/* Category */}
+          <div className="discover-filter-block">
+            <button
+              type="button"
+              className="discover-filter-heading"
+              onClick={() => setCategoriesCollapsed((c) => !c)}
+            >
+              <p className="discover-filter-label">Category</p>
+              <ChevronDown size={18} className={categoriesCollapsed ? 'discover-chevron collapsed' : 'discover-chevron'} />
+            </button>
+            <div className={categoriesCollapsed ? 'discover-filter-content collapsed' : 'discover-filter-content'}>
+              <div>
+                <div className="discover-category-list">
+                  {categories.map((category) => {
+                    const Icon = categoryIcons[category] || Map;
+                    return (
+                      <div
+                        key={category}
+                        className={[
+                          'discover-category-row',
+                          categoryFilters[category] === 'include' ? 'include' : '',
+                          categoryFilters[category] === 'exclude' ? 'exclude' : '',
+                        ].filter(Boolean).join(' ')}
+                      >
+                        <button
+                          type="button"
+                          className="discover-category-item"
+                          onClick={() => toggleCategoryRow(category)}
+                        >
+                          <Icon size={15} className="discover-category-icon" />
+                          <span>{category}</span>
+                        </button>
+                        <div className="discover-category-actions">
+                          <button
+                            type="button"
+                            className={[
+                              'discover-category-mode include',
+                              categoryFilters[category] === 'include' ? 'active include persist-visible' : '',
+                            ].join(' ')}
+                            onClick={() => setCategoryMode(category, 'include')}
+                            title="Include"
+                          ><Check size={13} /></button>
+                          <button
+                            type="button"
+                            className={[
+                              'discover-category-mode exclude',
+                              categoryFilters[category] === 'exclude' ? 'active exclude' : '',
+                            ].join(' ')}
+                            onClick={() => setCategoryMode(category, 'exclude')}
+                            title="Exclude"
+                          ><CircleOff size={13} /></button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Game version */}
+          <div className="discover-filter-block">
+            <button
+              type="button"
+              className="discover-filter-heading"
+              onClick={() => setVersionsCollapsed((c) => !c)}
+            >
+              <p className="discover-filter-label">Game version</p>
+              <ChevronDown size={18} className={versionsCollapsed ? 'discover-chevron collapsed' : 'discover-chevron'} />
+            </button>
+            <div className={versionsCollapsed ? 'discover-filter-content collapsed' : 'discover-filter-content'}>
+              <div>
+                <div className="discover-version-search">
+                  <Search size={14} className="discover-version-search-icon" />
+                  <input
+                    type="search"
+                    value={versionSearch}
+                    onChange={(event) => setVersionSearch(event.target.value)}
+                    placeholder="Search versions..."
+                  />
+                </div>
+                <div className="discover-version-list">
+                  {visibleVersions.map((version) => (
+                    <div
+                      key={version}
+                      className={['discover-version-row', versionFilter === version ? 'include' : ''].filter(Boolean).join(' ')}
+                    >
+                      <button
+                        type="button"
+                        className="discover-version-item"
+                        onClick={() => setVersionFilter((c) => c === version ? null : version)}
+                      >
+                        <span>{version}</span>
+                      </button>
+                    </div>
+                  ))}
+                  {visibleVersions.length === 0 && (
+                    <div className="discover-version-empty">No versions match</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="discover-filter-drawer-footer">
+          <button
+            type="button"
+            className="discover-filter-drawer-apply"
+            onClick={() => setMobileFiltersOpen(false)}
+          >
+            Show results
+          </button>
+        </div>
+      </div>
 
       <section className="discover-panel">
         <aside className="discover-sidebar">
@@ -565,6 +725,15 @@ const DiscoverCatalog = ({
             </button>
             <div className={versionsCollapsed ? 'discover-filter-content collapsed' : 'discover-filter-content'}>
               <div>
+                <div className="discover-version-search">
+                  <Search size={14} className="discover-version-search-icon" />
+                  <input
+                    type="search"
+                    value={versionSearch}
+                    onChange={(event) => setVersionSearch(event.target.value)}
+                    placeholder="Search versions..."
+                  />
+                </div>
                 <div className="discover-version-list">
                   {visibleVersions.map((version) => (
                     <div
@@ -583,25 +752,19 @@ const DiscoverCatalog = ({
                       </button>
                     </div>
                   ))}
+                  {visibleVersions.length === 0 && (
+                    <div className="discover-version-empty">No versions match</div>
+                  )}
                 </div>
-                {modrinthPluginVersions.length > 24 && (
-                  <button
-                    type="button"
-                    className="discover-show-more"
-                    onClick={() => setShowAllVersions((current) => !current)}
-                  >
-                    {showAllVersions ? 'Show fewer versions' : 'Show all versions'}
-                  </button>
-                )}
               </div>
             </div>
           </div>
         </aside>
 
         <div className="discover-results">
-          <form className="discover-searchbar discover-searchbar-top" onSubmit={handleSearchSubmit}>
+          <form className="discover-searchbar-top" onSubmit={handleSearchSubmit}>
             <div className="discover-searchbox">
-              <Search size={24} />
+              <Search size={16} className="discover-searchbox-icon" />
               <input
                 type="search"
                 value={searchQuery}
@@ -691,6 +854,17 @@ const DiscoverCatalog = ({
               >
                 {layoutMode === 'grid' ? <LayoutList size={22} /> : <ImageIcon size={22} />}
               </button>
+
+              <button
+                type="button"
+                className="discover-toolbar-pill discover-mobile-filter-btn"
+                onClick={() => setMobileFiltersOpen(true)}
+              >
+                Filter results...
+                {activeFilterCount > 0 && (
+                  <span className="discover-mobile-filter-badge">{activeFilterCount}</span>
+                )}
+              </button>
             </div>
 
             <div className="discover-toolbar-pages">
@@ -750,39 +924,38 @@ const DiscoverCatalog = ({
                           <h2>{plugin.name}</h2>
                           <p>by {plugin.dev_name || 'Unknown developer'}</p>
                         </div>
-
                         <p className="discover-card-description">{description}</p>
-
-                        <div className="discover-card-tags">
-                          {visibleTags.map((tag, index) => (
-                            <span
-                              key={`${plugin.id}-${tag.label}-${index}`}
-                              className={[
-                                index === 0 ? 'discover-tag' : 'discover-tag muted',
-                                tag.tone ? `tone-${tag.tone}` : '',
-                              ].join(' ')}
-                            >
-                              {tag.label}
-                            </span>
-                          ))}
-                          {hiddenTagCount > 0 && <span className="discover-tag muted">+{hiddenTagCount}</span>}
-                          {plugin.type === 'paid' && (
-                            <span className={`discover-price-pill ${price.tone}`}>
-                            {price.isSale && <span className="discover-price-strike">{price.originalLabel}</span>}
-                            <span>{price.label}</span>
-                            </span>
-                          )}
-                        </div>
                       </div>
 
                       <div className="discover-card-stats">
                         <div className="discover-stat-row">
-                          <span><Download size={18} /> {formatCompactNumber(plugin.downloads ?? 0)}</span>
-                          <span><Heart size={18} /> {formatCompactNumber(likes)}</span>
+                          <span><Download size={14} /> {formatCompactNumber(plugin.downloads ?? 0)}</span>
+                          <span><Heart size={14} /> {formatCompactNumber(likes)}</span>
                         </div>
                         <div className="discover-stat-row muted">
-                          <span><Clock3 size={18} /> {formatRelativeDate(plugin.created_at)}</span>
+                          <span><Clock3 size={14} /> {formatRelativeDate(plugin.created_at)}</span>
                         </div>
+                      </div>
+
+                      <div className="discover-card-tags">
+                        {visibleTags.map((tag, index) => (
+                          <span
+                            key={`${plugin.id}-${tag.label}-${index}`}
+                            className={[
+                              index === 0 ? 'discover-tag' : 'discover-tag muted',
+                              tag.tone ? `tone-${tag.tone}` : '',
+                            ].join(' ')}
+                          >
+                            {tag.label}
+                          </span>
+                        ))}
+                        {hiddenTagCount > 0 && <span className="discover-tag muted">+{hiddenTagCount}</span>}
+                        {plugin.type === 'paid' && (
+                          <span className={`discover-price-pill ${price.tone}`}>
+                            {price.isSale && <span className="discover-price-strike">{price.originalLabel}</span>}
+                            <span>{price.label}</span>
+                          </span>
+                        )}
                       </div>
                     </Link>
                   );

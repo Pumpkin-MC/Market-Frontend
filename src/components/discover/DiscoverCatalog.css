@@ -9,14 +9,13 @@
 .discover-panel {
   max-width: 1460px;
   margin: 0 auto;
-  padding: 1.35rem 1.5rem 3rem;
+  padding: 1rem 1.5rem 2.5rem;
   display: grid;
-  grid-template-columns: 22rem minmax(0, 1fr);
-  gap: 1rem;
+  grid-template-columns: 19rem minmax(0, 1fr);
+  gap: 0.85rem;
   align-items: start;
 }
 
-.discover-searchbar-top,
 .discover-toolbar,
 .discover-card,
 .discover-feedback,
@@ -37,13 +36,13 @@
 }
 
 .discover-filter-block {
-  border-radius: 28px;
-  padding: 1.5rem 1.6rem;
+  border-radius: 22px;
+  padding: 1.1rem 1.2rem;
   overflow: hidden;
 }
 
 .discover-filter-block + .discover-filter-block {
-  margin-top: 1.35rem;
+  margin-top: 0.85rem;
 }
 
 .discover-filter-heading {
@@ -62,7 +61,7 @@
 
 .discover-filter-label {
   margin: 0;
-  font-size: 1.12rem;
+  font-size: 0.97rem;
   font-weight: 900;
   letter-spacing: -0.02em;
   white-space: nowrap;
@@ -73,7 +72,7 @@
   grid-template-rows: 1fr;
   opacity: 1;
   transition: grid-template-rows 0.28s ease, opacity 0.2s ease, margin-top 0.28s ease;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 .discover-filter-content > * {
@@ -100,7 +99,7 @@
 .discover-category-list {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.05rem;
 }
 
 .discover-category-row {
@@ -131,13 +130,13 @@
 .discover-category-item {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 0.5rem;
   flex: 1;
-  padding: 0.58rem 0.2rem;
+  padding: 0.28rem 0.2rem;
   border: none;
   background: transparent;
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.76rem;
   font-weight: 700;
   text-align: left;
   cursor: pointer;
@@ -167,8 +166,8 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 0.2rem;
-  min-width: 4.4rem;
+  gap: 0.15rem;
+  min-width: 3.4rem;
   align-self: stretch;
   position: relative;
   z-index: 1;
@@ -199,10 +198,10 @@
 }
 
 .discover-category-mode {
-  width: 2.05rem;
+  width: 1.6rem;
   height: 100%;
-  min-height: 2.05rem;
-  border-radius: 10px;
+  min-height: 1.6rem;
+  border-radius: 8px;
   border: none;
   background: transparent;
   color: #8e8176;
@@ -228,10 +227,61 @@
   background: transparent;
 }
 
+.discover-version-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 0.7rem;
+  height: 2.2rem;
+  border-radius: 999px;
+  background: #1a1a1a;
+  border: 1px solid #2a2a2a;
+  margin-bottom: 0.55rem;
+}
+
+.discover-version-search:focus-within {
+  border-color: rgba(var(--primary-rgb), 0.45);
+}
+
+.discover-version-search-icon {
+  color: #666;
+  flex-shrink: 0;
+}
+
+.discover-version-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 0.82rem;
+  outline: none;
+  font-family: inherit;
+}
+
+.discover-version-search input::placeholder {
+  color: #555;
+}
+
+.discover-version-search input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.discover-version-empty {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 0.4rem 0.2rem;
+}
+
 .discover-version-list {
   display: flex;
   flex-direction: column;
   gap: 0.3rem;
+}
+
+@keyframes versionRowIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .discover-version-row {
@@ -245,6 +295,7 @@
   overflow: hidden;
   transition: background-color 0.18s ease, transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
   border: 1px solid transparent;
+  animation: versionRowIn 0.18s ease both;
 }
 
 .discover-version-row.include {
@@ -264,9 +315,9 @@
   border: none;
   background: transparent;
   color: var(--text-muted);
-  padding: 0.58rem 0.2rem;
+  padding: 0.42rem 0.2rem;
   text-align: left;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   cursor: pointer;
   transition: color 0.18s ease;
@@ -314,54 +365,60 @@
   min-width: 0;
 }
 
-.discover-searchbar {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-}
-
 .discover-searchbar-top {
-  border-radius: 18px;
-  padding: 0.85rem;
-  margin-bottom: 0.8rem;
-  color: var(--text-muted);
+  margin-bottom: 0.55rem;
 }
 
 .discover-searchbox {
   width: 100%;
-  min-height: 2.65rem;
-  height: 2.65rem;
+  height: 2.6rem;
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  padding: 0 0.9rem;
-  border-radius: 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+  gap: 0.6rem;
+  padding: 0 1rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(28,28,28,0.98) 0%, rgba(22,22,22,0.98) 100%);
+  border: 1px solid #2a2a2a;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.discover-searchbar input {
-  width: 100%;
+.discover-searchbox:focus-within {
+  border-color: rgba(255, 107, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.08), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.discover-searchbox-icon {
+  color: #555;
+  flex-shrink: 0;
+}
+
+.discover-searchbox input {
+  flex: 1;
   border: none;
   background: transparent;
   color: var(--text);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   outline: none;
+  font-family: inherit;
 }
 
-.discover-searchbar input::placeholder {
-  color: #9a9a9a;
+.discover-searchbox input::placeholder {
+  color: #555;
+}
+
+.discover-searchbox input::-webkit-search-cancel-button {
+  display: none;
 }
 
 .discover-toolbar {
-  border-radius: 18px;
-  padding: 0.85rem;
+  border-radius: 16px;
+  padding: 0.65rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.55rem;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
 }
 
 .discover-toolbar-controls,
@@ -375,18 +432,18 @@
 .discover-layout-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  border-radius: 16px;
+  gap: 0.4rem;
+  border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
-  min-height: 2.65rem;
-  height: 2.65rem;
+  min-height: 2.2rem;
+  height: 2.2rem;
 }
 
 .discover-toolbar-pill {
-  padding: 0 0.9rem;
-  font-size: 0.86rem;
+  padding: 0 0.75rem;
+  font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;
 }
@@ -432,8 +489,8 @@
 }
 
 .discover-layout-button {
-  width: 2.65rem;
-  min-width: 2.65rem;
+  width: 2.2rem;
+  min-width: 2.2rem;
   justify-content: center;
 }
 
@@ -444,7 +501,7 @@
 
 .discover-toolbar-pages {
   color: var(--text);
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 800;
 }
 
@@ -452,8 +509,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.65rem;
-  height: 2.65rem;
+  width: 2.2rem;
+  height: 2.2rem;
   border-radius: 999px;
   background: rgba(var(--primary-rgb), 0.18);
   color: var(--primary);
@@ -461,7 +518,7 @@
 
 .discover-card-list {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.55rem;
   transition: opacity 0.15s ease;
 }
 
@@ -476,10 +533,15 @@
 
 .discover-card {
   display: grid;
-  grid-template-columns: 8.5rem minmax(0, 1fr) auto;
-  gap: 0.9rem;
-  padding: 1.1rem 1.15rem;
-  border-radius: 24px;
+  grid-template-columns: 4.8rem minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "icon main  stats"
+    "icon tags  stats";
+  align-items: start;
+  gap: 0.3rem 0.8rem;
+  padding: 0.85rem 0.95rem;
+  border-radius: 18px;
   text-decoration: none;
   color: inherit;
   transition: border-color 0.18s ease, transform 0.18s ease;
@@ -495,14 +557,15 @@
 }
 
 .discover-card-icon {
-  width: 8.5rem;
-  height: 8.5rem;
-  border-radius: 24px;
+  grid-area: icon;
+  width: 4.8rem;
+  height: 4.8rem;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  font-size: 2.85rem;
+  font-size: 2.2rem;
   font-weight: 800;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: linear-gradient(180deg, #232323 0%, #1a1a1a 100%);
@@ -515,10 +578,11 @@
 }
 
 .discover-card-main {
+  grid-area: main;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .discover-card-title-row {
@@ -530,7 +594,7 @@
 
 .discover-card-title-row h2 {
   margin: 0;
-  font-size: 1.45rem;
+  font-size: 1.15rem;
   line-height: 1.05;
   color: var(--text);
 }
@@ -538,18 +602,19 @@
 .discover-card-title-row p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
 }
 
 .discover-card-description {
-  margin: 0.6rem 0 0.85rem;
+  margin: 0.42rem 0 0.6rem;
   color: #cfcfcf;
-  font-size: 0.9rem;
+  font-size: 0.83rem;
   line-height: 1.24;
   max-width: 50rem;
 }
 
 .discover-card-tags {
+  grid-area: tags;
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
@@ -561,10 +626,10 @@
   display: inline-flex;
   align-items: center;
   border-radius: 999px;
-  padding: 0.34rem 0.68rem;
+  padding: 0.24rem 0.52rem;
   border: 1px solid var(--border);
   background: #2a2a2a;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
@@ -619,14 +684,15 @@
 }
 
 .discover-card-stats {
-  min-width: 10rem;
+  grid-area: stats;
+  min-width: 8.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.7rem;
+  gap: 0.4rem;
   align-items: flex-end;
-  justify-content: center;
+  justify-content: flex-start;
   color: var(--text);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
   font-weight: 700;
 }
 
@@ -651,16 +717,23 @@
 }
 
 .discover-card.grid-card {
-  grid-template-columns: 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  grid-template-columns: unset;
+  grid-template-rows: unset;
+  grid-template-areas: unset;
   gap: 0;
   padding: 0;
   overflow: hidden;
 }
 
 .discover-card.grid-card .discover-card-banner {
+  order: 0;
   display: block;
-  height: 12.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  height: 13rem;
+  flex-shrink: 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .discover-card.grid-card .discover-card-banner img {
@@ -670,27 +743,37 @@
   display: block;
 }
 
+/* Icon: pulls up over banner, sits left */
 .discover-card.grid-card .discover-card-icon {
-  width: 4.8rem;
-  height: 4.8rem;
-  border-radius: 16px;
-  margin: -1.35rem 0 0 1.1rem;
+  order: 1;
+  grid-area: unset;
+  align-self: flex-start;
+  width: 4.4rem;
+  height: 4.4rem;
+  border-radius: 14px;
+  font-size: 1.8rem;
+  margin: -1.25rem 0 0 1rem;
   position: relative;
-  z-index: 1;
-  font-size: 2rem;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
+/* Main: pulls up beside the icon via negative margin + left padding */
 .discover-card.grid-card .discover-card-main {
-  padding: 0 1.1rem 0.85rem;
-  margin-top: -0.35rem;
+  order: 2;
+  grid-area: unset;
+  flex: 1;
+  min-height: 3.5rem;
+  margin-top: -3.8rem;
+  padding: 0 1rem 0.6rem calc(1rem + 4.4rem + 0.65rem);
 }
 
 .discover-card.grid-card .discover-card-title-row h2 {
-  font-size: 1.12rem;
+  font-size: 1.05rem;
 }
 
 .discover-card.grid-card .discover-card-title-row p {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .discover-card.grid-card .discover-card-description {
@@ -700,15 +783,26 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  margin: 0.45rem 0 0.7rem;
+  margin: 0.3rem 0 0;
 }
 
+/* Tags: full-width row below main */
+.discover-card.grid-card .discover-card-tags {
+  order: 3;
+  grid-area: unset;
+  padding: 0.15rem 1rem 0.7rem;
+}
+
+/* Stats: space-between row at bottom */
 .discover-card.grid-card .discover-card-stats {
+  order: 4;
+  grid-area: unset;
   min-width: 0;
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.1rem 1rem;
+  padding: 0.55rem 1rem 0.85rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .discover-feedback,
@@ -728,24 +822,49 @@
 
 @media (max-width: 1300px) {
   .discover-panel {
-    grid-template-columns: 18rem minmax(0, 1fr);
+    grid-template-columns: 16rem minmax(0, 1fr);
   }
 
   .discover-card {
-    grid-template-columns: 6rem minmax(0, 1fr);
+    grid-template-columns: 4.2rem minmax(0, 1fr);
   }
 
   .discover-card-icon {
-    width: 6rem;
-    height: 6rem;
-    font-size: 2rem;
+    width: 4.2rem;
+    height: 4.2rem;
+    font-size: 1.6rem;
   }
 
   .discover-card-stats {
-    grid-column: 2;
-    align-items: flex-start;
-    min-width: 0;
+    min-width: 7rem;
   }
+}
+
+/* ── Mobile filter drawer ── */
+.discover-mobile-filter-btn {
+  display: none;
+}
+
+.discover-filter-overlay {
+  display: none;
+}
+
+.discover-filter-drawer {
+  display: none;
+}
+
+.discover-mobile-filter-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 999px;
+  background: var(--primary, #ff6b00);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-left: 2px;
 }
 
 @media (max-width: 960px) {
@@ -756,7 +875,11 @@
   }
 
   .discover-sidebar {
-    position: static;
+    display: none;
+  }
+
+  .discover-mobile-filter-btn {
+    display: inline-flex;
   }
 
   .discover-toolbar,
@@ -765,23 +888,221 @@
   .discover-toolbar-caption {
     flex-wrap: wrap;
   }
+
+  /* Overlay */
+  .discover-filter-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 99;
+    animation: overlayIn 0.2s ease both;
+  }
+
+  @keyframes overlayIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+
+  /* Drawer */
+  .discover-filter-drawer {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 82vh;
+    background: #161616;
+    border-top: 1px solid #2a2a2a;
+    border-radius: 20px 20px 0 0;
+    z-index: 100;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .discover-filter-drawer.open {
+    transform: translateY(0);
+  }
+
+  .discover-filter-drawer-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.25rem 0.75rem;
+    border-bottom: 1px solid #2a2a2a;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #f0f0f0;
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+
+  .discover-filter-drawer-header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .discover-filter-drawer-clear {
+    background: none;
+    border: none;
+    color: var(--primary, #ff6b00);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .discover-filter-drawer-close {
+    background: #2a2a2a;
+    border: none;
+    color: #888;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .discover-filter-drawer-body {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding: 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    flex: 1;
+  }
+
+  /* In the drawer, the body scrolls. Only the inner grid wrapper clips for the
+     collapse animation; the block itself must stay overflow:visible so its
+     natural height propagates up to the body's scrollHeight. */
+  .discover-filter-drawer-body .discover-filter-block {
+    overflow: visible;
+  }
+  .discover-filter-drawer-body .discover-category-list {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Always show include/exclude action buttons on mobile (no hover available) */
+  .discover-filter-drawer-body .discover-category-actions {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .discover-filter-drawer-body .discover-category-mode {
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+
+  .discover-filter-drawer-body .discover-filter-block {
+    border: none;
+    background: transparent;
+    border-radius: 0;
+    padding: 0.75rem 0;
+    box-shadow: none;
+  }
+
+  .discover-filter-drawer-body .discover-filter-block {
+    position: relative;
+  }
+  .discover-filter-drawer-body .discover-filter-block + .discover-filter-block {
+    margin-top: 0;
+  }
+  .discover-filter-drawer-body .discover-filter-block:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: -1rem;
+    right: -1rem;
+    bottom: 0;
+    height: 1px;
+    background: #2a2a2a;
+  }
+
+  .discover-filter-drawer-footer {
+    padding: 0.85rem 1rem;
+    border-top: 1px solid #2a2a2a;
+    flex-shrink: 0;
+  }
+
+  .discover-filter-drawer-apply {
+    width: 100%;
+    height: 48px;
+    background: var(--primary, #ff6b00);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .discover-filter-drawer-apply:hover {
+    background: #e85d00;
+  }
 }
 
 @media (max-width: 720px) {
   .discover-panel {
-    padding-top: 1rem;
+    padding-top: 0.75rem;
   }
 
   .discover-card {
-    grid-template-columns: 1fr;
+    grid-template-columns: 3.6rem 1fr;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "icon main"
+      "tags tags"
+      "stats stats";
+    gap: 0.35rem 0.7rem;
+    padding: 0.8rem 0.85rem;
+  }
+
+  .discover-card-icon {
+    width: 3.6rem;
+    height: 3.6rem;
+    border-radius: 12px;
+    font-size: 1.5rem;
+  }
+
+  .discover-card-description {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 0;
   }
 
   .discover-card-stats {
-    grid-column: auto;
-    align-items: flex-start;
+    min-width: 0;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    margin-top: 0.1rem;
   }
 
   .discover-stat-row {
     flex-wrap: wrap;
+  }
+
+  /* Grid mode: single column on mobile */
+  .discover-card-list.grid-mode {
+    grid-template-columns: 1fr;
+    gap: 0.7rem;
+  }
+
+  .discover-card.grid-card .discover-card-banner {
+    height: 11rem;
   }
 }

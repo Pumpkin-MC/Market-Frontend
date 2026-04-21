@@ -288,50 +288,33 @@ h3 {
   }
 
   .mobile-menu-toggle {
-    display: block;
+    display: none;
   }
 
   .nav-content {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 80%;
-    max-width: 300px;
-    height: 100vh;
-    background: var(--surface);
-    flex-direction: column;
-    padding: 80px 2rem 2rem;
-    transition: right 0.3s ease;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    align-items: flex-start;
-  }
-
-  .nav-content.open {
-    right: 0;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    position: static;
+    width: auto;
+    height: auto;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
   }
 
   .nav-links {
-    margin: 0 0 2rem 0;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .nav-links a {
-    margin: 0;
-    font-size: 0.95rem;
+    display: none;
   }
 
   .nav-actions {
-    flex-direction: column;
-    width: 100%;
-    gap: 0.75rem;
+    flex-direction: row;
+    gap: 0.5rem;
     margin-left: 0;
   }
 
   .nav-actions .btn {
-    width: 100%;
+    width: auto;
   }
 
   .plugin-detail-layout {
