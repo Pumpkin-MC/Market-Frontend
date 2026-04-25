@@ -359,7 +359,7 @@ const AddPlugin = () => {
             if (previewImage) fd.append('preview_image', previewImage);
             if (wasmFile)     fd.append('wasm', wasmFile);
             screenshots.forEach(f => fd.append('screenshots', f));
-            await api.post('/plugins', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+            await api.post('/plugins', fd);
             setDone(true);
         } catch (err: any) {
             console.error(err);
