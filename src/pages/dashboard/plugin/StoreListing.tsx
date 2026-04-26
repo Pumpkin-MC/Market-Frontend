@@ -148,6 +148,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const [category, setCategory] = useState(plugin.category);
     const [sourceLink, setSourceLink] = useState(plugin.source_link || '');
     const [keywords, setKeywords] = useState(plugin.keywords || '');
+    const [isEarlyAccess, setIsEarlyAccess] = useState(plugin.is_early_access || false);
     const [screenshots, setScreenshots] = useState(plugin.screenshots || []);
     const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -181,6 +182,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         fd.append('category', category);
         fd.append('source_link', sourceLink);
         fd.append('keywords', keywords);
+        fd.append('is_early_access', String(isEarlyAccess));
         try {
             await api.put(`/plugins/${plugin.id}`, fd, {
                 headers: { 'Content-Type': 'multipart/form-data' },
@@ -258,6 +260,21 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                         <input className="mp-input" type="text" value={keywords}
                             onChange={e => setKeywords(e.target.value)}
                             placeholder="economy, shop, currency" />
+                    </div>
+
+                    <div className="mp-form-group">
+                        <label className="mp-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none', marginTop: '0.5rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={isEarlyAccess}
+                                onChange={e => setIsEarlyAccess(e.target.checked)}
+                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                            />
+                            <div>
+                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--mp-text)' }}>Early Access</div>
+                                <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3)', fontWeight: 400 }}>Flag this plugin as incomplete or in active development.</div>
+                            </div>
+                        </label>
                     </div>
                 </div>
 

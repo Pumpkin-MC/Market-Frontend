@@ -26,6 +26,7 @@ export type PluginData = {
     status?: 'published' | 'draft' | 'review';
     sale_active?: boolean;
     sale_discount_percent?: number;
+    is_early_access?: boolean;
 };
 
 const NAV_ITEMS = [

@@ -212,18 +212,31 @@ const Navbar = ({ user }: any) => {
           {user && <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>}
           {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
         </div>
-        <div className="nav-search">
-          <input
-            type="text"
-            placeholder={t('search')}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearch}
-          />
-        </div>
+
+        {!user && (
+          <div className="nav-search">
+            <input
+              type="text"
+              placeholder={t('search')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearch}
+            />
+          </div>
+        )}
+
         <div className="nav-actions">
           {user ? (
             <>
+              <div className="nav-search-right">
+                <input
+                  type="text"
+                  placeholder={t('search')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                />
+              </div>
               <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
             </>
           ) : (

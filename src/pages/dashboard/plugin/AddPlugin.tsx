@@ -223,6 +223,7 @@ const AddPlugin = () => {
 
     const [licenseType, setLicenseType] = useState<LicenseType>('free');
     const [price, setPrice]             = useState(4.99);
+    const [isEarlyAccess, setIsEarlyAccess] = useState(false);
     const stripeConnected               = user.stripe_ready;
 
     // ── Step 2: Binary ──
@@ -356,6 +357,7 @@ const AddPlugin = () => {
             fd.append('translated_descriptions', JSON.stringify(descriptions));
             fd.append('type',                    licenseType);
             fd.append('price', licenseType === 'paid' ? String(Math.round(price * 100)) : '0');
+            fd.append('is_early_access',         String(isEarlyAccess));
             if (previewImage) fd.append('preview_image', previewImage);
             if (wasmFile)     fd.append('wasm', wasmFile);
             screenshots.forEach(f => fd.append('screenshots', f));
@@ -374,7 +376,7 @@ const AddPlugin = () => {
         setDescriptions({ [DEFAULT_LOCALE]: '' }); setActiveLocale(DEFAULT_LOCALE);
         setPreviewImage(null); setPreviewImageUrl(null);
         setScreenshots([]); setScreenshotPreviews([]);
-        setLicenseType('free'); setPrice(4.99);
+        setLicenseType('free'); setPrice(4.99); setIsEarlyAccess(false);
         setWasmFile(null);
     };
 
@@ -493,7 +495,7 @@ const AddPlugin = () => {
                                 </div>
 
                                 {/* Keywords */}
-                                <div className="mp-form-group" style={{ marginBottom: 0 }}>
+                                <div className="mp-form-group" style={{ marginBottom: '1.5rem' }}>
                                     <label className="mp-label">
                                         Keywords{' '}
                                         <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(comma-separated)</span>
@@ -508,6 +510,22 @@ const AddPlugin = () => {
                                         style={{ borderColor: fieldErrors.keywords ? 'var(--mp-error)' : undefined }}
                                     />
                                     <FieldError msg={fieldErrors.keywords} />
+                                </div>
+
+                                {/* Early Access */}
+                                <div className="mp-form-group">
+                                    <label className="mp-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={isEarlyAccess}
+                                            onChange={e => setIsEarlyAccess(e.target.checked)}
+                                            style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+                                        />
+                                        <div>
+                                            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--mp-text-1)' }}>Early Access</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3)', fontWeight: 400 }}>Flag this plugin as incomplete or in active development.</div>
+                                        </div>
+                                    </label>
                                 </div>
                             </div>
 

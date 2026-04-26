@@ -109,9 +109,15 @@ const PluginDetail = () => {
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
-  const [reviewReportSelected, setReviewReportSelected] = useState<string>('');
+  const [reviewReportSelected, setReviewReportSelected] = useState('');
   const [reviewReportCustom, setReviewReportCustom] = useState('');
   const [reviewReportSubmitting, setReviewReportSubmitting] = useState(false);
+
+  const [replyOpen, setReplyOpen] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState('');
+  const [replySubmitting, setReplySubmitting] = useState(false);
+
+  const isOwner = user && plugin && user.id === plugin.dev_id;
   const [reportedReviews, setReportedReviews] = useState<Set<number>>(new Set());
 
   // ── Detect ?payment=success and strip from URL ───────────────────────────
@@ -289,6 +295,34 @@ const PluginDetail = () => {
     setReviewForm({ rating: 5, comment: '' });
   };
 
+  const deleteReview = async () => {
+    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    try {
+      await api.delete(`/plugins/${id}/reviews`);
+      fetchPlugin();
+    } catch (err) {
+      console.error('Failed to delete review', err);
+      alert('Failed to delete review');
+    }
+  };
+
+  const submitReply = async (e: React.FormEvent, reviewId: number) => {
+    e.preventDefault();
+    if (!replyText.trim()) return;
+    setReplySubmitting(true);
+    try {
+      await api.post(`/plugins/${id}/reviews/${reviewId}/reply`, { reply: replyText.trim() });
+      setReplyOpen(null);
+      setReplyText('');
+      fetchPlugin();
+    } catch (err) {
+      console.error('Failed to submit reply', err);
+      alert('Failed to submit reply');
+    } finally {
+      setReplySubmitting(false);
+    }
+  };
+
   const submitReport = async (e: React.FormEvent) => {
     e.preventDefault();
     const reason = reportSelected === 'Other' ? reportCustom.trim() : reportSelected;
@@ -389,6 +423,20 @@ const PluginDetail = () => {
     <script type="application/ld+json">
     {JSON.stringify(productSchema)}
     </script>
+
+    {/* ── Early Access Banner ── */}
+    {plugin.is_early_access && (
+      <div className="early-access-banner" style={{ marginBottom: '1.5rem' }}>
+        <div className="early-access-icon">⏳</div>
+        <div className="early-access-content">
+          <div className="early-access-title">Early Access Plugin</div>
+          <div className="early-access-text">
+            This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features. 
+            Downloading it now helps support the developer and shape the future of the plugin!
+          </div>
+        </div>
+      </div>
+    )}
 
     {/* ── Payment success banner ── */}
     {showPaymentSuccess && (
@@ -514,13 +562,30 @@ const PluginDetail = () => {
       ))}
       </div>
       <p className="review-item-body">{r.comment}</p>
+
+      {/* Developer Reply */}
+      {r.developer_reply && (
+        <div className="developer-reply" style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          background: 'rgba(255, 117, 24, 0.05)',
+          borderLeft: '2px solid var(--primary)',
+          borderRadius: '4px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>Developer Response</span>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(r.replied_at)}</span>
+          </div>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6 }}>{r.developer_reply}</p>
+        </div>
+      )}
       
-      {/* Review Report Button/Form */}
-      <div style={{ marginTop: '0.75rem' }}>
+      {/* Review Report & Reply Buttons */}
+      <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         {reportedReviews.has(r.id) ? (
           <p style={{ fontSize: '0.75rem', color: 'var(--success)', margin: 0 }}>✓ Report submitted</p>
         ) : reviewReportOpen === r.id ? (
-          <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px' }}>
+          <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px', width: '100%' }}>
             <label className="report-form-label">Reason for reporting this review</label>
             <div className="report-reasons" style={{ transform: 'scale(0.9)', originX: 'left' }}>
               {REVIEW_REPORT_REASONS.map(reason => (
@@ -563,12 +628,58 @@ const PluginDetail = () => {
               </button>
             </div>
           </form>
+        ) : replyOpen === r.id ? (
+          <form onSubmit={(e) => submitReply(e, r.id)} style={{ width: '100%', maxWidth: '500px' }}>
+            <textarea
+              className="report-textarea"
+              placeholder="Write your response to this review..."
+              value={replyText}
+              onChange={e => setReplyText(e.target.value)}
+              rows={3}
+              autoFocus
+              style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                type="button" 
+                className="btn-report-cancel" 
+                onClick={() => { setReplyOpen(null); setReplyText(''); }}
+                style={{ padding: '4px 12px', fontSize: '0.75rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="submit" 
+                className="btn btn-primary" 
+                disabled={replySubmitting || !replyText.trim()}
+                style={{ padding: '4px 12px', fontSize: '0.75rem', height: 'auto' }}
+              >
+                {replySubmitting ? 'Replying...' : 'Post Reply'}
+              </button>
+            </div>
+          </form>
         ) : (
-          user && user.username !== r.username && (
-            <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem' }}>
-              🚩 Report review
-            </button>
-          )
+          <>
+            {user && user.username === r.username ? (
+              <button className="btn-report" onClick={deleteReview} style={{ fontSize: '0.7rem', color: '#ff4d4f' }}>
+                🗑 Delete my review
+              </button>
+            ) : user && (
+              <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem' }}>
+                🚩 Report review
+              </button>
+            )}
+
+            {isOwner && !r.developer_reply && !replyOpen && (
+              <button 
+                className="btn-report" 
+                onClick={() => setReplyOpen(r.id)} 
+                style={{ fontSize: '0.7rem', color: 'var(--primary)' }}
+              >
+                💬 Reply as developer
+              </button>
+            )}
+          </>
         )}
       </div>
       </div>
@@ -579,10 +690,25 @@ const PluginDetail = () => {
       hasReviewed ? (
         <div className="review-already-posted">
         <span className="review-already-icon">✓</span>
-        <div>
+        <div style={{ flex: 1 }}>
         <div className="review-already-title">Review posted</div>
         <div className="review-already-sub">You've already reviewed this plugin. Thanks for the feedback!</div>
         </div>
+        <button 
+          onClick={deleteReview}
+          style={{ 
+            background: 'rgba(255, 77, 79, 0.1)', 
+            color: '#ff4d4f', 
+            border: 'none', 
+            padding: '8px 12px', 
+            borderRadius: '6px',
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            fontWeight: '600'
+          }}
+        >
+          Delete Review
+        </button>
         </div>
       ) : (
         <form onSubmit={submitReview} className="review-submit-form">
