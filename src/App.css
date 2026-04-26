@@ -552,10 +552,11 @@ h3 {
 }
 
 /* --- Plugin Grid --- */
-.plugin-grid {
+.plugin-grid,
+.home-plugin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
 }
 
 .plugin-card-link {
@@ -1095,12 +1096,12 @@ h3 {
 }
 
 .pcv2-info {
-  padding: 0.85rem 1rem 1rem;
+  padding: 0.75rem 0.85rem 0.85rem;
   flex-grow: 1;
 }
 
 .pcv2-name {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #f0f0f0;
   margin: 0 0 0.15rem;
@@ -1111,16 +1112,16 @@ h3 {
 }
 
 .pcv2-dev {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   color: #5a6070;
-  margin: 0 0 0.55rem;
+  margin: 0 0 0.5rem;
 }
 
 .pcv2-desc {
-  font-size: 0.77rem;
+  font-size: 0.72rem;
   color: #8b909a;
-  line-height: 1.55;
-  margin: 0 0 0.75rem;
+  line-height: 1.5;
+  margin: 0 0 0.65rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -1130,16 +1131,16 @@ h3 {
 .pcv2-footer {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  padding-top: 0.65rem;
+  gap: 0.75rem;
+  padding-top: 0.55rem;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .pcv2-stat {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  font-size: 0.7rem;
+  gap: 0.25rem;
+  font-size: 0.65rem;
   color: #5a6070;
 }
 
