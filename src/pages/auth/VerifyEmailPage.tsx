@@ -51,13 +51,13 @@ const VerifyEmailPage = () => {
                     <p>You are now logged in. Redirecting to the homepage...</p>
                 </div>
             )}
-            {/* {status === 'error' && (
+            {status === 'error' && (
                 <div>
                     <h1>Verification Failed</h1>
                     <p>{error}</p>
                     <p>Please try registering again or contact support.</p>
                 </div>
-            )} */}
+            )}
         </div>
     );
 };

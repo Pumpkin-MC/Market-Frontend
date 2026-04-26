@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import { useTranslation } from 'react-i18next';
@@ -6,7 +6,7 @@ import SEO from '../components/SEO';
 
 const AuthorProfilePage = () => {
   const { username } = useParams();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const [author, setAuthor] = useState<any>(null);
   const [plugins, setPlugins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

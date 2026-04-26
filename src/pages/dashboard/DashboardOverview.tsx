@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line
@@ -10,12 +9,12 @@ import {
 import { useAnalytics } from './useAnalytics';
 
 // Helper for formatting large numbers
-const formatValue = (val) => {
+const formatValue = (val: number) => {
   if (val >= 1000) return `${(val / 1000).toFixed(1)}k`;
-  return val;
+  return val.toString();
 };
 
-const CustomTooltip = ({ active, payload, label }) => {
+const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
       <div className="custom-tooltip-v2">
@@ -27,7 +26,7 @@ const CustomTooltip = ({ active, payload, label }) => {
   return null;
 };
 
-const MiniChart = ({ data, color, dataKey }) => (
+const MiniChart = ({ data, color, dataKey }: any) => (
   <div style={{ width: '80px', height: '40px' }}>
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={data}>
@@ -44,7 +43,7 @@ const MiniChart = ({ data, color, dataKey }) => (
   </div>
 );
 
-const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }) => {
+const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: any) => {
   // Logic Fix: Handle 0% as neutral
   const trendValue = parseFloat(comparison) || 0;
   const isPositive = trendValue > 0;
@@ -161,7 +160,7 @@ const DashboardOverview = () => {
                     tick={{fill: '#94a3b8', fontSize: 12}}
                     tickFormatter={formatValue}
                 />
-                <Tooltip content={<CustomTooltip />} />
+                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
                 <Area
                   type="monotone"
                   dataKey="earnings"
@@ -183,7 +182,7 @@ const DashboardOverview = () => {
           </div>
           <div className="feed-list">
             {recentActivity && recentActivity.length > 0 ? (
-              recentActivity.map((activity) => (
+              recentActivity.map((activity: any) => (
                 <div key={activity.id} className="feed-item-v2">
                   <div className="feed-avatar">
                     {activity.userInitials || <User size={14} />}

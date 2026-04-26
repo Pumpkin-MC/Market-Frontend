@@ -91,7 +91,6 @@ const PluginDetail = () => {
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
   const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
-  const [loading, setLoading] = useState(true);
 
   // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);
@@ -133,7 +132,6 @@ const PluginDetail = () => {
   const fetchPlugin = () => {
     api.get(`/plugins/${id}`).then(res => {
       setPlugin(res.data);
-      setLoading(false);
       if (res.data.screenshots?.length > 0) {
         setMainScreenshot(res.data.screenshots[0].path);
       }
@@ -251,7 +249,6 @@ const PluginDetail = () => {
 
       // Does not own — go to Stripe checkout
       try {
-        setLoading(true);
         const res = await api.post(`/plugins/${id}/checkout`);
         if (res.data.url) window.location.href = res.data.url;
       } catch (err: any) {
@@ -264,7 +261,6 @@ const PluginDetail = () => {
           alert('Checkout failed. Please try again.');
         }
       } finally {
-        setLoading(false);
       }
       return;
     }
@@ -587,7 +583,7 @@ const PluginDetail = () => {
         ) : reviewReportOpen === r.id ? (
           <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px', width: '100%' }}>
             <label className="report-form-label">Reason for reporting this review</label>
-            <div className="report-reasons" style={{ transform: 'scale(0.9)', originX: 'left' }}>
+            <div className="report-reasons" style={{ transform: 'scale(0.9)', transformOrigin: 'left' }}>
               {REVIEW_REPORT_REASONS.map(reason => (
                 <button
                   key={reason}

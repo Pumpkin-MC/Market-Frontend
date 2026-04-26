@@ -48,7 +48,7 @@ const DashboardAudience = () => {
           </div>
           
           <div className="map-wrapper" style={{ background: '#0f0f1a', borderRadius: '12px', padding: '20px', border: '1px solid var(--border)' }}>
-            <ComposableMap projectionConfig={{ rotate: [-10, 0, 0], scale: 147 }} width={800} height={400}>
+            <ComposableMap projectionConfig={{ rotate: [-10, 0, 0] as any, scale: 147 }} width={800} height={400}>
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
                   geographies.map((geo) => {

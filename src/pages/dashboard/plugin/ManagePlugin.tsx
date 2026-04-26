@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../api';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    ChevronLeft, Circle
+    Circle
 } from 'lucide-react';
 
 import StoreListing from './StoreListing';

@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../api';
 import SEO from '../components/SEO';
+import PluginCard from '../components/PluginCard';
 
 const Home = () => {
     const { t } = useTranslation();

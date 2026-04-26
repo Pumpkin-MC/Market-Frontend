@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../../api';
-import { useAuth } from '../../App';
 
 interface PasswordRequirement {
   label: string;
@@ -32,13 +31,11 @@ const RegisterPage = () => {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [focusedField, setFocusedField] = useState<string | null>(null);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
 
   const validateEmail = (email: string) =>
     Boolean(String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/));
@@ -50,7 +47,6 @@ const RegisterPage = () => {
   };
 
   const handleEmailBlur = () => {
-    setFocusedField(null);
     setEmailTouched(true);
     setEmailValid(form.email === '' ? null : validateEmail(form.email));
   };
@@ -277,7 +273,6 @@ const RegisterPage = () => {
                 <input
                   id="username" className="field-input" type="text" placeholder="johndoe"
                   onChange={e => setForm({ ...form, username: e.target.value })}
-                  onFocus={() => setFocusedField('username')} onBlur={() => setFocusedField(null)}
                   required disabled={isSubmitting} autoComplete="username"
                   autoCapitalize="none" spellCheck={false}
                 />
@@ -291,9 +286,9 @@ const RegisterPage = () => {
                 <input
                   id="email"
                   className={`field-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
-                  type="email" placeholder="you@company.com" value={form.email}
+                  type="email" placeholder="you@company.com"
+                  value={form.email}
                   onChange={handleEmailChange}
-                  onFocus={() => setFocusedField('email')}
                   onBlur={handleEmailBlur}
                   required disabled={isSubmitting} autoComplete="email"
                 />
@@ -340,8 +335,6 @@ const RegisterPage = () => {
                   placeholder="Create a strong password"
                   value={form.password}
                   onChange={handlePasswordChange}
-                  onFocus={() => setFocusedField('password')}
-                  onBlur={() => setFocusedField(null)}
                   required disabled={isSubmitting} autoComplete="new-password"
                 />
                 <button
@@ -422,7 +415,7 @@ const RegisterPage = () => {
 
             <div className="captcha-container">
               <Turnstile siteKey="0x4AAAAAAClcSibyhKfR0H6o"
-                onSuccess={(token) => setCaptchaToken(token)} theme="light" />
+                onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light' } as any} />
             </div>
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
