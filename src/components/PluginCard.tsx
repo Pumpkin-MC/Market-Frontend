@@ -70,8 +70,8 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
         timerRef.current = setTimeout(() => {
             cycleRef.current = setInterval(() => {
                 setCurrentIndex(prev => (prev + 1) % slideshowImages.length);
-            }, 3000);
-        }, 500);
+            }, 2000);
+        }, 200);
     };
 
     const stopHover = () => {
