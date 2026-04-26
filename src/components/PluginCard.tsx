@@ -67,11 +67,10 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
         setIsHovering(true);
         if (slideshowImages.length <= 1) return;
 
-        timerRef.current = setTimeout(() => {
-            cycleRef.current = setInterval(() => {
-                setCurrentIndex(prev => (prev + 1) % slideshowImages.length);
-            }, 2000);
-        }, 200);
+        const next = () => setCurrentIndex(prev => (prev + 1) % slideshowImages.length);
+        
+        next(); // Trigger first transition instantly
+        cycleRef.current = setInterval(next, 2000);
     };
 
     const stopHover = () => {
@@ -110,7 +109,6 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
                         </div>
                     )}
 
-                    <div className="pcv2-preview-fade" />
                     <span className="pcv2-category-badge">{plugin.category}</span>
 
                     {plugin.type === 'free' ? (
