@@ -40,6 +40,39 @@ const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number;
   </div>
 );
 
+const ExpandableText = ({ text, limit = 500, className, pStyle }: { text: string; limit?: number; className?: string; pStyle?: React.CSSProperties }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const shouldTruncate = text.length > limit;
+  const displayText = isExpanded ? text : text.slice(0, limit) + (shouldTruncate ? '...' : '');
+
+  return (
+    <div className={className}>
+      <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word', ...pStyle }}>
+        {displayText}
+      </p>
+      {shouldTruncate && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--primary)',
+            padding: 0,
+            marginTop: '8px',
+            cursor: 'pointer',
+            fontSize: '0.85rem',
+            fontWeight: 700,
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em'
+          }}
+        >
+          {isExpanded ? 'Show Less' : 'Expand'}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const PriceDisplay = ({ cents }: { cents: number }) => {
   if (!cents && cents !== 0) return null;
   const euros = Math.floor(cents / 100);
@@ -557,7 +590,7 @@ const PluginDetail = () => {
         <span key={n} className={`review-star-sm ${n <= r.rating ? 'filled' : 'empty'}`}>★</span>
       ))}
       </div>
-      <p className="review-item-body">{r.comment}</p>
+      <ExpandableText className="review-item-body" text={r.comment} limit={400} />
 
       {/* Developer Reply */}
       {r.developer_reply && (
@@ -566,13 +599,19 @@ const PluginDetail = () => {
           padding: '1rem',
           background: 'rgba(255, 117, 24, 0.05)',
           borderLeft: '2px solid var(--primary)',
-          borderRadius: '4px'
+          borderRadius: '4px',
+          overflowWrap: 'break-word',
+          wordBreak: 'break-word'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
             <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>Developer Response</span>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(r.replied_at)}</span>
           </div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6 }}>{r.developer_reply}</p>
+          <ExpandableText 
+            text={r.developer_reply} 
+            limit={300} 
+            pStyle={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6 }}
+          />
         </div>
       )}
       

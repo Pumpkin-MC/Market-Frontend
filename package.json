@@ -11,18 +11,18 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@marsidev/react-turnstile": "^1.5.0",
+    "@marsidev/react-turnstile": "^1.5.1",
     "@vnedyalk0v/react19-simple-maps": "^2.0.7",
     "axios": "^1.15.2",
     "d3-geo": "^3.1.1",
     "d3-scale": "^4.0.2",
     "i18next": "^26.0.8",
     "i18next-browser-languagedetector": "^8.2.1",
-    "lucide-react": "^1.11.0",
+    "lucide-react": "^1.14.0",
     "or": "^0.2.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "react-i18next": "^17.0.4",
+    "react-i18next": "^17.0.6",
     "react-is": "^19.2.5",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.2",
@@ -40,7 +40,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.59.0",
+    "typescript-eslint": "^8.59.1",
     "vite": "^8.0.10"
   },
   "overrides": {
