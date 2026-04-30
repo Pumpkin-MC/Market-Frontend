@@ -19,8 +19,8 @@ const DashboardPlugins = () => {
                     name: curr.name, 
                     downloads: 0, 
                     earnings: 0,
-                    createdAt: curr.createdAt,
-                    updatedAt: curr.updatedAt
+                    created_at: curr.created_at,
+                    updated_at: curr.updated_at
                 };
             }
             acc[id].downloads += (curr.downloads || 0);
@@ -30,8 +30,12 @@ const DashboardPlugins = () => {
     }, [timeSeries]);
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr) return 'N/A';
+        if (!dateStr || typeof dateStr !== 'string') return 'N/A';
+        const normalized = dateStr.toLowerCase().trim();
+        if (normalized === 'none' || normalized === 'null' || normalized === 'undefined') return 'N/A';
+        
         const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return 'N/A';
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
@@ -71,8 +75,8 @@ const DashboardPlugins = () => {
                                 </td>
                                 <td data-label="Dates">
                                     <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted)' }}>
-                                        <div>Created: {formatDate(p.createdAt)}</div>
-                                        <div>Updated: {formatDate(p.updatedAt)}</div>
+                                        <div>Created: {formatDate(p.created_at)}</div>
+                                        <div>Updated: {formatDate(p.updated_at)}</div>
                                     </div>
                                 </td>
                                 <td data-label="Actions" style={{ textAlign: 'right' }}>

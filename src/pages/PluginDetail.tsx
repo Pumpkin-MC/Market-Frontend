@@ -582,7 +582,7 @@ const PluginDetail = () => {
       </div>
       <div className="review-item-meta">
       <span className="review-item-author">{r.username}</span>
-      <span className="review-item-date">Verified User</span>
+      <span className="review-item-date">{formatDate(r.created_at)}</span>
       </div>
       </div>
       <div className="review-item-stars">

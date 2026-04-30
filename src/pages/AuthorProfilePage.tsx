@@ -110,7 +110,7 @@ const AuthorProfilePage = () => {
         <div>
           <h1 style={{ margin: 0, fontSize: '2.5rem' }}>{author.username}</h1>
           <p style={{ color: 'var(--mp-text-3, #5a6070)', margin: '0.5rem 0 0' }}>
-            Member since {new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}
+            Member since {author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A'}
           </p>
           <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
             <div className="stat-pill" style={{

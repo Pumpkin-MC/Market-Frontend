@@ -99,7 +99,7 @@ const AdminPanel = () => {
                                     <td data-label="Email">{u.email}</td>
                                     <td data-label="Role"><span className={`role-badge ${u.role}`}>{u.role}</span></td>
                                     <td data-label="Stripe">{u.stripe_ready ? '✅' : '❌'}</td>
-                                    <td data-label="Created">{new Date(u.created_at).toLocaleDateString()}</td>
+                                    <td data-label="Created">{u.created_at ? new Date(u.created_at).toLocaleDateString() : 'N/A'}</td>
                                     <td data-label="Actions">
                                         <button className="btn-delete" onClick={() => deleteUser(u.id)}>Delete</button>
                                     </td>
