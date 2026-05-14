@@ -8,6 +8,7 @@ import RegisterPage from './pages/auth/RegisterPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import ConfirmEmailChangePage from './pages/auth/ConfirmEmailChangePage';
 import CheckEmailPage from './pages/auth/CheckEmailPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthorProfilePage from './pages/AuthorProfilePage';
@@ -125,6 +126,7 @@ const App = () => (
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="verify-email" element={<VerifyEmailPage />} />
+          <Route path="confirm-email" element={<ConfirmEmailChangePage />} />
           <Route path="check-email" element={<CheckEmailPage />} />
           <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
             <Route index element={<DashboardOverview />} />

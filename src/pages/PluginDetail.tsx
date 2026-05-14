@@ -494,7 +494,7 @@ const PluginDetail = () => {
     >
     {!plugin.preview_path && plugin.name.charAt(0)}
     </div>
-    <div>
+    <div className="plugin-header-info">
     <h1 className="plugin-title">{plugin.name}</h1>
     <p className="dev-name">by <Link to={`/profile/${plugin.dev_name}`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')} onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}>{plugin.dev_name}</Link></p>
     </div>

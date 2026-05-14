@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../../api';
 import { useAuth } from '../../App';
 
@@ -11,6 +12,13 @@ const LoginPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  
+  // 2FA login state
+  const [requires2fa, setRequires2fa] = useState(false);
+  const [tempToken, setTempToken] = useState<string | null>(null);
+  const [totpCode, setTotpCode] = useState('');
+
   const navigate = useNavigate();
   const { login } = useAuth();
 
@@ -34,6 +42,24 @@ const LoginPage = () => {
     e.preventDefault();
     if (form.website) return;
 
+    if (requires2fa) {
+      setIsSubmitting(true);
+      setError('');
+      try {
+        const res = await api.post('/auth/login/2fa', {
+          temp_token: tempToken,
+          code: totpCode,
+        });
+        login(res.data.token);
+        navigate('/dashboard');
+      } catch (err: any) {
+        setError(err.response?.data?.error || 'Invalid 2FA code.');
+      } finally {
+        setIsSubmitting(false);
+      }
+      return;
+    }
+
     setEmailTouched(true);
     const isEmailValid = validateEmail(form.email);
     setEmailValid(isEmailValid);
@@ -43,15 +69,27 @@ const LoginPage = () => {
       return;
     }
 
+    if (!captchaToken) {
+      setError('Please complete the security check.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError('');
     try {
       const res = await api.post('/auth/login', {
         email: form.email,
         password: form.password,
+        captchaToken,
       });
-      login(res.data.token);
-      navigate('/dashboard');
+
+      if (res.data.requires_2fa) {
+        setRequires2fa(true);
+        setTempToken(res.data.temp_token);
+      } else {
+        login(res.data.token);
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Invalid credentials.');
     } finally {
@@ -313,68 +351,101 @@ const LoginPage = () => {
             <input type="text" style={{ display: 'none' }} tabIndex={-1}
               onChange={e => setForm({ ...form, website: e.target.value })} />
 
-            <div className="form-field">
-              <label className="field-label" htmlFor="email">{t('auth.email')}</label>
-              <div className="field-input-wrapper">
-                <input
-                  id="email"
-                  className={`login-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
-                  type="email"
-                  placeholder="you@company.com"
-                  value={form.email}
-                  onChange={handleEmailChange}
-                  onBlur={handleEmailBlur}
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="email"
-                />
-                {emailIsInvalid && (
-                  <svg key="x" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
-                    <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
-                  </svg>
-                )}
-                {emailIsValid && (
-                  <svg key="check" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
-                    <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
+            {requires2fa ? (
+              <div className="form-field">
+                <label className="field-label" htmlFor="totpCode">Authentication Code</label>
+                <p style={{ fontSize: '13px', color: '#697386', marginBottom: '12px' }}>Enter the 6-digit code from your authenticator app.</p>
+                <div className="field-input-wrapper">
+                  <input
+                    id="totpCode"
+                    className="login-input no-icon"
+                    type="text"
+                    placeholder="000000"
+                    maxLength={6}
+                    value={totpCode}
+                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                    required
+                    disabled={isSubmitting}
+                    autoFocus
+                    style={{ letterSpacing: '0.2em', textAlign: 'center', fontSize: '1.2rem', fontFamily: 'var(--font-mono, monospace)' }}
+                  />
+                </div>
               </div>
-              {emailIsInvalid && (
-                <p className="field-message invalid">
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-                    <path d="M6 0a6 6 0 100 12A6 6 0 006 0zm.5 3.5a.5.5 0 00-1 0v3a.5.5 0 001 0v-3zm-.5 5a.75.75 0 110 1.5.75.75 0 010-1.5z"/>
-                  </svg>
-                  Please enter a valid email address
-                </p>
-              )}
-            </div>
+            ) : (
+              <>
+                <div className="form-field">
+                  <label className="field-label" htmlFor="email">{t('auth.email')}</label>
+                  <div className="field-input-wrapper">
+                    <input
+                      id="email"
+                      className={`login-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
+                      type="email"
+                      placeholder="you@company.com"
+                      value={form.email}
+                      onChange={handleEmailChange}
+                      onBlur={handleEmailBlur}
+                      required
+                      disabled={isSubmitting}
+                      autoComplete="email"
+                    />
+                    {emailIsInvalid && (
+                      <svg key="x" className="field-status-icon" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
+                        <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
+                      </svg>
+                    )}
+                    {emailIsValid && (
+                      <svg key="check" className="field-status-icon" viewBox="0 0 20 20" fill="none">
+                        <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
+                        <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </div>
+                  {emailIsInvalid && (
+                    <p className="field-message invalid">
+                      <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M6 0a6 6 0 100 12A6 6 0 006 0zm.5 3.5a.5.5 0 00-1 0v3a.5.5 0 001 0v-3zm-.5 5a.75.75 0 110 1.5.75.75 0 010-1.5z"/>
+                      </svg>
+                      Please enter a valid email address
+                    </p>
+                  )}
+                </div>
 
-            <div className="form-field">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label className="field-label" htmlFor="password" style={{ marginBottom: 0 }}>{t('auth.password')}</label>
-                <Link to="/forgot-password" style={{ fontSize: '13px', color: '#ff6b00', textDecoration: 'none', fontWeight: 500 }}>
-                  Forgot password?
-                </Link>
+                <div className="form-field">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label className="field-label" htmlFor="password" style={{ marginBottom: 0 }}>{t('auth.password')}</label>
+                    <Link to="/forgot-password" style={{ fontSize: '13px', color: '#ff6b00', textDecoration: 'none', fontWeight: 500 }}>
+                      Forgot password?
+                    </Link>
+                  </div>
+                  <div className="field-input-wrapper">
+                    <input
+                      id="password"
+                      className="login-input no-icon"
+                      type="password"
+                      placeholder="••••••••"
+                      onChange={e => setForm({ ...form, password: e.target.value })}
+                      required
+                      disabled={isSubmitting}
+                      autoComplete="current-password"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {!requires2fa && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '4px' }}>
+                <Turnstile siteKey="0x4AAAAAAClcSibyhKfR0H6o"
+                  onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light', appearance: 'interaction-only' } as any} />
               </div>
-              <div className="field-input-wrapper">
-                <input
-                  id="password"
-                  className="login-input no-icon"
-                  type="password"
-                  placeholder="••••••••"
-                  onChange={e => setForm({ ...form, password: e.target.value })}
-                  required
-                  disabled={isSubmitting}
-                  autoComplete="current-password"
-                />
-              </div>
-            </div>
+            )}
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
                 <><span className="spinner" />{t('loading')}</>
+              ) : requires2fa ? (
+                'Verify'
               ) : (
                 t('auth.sign_in')
               )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { QRCodeSVG } from 'qrcode.react';
 import api from '../api';
 import { useAuth } from '../App';
 
@@ -30,7 +31,7 @@ const ProfilePage = () => {
     else                         setActiveTab('accountDetails');
   }, [location]);
 
-  const [formData, setFormData]         = useState({ username: '', email: '', password: '' });
+  const [formData, setFormData]         = useState({ username: '', email: '', password: '', currentPassword: '', disable2faPassword: '' });
   const [message, setMessage]           = useState({ text: '', type: '' });
   const [isStripeLoading, setIsStripeLoading] = useState(false);
 
@@ -39,11 +40,17 @@ const ProfilePage = () => {
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState<string | null>(null);
 
+  // 2FA state
+  const [is2faEnabled, setIs2faEnabled] = useState(false);
+  const [setup2faData, setSetup2faData] = useState<{ uri: string, secret: string } | null>(null);
+  const [verify2faCode, setVerify2faCode] = useState('');
+
   useEffect(() => { refreshUser?.(); }, []);
 
   useEffect(() => {
     if (user) {
       setFormData(prev => ({ ...prev, username: user.username || '', email: user.email || '' }));
+      setIs2faEnabled(user.totp_enabled || false);
     }
   }, [user]);
 
@@ -106,6 +113,46 @@ const ProfilePage = () => {
       navigate('/login');
     } catch (err: any) {
       showMessage(err.response?.data?.error || 'Failed to delete account.', true);
+    }
+  };
+
+  const start2faSetup = async () => {
+    try {
+      const res = await api.post('/user/2fa/setup');
+      setSetup2faData(res.data);
+    } catch (err: any) {
+      showMessage(err.response?.data?.error || 'Failed to start 2FA setup.', true);
+      if (err.response?.status === 400 && err.response?.data?.error === '2FA is already enabled') {
+        setIs2faEnabled(true);
+        refreshUser?.();
+      }
+    }
+  };
+
+  const confirm2faSetup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/user/2fa/verify', { code: verify2faCode });
+      setIs2faEnabled(true);
+      setSetup2faData(null);
+      setVerify2faCode('');
+      showMessage('2FA enabled successfully!');
+      refreshUser?.();
+    } catch (err: any) {
+      showMessage(err.response?.data?.error || 'Invalid 2FA code.', true);
+    }
+  };
+
+  const disable2fa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await api.post('/user/2fa/disable', { password: formData.disable2faPassword });
+      setIs2faEnabled(false);
+      setFormData({ ...formData, disable2faPassword: '' });
+      showMessage('2FA has been disabled.');
+      refreshUser?.();
+    } catch (err: any) {
+      showMessage(err.response?.data?.error || 'Failed to disable 2FA.', true);
     }
   };
 
@@ -328,11 +375,54 @@ const ProfilePage = () => {
           {/* ── Security ── */}
           {activeTab === 'security' && (
             <div className="profile-section">
+              <h2 className="section-title"><span>Two-Factor</span> Authentication</h2>
+              <div style={{ background: 'var(--surface-light)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)', marginBottom: '3rem' }}>
+                {is2faEnabled ? (
+                  <div>
+                    <p style={{ color: 'var(--success)', fontWeight: 600, marginBottom: '1rem' }}>✓ Two-Factor Authentication is currently enabled.</p>
+                    <form onSubmit={disable2fa} style={{ marginTop: '1rem' }}>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>Enter your password to disable 2FA.</p>
+                      <div className="form-group">
+                        <input type="password" placeholder="Current Password" value={formData.disable2faPassword} onChange={e => setFormData({ ...formData, disable2faPassword: e.target.value })} required />
+                      </div>
+                      <button type="submit" className="btn btn-secondary" style={{ color: '#ff4d4d', borderColor: '#ff4d4d' }}>Disable 2FA</button>
+                    </form>
+                  </div>
+                ) : (
+                  <div>
+                    <p style={{ marginBottom: '1rem', color: 'var(--text-muted)' }}>Protect your account with Two-Factor Authentication using an app like Google Authenticator or Authy.</p>
+                    {!setup2faData ? (
+                      <button className="btn" onClick={start2faSetup}>Set Up 2FA</button>
+                    ) : (
+                      <div style={{ marginTop: '1rem' }}>
+                        <p style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>1. Scan this QR code with your authenticator app:</p>
+                        <div style={{ background: 'white', padding: '1rem', display: 'inline-block', borderRadius: '8px', marginBottom: '1rem' }}>
+                          <QRCodeSVG value={setup2faData.uri} size={150} />
+                        </div>
+                        <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1.5rem' }}>Or enter this code manually: <strong style={{ fontFamily: 'var(--font-mono)' }}>{setup2faData.secret}</strong></p>
+                        
+                        <form onSubmit={confirm2faSetup}>
+                          <p style={{ fontSize: '0.9rem', marginBottom: '0.5rem' }}>2. Enter the 6-digit code from your app:</p>
+                          <div className="form-group" style={{ display: 'flex', gap: '0.5rem', maxWidth: '300px' }}>
+                            <input type="text" placeholder="000000" maxLength={6} value={verify2faCode} onChange={e => setVerify2faCode(e.target.value.replace(/\D/g, ''))} required style={{ fontFamily: 'var(--font-mono)', fontSize: '1.2rem', letterSpacing: '0.2em', textAlign: 'center' }} />
+                            <button type="submit" className="btn">Verify</button>
+                          </div>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
               <h2 className="section-title"><span>Change</span> Password</h2>
-              <form onSubmit={(e) => handleUpdate(e, '/user/settings', { newPassword: formData.password })}>
+              <form onSubmit={(e) => handleUpdate(e, '/user/settings', { currentPassword: formData.currentPassword, newPassword: formData.password })}>
+                <div className="form-group">
+                  <label>CURRENT PASSWORD</label>
+                  <input type="password" value={formData.currentPassword} onChange={e => setFormData({ ...formData, currentPassword: e.target.value })} required />
+                </div>
                 <div className="form-group">
                   <label>NEW PASSWORD</label>
-                  <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} />
+                  <input type="password" value={formData.password} onChange={e => setFormData({ ...formData, password: e.target.value })} required />
                 </div>
                 <button type="submit" className="btn">Update Password</button>
               </form>

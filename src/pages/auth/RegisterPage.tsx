@@ -415,7 +415,7 @@ const RegisterPage = () => {
 
             <div className="captcha-container">
               <Turnstile siteKey="0x4AAAAAAClcSibyhKfR0H6o"
-                onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light' } as any} />
+                onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light', appearance: 'interaction-only' } as any} />
             </div>
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
