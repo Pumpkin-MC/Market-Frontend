@@ -191,7 +191,7 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: { usedCodes: string[]; onAdd:
 // ── Main ──────────────────────────────────────────────────────────────────────
 const AddPlugin = () => {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const [step, setStep]           = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone]           = useState(false);
@@ -362,6 +362,10 @@ const AddPlugin = () => {
             if (wasmFile)     fd.append('wasm', wasmFile);
             screenshots.forEach(f => fd.append('screenshots', f));
             await api.post('/plugins', fd);
+            
+            // Refresh user to update plugin_count in JWT for Navbar
+            await refreshUser();
+            
             setDone(true);
         } catch (err: any) {
             console.error(err);

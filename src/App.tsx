@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
@@ -24,6 +24,15 @@ import AdminPanel from './pages/admin/AdminPanel';
 import './App.css';
 
 import api from './api';
+
+// --- Scroll To Top Helper ---
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
 
 // --- Auth Context ---
 const AuthContext = createContext<any>(null);
@@ -112,6 +121,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 const App = () => (
   <Router>
     <AuthProvider>
+      <ScrollToTop />
       <Routes>
         {/* All routes share MainLayout (navbar + footer) */}
         <Route path="/" element={<MainLayout />}>
@@ -211,7 +221,10 @@ const Navbar = ({ user }: any) => {
       <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
         <div className="nav-links">
           <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
-          {user && <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>}
+          {user && (user.plugin_count > 0 || user.role === 'admin') && (
+            <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>
+          )}
+          {user && <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
           {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
         </div>
 

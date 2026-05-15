@@ -553,6 +553,14 @@ h3 {
 }
 
 /* --- Plugin Grid --- */
+.home-section {
+  margin-bottom: 4rem;
+}
+
+.home-section:last-child {
+  margin-bottom: 0;
+}
+
 .plugin-grid,
 .home-plugin-grid {
   display: grid;
