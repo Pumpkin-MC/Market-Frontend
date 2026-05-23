@@ -138,6 +138,7 @@ const PluginDetail = () => {
   const [reportCustom, setReportCustom] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
@@ -849,7 +850,27 @@ const PluginDetail = () => {
     )}
     <div className="stat-item">Category: <strong>{plugin.category}</strong></div>
     {plugin.version && (
-      <div className="stat-item">Version: <strong>{plugin.version}</strong></div>
+      <div className="stat-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <span>Version: <strong>{plugin.version}</strong></span>
+        {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (
+          <button 
+            onClick={() => setChangelogOpen(true)}
+            style={{
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              color: 'var(--text)',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              fontSize: '0.7rem',
+              cursor: 'pointer',
+              fontWeight: 600,
+              marginLeft: '8px'
+            }}
+          >
+            Update History
+          </button>
+        )}
+      </div>
     )}
 
     <div className="divider-sm" />
@@ -957,6 +978,82 @@ const PluginDetail = () => {
         </div>
       )}
       </div>
+      </div>
+    )}
+
+    {/* CHANGELOG MODAL */}
+    {changelogOpen && (
+      <div className="lightbox-overlay" onClick={() => setChangelogOpen(false)} style={{ zIndex: 2000 }}>
+        <div className="lightbox-content" onClick={(e) => e.stopPropagation()} style={{ 
+          maxWidth: '800px', 
+          width: '90%', 
+          maxHeight: '80vh', 
+          backgroundColor: '#1b2838', // Steam-ish dark blue
+          borderRadius: '8px',
+          display: 'flex',
+          flexDirection: 'column',
+          padding: 0,
+          overflow: 'hidden',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+        }}>
+          <div style={{ 
+            padding: '20px 24px', 
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            background: 'linear-gradient(to right, #2a475e, #1b2838)'
+          }}>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#66c0f4', textTransform: 'uppercase', letterSpacing: '1px' }}>Update History</h2>
+            <button 
+              onClick={() => setChangelogOpen(false)}
+              style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.6 }}
+            >
+              &times;
+            </button>
+          </div>
+          
+          <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+            {Array.isArray(plugin.versions) && plugin.versions.map((v: any, idx: number) => (
+              <div key={v.id} style={{ 
+                marginBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
+                paddingBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
+                borderBottom: idx === plugin.versions.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <span style={{ 
+                    color: '#66c0f4', 
+                    fontSize: '1.1rem', 
+                    fontWeight: 800,
+                    fontFamily: 'var(--font-mono)'
+                  }}>
+                    v{v.version}
+                  </span>
+                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                    Released {formatDate(v.created_at)}
+                  </span>
+                </div>
+                <div className="markdown-content" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                  {v.release_notes ? (
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{v.release_notes}</ReactMarkdown>
+                  ) : (
+                    <p style={{ fontStyle: 'italic', opacity: 0.5 }}>No specific release notes for this update.</p>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div style={{ padding: '16px 24px', background: 'rgba(0,0,0,0.2)', textAlign: 'right' }}>
+            <button 
+              onClick={() => setChangelogOpen(false)}
+              className="btn btn-secondary"
+              style={{ padding: '8px 24px' }}
+            >
+              Close
+            </button>
+          </div>
+        </div>
       </div>
     )}
     </div>
