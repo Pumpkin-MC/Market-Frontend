@@ -109,10 +109,10 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
-// --- Admin Route ---
-const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+// --- Staff Route (Admin & Moderator) ---
+const StaffRoute = ({ children }: { children: React.ReactNode }) => {
   const { user } = useAuth();
-  if (!user || user.role !== 'admin') {
+  if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
     return <Navigate to="/" />;
   }
   return children;
@@ -147,7 +147,7 @@ const App = () => (
             <Route path="add-plugin" element={<AddPlugin />} />
             <Route path="manage-plugin/:id" element={<ManagePlugin />} />
           </Route>
-          <Route path="admin" element={<AdminRoute><AdminPanel /></AdminRoute>} />
+          <Route path="staff" element={<StaffRoute><AdminPanel /></StaffRoute>} />
           <Route path="settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         </Route>
       </Routes>
@@ -223,11 +223,11 @@ const Navbar = ({ user }: any) => {
       <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
         <div className="nav-links">
           <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
-          {user && (user.plugin_count > 0 || user.role === 'admin') && (
+          {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
             <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>
           )}
           {user && <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
-          {user && user.role === 'admin' && <NavLink to="/admin" onClick={() => setIsMenuOpen(false)}>Admin</NavLink>}
+          {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
         </div>
 
         {!user && (
