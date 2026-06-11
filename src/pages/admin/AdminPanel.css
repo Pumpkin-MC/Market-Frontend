@@ -96,6 +96,49 @@
 .role-badge.moderator { background: rgba(255, 209, 102, 0.15); color: #ffd166; border: 1px solid rgba(255, 209, 102, 0.3); }
 .role-badge.user { background: rgba(79, 126, 255, 0.1); color: #4f7eff; border: 1px solid rgba(79, 126, 255, 0.2); }
 
+select.role-badge {
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.85rem;
+    outline: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    text-align: center;
+}
+
+select.role-badge option {
+    background: #1a1a1a;
+    color: #fff;
+}
+
+.row-deleted {
+    opacity: 0.6;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.status-active {
+    color: #4caf50;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.status-deleted {
+    color: #ff6b6b;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.admin-table td strong {
+    color: #ff6b6b;
+}
+
+.admin-table td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .type-badge.paid { background: rgba(255, 209, 102, 0.15); color: #ffd166; border: 1px solid rgba(255, 209, 102, 0.3); }
 .type-badge.free { background: rgba(6, 214, 160, 0.15); color: #06d6a0; border: 1px solid rgba(6, 214, 160, 0.3); }
 .type-badge.adwall { background: rgba(168, 85, 247, 0.15); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.3); }

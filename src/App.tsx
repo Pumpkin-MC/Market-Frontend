@@ -20,6 +20,7 @@ import ManagePlugin from './pages/dashboard/plugin/ManagePlugin';
 import AddPlugin from './pages/dashboard/plugin/AddPlugin';
 import TermsOfServicePage from './pages/legal/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
+import GuidelinesPage from './pages/legal/GuidelinesPage';
 import AdminPanel from './pages/admin/AdminPanel';
 import './App.css';
 
@@ -131,6 +132,7 @@ const App = () => (
           <Route path="search" element={<SearchResultsPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />
+          <Route path="guidelines" element={<GuidelinesPage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -304,6 +306,15 @@ const Footer = () => (
         onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
       >
         Privacy
+      </Link>
+
+      <Link
+        to="/guidelines"
+        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+      >
+        Guidelines
       </Link>
     </div>
   </footer>

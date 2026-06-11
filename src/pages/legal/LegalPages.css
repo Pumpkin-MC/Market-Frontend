@@ -1,0 +1,119 @@
+.legal-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 24px;
+    color: #e0e0e0;
+    line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.legal-content h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: #fff;
+    letter-spacing: -0.02em;
+}
+
+.legal-content h1 span {
+    color: #ffb74d;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: #999;
+    margin-bottom: 2rem;
+}
+
+.last-updated {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 3rem;
+    border-bottom: 1px solid #333;
+    padding-bottom: 2rem;
+}
+
+.introduction p {
+    font-size: 1.15rem;
+    margin-bottom: 2rem;
+}
+
+.callout {
+    background: rgba(255, 183, 77, 0.05);
+    border: 1px solid rgba(255, 183, 77, 0.2);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 2rem 0;
+}
+
+.callout h3 {
+    margin-top: 0;
+    color: #ffb74d;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+}
+
+.callout ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.callout li {
+    margin-bottom: 8px;
+    color: #ccc;
+}
+
+.guideline-section {
+    margin-top: 4rem;
+}
+
+.guideline-section h2 {
+    font-size: 2rem;
+    color: #fff;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #333;
+    padding-bottom: 0.5rem;
+}
+
+.section-intro {
+    font-size: 1.1rem;
+    color: #bbb;
+    margin-bottom: 2rem;
+}
+
+.sub-section {
+    margin-bottom: 2rem;
+    padding-left: 20px;
+    border-left: 2px solid #222;
+}
+
+.sub-section h3 {
+    font-size: 1.25rem;
+    color: #ffb74d;
+    margin-bottom: 0.5rem;
+}
+
+.sub-section p {
+    color: #aaa;
+    margin: 0;
+}
+
+.guidelines-footer {
+    margin-top: 6rem;
+    padding-top: 3rem;
+    border-top: 1px solid #333;
+    text-align: center;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .legal-content h1 {
+        font-size: 2.25rem;
+    }
+    
+    .legal-container {
+        padding: 40px 20px;
+    }
+}
