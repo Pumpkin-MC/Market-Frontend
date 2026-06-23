@@ -8,32 +8,27 @@ import PluginCard from '../components/PluginCard';
 // This allows the page to render immediately when going "back", 
 // which is required for the browser to restore scroll position.
 let homeCache: {
-    topPaid: any[];
     popular: any[];
     newest: any[];
 } | null = null;
 
 const Home = () => {
     const { t } = useTranslation();
-    const [topPaid, setTopPaid] = useState<any[]>(homeCache?.topPaid || []);
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     // Load sections lazily when the user scrolls them into view
     const [loading, setLoading] = useState(false);
 
-    const topPaidRef = useRef<HTMLElement | null>(null);
     const popularRef = useRef<HTMLElement | null>(null);
     const newestRef = useRef<HTMLElement | null>(null);
 
-    const fetched = useRef({ topPaid: !!homeCache?.topPaid, popular: !!homeCache?.popular, newest: !!homeCache?.newest });
+    const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest });
 
-    const saveSection = (key: 'topPaid' | 'popular' | 'newest', data: any[]) => {
-        if (key === 'topPaid') setTopPaid(data);
+    const saveSection = (key: 'popular' | 'newest', data: any[]) => {
         if (key === 'popular') setPopular(data);
         if (key === 'newest') setNewest(data);
 
         homeCache = {
-            topPaid: key === 'topPaid' ? data : homeCache?.topPaid || [],
             popular: key === 'popular' ? data : homeCache?.popular || [],
             newest: key === 'newest' ? data : homeCache?.newest || []
         };
@@ -42,11 +37,11 @@ const Home = () => {
     };
 
     useEffect(() => {
-        if (fetched.current.topPaid && fetched.current.popular && fetched.current.newest) return;
+        if (fetched.current.popular && fetched.current.newest) return;
 
         const observers: IntersectionObserver[] = [];
 
-        const createObserver = (el: HTMLElement | null, key: 'topPaid' | 'popular' | 'newest', params: any) => {
+        const createObserver = (el: HTMLElement | null, key: 'popular' | 'newest', params: any) => {
             if (!el || fetched.current[key]) return;
             const obs = new IntersectionObserver(async (entries, observer) => {
                 for (const entry of entries) {
@@ -73,7 +68,6 @@ const Home = () => {
 
         // Ensure refs are attached before creating observers
         requestAnimationFrame(() => {
-            createObserver(topPaidRef.current, 'topPaid', { type: 'paid', sort: 'downloads', limit: 4 });
             createObserver(popularRef.current, 'popular', { sort: 'downloads', limit: 8 });
             createObserver(newestRef.current, 'newest', { sort: 'newest', limit: 12 });
         });
@@ -103,18 +97,6 @@ const Home = () => {
             </section>
 
             <div className="container" id="browse">
-                <section className="home-section" ref={topPaidRef}> 
-                    <h2 className="section-title"><span>Top</span> Premium</h2>
-                    <div className="home-plugin-grid">
-                        {topPaid.length > 0 ? (
-                            topPaid.map((plugin) => (
-                                <PluginCard key={`top-${plugin.id}`} plugin={plugin} />
-                            ))
-                        ) : (
-                            <div className="section-placeholder">{loading ? 'Loading premium plugins...' : 'Scroll to load premium plugins'}</div>
-                        )}
-                    </div>
-                </section>
 
                 <section className="home-section" ref={popularRef}>
                     <h2 className="section-title"><span>Most</span> Popular</h2>
@@ -142,7 +124,7 @@ const Home = () => {
                     </div>
                 </section>
 
-                {(fetched.current?.topPaid && fetched.current?.popular && fetched.current?.newest && topPaid.length === 0 && popular.length === 0 && newest.length === 0) && (
+                {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0) && (
                     <div className="empty-state">
                         <p>No plugins found. Check back later!</p>
                     </div>
