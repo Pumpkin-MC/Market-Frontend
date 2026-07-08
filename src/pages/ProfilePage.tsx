@@ -3,6 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../api';
 import { useAuth } from '../App';
+import { getNames } from 'country-list';
 
 interface LibraryEntry {
   plugin_id:    number;
@@ -31,7 +32,7 @@ const ProfilePage = () => {
     else                         setActiveTab('accountDetails');
   }, [location]);
 
-  const [formData, setFormData]         = useState({ username: '', email: '', password: '', currentPassword: '', disable2faPassword: '' });
+  const [formData, setFormData]         = useState({ username: '', email: '', country: '', password: '', currentPassword: '', disable2faPassword: '' });
   const [message, setMessage]           = useState({ text: '', type: '' });
   const [isStripeLoading, setIsStripeLoading] = useState(false);
 
@@ -49,7 +50,7 @@ const ProfilePage = () => {
 
   useEffect(() => {
     if (user) {
-      setFormData(prev => ({ ...prev, username: user.username || '', email: user.email || '' }));
+      setFormData(prev => ({ ...prev, username: user.username || '', email: user.email || '', country: user.country || '' }));
       setIs2faEnabled(user.totp_enabled || false);
     }
   }, [user]);
@@ -212,6 +213,49 @@ const ProfilePage = () => {
                   <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                 </div>
                 <button type="submit" className="btn">Update Email</button>
+              </form>
+
+              <form onSubmit={(e) => {
+                if (!formData.country) {
+                  e.preventDefault();
+                  showMessage('Please select a country', true);
+                  return;
+                }
+                handleUpdate(e, '/user/change-country', { newCountry: formData.country });
+              }} style={{ marginTop: '2rem' }}>
+                <div className="form-group">
+                  <label>COUNTRY</label>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.5rem 0', fontStyle: 'italic' }}>
+                    Auto-detected from your IP address during registration. You can change it here.
+                  </p>
+                  <select 
+                    value={formData.country} 
+                    onChange={e => setFormData({ ...formData, country: e.target.value })} 
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '12px 15px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--bg)',
+                      color: 'var(--text)',
+                      fontSize: '1rem',
+                      outline: 'none',
+                      transition: 'border-color 0.2s',
+                      cursor: 'pointer',
+                      marginTop: '0.5rem',
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
+                    onBlur={(e) => e.target.style.borderColor = 'var(--border)'}>
+                    <option value="">Select a country</option>
+                    {Object.entries(getNames()).map(([code, name]) => (
+                      <option key={code} value={code}>
+                        {name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <button type="submit" className="btn">Update Country</button>
               </form>
             </div>
           )}
