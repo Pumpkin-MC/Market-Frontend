@@ -7,6 +7,30 @@ import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 
+const getYoutubeVideoId = (url: string) => {
+  if (!url) return null;
+  try {
+    if (url.includes('youtu.be/')) {
+      return url.split('youtu.be/')[1].split(/[?#]/)[0];
+    } else if (url.includes('youtube.com/embed/')) {
+      return url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
+    } else if (url.includes('youtube.com/shorts/')) {
+      return url.split('youtube.com/shorts/')[1].split(/[?#]/)[0];
+    } else if (url.includes('v=')) {
+      return url.split('v=')[1].split(/[&?#]/)[0];
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+const getYoutubeEmbedUrl = (url: string) => {
+  if (!url) return '';
+  const videoId = getYoutubeVideoId(url);
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+};
+
 const REPORT_REASONS = [
   'Malware or malicious code',
   'Stolen or plagiarised content',
@@ -125,6 +149,44 @@ const PluginDetail = () => {
   const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
 
+  // Coupon state
+  const [couponCode, setCouponCode] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState<number>(0);
+  const [couponMessage, setCouponMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [validatingCoupon, setValidatingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setValidatingCoupon(true);
+    setCouponMessage(null);
+    try {
+      const res = await api.get(`/plugins/${id}/validate-coupon?code=${couponCode.trim()}`);
+      if (res.data.valid) {
+        setAppliedCoupon(couponCode.trim().toUpperCase());
+        setCouponDiscount(res.data.discount_percent);
+        setCouponMessage({ text: res.data.message, isError: false });
+      } else {
+        setAppliedCoupon(null);
+        setCouponDiscount(0);
+        setCouponMessage({ text: res.data.message || 'Invalid coupon code', isError: true });
+      }
+    } catch {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setCouponMessage({ text: 'Failed to validate coupon.', isError: true });
+    } finally {
+      setValidatingCoupon(false);
+    }
+  };
+
+  const handleClearCoupon = () => {
+    setCouponCode('');
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponMessage(null);
+  };
+
   // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
@@ -166,7 +228,9 @@ const PluginDetail = () => {
   const fetchPlugin = () => {
     api.get(`/plugins/${id}`).then(res => {
       setPlugin(res.data);
-      if (res.data.screenshots?.length > 0) {
+      if (res.data.youtube_video_url) {
+        setMainScreenshot('video');
+      } else if (res.data.screenshots?.length > 0) {
         setMainScreenshot(res.data.screenshots[0].path);
       }
     });
@@ -283,7 +347,8 @@ const PluginDetail = () => {
 
       // Does not own — go to Stripe checkout
       try {
-        const res = await api.post(`/plugins/${id}/checkout`);
+        const url = appliedCoupon ? `/plugins/${id}/checkout?coupon=${appliedCoupon}` : `/plugins/${id}/checkout`;
+        const res = await api.post(url);
         if (res.data.url) window.location.href = res.data.url;
       } catch (err: any) {
         if (err?.response?.status === 409) {
@@ -504,30 +569,65 @@ const PluginDetail = () => {
     <div className="plugin-detail-layout">
     <div className="plugin-main-content">
 
-    {/* SCREENSHOTS */}
-    {Array.isArray(plugin.screenshots) && plugin.screenshots.length > 0 && (
+    {/* SCREENSHOTS / MEDIA GALLERY */}
+    {((Array.isArray(plugin.screenshots) && plugin.screenshots.length > 0) || plugin.youtube_video_url) && (
       <div className="screenshot-gallery">
-      <img
-      src={mainScreenshot || plugin.screenshots[0].path}
-      alt="Main"
-      className="main-screenshot"
-      style={{ cursor: 'pointer' }}
-      onClick={() => {
-        const idx = plugin.screenshots.findIndex((s: any) => s.path === (mainScreenshot || plugin.screenshots[0].path));
-        openLightbox(idx >= 0 ? idx : 0);
-      }}
-      />
-      <div className="thumbnail-strip">
-      {plugin.screenshots.map((shot: any) => (
-        <img
-        key={shot.id}
-        src={shot.path}
-        alt="Thumbnail"
-        className={`thumbnail ${mainScreenshot === shot.path ? 'active' : ''}`}
-        onClick={() => setMainScreenshot(shot.path)}
-        />
-      ))}
-      </div>
+        {mainScreenshot === 'video' ? (
+          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <iframe
+              src={getYoutubeEmbedUrl(plugin.youtube_video_url)}
+              title="YouTube video player"
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
+            />
+          </div>
+        ) : (
+          <img
+            src={mainScreenshot || plugin.screenshots[0]?.path}
+            alt="Main"
+            className="main-screenshot"
+            style={{ cursor: 'pointer' }}
+            onClick={() => {
+              const idx = plugin.screenshots.findIndex((s: any) => s.path === (mainScreenshot || plugin.screenshots[0]?.path));
+              openLightbox(idx >= 0 ? idx : 0);
+            }}
+          />
+        )}
+        <div className="thumbnail-strip">
+          {plugin.youtube_video_url && (
+            <div 
+              className={`thumbnail ${mainScreenshot === 'video' ? 'active' : ''}`}
+              onClick={() => setMainScreenshot('video')}
+              style={{ position: 'relative', overflow: 'hidden' }}
+            >
+              {getYoutubeVideoId(plugin.youtube_video_url) ? (
+                <img 
+                  src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} 
+                  alt="Video Thumbnail"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}>Video</div>
+              )}
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary, #ff6b00)">
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          )}
+          {plugin.screenshots.map((shot: any) => (
+            <img
+              key={shot.id}
+              src={shot.path}
+              alt="Thumbnail"
+              className={`thumbnail ${mainScreenshot === shot.path ? 'active' : ''}`}
+              onClick={() => setMainScreenshot(shot.path)}
+            />
+          ))}
+        </div>
       </div>
     )}
 
@@ -789,28 +889,102 @@ const PluginDetail = () => {
       </div>
     ) : plugin.type === 'paid' ? (
       <div>
-      {plugin.sale_active && plugin.sale_discount_percent > 0 ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-        {/* Sale price prominent */}
-        <PriceDisplay cents={Math.round(plugin.price_cents * (1 - plugin.sale_discount_percent / 100))} />
-        {/* Original price struck through */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontFamily: 'var(--font-mono)' }}>
-        €{(plugin.price_cents / 100).toFixed(2)}
-        </span>
-        <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(255,107,107,0.15)', border: '1px solid rgba(255,107,107,0.35)', color: '#ff6b6b', borderRadius: 4, padding: '1px 6px', letterSpacing: '0.04em' }}>
-        -{plugin.sale_discount_percent}% SALE
-        </span>
-        </div>
-        </div>
-      ) : (
-        <PriceDisplay cents={plugin.price_cents} />
-      )}
+        {(() => {
+          const base = plugin.price_cents;
+          const salePrice = plugin.sale_active && plugin.sale_discount_percent > 0 
+            ? Math.round(base * (1 - plugin.sale_discount_percent / 100))
+            : base;
+          
+          const finalPrice = couponDiscount > 0
+            ? Math.round(salePrice * (1 - couponDiscount / 100))
+            : salePrice;
+
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+              <PriceDisplay cents={finalPrice} />
+              
+              {(plugin.sale_active && plugin.sale_discount_percent > 0) || couponDiscount > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontFamily: 'var(--font-mono)' }}>
+                    €{(plugin.price_cents / 100).toFixed(2)}
+                  </span>
+                  
+                  {plugin.sale_active && plugin.sale_discount_percent > 0 && (
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(255,107,107,0.1) ', border: '1px solid rgba(255,107,107,0.2) ', color: '#ff6b6b', borderRadius: 4, padding: '1px 6px' }}>
+                      -{plugin.sale_discount_percent}% SALE
+                    </span>
+                  )}
+                  
+                  {couponDiscount > 0 && (
+                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(74,222,128,0.1) ', border: '1px solid rgba(74,222,128,0.2) ', color: '#4ade80', borderRadius: 4, padding: '1px 6px' }}>
+                      -{couponDiscount}% COUPON
+                    </span>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          );
+        })()}
       </div>
     ) : (
       <div className="price-free">{plugin.type === 'adwall' ? 'AD SUPPORTED' : 'FREE'}</div>
     )}
     </div>
+
+    {plugin.type === 'paid' && !ownsPlugin && (
+      <div style={{ marginBottom: '1.25rem', marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Have a promo code?</label>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <input
+            type="text"
+            value={couponCode}
+            onChange={e => setCouponCode(e.target.value.toUpperCase())}
+            placeholder="PROMOCODE"
+            disabled={validatingCoupon || appliedCoupon !== null}
+            style={{ 
+              flex: 1, 
+              padding: '8px 12px', 
+              fontSize: '0.85rem', 
+              fontFamily: 'var(--font-mono)',
+              textTransform: 'uppercase',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              backgroundColor: 'rgba(0,0,0,0.2)',
+              color: 'var(--text)',
+              outline: 'none'
+            }}
+          />
+          {appliedCoupon ? (
+            <button
+              onClick={handleClearCoupon}
+              className="btn btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '0.85rem', borderRadius: '6px', cursor: 'pointer', height: 'auto', display: 'flex', alignItems: 'center' }}
+            >
+              Clear
+            </button>
+          ) : (
+            <button
+              onClick={handleApplyCoupon}
+              disabled={validatingCoupon || !couponCode.trim()}
+              className="btn btn-download-main"
+              style={{ width: 'auto', padding: '8px 16px', fontSize: '0.85rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            >
+              {validatingCoupon ? '…' : 'Apply'}
+            </button>
+          )}
+        </div>
+        {couponMessage && (
+          <p style={{ 
+            fontSize: '0.78rem', 
+            marginTop: '6px', 
+            color: couponMessage.isError ? '#ef4444' : '#4ade80',
+            fontWeight: 500
+          }}>
+            {couponMessage.text}
+          </p>
+        )}
+      </div>
+    )}
 
     <button
     className="btn btn-download-main"
@@ -988,29 +1162,24 @@ const PluginDetail = () => {
           maxWidth: '800px', 
           width: '90%', 
           maxHeight: '80vh', 
-          backgroundColor: '#1b2838', // Steam-ish dark blue
-          borderRadius: '8px',
+          backgroundColor: 'var(--surface)', 
+          borderRadius: '12px',
           display: 'flex',
           flexDirection: 'column',
           padding: 0,
           overflow: 'hidden',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+          border: '1px solid var(--border)',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
         }}>
           <div style={{ 
             padding: '20px 24px', 
-            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            borderBottom: '1px solid var(--border)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'linear-gradient(to right, #2a475e, #1b2838)'
+            background: 'linear-gradient(to right, rgba(255, 117, 24, 0.05), transparent)'
           }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: '#66c0f4', textTransform: 'uppercase', letterSpacing: '1px' }}>Update History</h2>
-            <button 
-              onClick={() => setChangelogOpen(false)}
-              style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer', opacity: 0.6 }}
-            >
-              &times;
-            </button>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800 }}>Update History</h2>
           </div>
           
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
@@ -1018,33 +1187,33 @@ const PluginDetail = () => {
               <div key={v.id} style={{ 
                 marginBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
                 paddingBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
-                borderBottom: idx === plugin.versions.length - 1 ? 'none' : '1px solid rgba(255,255,255,0.05)'
+                borderBottom: idx === plugin.versions.length - 1 ? 'none' : '1px solid var(--border)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <span style={{ 
-                    color: '#66c0f4', 
+                    color: 'var(--primary)', 
                     fontSize: '1.1rem', 
                     fontWeight: 800,
                     fontFamily: 'var(--font-mono)'
                   }}>
                     v{v.version}
                   </span>
-                  <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     Released {formatDate(v.created_at)}
                   </span>
                 </div>
-                <div className="markdown-content" style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
                   {v.release_notes ? (
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{v.release_notes}</ReactMarkdown>
                   ) : (
-                    <p style={{ fontStyle: 'italic', opacity: 0.5 }}>No specific release notes for this update.</p>
+                    <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
                   )}
                 </div>
               </div>
             ))}
           </div>
           
-          <div style={{ padding: '16px 24px', background: 'rgba(0,0,0,0.2)', textAlign: 'right' }}>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)', textAlign: 'right' }}>
             <button 
               onClick={() => setChangelogOpen(false)}
               className="btn btn-secondary"

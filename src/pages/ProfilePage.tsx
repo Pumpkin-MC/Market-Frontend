@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../api';
 import { useAuth } from '../App';
-import { getNames } from 'country-list';
+import { getCodeList } from 'country-list';
 
 interface LibraryEntry {
   plugin_id:    number;
@@ -248,11 +248,13 @@ const ProfilePage = () => {
                     onFocus={(e) => e.target.style.borderColor = 'var(--primary)'}
                     onBlur={(e) => e.target.style.borderColor = 'var(--border)'}>
                     <option value="">Select a country</option>
-                    {Object.entries(getNames()).map(([code, name]) => (
-                      <option key={code} value={code}>
-                        {name}
-                      </option>
-                    ))}
+                    {Object.entries(getCodeList())
+                      .sort((a, b) => a[1].localeCompare(b[1]))
+                      .map(([code, name]) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
                   </select>
                 </div>
                 <button type="submit" className="btn">Update Country</button>

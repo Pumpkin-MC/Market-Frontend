@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
@@ -13,6 +13,7 @@ const LoginPage = () => {
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
   
   // 2FA login state
   const [requires2fa, setRequires2fa] = useState(false);
@@ -69,18 +70,34 @@ const LoginPage = () => {
       return;
     }
 
-    if (!captchaToken) {
+    setIsSubmitting(true);
+    setError('');
+
+    let currentToken = captchaToken;
+    if (!currentToken && turnstileRef.current) {
+      try {
+        currentToken = await turnstileRef.current.getResponsePromise(2000);
+      } catch (err) {
+        try {
+          turnstileRef.current.reset();
+          currentToken = await turnstileRef.current.getResponsePromise(4000);
+        } catch (resetErr) {
+          console.error('Turnstile verification failed:', resetErr);
+        }
+      }
+    }
+
+    if (!currentToken) {
       setError('Please complete the security check.');
+      setIsSubmitting(false);
       return;
     }
 
-    setIsSubmitting(true);
-    setError('');
     try {
       const res = await api.post('/auth/login', {
         email: form.email,
         password: form.password,
-        captchaToken,
+        captchaToken: currentToken,
       });
 
       if (res.data.requires_2fa) {
@@ -436,8 +453,14 @@ const LoginPage = () => {
 
             {!requires2fa && (
               <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '4px' }}>
-                <Turnstile siteKey="0x4AAAAAAClcSibyhKfR0H6o"
-                  onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light', appearance: 'interaction-only' } as any} />
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey="0x4AAAAAAClcSibyhKfR0H6o"
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                  onError={() => setCaptchaToken(null)}
+                  options={{ theme: 'light', appearance: 'interaction-only' } as any}
+                />
               </div>
             )}
 

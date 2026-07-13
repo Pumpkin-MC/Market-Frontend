@@ -48,6 +48,7 @@ const MAX_TOTAL_IMAGE_BYTES  = 5 * 1024 * 1024;
 const MAX_NAME_LEN           = 64;
 const MAX_CATEGORY_LEN       = 48;
 const MAX_SOURCE_LINK_LEN    = 512;
+const MAX_YOUTUBE_URL_LEN    = 512;
 const MAX_KEYWORDS_LEN       = 256;
 const MAX_DESC_LEN           = 64_000;
 const MAX_SCREENSHOTS        = 8;
@@ -201,6 +202,7 @@ const AddPlugin = () => {
     const [developerName, setDeveloperName] = useState('');
     const [category, setCategory]       = useState(PLUGIN_CATEGORIES[0]);
     const [sourceLink, setSourceLink]   = useState('');
+    const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
     const [keywords, setKeywords]       = useState('');
 
     // ── Step 1: Store Listing ──
@@ -248,13 +250,17 @@ const AddPlugin = () => {
             errs.sourceLink = `Source link exceeds ${MAX_SOURCE_LINK_LEN} characters.`;
         if (sourceLink && !sourceLink.startsWith('http://') && !sourceLink.startsWith('https://'))
             errs.sourceLink = 'Source link must start with http:// or https://';
+        if (youtubeVideoUrl.length > MAX_YOUTUBE_URL_LEN)
+            errs.youtubeVideoUrl = `YouTube video URL exceeds ${MAX_YOUTUBE_URL_LEN} characters.`;
+        if (youtubeVideoUrl && !youtubeVideoUrl.startsWith('http://') && !youtubeVideoUrl.startsWith('https://'))
+            errs.youtubeVideoUrl = 'YouTube video URL must start with http:// or https://';
         if (keywords.length > MAX_KEYWORDS_LEN)
             errs.keywords = `Keywords exceed ${MAX_KEYWORDS_LEN} characters.`;
         const descLen = (descriptions[DEFAULT_LOCALE] ?? '').length;
         if (descLen > MAX_DESC_LEN)
             errs.description = `Description exceeds ${MAX_DESC_LEN} characters (${descLen}/${MAX_DESC_LEN}).`;
         return errs;
-    }, [name, category, sourceLink, keywords, descriptions]);
+    }, [name, category, sourceLink, youtubeVideoUrl, keywords, descriptions]);
 
     const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
@@ -353,6 +359,7 @@ const AddPlugin = () => {
             fd.append('name',                    name);
             fd.append('category',                category);
             fd.append('source_link',             sourceLink);
+            fd.append('youtube_video_url',        youtubeVideoUrl);
             fd.append('keywords',                keywords);
             fd.append('translated_descriptions', JSON.stringify(descriptions));
             fd.append('type',                    licenseType);
@@ -376,7 +383,7 @@ const AddPlugin = () => {
     const resetAll = () => {
         setDone(false); setStep(0);
         setName(''); setDeveloperName(''); setCategory(PLUGIN_CATEGORIES[0]);
-        setSourceLink(''); setKeywords('');
+        setSourceLink(''); setYoutubeVideoUrl(''); setKeywords('');
         setDescriptions({ [DEFAULT_LOCALE]: '' }); setActiveLocale(DEFAULT_LOCALE);
         setPreviewImage(null); setPreviewImageUrl(null);
         setScreenshots([]); setScreenshotPreviews([]);
@@ -498,22 +505,42 @@ const AddPlugin = () => {
                                     </div>
                                 </div>
 
-                                {/* Keywords */}
-                                <div className="mp-form-group" style={{ marginBottom: '1.5rem' }}>
-                                    <label className="mp-label">
-                                        Keywords{' '}
-                                        <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(comma-separated)</span>
-                                        <CharCount current={keywords.length} max={MAX_KEYWORDS_LEN} />
-                                    </label>
-                                    <input
-                                        className="mp-input"
-                                        type="text"
-                                        value={keywords}
-                                        onChange={e => setKeywords(e.target.value)}
-                                        placeholder="economy, shop, currency"
-                                        style={{ borderColor: fieldErrors.keywords ? 'var(--mp-error)' : undefined }}
-                                    />
-                                    <FieldError msg={fieldErrors.keywords} />
+                                <div className="mp-form-row">
+                                    {/* Keywords */}
+                                    <div className="mp-form-group">
+                                        <label className="mp-label">
+                                            Keywords{' '}
+                                            <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(comma-separated)</span>
+                                            <CharCount current={keywords.length} max={MAX_KEYWORDS_LEN} />
+                                        </label>
+                                        <input
+                                            className="mp-input"
+                                            type="text"
+                                            value={keywords}
+                                            onChange={e => setKeywords(e.target.value)}
+                                            placeholder="economy, shop, currency"
+                                            style={{ borderColor: fieldErrors.keywords ? 'var(--mp-error)' : undefined }}
+                                        />
+                                        <FieldError msg={fieldErrors.keywords} />
+                                    </div>
+
+                                    {/* YouTube Video URL */}
+                                    <div className="mp-form-group">
+                                        <label className="mp-label">
+                                            YouTube Video URL{' '}
+                                            <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
+                                            <CharCount current={youtubeVideoUrl.length} max={MAX_YOUTUBE_URL_LEN} />
+                                        </label>
+                                        <input
+                                            className="mp-input"
+                                            type="url"
+                                            value={youtubeVideoUrl}
+                                            onChange={e => setYoutubeVideoUrl(e.target.value)}
+                                            placeholder="https://www.youtube.com/watch?v=..."
+                                            style={{ borderColor: fieldErrors.youtubeVideoUrl ? 'var(--mp-error)' : undefined }}
+                                        />
+                                        <FieldError msg={fieldErrors.youtubeVideoUrl} />
+                                    </div>
                                 </div>
 
                                 {/* Early Access */}

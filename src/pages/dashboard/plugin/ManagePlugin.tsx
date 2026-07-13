@@ -9,6 +9,7 @@ import {
 import StoreListing from './StoreListing';
 import PublishUpdate from './PublishUpdate';
 import Pricing from './Pricing';
+import Coupons from './Coupons';
 import DangerZone from './DangerZone';
 import './ManagePlugin.css';
 
@@ -27,12 +28,14 @@ export type PluginData = {
     sale_active?: boolean;
     sale_discount_percent?: number;
     is_early_access?: boolean;
+    youtube_video_url?: string;
 };
 
 const NAV_ITEMS = [
     { key: 'listing',  label: 'Store Listing',    icon: LayoutGrid  },
     { key: 'update',   label: 'Publish Update',   icon: Upload      },
     { key: 'pricing',  label: 'Pricing',          icon: DollarSign  },
+    { key: 'coupons',  label: 'Coupons',          icon: Tag         },
     { key: 'danger',   label: 'Danger Zone',      icon: Trash2      },
 ];
 
@@ -129,6 +132,9 @@ const ManagePlugin = () => {
                 )}
                 {activeTab === 'pricing' && (
                     <Pricing plugin={plugin} onSaved={refreshPlugin} />
+                )}
+                {activeTab === 'coupons' && (
+                    <Coupons plugin={plugin} />
                 )}
                 {activeTab === 'danger' && (
                     <DangerZone plugin={plugin} />

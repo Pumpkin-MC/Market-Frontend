@@ -147,6 +147,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const [activeLocale, setActiveLocale] = useState(DEFAULT_LOCALE);
     const [category, setCategory] = useState(plugin.category);
     const [sourceLink, setSourceLink] = useState(plugin.source_link || '');
+    const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(plugin.youtube_video_url || '');
     const [keywords, setKeywords] = useState(plugin.keywords || '');
     const [isEarlyAccess, setIsEarlyAccess] = useState(plugin.is_early_access || false);
     const [screenshots, setScreenshots] = useState(plugin.screenshots || []);
@@ -181,6 +182,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         fd.append('translated_descriptions', JSON.stringify(descriptions));
         fd.append('category', category);
         fd.append('source_link', sourceLink);
+        fd.append('youtube_video_url', youtubeVideoUrl);
         fd.append('keywords', keywords);
         fd.append('is_early_access', String(isEarlyAccess));
         try {
@@ -253,13 +255,23 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                         </div>
                     </div>
 
-                    <div className="mp-form-group">
-                        <label className="mp-label">
-                            Keywords <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(comma-separated)</span>
-                        </label>
-                        <input className="mp-input" type="text" value={keywords}
-                            onChange={e => setKeywords(e.target.value)}
-                            placeholder="economy, shop, currency" />
+                    <div className="mp-form-row">
+                        <div className="mp-form-group">
+                            <label className="mp-label">
+                                Keywords <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(comma-separated)</span>
+                            </label>
+                            <input className="mp-input" type="text" value={keywords}
+                                onChange={e => setKeywords(e.target.value)}
+                                placeholder="economy, shop, currency" />
+                        </div>
+                        <div className="mp-form-group">
+                            <label className="mp-label">
+                                YouTube Video URL <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(optional)</span>
+                            </label>
+                            <input className="mp-input" type="url" value={youtubeVideoUrl}
+                                onChange={e => setYoutubeVideoUrl(e.target.value)}
+                                placeholder="https://www.youtube.com/watch?v=..." />
+                        </div>
                     </div>
 
                     <div className="mp-form-group">

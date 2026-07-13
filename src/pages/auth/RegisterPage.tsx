@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../../api';
@@ -29,6 +29,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 const RegisterPage = () => {
   const [form, setForm] = useState({ username: '', email: '', password: '', website: '' });
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
@@ -70,13 +71,32 @@ const RegisterPage = () => {
 
     if (!isEmailValid) { setError('Please enter a valid email address.'); return; }
     if (!allRequirementsMet) { setError('Please meet all password requirements.'); return; }
-    if (!captchaToken) { setError('Please complete the security check.'); return; }
 
     setIsSubmitting(true);
     setError('');
 
+    let currentToken = captchaToken;
+    if (!currentToken && turnstileRef.current) {
+      try {
+        currentToken = await turnstileRef.current.getResponsePromise(2000);
+      } catch (err) {
+        try {
+          turnstileRef.current.reset();
+          currentToken = await turnstileRef.current.getResponsePromise(4000);
+        } catch (resetErr) {
+          console.error('Turnstile verification failed:', resetErr);
+        }
+      }
+    }
+
+    if (!currentToken) {
+      setError('Please complete the security check.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await api.post('/auth/register', { ...form, captchaToken });
+      await api.post('/auth/register', { ...form, captchaToken: currentToken });
       navigate('/check-email', { state: { email: form.email } });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
@@ -414,8 +434,14 @@ const RegisterPage = () => {
             </div>
 
             <div className="captcha-container">
-              <Turnstile siteKey="0x4AAAAAAClcSibyhKfR0H6o"
-                onSuccess={(token) => setCaptchaToken(token)} options={{ theme: 'light', appearance: 'interaction-only' } as any} />
+              <Turnstile
+                ref={turnstileRef}
+                siteKey="0x4AAAAAAClcSibyhKfR0H6o"
+                onSuccess={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+                options={{ theme: 'light', appearance: 'interaction-only' } as any}
+              />
             </div>
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
