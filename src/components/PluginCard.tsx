@@ -109,8 +109,6 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
                         </div>
                     )}
 
-                    <span className="pcv2-category-badge">{plugin.category}</span>
-
                     {plugin.type === 'free' ? (
                         <span className="pcv2-price-badge free">Free</span>
                     ) : isSale ? (
@@ -157,7 +155,7 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
 
                 {isSale && (
                     <div className="pcv2-sale-strip">
-                        🔥 Sale — {plugin.sale_discount_percent}% off
+                        Sale — {plugin.sale_discount_percent}% off
                     </div>
                 )}
 

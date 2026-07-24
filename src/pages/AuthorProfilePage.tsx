@@ -181,7 +181,7 @@ const AuthorProfilePage = () => {
                   </div>
                 </div>
                 {isSale && (
-                  <div className="pcv2-sale-strip">🔥 Sale — {plugin.sale_discount_percent}% off</div>
+                  <div className="pcv2-sale-strip">Sale — {plugin.sale_discount_percent}% off</div>
                 )}
                 <div className="pcv2-accent-bar" style={{ background: `linear-gradient(90deg, ${isSale ? '#ff6b6b' : accent}, transparent)` }} />
               </div>

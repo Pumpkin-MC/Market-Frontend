@@ -22,7 +22,6 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    showSupportNotice: false,
     interpolation: {
       escapeValue: false, // React already escapes values
     },

@@ -247,7 +247,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                             ) : (
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: 8 }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', fontWeight: 700, color: '#ff6b6b' }}>
-                                        🔥 Sale is live — {discountPercent}% off
+                                        Sale is live — {discountPercent}% off
                                     </div>
                                     <button
                                         type="button"
