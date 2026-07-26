@@ -74,9 +74,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
         }
 
         try {
-            await api.put(`/plugins/${plugin.id}`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.put(`/plugins/${plugin.id}`, fd);
             onSaved();
         } catch {
             alert('Failed to save pricing.');

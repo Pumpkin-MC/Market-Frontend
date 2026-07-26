@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../api';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    Circle
+    Circle, BarChart3
 } from 'lucide-react';
 
 import StoreListing from './StoreListing';
@@ -11,6 +11,7 @@ import PublishUpdate from './PublishUpdate';
 import Pricing from './Pricing';
 import Coupons from './Coupons';
 import DangerZone from './DangerZone';
+import PluginAnalyticsTab from './PluginAnalyticsTab';
 import './ManagePlugin.css';
 
 export type PluginData = {
@@ -32,11 +33,12 @@ export type PluginData = {
 };
 
 const NAV_ITEMS = [
-    { key: 'listing',  label: 'Store Listing',    icon: LayoutGrid  },
-    { key: 'update',   label: 'Publish Update',   icon: Upload      },
-    { key: 'pricing',  label: 'Pricing',          icon: DollarSign  },
-    { key: 'coupons',  label: 'Coupons',          icon: Tag         },
-    { key: 'danger',   label: 'Danger Zone',      icon: Trash2      },
+    { key: 'listing',   label: 'Store Listing',    icon: LayoutGrid  },
+    { key: 'update',    label: 'Publish Update',   icon: Upload      },
+    { key: 'analytics', label: 'Analytics',        icon: BarChart3   },
+    { key: 'pricing',   label: 'Pricing',          icon: DollarSign  },
+    { key: 'coupons',   label: 'Coupons',          icon: Tag         },
+    { key: 'danger',    label: 'Danger Zone',      icon: Trash2      },
 ];
 
 const ManagePlugin = () => {
@@ -129,6 +131,9 @@ const ManagePlugin = () => {
                 )}
                 {activeTab === 'update' && (
                     <PublishUpdate plugin={plugin} onSaved={refreshPlugin} />
+                )}
+                {activeTab === 'analytics' && (
+                    <PluginAnalyticsTab pluginId={plugin.id} pluginName={plugin.name} />
                 )}
                 {activeTab === 'pricing' && (
                     <Pricing plugin={plugin} onSaved={refreshPlugin} />

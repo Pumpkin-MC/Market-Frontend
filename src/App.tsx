@@ -13,7 +13,6 @@ import CheckEmailPage from './pages/auth/CheckEmailPage';
 import ProfilePage from './pages/ProfilePage';
 import AuthorProfilePage from './pages/AuthorProfilePage';
 import SearchResultsPage from './pages/SearchResultsPage';
-import DashboardOverview from './pages/dashboard/DashboardOverview';
 import DashboardAudience from './pages/dashboard/DashboardAudience';
 import DashboardPlugins from './pages/dashboard/DashboardPlugins';
 import ManagePlugin from './pages/dashboard/plugin/ManagePlugin';
@@ -141,7 +140,7 @@ const App = () => (
           <Route path="confirm-email" element={<ConfirmEmailChangePage />} />
           <Route path="check-email" element={<CheckEmailPage />} />
           <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<DashboardOverview />} />
+            <Route index element={<Navigate to="/dashboard/plugins" replace />} />
             <Route path="audience" element={<DashboardAudience />} />
             <Route path="plugins" element={<DashboardPlugins />} />
             <Route path="add-plugin" element={<AddPlugin />} />
@@ -169,12 +168,9 @@ const MainLayout = () => {
 import './pages/dashboard/Dashboard.css';
 
 const DashboardLayout = () => {
-  const { t } = useTranslation();
   return (
     <div className="dashboard-container">
       <nav className="dashboard-nav">
-        <NavLink to="/dashboard" end>{t('dashboard')}</NavLink>
-        {/* <NavLink to="/dashboard/audience">Audience</NavLink> */}
         <NavLink to="/dashboard/plugins">My Plugins</NavLink>
       </nav>
       <div className="dashboard-content">

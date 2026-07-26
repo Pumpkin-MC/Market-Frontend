@@ -1,17 +1,20 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Plus, ExternalLink } from 'lucide-react'; // Added some icons for a cleaner UI
+import { Settings, Plus, ExternalLink, Sparkles } from 'lucide-react';
+import { useAuth } from '../../App';
+import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal';
 
 // --- Main Component ---
 const DashboardPlugins = () => {
+    const { user } = useAuth();
     const { timeSeries } = useAnalytics();
     const navigate = useNavigate();
+    const [isDevModalOpen, setIsDevModalOpen] = useState(false);
 
     // Grouping analytics data by plugin ID
     const plugins = useMemo(() => {
         return Object.values(timeSeries.reduce((acc, curr) => {
-            // Ensure we use curr.plugin_id or curr.id depending on your hook's structure
             const id = curr.plugin_id || curr.id; 
             if (!acc[id]) {
                 acc[id] = { 
@@ -38,6 +41,40 @@ const DashboardPlugins = () => {
         if (isNaN(date.getTime())) return 'N/A';
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
+
+    if (!user?.is_developer) {
+        return (
+            <div className="dashboard-grid-layout">
+                <div className="data-card" style={{ textAlign: 'center', padding: '3.5rem 2rem' }}>
+                    <div style={{
+                        width: 64, height: 64, borderRadius: '50%',
+                        background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem'
+                    }}>
+                        <Sparkles size={32} color="#f97316" />
+                    </div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem' }}>Developer Onboarding Required</h2>
+                    <p style={{ color: 'var(--dash-text-muted)', maxWidth: '520px', margin: '0 auto 1.75rem', lineHeight: 1.6 }}>
+                        To manage existing plugins or publish new ones, please complete the free <strong>Developer Onboarding</strong> wizard to set up your creator & legal profile.
+                    </p>
+                    <button
+                        className="btn btn-primary"
+                        style={{ padding: '0.75rem 1.75rem', fontSize: '1rem' }}
+                        onClick={() => setIsDevModalOpen(true)}
+                    >
+                        <Sparkles size={18} style={{ marginRight: '8px' }} />
+                        Complete Free Developer Onboarding
+                    </button>
+
+                    <DeveloperOnboardingModal
+                        isOpen={isDevModalOpen}
+                        onClose={() => setIsDevModalOpen(false)}
+                        onSuccess={() => setIsDevModalOpen(false)}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="dashboard-grid-layout">

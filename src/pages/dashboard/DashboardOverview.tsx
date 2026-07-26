@@ -4,7 +4,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Minus, DollarSign, 
-  Download, MousePointer2, Clock, User 
+  Download, MousePointer2, Clock, User, Star
 } from 'lucide-react';
 import { useAnalytics } from './useAnalytics';
 
@@ -19,7 +19,11 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="custom-tooltip-v2">
         <p className="label">{label}</p>
-        <p className="value">${payload[0].value.toLocaleString()}</p>
+        {payload.map((entry: any, index: number) => (
+          <p key={index} className="value" style={{ color: entry.color }}>
+            {entry.name}: {entry.dataKey === 'earnings' ? `$${entry.value.toLocaleString()}` : entry.value}
+          </p>
+        ))}
       </div>
     );
   }
@@ -44,7 +48,6 @@ const MiniChart = ({ data, color, dataKey }: any) => (
 );
 
 const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: any) => {
-  // Logic Fix: Handle 0% as neutral
   const trendValue = parseFloat(comparison) || 0;
   const isPositive = trendValue > 0;
   const isNeutral = trendValue === 0;
@@ -80,7 +83,7 @@ const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: a
 };
 
 const DashboardOverview = () => {
-  const { processedData, totals, timeframe, setTimeframe, recentActivity, trends } = useAnalytics();
+  const { processedData, totals, ratingSummary, timeframe, setTimeframe, recentActivity, trends } = useAnalytics();
   const timeframes = ['Today', '7 Days', '1 Month', '1 Year'];
 
   return (
@@ -105,7 +108,7 @@ const DashboardOverview = () => {
 
       <div className="dashboard-grid-v2">
         <main className="main-stats">
-          <div className="kpi-row">
+          <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <KpiCard
               title="Revenue"
               value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
@@ -130,16 +133,24 @@ const DashboardOverview = () => {
               chartData={processedData}
               dataKey="conversion" 
             />
+            <KpiCard
+              title="Avg Rating"
+              value={ratingSummary?.averageRating ? `★ ${ratingSummary.averageRating.toFixed(1)}` : '★ --'}
+              comparison={0}
+              icon={Star}
+              chartData={processedData}
+              dataKey="avgRating"
+            />
           </div>
 
-          <div className="chart-container-v2">
+          <div className="chart-container-v2" style={{ marginBottom: '1.5rem' }}>
             <div className="chart-header">
               <h3>Revenue Growth</h3>
               <div className="chart-legend">
                 <span className="legend-item earnings">Earnings ($)</span>
               </div>
             </div>
-            <ResponsiveContainer width="100%" height={400}>
+            <ResponsiveContainer width="100%" height={320}>
               <AreaChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -164,6 +175,7 @@ const DashboardOverview = () => {
                 <Area
                   type="monotone"
                   dataKey="earnings"
+                  name="Earnings ($)"
                   stroke="#6366f1"
                   strokeWidth={3}
                   fillOpacity={1}
@@ -173,9 +185,79 @@ const DashboardOverview = () => {
               </AreaChart>
             </ResponsiveContainer>
           </div>
+
+          {/* ── Rating Over Time Chart ── */}
+          <div className="chart-container-v2">
+            <div className="chart-header">
+              <h3>Rating Over Time</h3>
+              <div className="chart-legend">
+                <span className="legend-item" style={{ color: '#f59e0b' }}>★ Daily Rating (1-5)</span>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={260}>
+              <LineChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#94a3b8', fontSize: 12}} 
+                    dy={10} 
+                />
+                <YAxis 
+                    domain={[1, 5]}
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{fill: '#94a3b8', fontSize: 12}}
+                />
+                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+                <Line
+                  type="monotone"
+                  dataKey="avgRating"
+                  name="Rating"
+                  stroke="#f59e0b"
+                  strokeWidth={3}
+                  dot={{ r: 4, fill: '#f59e0b' }}
+                  animationDuration={1500}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
         </main>
 
         <aside className="activity-sidebar-v2">
+          {/* Rating Breakdown Widget */}
+          {ratingSummary && (
+            <div className="rating-breakdown-card" style={{ background: '#0f0f1a', borderRadius: '12px', padding: '1.25rem', border: '1px solid var(--border)', marginBottom: '1.5rem' }}>
+              <h3 style={{ fontSize: '0.95rem', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <Star size={16} fill="#f59e0b" color="#f59e0b" /> Rating Breakdown
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginBottom: '1.25rem' }}>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '2.2rem', fontWeight: 800, color: 'var(--text)' }}>
+                    {ratingSummary.averageRating.toFixed(1)}
+                  </div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    {ratingSummary.totalReviews} total reviews
+                  </div>
+                </div>
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {ratingSummary.breakdown?.map((b: any) => {
+                    const pct = ratingSummary.totalReviews > 0 ? (b.count / ratingSummary.totalReviews) * 100 : 0;
+                    return (
+                      <div key={b.stars} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem' }}>
+                        <span style={{ width: '32px', color: 'var(--text-muted)' }}>{b.stars} ★</span>
+                        <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: '3px' }} />
+                        </div>
+                        <span style={{ width: '24px', textAlign: 'right', color: 'var(--text-muted)' }}>{b.count}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="sidebar-header">
             <h3>Live Activity</h3>
             <span className="live-indicator"></span>

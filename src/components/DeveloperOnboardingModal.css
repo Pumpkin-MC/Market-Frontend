@@ -1,0 +1,304 @@
+.dev-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.dev-modal-container {
+  background: var(--bg-card, #16181d);
+  border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  padding: 2.25rem;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+  color: var(--text-color, #e2e8f0);
+}
+
+.dev-modal-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #94a3b8);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.dev-modal-close:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dev-modal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #f97316;
+  background: rgba(249, 115, 22, 0.12);
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+  margin-bottom: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dev-modal-header h2 {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem 0;
+}
+
+.dev-modal-header p {
+  color: var(--text-muted, #94a3b8);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.dev-steps-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1.5rem 0 1.75rem 0;
+}
+
+.dev-step-pill {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted, #94a3b8);
+}
+
+.dev-step-pill.active {
+  background: #f97316;
+  color: #fff;
+}
+
+.dev-step-line {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dev-modal-error {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.dev-entity-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+
+.dev-entity-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: inherit;
+}
+
+.dev-entity-card:hover {
+  border-color: rgba(249, 115, 22, 0.5);
+  background: rgba(249, 115, 22, 0.04);
+}
+
+.dev-entity-card.selected {
+  border-color: #f97316;
+  background: rgba(249, 115, 22, 0.08);
+}
+
+.dev-entity-icon {
+  color: #f97316;
+}
+
+.dev-entity-card h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.dev-entity-card p {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.3;
+}
+
+.dev-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.dev-field-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.dev-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  color: #fff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.dev-input:focus {
+  border-color: #f97316;
+}
+
+.dev-select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.dev-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.dev-btn-row {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+}
+
+.dev-btn-row-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.dev-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.4rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.dev-btn-primary {
+  background: #f97316;
+  color: #fff;
+}
+
+.dev-btn-primary:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+.dev-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.dev-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dev-btn-stripe {
+  background: #6366f1;
+  color: #fff;
+}
+
+.dev-btn-stripe:hover:not(:disabled) {
+  background: #4f46e5;
+}
+
+.dev-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dev-monetization-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1.25rem;
+}
+
+.dev-monetization-header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  color: #f97316;
+}
+
+.dev-monetization-header h4 {
+  margin: 0 0 0.2rem 0;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.dev-monetization-header p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted, #94a3b8);
+}
+
+.dev-check-list {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dev-check-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #e2e8f0;
+}
+
+.dev-check-list svg {
+  color: #22c55e;
+}

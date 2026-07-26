@@ -1,15 +1,20 @@
 import React, { useState } from 'react';
-import { Upload, FileCode, Send, CheckCircle} from 'lucide-react';
+import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
 
-type ReleaseTrack = 'stable' | 'beta' | 'alpha';
 type Props = { plugin: PluginData; onSaved: () => void };
+
+const TRACKS = [
+    { key: 'stable', label: 'Production (Stable)', desc: 'Available to all users across the marketplace.' },
+    { key: 'beta',   label: 'Beta',               desc: 'Public beta release for community testing.' },
+    { key: 'alpha',  label: 'Alpha / Testing',    desc: 'Early access build for testers.' },
+] as const;
 
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [wasmFile, setWasmFile] = useState<File | null>(null);
-    const [track] = useState<ReleaseTrack>('stable');
     const [version, setVersion] = useState('');
+    const [track, setTrack] = useState<'stable' | 'beta' | 'alpha'>('stable');
     const [releaseNotes, setReleaseNotes] = useState('');
     const [dragOver, setDragOver] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -28,14 +33,12 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         setUploading(true);
         const fd = new FormData();
         fd.append('wasm', wasmFile);
-        fd.append('track', track);
         if (version) fd.append('version', version);
+        fd.append('track', track);
         if (releaseNotes) fd.append('release_notes', releaseNotes);
 
         try {
-            await api.put(`/plugins/${plugin.id}`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.put(`/plugins/${plugin.id}`, fd);
             setPublished(true);
             onSaved();
             setTimeout(() => {
@@ -71,7 +74,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     <div>
                         <p style={{fontWeight:700, fontSize:'1rem', color:'var(--mp-text)'}}>Update Published!</p>
                         <p style={{fontSize:'0.83rem', color:'var(--mp-text-2)', marginTop:'0.3rem'}}>
-                            Your new version is being rolled out on the <strong>{track}</strong> track.
+                            Your new version has been published successfully to the <strong>{track}</strong> track.
                         </p>
                     </div>
                 </div>
@@ -86,7 +89,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 <p>Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes — like Google Play, but for your plugin marketplace.</p>
             </div>
 
-            {/* ── Release Track ──
+            {/* ── Release Track ── */}
             <div className="mp-card">
                 <div className="mp-card-title">
                     <Send size={14} />
@@ -110,18 +113,18 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 </div>
 
                 {track === 'stable' && (
-                    <div className="mp-banner warn">
+                    <div className="mp-banner warn" style={{ marginTop: '1rem' }}>
                         <AlertTriangle size={16} style={{flexShrink:0, marginTop:1}} />
-                        <span>Stable releases are immediately visible to all users. Make sure your build is production-ready.</span>
+                        <span>Production releases are immediately visible to all users. Make sure your build is tested.</span>
                     </div>
                 )}
-                {track === 'alpha' && (
-                    <div className="mp-banner info">
+                {track !== 'stable' && (
+                    <div className="mp-banner info" style={{ marginTop: '1rem' }}>
                         <Clock size={16} style={{flexShrink:0, marginTop:1}} />
-                        <span>Internal track is only visible to whitelisted user IDs. Configure access in your plugin settings.</span>
+                        <span>Pre-release ({track}) tracks allow community testing before promoting to production.</span>
                     </div>
                 )}
-            </div> */}
+            </div>
 
             {/* ── Version & Notes ── */}
             <div className="mp-card">
@@ -203,7 +206,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     disabled={!wasmFile || uploading}
                 >
                     <Send size={15} />
-                    {uploading ? 'Publishing…' : `Publish to ${track.charAt(0).toUpperCase() + track.slice(1)}`}
+                    {uploading ? 'Publishing…' : 'Publish Update'}
                 </button>
             </div>
         </div>

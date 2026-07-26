@@ -186,9 +186,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         fd.append('keywords', keywords);
         fd.append('is_early_access', String(isEarlyAccess));
         try {
-            await api.put(`/plugins/${plugin.id}`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            await api.put(`/plugins/${plugin.id}`, fd);
             onSaved();
         } catch {
             alert('Failed to save.');
@@ -213,9 +211,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         const fd = new FormData();
         Array.from(files).forEach(f => fd.append('screenshots', f));
         try {
-            const res = await api.post(`/plugins/${plugin.id}/screenshots`, fd, {
-                headers: { 'Content-Type': 'multipart/form-data' },
-            });
+            const res = await api.post(`/plugins/${plugin.id}/screenshots`, fd);
             setScreenshots(prev => [...prev, ...(res.data.screenshots || [])]);
         } catch {
             alert('Screenshot upload failed.');
