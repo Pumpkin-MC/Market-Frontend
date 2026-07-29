@@ -4,6 +4,7 @@ import api from '../../api';
 export const useAnalytics = (pluginId?: number) => {
   const [timeSeries, setTimeSeries] = useState<any[]>([]);
   const [ratingSummary, setRatingSummary] = useState<any>(null);
+  const [referrers, setReferrers] = useState<any[]>([]);
   const [mapData, setMapData] = useState<any[]>([]);
   const [breakdowns, setBreakdowns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -20,12 +21,14 @@ export const useAnalytics = (pluginId?: number) => {
       
       setTimeSeries(Array.isArray(res.data.timeSeries) ? res.data.timeSeries : []);
       setRatingSummary(res.data.ratingSummary || null);
+      setReferrers(Array.isArray(res.data.referrers) ? res.data.referrers : []);
       setMapData(Array.isArray(res.data.mapData) ? res.data.mapData : []);
       setBreakdowns(Array.isArray(res.data.breakdowns) ? res.data.breakdowns : []);
     } catch (error) {
       console.error("Analytics Fetch Error:", error);
       setTimeSeries([]);
       setRatingSummary(null);
+      setReferrers([]);
       setMapData([]);
       setBreakdowns([]);
     } finally {
@@ -83,6 +86,7 @@ export const useAnalytics = (pluginId?: number) => {
   return { 
     timeSeries, 
     ratingSummary,
+    referrers,
     mapData, 
     breakdowns, 
     processedData, 

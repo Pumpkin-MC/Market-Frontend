@@ -391,7 +391,7 @@ h3 {
 
   .sidebar-widget {
     position: static;
-    padding: 1.5rem;
+    padding: 1.25rem;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
@@ -404,28 +404,45 @@ h3 {
   }
 
   .plugin-title {
-    font-size: 2.25rem;
+    font-size: 1.75rem;
+    line-height: 1.2;
     word-break: break-word;
     overflow-wrap: break-word;
   }
 
   .plugin-detail-header {
     flex-direction: row;
-    align-items: flex-start;
-    gap: 1.25rem;
-    margin-bottom: 2rem;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
 
   .plugin-icon.large {
-    width: 80px;
-    height: 80px;
-    min-width: 80px;
-    font-size: 2.5rem;
-    border-radius: 16px;
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+    font-size: 2rem;
+    border-radius: 12px;
   }
 
   .main-screenshot {
-    max-height: 300px;
+    max-height: 240px;
+    width: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .thumbnail-strip {
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .thumbnail {
+    width: 72px;
+    height: 48px;
+    flex-shrink: 0;
   }
 
   main {
@@ -435,21 +452,34 @@ h3 {
   }
 
   .container {
-    padding: 1.5rem 1rem;
+    padding: 1.25rem 1rem;
   }
 
   .price-hero-section {
     margin: 0.5rem 0 1rem 0;
-  }
-
-  .thumbnail {
-    width: 100px;
-    height: 66px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
   .markdown-content {
-    font-size: 1rem;
+    font-size: 0.95rem;
     line-height: 1.6;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .markdown-content table {
+    display: block;
+    overflow-x: auto;
+    width: 100%;
+  }
+
+  .markdown-content pre {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 0.75rem;
+    font-size: 0.85rem;
   }
 
   .lightbox-close {
@@ -460,29 +490,33 @@ h3 {
   }
 
   .hero {
-    padding: 4rem 1rem;
+    padding: 3rem 1rem;
   }
 
   .hero h1 {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
   }
 
   .hero-stats {
     flex-direction: column;
     gap: 1.5rem;
-    margin-top: 3rem;
+    margin-top: 2rem;
   }
 
   .review-summary-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
 
   .review-avg-block {
     border-right: none;
     border-bottom: 1px solid var(--border);
     padding-right: 0;
-    padding-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .review-item-premium {
+    padding: 1rem;
   }
 
   .profile-layout {

@@ -174,6 +174,17 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         try { return DISPLAY_NAMES.of(code) ?? code; } catch { return code; }
     };
 
+    const [iconFile, setIconFile] = useState<File | null>(null);
+    const [iconPreview, setIconPreview] = useState<string | null>(plugin.preview_path || null);
+
+    const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setIconFile(file);
+            setIconPreview(URL.createObjectURL(file));
+        }
+    };
+
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
@@ -185,6 +196,9 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         fd.append('youtube_video_url', youtubeVideoUrl);
         fd.append('keywords', keywords);
         fd.append('is_early_access', String(isEarlyAccess));
+        if (iconFile) {
+            fd.append('preview_image', iconFile);
+        }
         try {
             await api.put(`/plugins/${plugin.id}`, fd);
             onSaved();
@@ -229,6 +243,44 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                 {/* ── General Details ── */}
                 <div className="mp-card">
                     <div className="mp-card-title"><Globe size={14} />General Details</div>
+
+                    <div className="mp-form-group">
+                        <label className="mp-label">Plugin Icon</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.25rem' }}>
+                            <div style={{
+                                width: '72px',
+                                height: '72px',
+                                borderRadius: '12px',
+                                border: '1px solid var(--mp-border)',
+                                background: iconPreview ? `url(${iconPreview}) center/cover no-repeat` : 'var(--mp-surface-2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.5rem',
+                                fontWeight: 800,
+                                color: 'var(--mp-text-2)',
+                                flexShrink: 0
+                            }}>
+                                {!iconPreview && name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <label htmlFor="icon-upload-input" className="mp-btn mp-btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.82rem' }}>
+                                    <ImageIcon size={14} />
+                                    Change Icon
+                                </label>
+                                <input
+                                    id="icon-upload-input"
+                                    type="file"
+                                    accept="image/png,image/jpeg,image/webp"
+                                    onChange={handleIconChange}
+                                    style={{ display: 'none' }}
+                                />
+                                <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.74rem', color: 'var(--mp-text-3)' }}>
+                                    Square image recommended (PNG, JPEG, WebP). Max 2MB.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div className="mp-form-group">
                         <label className="mp-label">Plugin Name</label>

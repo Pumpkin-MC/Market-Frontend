@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Minus, DollarSign, 
-  Download, MousePointer2, Star, BarChart3
+  Download, MousePointer2, Star, BarChart3, Globe
 } from 'lucide-react';
 import { useAnalytics } from '../useAnalytics';
 
@@ -87,7 +87,7 @@ const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: a
 };
 
 export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) => {
-  const { processedData, totals, ratingSummary, timeframe, setTimeframe, loading } = useAnalytics(pluginId);
+  const { processedData, totals, ratingSummary, referrers, timeframe, setTimeframe, loading } = useAnalytics(pluginId);
   const timeframes = ['Today', '7 Days', '1 Month', '1 Year', 'Lifetime'];
 
   if (loading) {
@@ -206,8 +206,8 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
           </div>
         </div>
 
-        {/* Right Sidebar: Rating Histogram */}
-        <div>
+        {/* Right Sidebar: Rating Histogram & Traffic Sources */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           {ratingSummary && (
             <div className="mp-card">
               <div className="mp-card-title">
@@ -240,6 +240,45 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
               </div>
             </div>
           )}
+
+          {/* Traffic Referrers & CTR */}
+          <div className="mp-card">
+            <div className="mp-card-title">
+              <Globe size={16} />
+              Traffic Sources & CTR
+            </div>
+            {referrers && referrers.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '0.75rem' }}>
+                {referrers.map((r: any, idx: number) => (
+                  <div key={idx} style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '8px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: '6px',
+                    fontSize: '0.82rem'
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden', marginRight: '8px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--mp-text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {r.referrer}
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: 'var(--mp-text-3)' }}>
+                        {r.views} views • {r.downloads} downloads
+                      </span>
+                    </div>
+                    <div style={{
+                      background: 'rgba(62, 207, 142, 0.12)', color: '#3ecf8e',
+                      padding: '2px 8px', borderRadius: '12px', fontWeight: 700, fontSize: '0.75rem',
+                      whiteSpace: 'nowrap'
+                    }}>
+                      {r.ctr}% CTR
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--mp-text-3)', fontSize: '0.83rem' }}>
+                No referrer traffic recorded yet.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

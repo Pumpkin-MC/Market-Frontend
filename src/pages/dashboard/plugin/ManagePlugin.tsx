@@ -24,6 +24,7 @@ export type PluginData = {
     price_cents: number;
     type: 'free' | 'paid' | 'adwall';
     screenshots: { id: number; path: string }[];
+    preview_path?: string;
     version?: string;
     status?: 'published' | 'draft' | 'review';
     sale_active?: boolean;
@@ -87,8 +88,8 @@ const ManagePlugin = () => {
             {/* ── Sidebar ───────────────────────────────────────────── */}
             <aside className="mp-sidebar">
                 <div className="mp-plugin-identity">
-                    <div className="mp-plugin-avatar">
-                        {plugin.name.charAt(0).toUpperCase()}
+                    <div className="mp-plugin-avatar" style={plugin.preview_path ? { backgroundImage: `url(${plugin.preview_path})`, backgroundSize: 'cover', backgroundPosition: 'center', color: 'transparent' } : {}}>
+                        {!plugin.preview_path && plugin.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
                         <p className="mp-plugin-name">{plugin.name}</p>
