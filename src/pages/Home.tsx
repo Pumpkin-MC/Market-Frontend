@@ -5,6 +5,8 @@ import api from '../api';
 import SEO from '../components/SEO';
 import PluginCard from '../components/PluginCard';
 
+import { getPluginUrl } from '../utils/url';
+
 // Global cache to persist data across component unmounts (navigation)
 let homeCache: {
     popular: any[];
@@ -120,7 +122,7 @@ const Home = () => {
             {activeFeatured && (
                 <section className="featured-showcase-container">
                     <div className="featured-showcase-main">
-                        <Link to={`/plugin/${activeFeatured.id}`} className="featured-showcase-link">
+                        <Link to={getPluginUrl(activeFeatured)} className="featured-showcase-link">
                             {/* Main visual display */}
                             <div className="featured-main-visual">
                                 {activeImage ? (

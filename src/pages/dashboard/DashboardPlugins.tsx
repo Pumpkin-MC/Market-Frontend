@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Settings, Plus, ExternalLink, Sparkles } from 'lucide-react';
 import { useAuth } from '../../App';
 import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal';
+import { getPluginUrl } from '../../utils/url';
 
 // --- Main Component ---
 const DashboardPlugins = () => {
@@ -121,7 +122,7 @@ const DashboardPlugins = () => {
                                         {/* View on Marketplace */}
                                         <button 
                                             className="btn btn-icon-only" 
-                                            onClick={() => navigate(`/plugin/${p.id}`)}
+                                            onClick={() => navigate(getPluginUrl(p))}
                                             title="View in Store"
                                         >
                                             <ExternalLink size={16} />

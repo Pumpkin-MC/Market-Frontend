@@ -384,7 +384,7 @@ h3 {
   }
 
   .plugin-sidebar {
-    order: -1;
+    order: 1;
     width: 100%;
     margin: 0;
   }

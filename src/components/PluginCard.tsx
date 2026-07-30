@@ -1,6 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { getPluginUrl } from '../utils/url';
 
 const getAccentColor = (name: string) => {
     const colors = [
@@ -81,7 +82,7 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
     };
 
     return (
-        <Link to={`/plugin/${plugin.id}`} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
+        <Link to={getPluginUrl(plugin)} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
             <div className="plugin-card-v2">
                 <div className="pcv2-preview">
                     {slideshowImages.length > 0 ? (

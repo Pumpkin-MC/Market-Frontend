@@ -5,6 +5,7 @@ import api from '../api';
 import { useAuth } from '../App';
 import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../components/DeveloperOnboardingModal';
+import { getPluginUrl } from '../utils/url';
 import {
   User, Mail, Globe, Lock, Shield, CreditCard,
   BookOpen, AlertTriangle, LogOut, CheckCircle,
@@ -854,7 +855,7 @@ const ProfilePage = () => {
                   {library.map((entry, idx) => (
                     <Link
                       key={entry.plugin_id}
-                      to={`/plugin/${entry.plugin_id}`}
+                      to={getPluginUrl({ id: entry.plugin_id, name: entry.name })}
                       className="library-card"
                       style={{ animationDelay: `${idx * 0.05}s` }}
                     >

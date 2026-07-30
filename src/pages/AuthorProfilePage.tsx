@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../api';
 import { useTranslation } from 'react-i18next';
 import SEO from '../components/SEO';
+import { getPluginUrl } from '../utils/url';
 
 const AuthorProfilePage = () => {
   const { username } = useParams();
@@ -138,7 +139,7 @@ const AuthorProfilePage = () => {
           const imageUrl = plugin.preview_path;
 
           return (
-            <Link to={`/plugin/${plugin.id}`} key={plugin.id} className="plugin-card-link">
+            <Link to={getPluginUrl(plugin)} key={plugin.id} className="plugin-card-link">
               <div className="plugin-card-v2">
                 <div className="pcv2-preview">
                   {imageUrl ? (

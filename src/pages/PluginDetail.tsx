@@ -135,7 +135,8 @@ const formatDate = (dateStr: string) => {
 };
 
 const PluginDetail = () => {
-  const { id } = useParams();
+  const { id: rawId, slug } = useParams();
+  const id = rawId ? rawId.split('-')[0] : rawId;
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -232,6 +233,15 @@ const PluginDetail = () => {
         setMainScreenshot('video');
       } else if (res.data.screenshots?.length > 0) {
         setMainScreenshot(res.data.screenshots[0].path);
+      }
+
+      // Canonical URL check & replace
+      if (res.data.name) {
+        const expectedSlug = res.data.name.toLowerCase().trim().replace(/[\s_\.\-]+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
+        const targetPath = expectedSlug ? `/plugin/${res.data.id}-${expectedSlug}` : `/plugin/${res.data.id}`;
+        if (location.pathname !== targetPath || slug !== expectedSlug) {
+          window.history.replaceState({}, '', targetPath + location.search);
+        }
       }
     });
   };
@@ -485,33 +495,71 @@ const PluginDetail = () => {
   return `Download ${sizeStr}`;
   })();
 
+  const cleanDesc = currentDescription.replace(/[#*`_\[\]]/g, '').slice(0, 160).trim();
+
   const productSchema = {
-    "@context": "https://schema.org/",
-    "@type": "SoftwareApplication",
-    "name": plugin.name,
-    "operatingSystem": "Minecraft",
-    "applicationCategory": "GameApplication",
-    "offers": {
-      "@type": "Offer",
-      "price": plugin.type === 'paid' ? (plugin.price_cents / 100).toFixed(2) : "0.00",
-      "priceCurrency": "EUR"
-    },
-    "aggregateRating": stats ? {
-      "@type": "AggregateRating",
-      "ratingValue": stats.avg,
-      "reviewCount": stats.total
-    } : undefined,
-    "author": {
-      "@type": "Person",
-      "name": plugin.dev_name
-    }
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "name": plugin.name,
+        "description": cleanDesc,
+        "operatingSystem": "Minecraft",
+        "applicationCategory": "GameApplication",
+        "softwareVersion": plugin.version || "1.0.0",
+        "fileSize": plugin.file_size ? `${plugin.file_size} B` : undefined,
+        "image": plugin.preview_path || "https://market.pumpkinmc.org/icon.png",
+        "offers": {
+          "@type": "Offer",
+          "price": plugin.type === 'paid' ? (plugin.price_cents / 100).toFixed(2) : "0.00",
+          "priceCurrency": "EUR",
+          "availability": "https://schema.org/InStock"
+        },
+        "aggregateRating": stats ? {
+          "@type": "AggregateRating",
+          "ratingValue": stats.avg,
+          "ratingCount": stats.total,
+          "bestRating": "5",
+          "worstRating": "1"
+        } : undefined,
+        "author": {
+          "@type": "Person",
+          "name": plugin.dev_name,
+          "url": `https://market.pumpkinmc.org/profile/${plugin.dev_name}`
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          {
+            "@type": "ListItem",
+            "position": 1,
+            "name": "Home",
+            "item": "https://market.pumpkinmc.org"
+          },
+          {
+            "@type": "ListItem",
+            "position": 2,
+            "name": plugin.category || "Plugins",
+            "item": `https://market.pumpkinmc.org/search?category=${encodeURIComponent(plugin.category || '')}`
+          },
+          {
+            "@type": "ListItem",
+            "position": 3,
+            "name": plugin.name,
+            "item": `https://market.pumpkinmc.org/plugin/${plugin.id}`
+          }
+        ]
+      }
+    ]
   };
 
   return (
     <div className="container">
     <SEO
     title={plugin.name}
-    description={currentDescription.substring(0, 160)}
+    description={cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`}
+    keywords={`${plugin.name}, minecraft plugin, ${plugin.category || ''}, ${plugin.keywords || ''}`}
     ogType="product"
     ogImage={plugin.preview_path || "/icon.png"}
     />
