@@ -14,6 +14,7 @@ import ProfilePage from './pages/ProfilePage';
 import AuthorProfilePage from './pages/AuthorProfilePage';
 import SearchResultsPage from './pages/SearchResultsPage';
 import DashboardAudience from './pages/dashboard/DashboardAudience';
+import DashboardOverview from './pages/dashboard/DashboardOverview';
 import DashboardPlugins from './pages/dashboard/DashboardPlugins';
 import ManagePlugin from './pages/dashboard/plugin/ManagePlugin';
 import AddPlugin from './pages/dashboard/plugin/AddPlugin';
@@ -24,6 +25,9 @@ import AdminPanel from './pages/admin/AdminPanel';
 import './App.css';
 
 import api from './api';
+import { AnalyticsContext } from './pages/dashboard/AnalyticsContext';
+import { useAnalytics } from './pages/dashboard/useAnalytics';
+import { CurrencyProvider } from './context/CurrencyContext';
 
 // --- Scroll To Top Helper ---
 const ScrollToTop = () => {
@@ -94,7 +98,7 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, logout, loading, refreshUser }}>
-      {!loading && children}
+      {!loading && <CurrencyProvider>{children}</CurrencyProvider>}
     </AuthContext.Provider>
   );
 };
@@ -140,7 +144,8 @@ const App = () => (
           <Route path="confirm-email" element={<ConfirmEmailChangePage />} />
           <Route path="check-email" element={<CheckEmailPage />} />
           <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/dashboard/plugins" replace />} />
+            <Route index element={<Navigate to="/dashboard/overview" replace />} />
+            <Route path="overview" element={<DashboardOverview />} />
             <Route path="audience" element={<DashboardAudience />} />
             <Route path="plugins" element={<DashboardPlugins />} />
             <Route path="add-plugin" element={<AddPlugin />} />
@@ -148,6 +153,7 @@ const App = () => (
           </Route>
           <Route path="staff" element={<StaffRoute><AdminPanel /></StaffRoute>} />
           <Route path="settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
       </Routes>
     </AuthProvider>
@@ -168,15 +174,23 @@ const MainLayout = () => {
 import './pages/dashboard/Dashboard.css';
 
 const DashboardLayout = () => {
+  // Instantiate analytics once here and share via context — prevents each tab
+  // from making its own redundant API call.
+  const analytics = useAnalytics();
+
   return (
-    <div className="dashboard-container">
-      <nav className="dashboard-nav">
-        <NavLink to="/dashboard/plugins">My Plugins</NavLink>
-      </nav>
-      <div className="dashboard-content">
-        <Outlet />
+    <AnalyticsContext.Provider value={analytics}>
+      <div className="dashboard-container">
+        <nav className="dashboard-nav">
+          <NavLink to="/dashboard/overview">Overview</NavLink>
+          <NavLink to="/dashboard/plugins">My Plugins</NavLink>
+          <NavLink to="/dashboard/audience">Analytics</NavLink>
+        </nav>
+        <div className="dashboard-content">
+          <Outlet />
+        </div>
       </div>
-    </div>
+    </AnalyticsContext.Provider>
   );
 };
 
@@ -219,7 +233,7 @@ const Navbar = ({ user }: any) => {
       <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
         <div className="nav-links">
           <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
-          {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
+          {user && (user.is_developer || user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
             <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>
           )}
           {user && <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
@@ -314,6 +328,17 @@ const Footer = () => (
       </Link>
     </div>
   </footer>
+);
+
+const NotFoundPage = () => (
+  <div className="container" style={{ textAlign: 'center', padding: '6rem 1rem' }}>
+    <div style={{ fontSize: '6rem', fontWeight: 900, color: 'var(--primary)', lineHeight: 1, marginBottom: '1rem' }}>404</div>
+    <h1 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.75rem' }}>Page Not Found</h1>
+    <p style={{ color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto 2rem' }}>
+      The page you're looking for doesn't exist or has been moved.
+    </p>
+    <Link to="/" className="btn btn-primary" style={{ display: 'inline-block', padding: '0.75rem 2rem' }}>Go Home</Link>
+  </div>
 );
 
 export default App;

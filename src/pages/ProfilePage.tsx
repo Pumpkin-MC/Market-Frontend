@@ -4,6 +4,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import api from '../api';
 import { useAuth } from '../App';
 import { getCodeList } from 'country-list';
+import { SUPPORTED_CURRENCIES, useCurrency } from '../context/CurrencyContext';
 import DeveloperOnboardingModal from '../components/DeveloperOnboardingModal';
 import {
   User, Mail, Globe, Lock, Shield, CreditCard,
@@ -35,6 +36,7 @@ const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger
 
 const ProfilePage = () => {
   const { user, login, logout, refreshUser } = useAuth();
+  const { currency: currentCurrency } = useCurrency();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -48,7 +50,7 @@ const ProfilePage = () => {
   }, [location]);
 
   const [formData, setFormData] = useState({
-    username: '', email: '', country: '',
+    username: '', email: '', country: '', currency: '',
     password: '', currentPassword: '', disable2faPassword: '',
     newPassword: '', confirmPassword: '',
   });
@@ -79,7 +81,9 @@ const ProfilePage = () => {
     marketingEmail: false,
   });
 
-  useEffect(() => { refreshUser?.(); }, []);
+  // Note: We intentionally do NOT call refreshUser() on mount here — the JWT payload already
+  // contains all the data ProfilePage needs. Individual save actions call login() with the
+  // updated token when the server returns a new one.
 
   useEffect(() => {
     if (user) {
@@ -88,6 +92,7 @@ const ProfilePage = () => {
         username: user.username || '',
         email: user.email || '',
         country: user.country || '',
+        currency: user.preferred_currency || currentCurrency || 'EUR',
       }));
       setIs2faEnabled(user.totp_enabled || false);
     }
@@ -101,7 +106,8 @@ const ProfilePage = () => {
   });
 
   useEffect(() => {
-    if (activeTab === 'developer' && user?.is_developer) {
+    // Skip if we already loaded the dev profile or the user isn't a developer.
+    if (activeTab === 'developer' && user?.is_developer && devProfile === null) {
       api.get('/user/developer/profile')
         .then(res => {
           if (res.data.profile) {
@@ -122,7 +128,7 @@ const ProfilePage = () => {
         })
         .catch(err => console.error('Failed to load dev profile', err));
     }
-  }, [activeTab, user?.is_developer]);
+  }, [activeTab, user?.is_developer, devProfile]);
 
   const handleUpdateDevProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,14 +144,15 @@ const ProfilePage = () => {
   };
 
   useEffect(() => {
-    if (activeTab !== 'library') return;
+    // Skip if library is already loaded or currently being fetched.
+    if (activeTab !== 'library' || library.length > 0 || libraryLoading) return;
     setLibraryLoading(true);
     setLibraryError(null);
     api.get('/user/library')
       .then(res => setLibrary(Array.isArray(res.data) ? res.data : []))
       .catch(() => setLibraryError('Failed to load your library. Please try again.'))
       .finally(() => setLibraryLoading(false));
-  }, [activeTab]);
+  }, [activeTab, library.length, libraryLoading]);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToast({ text, type });
@@ -432,6 +439,34 @@ const ProfilePage = () => {
                     </select>
                   </Field>
                   <SaveBtn id="country" label="Update Country" />
+                </form>
+              </SettingsCard>
+
+              <SettingsCard title="Currency" description="Choose how prices are displayed across the marketplace. Charges are always processed in EUR." icon={CreditCard}>
+                <form onSubmit={e => {
+                  if (!formData.currency) {
+                    e.preventDefault();
+                    showToast('Please select a currency.', 'error');
+                    return;
+                  }
+                  handleUpdate(e, '/user/change-currency', { newCurrency: formData.currency }, 'currency');
+                }}>
+                  <Field label="Display Currency" hint="Converted prices are approximate and for reference only.">
+                    <select
+                      id="currency-select"
+                      className="settings-input settings-select"
+                      value={formData.currency}
+                      onChange={e => setFormData({ ...formData, currency: e.target.value })}
+                      required
+                    >
+                      {SUPPORTED_CURRENCIES.map(c => (
+                        <option key={c.code} value={c.code}>
+                          {c.symbol} {c.code} — {c.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+                  <SaveBtn id="currency" label="Update Currency" />
                 </form>
               </SettingsCard>
             </div>

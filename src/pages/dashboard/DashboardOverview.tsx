@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, Minus, DollarSign, 
   Download, MousePointer2, Clock, User, Star
 } from 'lucide-react';
-import { useAnalytics } from './useAnalytics';
+import { useAnalyticsContext } from './AnalyticsContext';
 
 // Helper for formatting large numbers
 const formatValue = (val: number) => {
@@ -83,7 +83,7 @@ const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: a
 };
 
 const DashboardOverview = () => {
-  const { processedData, totals, ratingSummary, timeframe, setTimeframe, recentActivity, trends } = useAnalytics();
+  const { processedData, totals, ratingSummary, timeframe, setTimeframe, recentActivity, trends } = useAnalyticsContext();
   const timeframes = ['Today', '7 Days', '1 Month', '1 Year'];
 
   return (

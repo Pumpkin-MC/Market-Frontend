@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react';
 import { ComposableMap, Geographies, Geography } from "@vnedyalk0v/react19-simple-maps";
 import { scaleLinear } from "d3-scale";
-import { useAnalytics } from './useAnalytics';
+import { useAnalyticsContext } from './AnalyticsContext';
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
 const DashboardAudience = () => {
-  const { mapData, loading } = useAnalytics(); 
+  const { mapData, loading } = useAnalyticsContext();
   const [mapFilter, setMapFilter] = useState<'visitors' | 'free_downloads' | 'buyers'>('visitors');
 
   // Memoize scales to prevent recalculation on every render

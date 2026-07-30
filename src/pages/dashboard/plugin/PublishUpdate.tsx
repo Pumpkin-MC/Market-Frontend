@@ -47,8 +47,9 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 setVersion('');
                 setReleaseNotes('');
             }, 3000);
-        } catch {
-            alert('Publish failed.');
+        } catch (err: any) {
+            const msg = err?.response?.data || err?.message || 'Publish failed.';
+            alert(typeof msg === 'string' ? msg : JSON.stringify(msg));
         } finally {
             setUploading(false);
         }
