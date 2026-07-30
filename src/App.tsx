@@ -126,6 +126,7 @@ const App = () => (
         {/* All routes share MainLayout (navbar + footer) */}
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
+          <Route path="plugin/:id" element={<PluginDetail />} />
           <Route path="plugin/:id-:slug" element={<PluginDetail />} />
           <Route path="profile/:username" element={<AuthorProfilePage />} />
           <Route path="search" element={<SearchResultsPage />} />
