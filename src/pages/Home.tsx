@@ -6,13 +6,10 @@ import SEO from '../components/SEO';
 import PluginCard from '../components/PluginCard';
 
 // Global cache to persist data across component unmounts (navigation)
-const PAGE_SIZE = 24;
-
 let homeCache: {
     popular: any[];
     newest: any[];
     all: any[];
-    allHasMore: boolean;
 } | null = null;
 
 const Home = () => {
@@ -20,16 +17,13 @@ const Home = () => {
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
-    const [allHasMore, setAllHasMore] = useState(homeCache?.allHasMore ?? true);
-    const [allOffset, setAllOffset] = useState(homeCache?.all.length || 0);
-    const [loadingMore, setLoadingMore] = useState(false);
     const [loading, setLoading] = useState(false);
     const [heroIndex, setHeroIndex] = useState(0);
     const [heroSubImageIndex, setHeroSubImageIndex] = useState(0);
 
     const popularRef = useRef<HTMLElement | null>(null);
     const newestRef = useRef<HTMLElement | null>(null);
-    const fetched = useRef({ popular: !!homeCache?.popular.length, newest: !!homeCache?.newest.length, all: !!homeCache?.all.length });
+    const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest, all: !!homeCache?.all });
 
     const saveSection = (key: 'popular' | 'newest' | 'all', data: any[]) => {
         if (key === 'popular') setPopular(data);
@@ -52,23 +46,13 @@ const Home = () => {
             setLoading(true);
             try {
                 const [popRes, newRes, allRes] = await Promise.all([
-                    api.get('/plugins', { params: { sort: 'downloads', limit: 12 } }),
-                    api.get('/plugins', { params: { sort: 'newest', limit: 12 } }),
-                    api.get('/plugins', { params: { limit: PAGE_SIZE, offset: 0 } })
+                    api.get('/plugins', { params: { sort: 'downloads' } }),
+                    api.get('/plugins', { params: { sort: 'newest' } }),
+                    api.get('/plugins')
                 ]);
-                const popData = Array.isArray(popRes.data) ? popRes.data : [];
-                const newData = Array.isArray(newRes.data) ? newRes.data : [];
-                const allData = Array.isArray(allRes.data) ? allRes.data : [];
-                const hasMore = allData.length >= PAGE_SIZE;
-
-                setPopular(popData);
-                setNewest(newData);
-                setAllPlugins(allData);
-                setAllHasMore(hasMore);
-                setAllOffset(allData.length);
-
-                homeCache = { popular: popData, newest: newData, all: allData, allHasMore: hasMore };
-                fetched.current = { popular: true, newest: true, all: true };
+                saveSection('popular', Array.isArray(popRes.data) ? popRes.data : []);
+                saveSection('newest', Array.isArray(newRes.data) ? newRes.data : []);
+                saveSection('all', Array.isArray(allRes.data) ? allRes.data : []);
             } catch (err) {
                 console.error('Fetch error for home sections:', err);
             } finally {
@@ -78,25 +62,6 @@ const Home = () => {
 
         loadSections();
     }, []);
-
-    const loadMoreAll = async () => {
-        if (loadingMore || !allHasMore) return;
-        setLoadingMore(true);
-        try {
-            const res = await api.get('/plugins', { params: { limit: PAGE_SIZE, offset: allOffset } });
-            const newData = Array.isArray(res.data) ? res.data : [];
-            const merged = [...allPlugins, ...newData];
-            const hasMore = newData.length >= PAGE_SIZE;
-            setAllPlugins(merged);
-            setAllHasMore(hasMore);
-            setAllOffset(merged.length);
-            if (homeCache) homeCache = { ...homeCache, all: merged, allHasMore: hasMore };
-        } catch (err) {
-            console.error('Load more error:', err);
-        } finally {
-            setLoadingMore(false);
-        }
-    };
 
     // Featured plugins for top Steam-like carousel
     const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
@@ -274,7 +239,7 @@ const Home = () => {
                 </section>
 
                 <section className="home-section">
-                    <h2 className="section-title"><span>All</span> Plugins ({allPlugins.length}{allHasMore ? '+' : ''})</h2>
+                    <h2 className="section-title"><span>All</span> Plugins ({allPlugins.length})</h2>
                     <div className="home-plugin-grid">
                         {allPlugins.length > 0 ? (
                             allPlugins.map((plugin) => (
@@ -284,18 +249,6 @@ const Home = () => {
                             <div className="section-placeholder">{loading ? 'Loading all plugins...' : 'No plugins available'}</div>
                         )}
                     </div>
-                    {allHasMore && (
-                        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-                            <button
-                                className="btn btn-secondary"
-                                onClick={loadMoreAll}
-                                disabled={loadingMore}
-                                style={{ padding: '0.75rem 2.5rem', fontSize: '0.9rem' }}
-                            >
-                                {loadingMore ? 'Loading...' : 'Load More Plugins'}
-                            </button>
-                        </div>
-                    )}
                 </section>
 
                 {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (

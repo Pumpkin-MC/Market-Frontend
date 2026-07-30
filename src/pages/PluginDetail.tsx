@@ -187,7 +187,7 @@ const PluginDetail = () => {
     setCouponMessage(null);
   };
 
-  // Ownership — resolved from plugin.owned (injected by server) so no extra HTTP call needed
+  // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
 
@@ -201,7 +201,6 @@ const PluginDetail = () => {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
-  const [moreByDev, setMoreByDev] = useState<any[]>([]);
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
@@ -234,41 +233,19 @@ const PluginDetail = () => {
       } else if (res.data.screenshots?.length > 0) {
         setMainScreenshot(res.data.screenshots[0].path);
       }
-      // Resolve ownership from the plugin response — server includes it when a JWT is sent.
-      if (res.data.owned !== undefined && res.data.owned !== null) {
-        setOwnsPlugin(res.data.owned);
-        setOwnershipChecked(true);
-      }
-      // Save to recently viewed
-      try {
-        const key = 'recentlyViewed';
-        const existing: any[] = JSON.parse(localStorage.getItem(key) || '[]');
-        const filtered = existing.filter((p: any) => String(p.id) !== String(res.data.id));
-        const entry = { id: res.data.id, name: res.data.name, preview_path: res.data.preview_path, dev_name: res.data.dev_name };
-        localStorage.setItem(key, JSON.stringify([entry, ...filtered].slice(0, 10)));
-      } catch { /* ignore */ }
     });
   };
 
   useEffect(() => { fetchPlugin(); }, [id]);
 
-  // ── Fetch more plugins by same developer ─────────────────────────────────
+  // ── Check ownership ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!plugin?.dev_name || !plugin?.id) return;
-    api.get('/plugins', { params: { dev_name: plugin.dev_name, limit: 4 } })
-      .then(res => {
-        const data = Array.isArray(res.data) ? res.data : [];
-        setMoreByDev(data.filter((p: any) => String(p.id) !== String(plugin.id)).slice(0, 3));
-      })
-      .catch(() => {});
-  }, [plugin?.dev_name, plugin?.id]);
-
-  // ── Ownership is now provided by the plugin detail response.
-  // Fallback: if the server didn't include it (unauthenticated request that later
-  // becomes authenticated via token refresh), mark it checked immediately.
-  useEffect(() => {
-    if (!user) { setOwnershipChecked(true); }
-  }, [user]);
+    if (!user || !id) { setOwnershipChecked(true); return; }
+    api.get(`/plugins/${id}/owned`)
+    .then(res => setOwnsPlugin(res.data.owned === true))
+    .catch(() => setOwnsPlugin(false))
+    .finally(() => setOwnershipChecked(true));
+  }, [user, id]);
 
   // ── Translations ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -1127,32 +1104,6 @@ const PluginDetail = () => {
     )}
     </div>
     </div>
-
-    {/* MORE BY THIS DEVELOPER */}
-    {moreByDev.length > 0 && (
-      <div className="sidebar-widget" style={{ marginTop: '1rem' }}>
-        <div style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
-          More by {plugin.dev_name}
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-          {moreByDev.map((p: any) => (
-            <Link
-              key={p.id}
-              to={`/plugin/${p.id}`}
-              style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', textDecoration: 'none', padding: '0.5rem', borderRadius: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', transition: 'background 0.15s' }}
-              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.03)')}
-            >
-              <div style={{ width: 36, height: 36, borderRadius: 6, backgroundImage: p.preview_path ? `url(${p.preview_path})` : 'none', backgroundSize: 'cover', backgroundPosition: 'center', background: p.preview_path ? undefined : 'var(--surface)', border: '1px solid var(--border)', flexShrink: 0 }} />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{p.type === 'free' ? 'Free' : `€${((p.price_cents || 0) / 100).toFixed(2)}`}</div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
-    )}
     </aside>
     </div>
 

@@ -24,38 +24,18 @@ const SearchResultsPage = () => {
   const [minPrice, setMinPrice] = useState(initialMinPrice);
   const [maxPrice, setMaxPrice] = useState(initialMaxPrice);
 
-  // Debounce filter changes — wait 350ms after user stops typing before firing a request.
-  const [debouncedQuery, setDebouncedQuery] = useState(searchQuery);
-  const [debouncedSort, setDebouncedSort] = useState(sort);
-  const [debouncedCategory, setDebouncedCategory] = useState(category);
-  const [debouncedType, setDebouncedType] = useState(type);
-  const [debouncedMinPrice, setDebouncedMinPrice] = useState(minPrice);
-  const [debouncedMaxPrice, setDebouncedMaxPrice] = useState(maxPrice);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(searchQuery);
-      setDebouncedSort(sort);
-      setDebouncedCategory(category);
-      setDebouncedType(type);
-      setDebouncedMinPrice(minPrice);
-      setDebouncedMaxPrice(maxPrice);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [searchQuery, sort, category, type, minPrice, maxPrice]);
-
   useEffect(() => {
     const fetchPlugins = async () => {
       setLoading(true);
       setError(null);
       try {
         const params: any = {
-          q: debouncedQuery || undefined,
-          sort: debouncedSort || undefined,
-          category: debouncedCategory || undefined,
-          type: debouncedType || undefined,
-          min_price: debouncedMinPrice ? parseInt(debouncedMinPrice) * 100 : undefined,
-          max_price: debouncedMaxPrice ? parseInt(debouncedMaxPrice) * 100 : undefined,
+          q: searchQuery || undefined,
+          sort: sort || undefined,
+          category: category || undefined,
+          type: type || undefined,
+          min_price: minPrice ? parseInt(minPrice) * 100 : undefined,
+          max_price: maxPrice ? parseInt(maxPrice) * 100 : undefined,
         };
         const response = await api.get('/plugins', { params });
         setPlugins(Array.isArray(response.data) ? response.data : []);
@@ -72,15 +52,15 @@ const SearchResultsPage = () => {
 
     // Update URL params
     const newParams: any = {};
-    if (debouncedQuery) newParams.q = debouncedQuery;
-    if (debouncedSort) newParams.sort = debouncedSort;
-    if (debouncedCategory) newParams.category = debouncedCategory;
-    if (debouncedType) newParams.type = debouncedType;
-    if (debouncedMinPrice) newParams.min_price = debouncedMinPrice;
-    if (debouncedMaxPrice) newParams.max_price = debouncedMaxPrice;
+    if (searchQuery) newParams.q = searchQuery;
+    if (sort) newParams.sort = sort;
+    if (category) newParams.category = category;
+    if (type) newParams.type = type;
+    if (minPrice) newParams.min_price = minPrice;
+    if (maxPrice) newParams.max_price = maxPrice;
     setSearchParams(newParams, { replace: true });
 
-  }, [debouncedQuery, debouncedSort, debouncedCategory, debouncedType, debouncedMinPrice, debouncedMaxPrice, setSearchParams]);
+  }, [searchQuery, sort, category, type, minPrice, maxPrice, setSearchParams]);
 
   return (
     <div className="container">
@@ -120,7 +100,7 @@ const SearchResultsPage = () => {
           </div>
 
           <div className="filter-group">
-            <label>Price Range (€)</label>
+            <label>Price Range ($)</label>
             <div className="price-range-inputs">
               <input 
                 type="number" 
@@ -154,7 +134,6 @@ const SearchResultsPage = () => {
               <select id="sort-by" value={sort} onChange={(e) => setSort(e.target.value)}>
                 <option value="">Newest</option>
                 <option value="downloads">Most Popular</option>
-                <option value="top">Top Rated</option>
                 <option value="name-asc">Name (A-Z)</option>
                 <option value="name-desc">Name (Z-A)</option>
                 <option value="price-asc">Price (Low to High)</option>

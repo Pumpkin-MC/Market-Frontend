@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useAnalyticsContext } from './AnalyticsContext';
+import { useAnalytics } from './useAnalytics';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Plus, ExternalLink, Sparkles } from 'lucide-react';
 import { useAuth } from '../../App';
@@ -8,7 +8,7 @@ import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal'
 // --- Main Component ---
 const DashboardPlugins = () => {
     const { user } = useAuth();
-    const { timeSeries } = useAnalyticsContext();
+    const { timeSeries } = useAnalytics();
     const navigate = useNavigate();
     const [isDevModalOpen, setIsDevModalOpen] = useState(false);
 

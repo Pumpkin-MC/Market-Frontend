@@ -15,15 +15,16 @@ const AuthorProfilePage = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-
-    // Fetch author info and plugins in parallel — saves one full round-trip.
-    Promise.all([
-      api.get(`/user/public/${username}`),
-      api.get('/plugins', { params: { dev_name: username, sort: 'newest' } }),
-    ])
-      .then(([authorRes, pluginsRes]) => {
-        setAuthor(authorRes.data);
-        setPlugins(Array.isArray(pluginsRes.data) ? pluginsRes.data : []);
+    
+    // Fetch author public info
+    api.get(`/user/public/${username}`)
+      .then(res => {
+        setAuthor(res.data);
+        // Fetch author plugins
+        return api.get('/plugins', { params: { dev_name: username, sort: 'newest' } });
+      })
+      .then(res => {
+        setPlugins(Array.isArray(res.data) ? res.data : []);
       })
       .catch(err => {
         console.error('Fetch error:', err);
