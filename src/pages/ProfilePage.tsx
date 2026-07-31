@@ -171,6 +171,51 @@ const ProfilePage = () => {
     });
   };
 
+  const handleSaveAccountInfo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await withSaving('accountInfo', async () => {
+      let updatedAny = false;
+
+      if (formData.username && formData.username !== user?.username) {
+        try {
+          const res = await api.post('/user/change-username', { newUsername: formData.username });
+          if (res.data.token) login(res.data.token);
+          updatedAny = true;
+        } catch (err: any) {
+          showToast(err.response?.data?.error || 'Failed to update username.', 'error');
+          return;
+        }
+      }
+
+      if (formData.email && formData.email !== user?.email) {
+        try {
+          const res = await api.post('/user/change-email', { newEmail: formData.email });
+          updatedAny = true;
+        } catch (err: any) {
+          showToast(err.response?.data?.error || 'Failed to update email.', 'error');
+          return;
+        }
+      }
+
+      if (formData.country && formData.country !== user?.country) {
+        try {
+          await api.post('/user/change-country', { newCountry: formData.country });
+          updatedAny = true;
+        } catch (err: any) {
+          showToast(err.response?.data?.error || 'Failed to update country.', 'error');
+          return;
+        }
+      }
+
+      if (updatedAny) {
+        showToast('Account details updated successfully!');
+        refreshUser?.();
+      } else {
+        showToast('No changes to save.');
+      }
+    });
+  };
+
   const handleLogout = () => { logout(); navigate('/login'); };
 
   const handleConnectStripe = async () => {
@@ -375,48 +420,34 @@ const ProfilePage = () => {
                 <h2 className="section-title" style={{ marginBottom: 0 }}>
                   <span>Account</span> Details
                 </h2>
-                <p className="settings-section-sub">Manage your public identity and contact information.</p>
               </div>
 
-              <SettingsCard title="Username" description="Your public display name across the marketplace." icon={User}>
-                <form onSubmit={e => handleUpdate(e, '/user/change-username', { newUsername: formData.username }, 'username')}>
-                  <Field label="Username">
-                    <input
-                      className="settings-input"
-                      type="text"
-                      value={formData.username}
-                      onChange={e => setFormData({ ...formData, username: e.target.value })}
-                      placeholder="Your username"
-                    />
-                  </Field>
-                  <SaveBtn id="username" label="Update Username" />
-                </form>
-              </SettingsCard>
+              <SettingsCard title="Account Profile" icon={User}>
+                <form onSubmit={handleSaveAccountInfo} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                    <Field label="Username">
+                      <input
+                        className="settings-input"
+                        type="text"
+                        value={formData.username}
+                        onChange={e => setFormData({ ...formData, username: e.target.value })}
+                        placeholder="Your username"
+                        required
+                      />
+                    </Field>
 
-              <SettingsCard title="Email Address" description="We'll send a verification link to your new address." icon={Mail}>
-                <form onSubmit={e => handleUpdate(e, '/user/change-email', { newEmail: formData.email }, 'email')}>
-                  <Field label="Email">
-                    <input
-                      className="settings-input"
-                      type="email"
-                      value={formData.email}
-                      onChange={e => setFormData({ ...formData, email: e.target.value })}
-                      placeholder="your@email.com"
-                    />
-                  </Field>
-                  <SaveBtn id="email" label="Update Email" />
-                </form>
-              </SettingsCard>
+                    <Field label="Email Address">
+                      <input
+                        className="settings-input"
+                        type="email"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="your@email.com"
+                        required
+                      />
+                    </Field>
+                  </div>
 
-              <SettingsCard title="Country" description="Used for tax purposes and regional features. Auto-detected from IP on registration." icon={Globe}>
-                <form onSubmit={e => {
-                  if (!formData.country) {
-                    e.preventDefault();
-                    showToast('Please select a country.', 'error');
-                    return;
-                  }
-                  handleUpdate(e, '/user/change-country', { newCountry: formData.country }, 'country');
-                }}>
                   <Field label="Country">
                     <select
                       className="settings-input settings-select"
@@ -432,7 +463,10 @@ const ProfilePage = () => {
                         ))}
                     </select>
                   </Field>
-                  <SaveBtn id="country" label="Update Country" />
+
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <SaveBtn id="accountInfo" label="Save Changes" />
+                  </div>
                 </form>
               </SettingsCard>
             </div>

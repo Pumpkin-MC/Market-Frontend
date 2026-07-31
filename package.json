@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@marsidev/react-turnstile": "^1.5.4",
-    "@vnedyalk0v/react19-simple-maps": "^2.0.9",
+    "@vnedyalk0v/react19-simple-maps": "^2.0.10",
     "axios": "^1.19.0",
     "country-list": "^2.4.1",
     "d3-geo": "^3.1.1",
@@ -35,18 +35,18 @@
     "@eslint/js": "^10.0.1",
     "@types/country-list": "^2.1.4",
     "@types/node": "^26.1.2",
-    "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.4",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^10.8.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.3",
     "globals": "^17.8.0",
     "typescript": "^7.0.2",
     "typescript-eslint": "^8.65.0",
-    "vite": "^8.1.5"
+    "vite": "^8.2.0"
   },
   "overrides": {
-    "vite": "^8.1.5"
+    "vite": "^8.2.0"
   }
 }

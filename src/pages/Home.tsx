@@ -219,7 +219,7 @@ const Home = () => {
                     <div className="home-plugin-grid">
                         {popular.length > 0 ? (
                             popular.map((plugin) => (
-                                <PluginCard key={`pop-${plugin.id}`} plugin={plugin} />
+                                <PluginCard key={`pop-${plugin.id}`} plugin={plugin} hideDescription />
                             ))
                         ) : (
                             <div className="section-placeholder">{loading ? 'Loading popular plugins...' : 'Scroll to load popular plugins'}</div>
@@ -232,7 +232,7 @@ const Home = () => {
                     <div className="home-plugin-grid">
                         {newest.length > 0 ? (
                             newest.map((plugin) => (
-                                <PluginCard key={`new-${plugin.id}`} plugin={plugin} />
+                                <PluginCard key={`new-${plugin.id}`} plugin={plugin} hideDescription />
                             ))
                         ) : (
                             <div className="section-placeholder">{loading ? 'Loading new plugins...' : 'Scroll to load new plugins'}</div>
@@ -245,7 +245,7 @@ const Home = () => {
                     <div className="home-plugin-grid">
                         {allPlugins.length > 0 ? (
                             allPlugins.map((plugin) => (
-                                <PluginCard key={`all-${plugin.id}`} plugin={plugin} />
+                                <PluginCard key={`all-${plugin.id}`} plugin={plugin} hideDescription />
                             ))
                         ) : (
                             <div className="section-placeholder">{loading ? 'Loading all plugins...' : 'No plugins available'}</div>

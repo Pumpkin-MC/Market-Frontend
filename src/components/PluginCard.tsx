@@ -31,7 +31,7 @@ const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; ori
     };
 };
 
-const PluginCard = ({ plugin }: { plugin: any }) => {
+const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDescription?: boolean }) => {
     const { i18n } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
@@ -129,7 +129,7 @@ const PluginCard = ({ plugin }: { plugin: any }) => {
                         {plugin.is_early_access && <span className="pcv2-badge-ea">Early Access</span>}
                     </p>
                     <p className="pcv2-dev">by {plugin.dev_name}</p>
-                    <p className="pcv2-desc">{desc}</p>
+                    {!hideDescription && <p className="pcv2-desc">{desc}</p>}
 
                     <div className="pcv2-footer">
                         <span className="pcv2-stat">

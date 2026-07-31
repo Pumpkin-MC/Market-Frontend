@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {
     Globe, ImageIcon, Plus, Search, X, Upload, FileCode,
     DollarSign, CheckCircle, ChevronRight, ChevronLeft,
-    Zap, Lock, AlertTriangle, Tag, Store, User,
+    Zap, Lock, AlertTriangle, Tag, Store, User, Sparkles,
 } from 'lucide-react';
 import api from '../../../api';
 import { useAuth } from '../../../App';
+import { DeveloperOnboardingModal } from '../../../components/DeveloperOnboardingModal';
 import './AddPlugin.css';
 
 // ── Locale helpers ────────────────────────────────────────────────────────────
@@ -193,6 +194,7 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: { usedCodes: string[]; onAdd:
 const AddPlugin = () => {
     const navigate = useNavigate();
     const { user, refreshUser } = useAuth();
+    const [isDevModalOpen, setIsDevModalOpen] = useState(false);
     const [step, setStep]           = useState(0);
     const [submitting, setSubmitting] = useState(false);
     const [done, setDone]           = useState(false);
@@ -204,6 +206,45 @@ const AddPlugin = () => {
     const [sourceLink, setSourceLink]   = useState('');
     const [youtubeVideoUrl, setYoutubeVideoUrl] = useState('');
     const [keywords, setKeywords]       = useState('');
+
+    if (user && !user.is_developer) {
+        return (
+            <div className="ap-root" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '2rem 1rem' }}>
+                <div style={{
+                    maxWidth: 520, width: '100%', padding: '2.5rem', background: 'var(--mp-surface, #14171c)',
+                    borderRadius: 16, border: '1px solid var(--mp-border, rgba(255,255,255,0.1))', textAlign: 'center',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+                }}>
+                    <div style={{
+                        width: 60, height: 60, borderRadius: '50%', background: 'rgba(249, 115, 22, 0.15)',
+                        color: 'var(--mp-accent, #f97316)', display: 'inline-flex', alignItems: 'center',
+                        justifyContent: 'center', marginBottom: '1.25rem'
+                    }}>
+                        <Sparkles size={28} />
+                    </div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: 'var(--mp-text, #fff)' }}>
+                        Developer Profile Required
+                    </h2>
+                    <p style={{ color: 'var(--mp-muted, #94a3b8)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+                        Before publishing plugins on Pumpkin Market, you must complete your developer profile. It takes less than a minute!
+                    </p>
+                    <button
+                        className="mp-btn mp-btn-primary"
+                        style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                        onClick={() => setIsDevModalOpen(true)}
+                    >
+                        <Sparkles size={16} /> Set Up Developer Profile
+                    </button>
+
+                    <DeveloperOnboardingModal
+                        isOpen={isDevModalOpen}
+                        onClose={() => setIsDevModalOpen(false)}
+                        onSuccess={() => refreshUser?.()}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     // ── Step 1: Store Listing ──
     const [descriptions, setDescriptions] = useState<Record<string, string>>({ [DEFAULT_LOCALE]: '' });

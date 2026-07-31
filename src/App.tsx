@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Search } from 'lucide-react';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
 import LoginPage from './pages/auth/LoginPage'; 
@@ -171,9 +172,14 @@ import './pages/dashboard/Dashboard.css';
 const DashboardLayout = () => {
   return (
     <div className="dashboard-container">
-      <nav className="dashboard-nav">
-        <NavLink to="/dashboard/plugins">My Plugins</NavLink>
-      </nav>
+      <header className="dashboard-app-header">
+        <div className="dashboard-app-header-inner">
+          <Link to="/dashboard/plugins" className="dashboard-app-brand">
+            <img src="/icon.png" alt="Market Logo" className="dashboard-app-logo" />
+            <span className="dashboard-app-title">DEVELOPER <span>STUDIO</span></span>
+          </Link>
+        </div>
+      </header>
       <div className="dashboard-content">
         <Outlet />
       </div>
@@ -227,8 +233,10 @@ const Navbar = ({ user }: any) => {
           {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
         </div>
 
-        {!user && (
-          <div className="nav-search">
+        {/* ── Center Search Bar ── */}
+        <div className="nav-search-center">
+          <div className="nav-search-input-wrap">
+            <Search size={16} className="nav-search-icon" />
             <input
               type="text"
               placeholder={t('search')}
@@ -237,22 +245,11 @@ const Navbar = ({ user }: any) => {
               onKeyDown={handleSearch}
             />
           </div>
-        )}
+        </div>
 
         <div className="nav-actions">
           {user ? (
-            <>
-              <div className="nav-search-right">
-                <input
-                  type="text"
-                  placeholder={t('search')}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearch}
-                />
-              </div>
-              <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
-            </>
+            <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
           ) : (
             <>
               <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('login')}</Link>
