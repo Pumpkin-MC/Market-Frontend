@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Store, Package, Globe, PlusCircle } from 'lucide-react';
+import { Search, Store } from 'lucide-react';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
 import LoginPage from './pages/auth/LoginPage'; 
@@ -176,73 +176,75 @@ const DeveloperStudioNavbar = ({ user }: any) => {
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
-    <header className="dashboard-app-header">
-      <div className="dashboard-app-header-inner">
-        {/* Brand */}
-        <Link to="/dashboard/plugins" className="dashboard-app-brand" onClick={() => setIsMenuOpen(false)}>
-          <img src="/icon.png" alt="Market Logo" className="dashboard-app-logo" />
-          <span className="dashboard-app-title">DEVELOPER <span>STUDIO</span></span>
+    <nav className="navbar">
+      <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
+        <Link to="/dashboard/plugins" onClick={() => setIsMenuOpen(false)}>
+          <img src="/icon.png" alt="Market Logo" style={{ height: '50px', marginRight: '0px', verticalAlign: 'middle' }} />
+          <span>STUDIO</span>
         </Link>
+      </div>
 
-        {/* Mobile menu toggle button */}
-        <button className="dashboard-mobile-toggle" onClick={toggleMenu} aria-label="Toggle navigation menu">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            {isMenuOpen ? (
-              <path d="M18 6L6 18M6 6l12 12" />
-            ) : (
-              <path d="M3 12h18M3 6h18M3 18h18" />
-            )}
-          </svg>
-        </button>
+      <button className="mobile-menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          {isMenuOpen ? (
+            <path d="M18 6L6 18M6 6l12 12" />
+          ) : (
+            <path d="M3 12h18M3 6h18M3 18h18" />
+          )}
+        </svg>
+      </button>
 
-        {/* Navigation & Actions */}
-        <div className={`dashboard-app-nav-wrap ${isMenuOpen ? 'open' : ''}`}>
-          <nav className="dashboard-app-nav">
-            <NavLink
-              to="/dashboard/plugins"
-              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Package size={16} />
-              <span>Plugins</span>
-            </NavLink>
-            <NavLink
-              to="/dashboard/audience"
-              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <Globe size={16} />
-              <span>Audience</span>
-            </NavLink>
-            <NavLink
-              to="/dashboard/add-plugin"
-              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <PlusCircle size={16} />
-              <span>Publish</span>
-            </NavLink>
-          </nav>
+      <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
+        <div className="nav-links">
+          <NavLink to="/dashboard/plugins" onClick={() => setIsMenuOpen(false)}>Plugins</NavLink>
+          <NavLink to="/dashboard/audience" onClick={() => setIsMenuOpen(false)}>Audience</NavLink>
+          <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>
+          {user && (user.role === 'admin' || user.role === 'moderator') && (
+            <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>
+          )}
+        </div>
 
-          <div className="dashboard-app-actions">
-            <Link to="/" className="dashboard-action-link store-link" onClick={() => setIsMenuOpen(false)} title="Return to Marketplace">
-              <Store size={15} />
-              <span>Marketplace</span>
-            </Link>
-            {user && (user.role === 'admin' || user.role === 'moderator') && (
-              <NavLink to="/staff" className="dashboard-action-link" onClick={() => setIsMenuOpen(false)}>
-                <span>Staff</span>
-              </NavLink>
-            )}
-            {user && (
-              <NavLink to="/settings" className="dashboard-user-link" onClick={() => setIsMenuOpen(false)}>
-                <span>{user.username}</span>
-              </NavLink>
-            )}
-          </div>
+        <div className="nav-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <Link
+            to="/"
+            onClick={() => setIsMenuOpen(false)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              color: 'var(--primary)',
+              textDecoration: 'none',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.03em',
+              padding: '6px 14px',
+              borderRadius: '20px',
+              background: 'rgba(255, 117, 24, 0.1)',
+              border: '1px solid rgba(255, 117, 24, 0.3)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(255, 117, 24, 0.2)';
+              e.currentTarget.style.borderColor = 'var(--primary)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(255, 117, 24, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(255, 117, 24, 0.3)';
+            }}
+          >
+            <Store size={14} />
+            <span>Marketplace</span>
+          </Link>
+
+          {user ? (
+            <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
+          ) : (
+            <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>Login</Link>
+          )}
         </div>
       </div>
-    </header>
+    </nav>
   );
 };
 

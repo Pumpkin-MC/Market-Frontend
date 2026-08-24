@@ -144,7 +144,7 @@ const DashboardPlugins = () => {
                         
                         {plugins.length === 0 && (
                             <tr>
-                                <td colSpan={4} style={{ textAlign: 'center', padding: '3rem' }}>
+                                <td colSpan={5} style={{ textAlign: 'center', padding: '3rem' }}>
                                     <div style={{ opacity: 0.6 }}>
                                         <p>No plugins published yet.</p>
                                         <small>Click "Add New Plugin" to get started</small>

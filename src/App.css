@@ -2034,6 +2034,14 @@ h3 {
   font-size: 0.92rem;
   line-height: 1.6;
   color: var(--text);
+  position: relative;
+}
+
+.plugin-recent-update-body.is-clamped {
+  max-height: 90px;
+  overflow: hidden;
+  mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 
 .plugin-recent-update-body p:last-child {
@@ -2045,6 +2053,27 @@ h3 {
   color: var(--text-muted);
   font-style: italic;
   margin: 0;
+}
+
+.plugin-recent-update-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--primary);
+  padding: 8px 0 0 0;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.plugin-recent-update-more-btn:hover {
+  opacity: 0.85;
+  transform: translateX(2px);
 }
 
 .lightbox-overlay {

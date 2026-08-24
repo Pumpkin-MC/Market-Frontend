@@ -4,8 +4,9 @@
 .ap-root {
     display: flex;
     flex-direction: column;
-    /* developer studio navbar ~58px */
-    height: calc(100vh - 58px);
+    flex: 1;
+    height: 100%;
+    min-height: 0;
     background: var(--mp-bg);
     color: var(--mp-text);
     font-family: var(--font-display);

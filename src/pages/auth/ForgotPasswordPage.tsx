@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../../api';
 
 const ForgotPasswordPage = () => {
@@ -11,6 +12,8 @@ const ForgotPasswordPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [emailTouched, setEmailTouched] = useState(false);
   const [emailValid, setEmailValid] = useState<boolean | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = useRef<any>(null);
 
   const validateEmail = (email: string) =>
     Boolean(String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/));
@@ -43,11 +46,38 @@ const ForgotPasswordPage = () => {
     setIsSubmitting(true);
     setError('');
     setMessage('');
+
+    let currentToken = captchaToken;
+    if (!currentToken && turnstileRef.current) {
+      try {
+        currentToken = await turnstileRef.current.getResponsePromise(2000);
+      } catch (err) {
+        try {
+          turnstileRef.current.reset();
+          currentToken = await turnstileRef.current.getResponsePromise(4000);
+        } catch (resetErr) {
+          console.error('Turnstile verification failed:', resetErr);
+        }
+      }
+    }
+
+    if (!currentToken) {
+      setError('Please complete the security check.');
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      await api.post('/auth/forgot-password', { email });
+      await api.post('/auth/forgot-password', { email, captchaToken: currentToken });
       setMessage('If an account exists with that email, a reset link has been sent.');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      if (turnstileRef.current) {
+        try {
+          turnstileRef.current.reset();
+          setCaptchaToken(null);
+        } catch (_) {}
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -270,6 +300,17 @@ const ForgotPasswordPage = () => {
               {emailIsInvalid && (
                 <p className="field-message invalid">Please enter a valid email address</p>
               )}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px', marginTop: '4px' }}>
+              <Turnstile
+                ref={turnstileRef}
+                siteKey="0x4AAAAAAClcSibyhKfR0H6o"
+                onSuccess={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken(null)}
+                onError={() => setCaptchaToken(null)}
+                options={{ theme: 'light', appearance: 'interaction-only' } as any}
+              />
             </div>
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
