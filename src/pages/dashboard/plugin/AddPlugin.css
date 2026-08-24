@@ -4,7 +4,8 @@
 .ap-root {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 133px);
+    /* developer studio navbar ~58px */
+    height: calc(100vh - 58px);
     background: var(--mp-bg);
     color: var(--mp-text);
     font-family: var(--font-display);
@@ -338,6 +339,7 @@
 .ap-success p { color: var(--mp-text-2); font-size: 0.9rem; margin: 0; }
 
 /* ── Dashboard padding reset ────────────────────────────────── */
-.dashboard-content:has(.ap-root)                       { padding: 0 !important; margin: 0 !important; overflow: hidden; }
-.dashboard-container:has(.ap-root) .dashboard-nav      { margin-bottom: 0 !important; }
-.dashboard-container:has(.ap-root) .dashboard-content  { padding: 0 !important; flex: 1; overflow: hidden; }
+.dashboard-content:has(.ap-root)                       { padding: 0 !important; margin: 0 !important; overflow: hidden; max-width: 100% !important; width: 100% !important; }
+.dashboard-container:has(.ap-root)                     { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+.dashboard-container:has(.ap-root) .dashboard-app-header { margin-bottom: 0 !important; }
+.dashboard-container:has(.ap-root) .dashboard-content  { padding: 0 !important; flex: 1; overflow: hidden; max-width: 100% !important; width: 100% !important; }

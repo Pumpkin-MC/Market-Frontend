@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { Sparkles, History } from 'lucide-react';
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -675,6 +676,48 @@ const PluginDetail = () => {
               onClick={() => setMainScreenshot(shot.path)}
             />
           ))}
+        </div>
+      </div>
+    )}
+
+    {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (
+      <div className="plugin-recent-update">
+        <div className="plugin-recent-update-header">
+          <div className="plugin-recent-update-title-group">
+            <h3 className="plugin-recent-update-title">
+              <Sparkles size={16} color="var(--primary)" />
+              What's New
+            </h3>
+            <span className="plugin-recent-update-badge">
+              v{plugin.versions[0].version}
+            </span>
+            {plugin.versions[0].created_at && (
+              <span className="plugin-recent-update-date">
+                {formatDate(plugin.versions[0].created_at)}
+              </span>
+            )}
+          </div>
+          {plugin.versions.length > 1 && (
+            <button
+              type="button"
+              className="plugin-recent-update-history-btn"
+              onClick={() => setChangelogOpen(true)}
+            >
+              <History size={13} />
+              <span>Version History ({plugin.versions.length})</span>
+            </button>
+          )}
+        </div>
+        <div className="plugin-recent-update-body markdown-content">
+          {plugin.versions[0].release_notes ? (
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {plugin.versions[0].release_notes}
+            </ReactMarkdown>
+          ) : (
+            <p className="plugin-recent-update-empty">
+              Bug fixes and performance improvements.
+            </p>
+          )}
         </div>
       </div>
     )}

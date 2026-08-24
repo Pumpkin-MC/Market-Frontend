@@ -7,7 +7,7 @@ import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../components/DeveloperOnboardingModal';
 import { getPluginUrl } from '../utils/url';
 import {
-  User, Mail, Globe, Lock, Shield, CreditCard,
+  User, Mail, Lock, Shield, CreditCard,
   BookOpen, AlertTriangle, LogOut, CheckCircle,
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2
@@ -189,7 +189,7 @@ const ProfilePage = () => {
 
       if (formData.email && formData.email !== user?.email) {
         try {
-          const res = await api.post('/user/change-email', { newEmail: formData.email });
+          await api.post('/user/change-email', { newEmail: formData.email });
           updatedAny = true;
         } catch (err: any) {
           showToast(err.response?.data?.error || 'Failed to update email.', 'error');

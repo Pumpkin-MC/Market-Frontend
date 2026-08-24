@@ -13,13 +13,35 @@
   --dash-shadow: 0 1px 3px rgba(0,0,0,0.08); /* New: for subtle shadows */
 }
 
-/* Dashboard Top App Header */
+/* Dashboard Layout Container */
+.dashboard-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--dash-bg, #F6F8FA);
+  color: var(--dash-text, #24292E);
+}
+
+.dashboard-content {
+  flex: 1;
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 2rem 2.5rem 2rem;
+  box-sizing: border-box;
+}
+
+/* Dashboard Top App Header (replaces main navbar in dev menu) */
 .dashboard-app-header {
   background: var(--dash-surface);
   border-bottom: 1px solid var(--dash-border);
-  padding: 0.85rem 2rem;
+  padding: 0.75rem 2rem;
   margin-bottom: 2rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
 .dashboard-app-header-inner {
@@ -28,6 +50,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
 }
 
 .dashboard-app-brand {
@@ -39,6 +62,7 @@
   font-weight: 800;
   font-size: 1.1rem;
   letter-spacing: -0.3px;
+  flex-shrink: 0;
 }
 
 .dashboard-app-logo {
@@ -49,6 +73,242 @@
 
 .dashboard-app-title span {
   color: var(--dash-accent, #ff7518);
+}
+
+.dashboard-app-nav-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  margin-left: 2rem;
+}
+
+.dashboard-app-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.dashboard-app-nav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--dash-text-muted);
+  text-decoration: none !important;
+  transition: all 0.15s ease;
+}
+
+.dashboard-app-nav-link:hover {
+  color: var(--dash-text);
+  background: var(--dash-surface-soft);
+}
+
+.dashboard-app-nav-link.active {
+  color: var(--dash-primary);
+  background: var(--dash-primary-light);
+  font-weight: 600;
+}
+
+.dashboard-app-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.dashboard-action-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  color: var(--dash-text-secondary);
+  border: 1px solid var(--dash-border);
+  background: var(--dash-surface);
+  transition: all 0.15s ease;
+}
+
+.dashboard-action-link:hover {
+  color: var(--dash-text);
+  background: var(--dash-surface-soft);
+  border-color: var(--dash-text-muted);
+}
+
+.dashboard-action-link.store-link {
+  background: transparent;
+  color: var(--dash-accent, #ff7518);
+  border-color: rgba(255, 117, 24, 0.3);
+}
+
+.dashboard-action-link.store-link:hover {
+  background: rgba(255, 117, 24, 0.08);
+  border-color: var(--dash-accent, #ff7518);
+  color: var(--dash-accent, #ff7518);
+}
+
+.dashboard-user-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none !important;
+  color: var(--dash-text);
+  background: var(--dash-surface-soft);
+  border: 1px solid var(--dash-border);
+  transition: all 0.15s ease;
+}
+
+.dashboard-user-link:hover {
+  background: var(--dash-hover);
+  border-color: var(--dash-text-secondary);
+}
+
+.dashboard-mobile-toggle {
+  display: none;
+  background: transparent;
+  border: none;
+  color: var(--dash-text);
+  cursor: pointer;
+  padding: 4px;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 860px) {
+  .dashboard-mobile-toggle {
+    display: flex;
+  }
+
+  .dashboard-app-nav-wrap {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--dash-surface);
+    border-bottom: 1px solid var(--dash-border);
+    flex-direction: column;
+    padding: 1rem 1.5rem 1.5rem;
+    gap: 1rem;
+    margin-left: 0;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.08);
+  }
+
+  .dashboard-app-nav-wrap.open {
+    display: flex;
+  }
+
+  .dashboard-app-nav {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+  }
+
+  .dashboard-app-nav-link {
+    padding: 10px 14px;
+  }
+
+  .dashboard-app-actions {
+    flex-direction: column;
+    width: 100%;
+    align-items: stretch;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--dash-border);
+  }
+
+  .dashboard-action-link, .dashboard-user-link {
+    justify-content: center;
+    padding: 10px;
+  }
+}
+
+/* Studio dark theme overrides for developer studio header when in ManagePlugin or AddPlugin */
+.dashboard-container:has(.mp-root) .dashboard-app-header,
+.dashboard-container:has(.ap-root) .dashboard-app-header {
+  background: var(--mp-surface, #151820);
+  border-color: var(--mp-border, #252a38);
+  margin-bottom: 0 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-brand,
+.dashboard-container:has(.ap-root) .dashboard-app-brand {
+  color: var(--mp-text, #e8eaf2);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-nav-link,
+.dashboard-container:has(.ap-root) .dashboard-app-nav-link {
+  color: var(--mp-text-2, #8b91a8);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-nav-link:hover,
+.dashboard-container:has(.ap-root) .dashboard-app-nav-link:hover {
+  color: var(--mp-text, #e8eaf2);
+  background: var(--mp-surface-2, #1c2030);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-nav-link.active,
+.dashboard-container:has(.ap-root) .dashboard-app-nav-link.active {
+  color: #ffffff;
+  background: rgba(79, 126, 255, 0.18);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-action-link,
+.dashboard-container:has(.ap-root) .dashboard-action-link {
+  background: var(--mp-surface-2, #1c2030);
+  border-color: var(--mp-border, #252a38);
+  color: var(--mp-text-2, #8b91a8);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-action-link:hover,
+.dashboard-container:has(.ap-root) .dashboard-action-link:hover {
+  color: var(--mp-text, #e8eaf2);
+  background: #252a38;
+}
+
+.dashboard-container:has(.mp-root) .dashboard-action-link.store-link,
+.dashboard-container:has(.ap-root) .dashboard-action-link.store-link {
+  background: transparent;
+  color: var(--dash-accent, #ff7518);
+  border-color: rgba(255, 117, 24, 0.3);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-action-link.store-link:hover,
+.dashboard-container:has(.ap-root) .dashboard-action-link.store-link:hover {
+  background: rgba(255, 117, 24, 0.12);
+  border-color: var(--dash-accent, #ff7518);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-user-link,
+.dashboard-container:has(.ap-root) .dashboard-user-link {
+  background: var(--mp-surface-2, #1c2030);
+  border-color: var(--mp-border, #252a38);
+  color: var(--mp-text, #e8eaf2);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-user-link:hover,
+.dashboard-container:has(.ap-root) .dashboard-user-link:hover {
+  background: #252a38;
+}
+
+.dashboard-container:has(.mp-root) .dashboard-mobile-toggle,
+.dashboard-container:has(.ap-root) .dashboard-mobile-toggle {
+  color: var(--mp-text, #e8eaf2);
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-nav-wrap,
+.dashboard-container:has(.ap-root) .dashboard-app-nav-wrap {
+  background: var(--mp-surface, #151820);
+  border-color: var(--mp-border, #252a38);
 }
 
 /* Override App.css within the dashboard */

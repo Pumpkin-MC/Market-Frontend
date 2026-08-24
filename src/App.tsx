@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search } from 'lucide-react';
+import { Search, Store, Package, Globe, PlusCircle } from 'lucide-react';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
 import LoginPage from './pages/auth/LoginPage'; 
@@ -124,9 +124,9 @@ const App = () => (
     <AuthProvider>
       <ScrollToTop />
       <Routes>
-        {/* All routes share MainLayout (navbar + footer) */}
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Home />} />
+        {/* All marketplace routes share MainLayout (original navbar + footer) */}
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Home />} />
           <Route path="plugin/:id" element={<PluginDetail />} />
           <Route path="plugin/:id-:slug" element={<PluginDetail />} />
           <Route path="profile/:username" element={<AuthorProfilePage />} />
@@ -141,15 +141,17 @@ const App = () => (
           <Route path="verify-email" element={<VerifyEmailPage />} />
           <Route path="confirm-email" element={<ConfirmEmailChangePage />} />
           <Route path="check-email" element={<CheckEmailPage />} />
-          <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-            <Route index element={<Navigate to="/dashboard/plugins" replace />} />
-            <Route path="audience" element={<DashboardAudience />} />
-            <Route path="plugins" element={<DashboardPlugins />} />
-            <Route path="add-plugin" element={<AddPlugin />} />
-            <Route path="manage-plugin/:id" element={<ManagePlugin />} />
-          </Route>
           <Route path="staff" element={<StaffRoute><AdminPanel /></StaffRoute>} />
           <Route path="settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+        </Route>
+
+        {/* Developer Studio layout (Developer Studio navbar replaces original navbar when in dev menu) */}
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+          <Route index element={<Navigate to="/dashboard/plugins" replace />} />
+          <Route path="audience" element={<DashboardAudience />} />
+          <Route path="plugins" element={<DashboardPlugins />} />
+          <Route path="add-plugin" element={<AddPlugin />} />
+          <Route path="manage-plugin/:id" element={<ManagePlugin />} />
         </Route>
       </Routes>
     </AuthProvider>
@@ -169,17 +171,86 @@ const MainLayout = () => {
 
 import './pages/dashboard/Dashboard.css';
 
+const DeveloperStudioNavbar = ({ user }: any) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  return (
+    <header className="dashboard-app-header">
+      <div className="dashboard-app-header-inner">
+        {/* Brand */}
+        <Link to="/dashboard/plugins" className="dashboard-app-brand" onClick={() => setIsMenuOpen(false)}>
+          <img src="/icon.png" alt="Market Logo" className="dashboard-app-logo" />
+          <span className="dashboard-app-title">DEVELOPER <span>STUDIO</span></span>
+        </Link>
+
+        {/* Mobile menu toggle button */}
+        <button className="dashboard-mobile-toggle" onClick={toggleMenu} aria-label="Toggle navigation menu">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            {isMenuOpen ? (
+              <path d="M18 6L6 18M6 6l12 12" />
+            ) : (
+              <path d="M3 12h18M3 6h18M3 18h18" />
+            )}
+          </svg>
+        </button>
+
+        {/* Navigation & Actions */}
+        <div className={`dashboard-app-nav-wrap ${isMenuOpen ? 'open' : ''}`}>
+          <nav className="dashboard-app-nav">
+            <NavLink
+              to="/dashboard/plugins"
+              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Package size={16} />
+              <span>Plugins</span>
+            </NavLink>
+            <NavLink
+              to="/dashboard/audience"
+              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <Globe size={16} />
+              <span>Audience</span>
+            </NavLink>
+            <NavLink
+              to="/dashboard/add-plugin"
+              className={({ isActive }) => `dashboard-app-nav-link ${isActive ? 'active' : ''}`}
+              onClick={() => setIsMenuOpen(false)}
+            >
+              <PlusCircle size={16} />
+              <span>Publish</span>
+            </NavLink>
+          </nav>
+
+          <div className="dashboard-app-actions">
+            <Link to="/" className="dashboard-action-link store-link" onClick={() => setIsMenuOpen(false)} title="Return to Marketplace">
+              <Store size={15} />
+              <span>Marketplace</span>
+            </Link>
+            {user && (user.role === 'admin' || user.role === 'moderator') && (
+              <NavLink to="/staff" className="dashboard-action-link" onClick={() => setIsMenuOpen(false)}>
+                <span>Staff</span>
+              </NavLink>
+            )}
+            {user && (
+              <NavLink to="/settings" className="dashboard-user-link" onClick={() => setIsMenuOpen(false)}>
+                <span>{user.username}</span>
+              </NavLink>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+};
+
 const DashboardLayout = () => {
+  const { user } = useAuth();
   return (
     <div className="dashboard-container">
-      <header className="dashboard-app-header">
-        <div className="dashboard-app-header-inner">
-          <Link to="/dashboard/plugins" className="dashboard-app-brand">
-            <img src="/icon.png" alt="Market Logo" className="dashboard-app-logo" />
-            <span className="dashboard-app-title">DEVELOPER <span>STUDIO</span></span>
-          </Link>
-        </div>
-      </header>
+      <DeveloperStudioNavbar user={user} />
       <div className="dashboard-content">
         <Outlet />
       </div>

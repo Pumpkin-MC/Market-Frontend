@@ -38,8 +38,8 @@
 
 .mp-root {
     display: flex;
-    /* navbar ~83px + dashboard-nav ~50px */
-    height: calc(100vh - 133px);
+    /* developer studio navbar ~58px */
+    height: calc(100vh - 58px);
     background: var(--mp-bg);
     color: var(--mp-text);
     font-family: var(--font-display);
@@ -52,7 +52,7 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    min-height: calc(100vh - 133px);
+    min-height: calc(100vh - 58px);
     gap: 1rem;
     background: var(--mp-bg);
     color: var(--mp-text-2);
@@ -626,22 +626,27 @@
     padding: 0 !important;
     margin: 0 !important;
     overflow: hidden;
-}
-
-/* Also kill the nav bottom margin and content padding from Dashboard.css */
-.dashboard-container:has(.mp-root) .dashboard-nav {
-    margin-bottom: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 .dashboard-container:has(.mp-root) {
     display: flex;
     flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.dashboard-container:has(.mp-root) .dashboard-app-header {
+    margin-bottom: 0 !important;
 }
 
 .dashboard-container:has(.mp-root) .dashboard-content {
     padding: 0 !important;
     flex: 1;
     overflow: hidden;
+    max-width: 100% !important;
+    width: 100% !important;
 }
 
 /* ── Scrollbar ──────────────────────────────────────────────── */
