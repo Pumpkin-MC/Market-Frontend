@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "buildWithoutLints": "vite build",
-    "lint": "eslint .",
+    "lint": "eslint . && npm run check:i18n",
+    "typecheck": "tsc -b",
+    "check:i18n": "node scripts/validate-i18n.mjs",
+    "test": "npm run check:i18n && npm run typecheck",
     "preview": "vite preview"
   },
   "dependencies": {

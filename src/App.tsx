@@ -307,9 +307,8 @@ const Navbar = ({ user }: any) => {
 
       <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
         <div className="nav-links">
-          <NavLink to="/" onClick={() => setIsMenuOpen(false)}>{t('home')}</NavLink>
           {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
-            <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('dashboard')}</NavLink>
+            <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('nav.dashboard')}</NavLink>
           )}
           {user && <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
           {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
@@ -321,7 +320,7 @@ const Navbar = ({ user }: any) => {
             <Search size={16} className="nav-search-icon" />
             <input
               type="text"
-              placeholder={t('search')}
+              placeholder={t('nav.search_placeholder')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleSearch}
@@ -334,8 +333,8 @@ const Navbar = ({ user }: any) => {
             <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
           ) : (
             <>
-              <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('login')}</Link>
-              <Link to="/register" className="btn" onClick={() => setIsMenuOpen(false)}>{t('register')}</Link>
+              <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('nav.login')}</Link>
+              <Link to="/register" className="btn" onClick={() => setIsMenuOpen(false)}>{t('nav.register')}</Link>
             </>
           )}
         </div>

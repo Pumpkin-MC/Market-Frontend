@@ -1,0 +1,26 @@
+[files]
+extend-exclude = [
+  "src/locales/de.json",
+  "src/locales/es.json",
+  "src/locales/fr.json",
+  "src/locales/it.json",
+  "src/locales/ja.json",
+  "src/locales/ko.json",
+  "src/locales/nl.json",
+  "src/locales/pl.json",
+  "src/locales/pt.json",
+  "src/locales/ru.json",
+  "src/locales/tr.json",
+  "src/locales/zh.json",
+  "dist/**",
+  "package-lock.json"
+]
+
+[default.extend-words]
+wasm = "wasm"
+preorder = "preorder"
+adwall = "adwall"
+PumpkinMC = "PumpkinMC"
+pumpkinmc = "pumpkinmc"
+Mis = "Mis"
+mis = "mis"

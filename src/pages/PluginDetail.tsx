@@ -138,7 +138,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const PluginDetail = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { id: rawId, slug } = useParams();
   const id = rawId ? rawId.split('-')[0] : rawId;
   const { user } = useAuth();
@@ -146,6 +146,8 @@ const PluginDetail = () => {
   const location = useLocation();
 
   const [plugin, setPlugin] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [adShown, setAdShown] = useState(false);
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
@@ -230,6 +232,8 @@ const PluginDetail = () => {
 
   // ── Fetch plugin ─────────────────────────────────────────────────────────
   const fetchPlugin = () => {
+    setLoading(true);
+    setError(null);
     api.get(`/plugins/${id}`).then(res => {
       setPlugin(res.data);
       if (res.data.youtube_video_url) {
@@ -246,6 +250,13 @@ const PluginDetail = () => {
           window.history.replaceState({}, '', targetPath + location.search);
         }
       }
+    })
+    .catch(err => {
+      console.error('Failed to load plugin:', err);
+      setError('Plugin not found or failed to load.');
+    })
+    .finally(() => {
+      setLoading(false);
     });
   };
 
@@ -490,8 +501,35 @@ const PluginDetail = () => {
     return `(${bytes} B)`;
   };
 
+  if (loading) {
+    return (
+      <div className="container">
+        <div className="loading-state" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="spinner" />
+          <p>{t('common.loading')}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !plugin) {
+    return (
+      <div className="container">
+        <div className="empty-state" style={{ minHeight: '60vh', textAlign: 'center', padding: '4rem 1rem' }}>
+          <h2>Plugin Not Found</h2>
+          <p style={{ color: 'var(--text-muted)', margin: '1rem 0 1.5rem' }}>
+            {error || 'The requested plugin could not be found.'}
+          </p>
+          <Link to="/" className="btn btn-secondary">
+            {t('common.back')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
   const downloadLabel = (() => {
-    const sizeStr = plugin.file_size ? ` ${formatSize(plugin.file_size)}` : '';
+    const sizeStr = plugin?.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
     if (plugin.type === 'paid') {
       if (!ownershipChecked) return 'Loading…';

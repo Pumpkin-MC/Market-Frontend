@@ -464,7 +464,7 @@ const LoginPage = () => {
 
             <button className="submit-btn" type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
-                <><span className="spinner" />{t('loading')}</>
+                <><span className="spinner" />{t('common.loading')}</>
               ) : requires2fa ? (
                 'Verify'
               ) : (
@@ -476,7 +476,7 @@ const LoginPage = () => {
           <div className="divider" />
 
           <div className="card-footer">
-            Don't have an account? <Link to="/register">Create one</Link>
+            {t('auth.no_account')} <Link to="/register">{t('auth.create_account')}</Link>
           </div>
         </div>
       </div>

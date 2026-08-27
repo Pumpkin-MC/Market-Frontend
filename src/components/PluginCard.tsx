@@ -38,31 +38,35 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
     const timerRef = useRef<any>(null);
     const cycleRef = useRef<any>(null);
 
-    const accent = useMemo(() => getAccentColor(plugin.name), [plugin.name]);
+    const accent = useMemo(() => getAccentColor(plugin?.name || ''), [plugin?.name]);
     
-    const getDescription = (translatedStr: string) => {
+    const getDescription = (translatedStr?: string) => {
+        if (!translatedStr) return 'No description available.';
         try {
             const data = JSON.parse(translatedStr);
-            const currentLang = i18n.language.split('-')[0];
+            const currentLang = (i18n.language || 'en').split('-')[0];
             return data[currentLang] || data.en || Object.values(data)[0] || 'No description available.';
         } catch {
             return 'No description available.';
         }
     };
 
-    const priceInfo = useMemo(() => getEffectivePrice(plugin), [plugin]);
-    const isSale = plugin.type === 'paid' && priceInfo.isSale;
-    const desc = getDescription(plugin.translated_descriptions);
-    const initial = plugin.name.charAt(0).toUpperCase();
+    const priceInfo = useMemo(() => (plugin ? getEffectivePrice(plugin) : { display: '€0.00', isSale: false, originalDisplay: '' }), [plugin]);
+    const isSale = plugin?.type === 'paid' && priceInfo.isSale;
+    const desc = getDescription(plugin?.translated_descriptions);
+    const initial = (plugin?.name || '?').charAt(0).toUpperCase();
 
     const slideshowImages = useMemo(() => {
+        if (!plugin) return [];
         const images = [];
         if (plugin.preview_path) images.push(plugin.preview_path);
         if (plugin.screenshots && plugin.screenshots.length > 0) {
             images.push(...plugin.screenshots);
         }
         return images;
-    }, [plugin.preview_path, plugin.screenshots]);
+    }, [plugin?.preview_path, plugin?.screenshots]);
+
+    if (!plugin) return null;
 
     const startHover = () => {
         setIsHovering(true);
