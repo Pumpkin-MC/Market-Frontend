@@ -89,8 +89,6 @@ const ForgotPasswordPage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
-
         .auth-page {
           display: flex;
           flex-direction: column;

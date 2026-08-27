@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { getCodeList } from 'country-list';
-import { Building2, User, Globe, Mail, CheckCircle2, ChevronRight, AlertCircle, CreditCard, Sparkles, Code2, ShieldCheck, MapPin, FileText } from 'lucide-react';
+import {
+  Building2, User, Globe, Mail, CheckCircle2, ChevronRight,
+  AlertCircle, CreditCard, Sparkles, Code2, ShieldCheck, MapPin,
+  Gift, DollarSign,
+} from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../App';
 import './DeveloperOnboardingModal.css';
@@ -11,15 +16,20 @@ interface DeveloperOnboardingModalProps {
   onSuccess?: () => void;
 }
 
-export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> = ({ isOpen, onClose, onSuccess }) => {
+export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}) => {
+  const { t } = useTranslation();
   const { user, login } = useAuth();
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [step, setStep] = useState<number>(1);
   const [entityType, setEntityType] = useState<'individual' | 'organization'>('individual');
   const [displayName, setDisplayName] = useState(user?.username || '');
+  const [isSellingPaid, setIsSellingPaid] = useState<boolean>(false);
+
+  // Legal / Address (for paid sellers)
   const [legalName, setLegalName] = useState('');
-  const [publishingIntent, setPublishingIntent] = useState('');
-  
-  // Legal / Address
   const [streetAddress, setStreetAddress] = useState('');
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
@@ -30,29 +40,38 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   const [supportEmail, setSupportEmail] = useState(user?.email || '');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
+  // Max steps: 3 for Free, 4 for Paid
+  const totalSteps = isSellingPaid ? 4 : 3;
+
   const handleCompleteOnboarding = async (connectStripe: boolean) => {
+    if (!acceptedTerms) {
+      setError('You must accept the Developer Distribution Agreement to continue.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {
       const res = await api.post('/user/developer/onboard', {
         entityType,
         displayName,
-        legalName: legalName || null,
-        streetAddress: streetAddress || null,
-        city: city || null,
-        postalCode: postalCode || null,
-        vatId: vatId || null,
-        publishingIntent: publishingIntent || null,
-        supportEmail: supportEmail || null,
-        websiteUrl: websiteUrl || null,
-        githubUrl: githubUrl || null,
-        country: country || null,
+        legalName: isSellingPaid ? (legalName.trim() || null) : null,
+        streetAddress: isSellingPaid ? (streetAddress.trim() || null) : null,
+        city: isSellingPaid ? (city.trim() || null) : null,
+        postalCode: isSellingPaid ? (postalCode.trim() || null) : null,
+        vatId: isSellingPaid ? (vatId.trim() || null) : null,
+        publishingIntent: isSellingPaid ? 'paid' : 'free',
+        supportEmail: supportEmail.trim() || null,
+        websiteUrl: websiteUrl.trim() || null,
+        githubUrl: githubUrl.trim() || null,
+        country: country || user?.country || null,
+        acceptedTerms,
       });
 
       if (res.data.token) {
@@ -76,28 +95,48 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
     }
   };
 
+  const nextStep = () => {
+    setStep(s => s + 1);
+  };
+
+  const prevStep = () => {
+    setStep(s => Math.max(1, s - 1));
+  };
+
   return (
     <div className="dev-modal-overlay">
       <div className="dev-modal-container">
-        <button className="dev-modal-close" onClick={onClose}>✕</button>
+        <button className="dev-modal-close" onClick={onClose} aria-label="Close modal">&times;</button>
 
         <div className="dev-modal-header">
           <div className="dev-modal-badge">
-            <Sparkles size={14} /> Developer Portal
+            <Sparkles size={14} /> {t('developer.onboarding.badge')}
           </div>
-          <h2>Become a Verified Developer</h2>
-          <p>Set up your creator profile and legal seller identity to publish plugins on PumpkinMarket.</p>
+          <h2>{t('developer.onboarding.title')}</h2>
+          <p>
+            {isSellingPaid
+              ? t('developer.onboarding.subtitle_paid')
+              : t('developer.onboarding.subtitle_free')}
+          </p>
         </div>
 
         {/* Step Indicator */}
         <div className="dev-steps-nav">
-          <div className={`dev-step-pill ${step >= 1 ? 'active' : ''}`}>1. Entity</div>
+          <div className={`dev-step-pill ${step >= 1 ? 'active' : ''}`}>{t('developer.onboarding.step_profile')}</div>
           <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 2 ? 'active' : ''}`}>2. Legal</div>
+          {isSellingPaid && (
+            <>
+              <div className={`dev-step-pill ${step >= 2 ? 'active' : ''}`}>{t('developer.onboarding.step_seller')}</div>
+              <div className="dev-step-line" />
+            </>
+          )}
+          <div className={`dev-step-pill ${step >= (isSellingPaid ? 3 : 2) ? 'active' : ''}`}>
+            {isSellingPaid ? `3. ${t('developer.onboarding.step_links')}` : `2. ${t('developer.onboarding.step_links')}`}
+          </div>
           <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 3 ? 'active' : ''}`}>3. Support</div>
-          <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 4 ? 'active' : ''}`}>4. Finish</div>
+          <div className={`dev-step-pill ${step >= totalSteps ? 'active' : ''}`}>
+            {totalSteps}. {t('developer.onboarding.step_finish')}
+          </div>
         </div>
 
         {error && (
@@ -107,20 +146,20 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </div>
         )}
 
-        {/* STEP 1: Entity Type & Public Name */}
+        {/* ── STEP 1: Entity Type, Public Name & Plan ── */}
         {step === 1 && (
           <div className="dev-step-content">
-            <label className="dev-field-label">How will you be publishing plugins?</label>
+            <label className="dev-field-label">{t('developer.onboarding.entity_question')}</label>
             <div className="dev-entity-grid">
               <button
                 type="button"
                 className={`dev-entity-card ${entityType === 'individual' ? 'selected' : ''}`}
                 onClick={() => setEntityType('individual')}
               >
-                <div className="dev-entity-icon"><User size={24} /></div>
+                <div className="dev-entity-icon"><User size={22} /></div>
                 <div>
-                  <h4>Individual / Solo Developer</h4>
-                  <p>Publishing as an independent creator or hobbyist.</p>
+                  <h4>{t('developer.onboarding.individual_title')}</h4>
+                  <p>{t('developer.onboarding.individual_desc')}</p>
                 </div>
               </button>
 
@@ -129,57 +168,74 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 className={`dev-entity-card ${entityType === 'organization' ? 'selected' : ''}`}
                 onClick={() => setEntityType('organization')}
               >
-                <div className="dev-entity-icon"><Building2 size={24} /></div>
+                <div className="dev-entity-icon"><Building2 size={22} /></div>
                 <div>
-                  <h4>Organization / Studio</h4>
-                  <p>Publishing on behalf of a company, team, or studio.</p>
+                  <h4>{t('developer.onboarding.org_title')}</h4>
+                  <p>{t('developer.onboarding.org_desc')}</p>
                 </div>
               </button>
             </div>
 
-            <div className="dev-form-group" style={{ marginTop: '1.25rem' }}>
-              <label className="dev-field-label">
-                {entityType === 'individual' ? 'Public Creator Name' : 'Studio / Organization Name'} *
-              </label>
+            <div className="dev-form-group">
+              <label>{t('developer.onboarding.display_name_label')}</label>
               <input
                 type="text"
                 className="dev-input"
+                placeholder={t('developer.onboarding.display_name_placeholder')}
                 value={displayName}
                 onChange={e => setDisplayName(e.target.value)}
-                placeholder={entityType === 'individual' ? 'e.g. John Doe or AlexDev' : 'e.g. Acme Studio'}
-                required
+                maxLength={60}
+                autoFocus
               />
-              <span className="dev-hint">This name will be publicly shown on all your plugin pages.</span>
+              <span className="dev-hint">{t('developer.onboarding.display_name_hint')}</span>
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><FileText size={14} /> What type of plugins do you plan to publish?</label>
-              <input
-                type="text"
-                className="dev-input"
-                value={publishingIntent}
-                onChange={e => setPublishingIntent(e.target.value)}
-                placeholder="e.g. Economy utilities, Chat moderation tools, Mini-games"
-              />
+              <label>{t('developer.onboarding.intent_label')}</label>
+              <div className="dev-entity-grid">
+                <button
+                  type="button"
+                  className={`dev-entity-card ${!isSellingPaid ? 'active' : ''}`}
+                  onClick={() => setIsSellingPaid(false)}
+                >
+                  <div className="dev-entity-icon"><Gift size={22} color="#10b981" /></div>
+                  <div>
+                    <h4>{t('developer.onboarding.intent_free')}</h4>
+                    <p>{t('developer.onboarding.intent_free_desc')}</p>
+                  </div>
+                </button>
+
+                <button
+                  type="button"
+                  className={`dev-entity-card ${isSellingPaid ? 'active' : ''}`}
+                  onClick={() => setIsSellingPaid(true)}
+                >
+                  <div className="dev-entity-icon"><DollarSign size={22} color="#f97316" /></div>
+                  <div>
+                    <h4>{t('developer.onboarding.intent_paid')}</h4>
+                    <p>{t('developer.onboarding.intent_paid_desc')}</p>
+                  </div>
+                </button>
+              </div>
             </div>
 
             <button
               className="dev-btn dev-btn-primary"
               style={{ marginTop: '1.25rem' }}
               disabled={!displayName.trim()}
-              onClick={() => setStep(2)}
+              onClick={nextStep}
             >
-              Continue <ChevronRight size={16} />
+              {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
             </button>
           </div>
         )}
 
-        {/* STEP 2: Legal Identity & Physical Address */}
-        {step === 2 && (
+        {/* ── STEP 2 (Paid Only): Legal Seller Identity & Address ── */}
+        {isSellingPaid && step === 2 && (
           <div className="dev-step-content">
             <div className="dev-form-group">
               <label className="dev-field-label">
-                <ShieldCheck size={14} /> {entityType === 'individual' ? 'Full Legal Name' : 'Registered Business Name'} *
+                <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
               </label>
               <input
                 type="text"
@@ -189,11 +245,10 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
                 required
               />
-              <span className="dev-hint">Used for verification, legal compliance, and tax records.</span>
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><MapPin size={14} /> Street Address *</label>
+              <label className="dev-field-label"><MapPin size={14} /> {t('developer.onboarding.street_label')}</label>
               <input
                 type="text"
                 className="dev-input"
@@ -206,7 +261,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="dev-form-group">
-                <label className="dev-field-label">City *</label>
+                <label className="dev-field-label">{t('developer.onboarding.city_label')}</label>
                 <input
                   type="text"
                   className="dev-input"
@@ -217,7 +272,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 />
               </div>
               <div className="dev-form-group">
-                <label className="dev-field-label">Postal / ZIP Code *</label>
+                <label className="dev-field-label">{t('developer.onboarding.postal_label')}</label>
                 <input
                   type="text"
                   className="dev-input"
@@ -231,7 +286,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="dev-form-group">
-                <label className="dev-field-label"><Globe size={14} /> Country / Region *</label>
+                <label className="dev-field-label"><Globe size={14} /> {t('developer.onboarding.country_label')}</label>
                 <select
                   className="dev-input dev-select"
                   value={country}
@@ -246,7 +301,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
               </div>
 
               <div className="dev-form-group">
-                <label className="dev-field-label">VAT / Tax ID <span className="dev-hint">(optional)</span></label>
+                <label className="dev-field-label">{t('developer.onboarding.vat_label')}</label>
                 <input
                   type="text"
                   className="dev-input"
@@ -258,23 +313,23 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
 
             <div className="dev-btn-row" style={{ marginTop: '1.25rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={() => setStep(1)}>Back</button>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
               <button
                 className="dev-btn dev-btn-primary"
                 disabled={!legalName.trim() || !streetAddress.trim() || !city.trim() || !postalCode.trim() || !country}
-                onClick={() => setStep(3)}
+                onClick={nextStep}
               >
-                Continue <ChevronRight size={16} />
+                {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 3: Support Contact & Portfolio Links */}
-        {step === 3 && (
+        {/* ── STEP (Free: Step 2, Paid: Step 3): Support Contact & Portfolio Links ── */}
+        {((!isSellingPaid && step === 2) || (isSellingPaid && step === 3)) && (
           <div className="dev-step-content">
             <div className="dev-form-group">
-              <label className="dev-field-label"><Mail size={14} /> Support / Public Contact Email *</label>
+              <label className="dev-field-label"><Mail size={14} /> {t('developer.onboarding.support_email_label')} *</label>
               <input
                 type="email"
                 className="dev-input"
@@ -283,11 +338,10 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 placeholder="support@yourdomain.com"
                 required
               />
-              <span className="dev-hint">Where users can reach you for plugin help and questions.</span>
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><Globe size={14} /> Website / Portfolio URL</label>
+              <label className="dev-field-label"><Globe size={14} /> {t('developer.onboarding.website_label')}</label>
               <input
                 type="url"
                 className="dev-input"
@@ -298,7 +352,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><Code2 size={14} /> GitHub Profile / Organization</label>
+              <label className="dev-field-label"><Code2 size={14} /> {t('developer.onboarding.github_label')}</label>
               <input
                 type="text"
                 className="dev-input"
@@ -309,55 +363,128 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
 
             <div className="dev-btn-row" style={{ marginTop: '1.5rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={() => setStep(2)}>Back</button>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
               <button
                 className="dev-btn dev-btn-primary"
                 disabled={!supportEmail.trim()}
-                onClick={() => setStep(4)}
+                onClick={nextStep}
               >
-                Continue <ChevronRight size={16} />
+                {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
               </button>
             </div>
           </div>
         )}
 
-        {/* STEP 4: Monetization & Confirmation */}
-        {step === 4 && (
+        {/* ── STEP (Free: Step 3, Paid: Step 4): Finish & Confirmation ── */}
+        {step === totalSteps && (
           <div className="dev-step-content">
-            <div className="dev-monetization-box">
-              <div className="dev-monetization-header">
-                <CreditCard size={20} />
-                <div>
-                  <h4>Publishing & Payouts</h4>
-                  <p>You can publish <strong>Free plugins immediately</strong> without linking a bank account.</p>
+            {!isSellingPaid ? (
+              <>
+                <div className="dev-monetization-box">
+                  <div className="dev-monetization-header">
+                    <Gift size={22} color="#10b981" />
+                    <div>
+                      <h4>Ready to Publish Free Plugins!</h4>
+                      <p>Your developer profile is configured for free &amp; open-source uploads.</p>
+                    </div>
+                  </div>
+                  <ul className="dev-check-list">
+                    <li><CheckCircle2 size={16} color="#10b981" /> Publish unlimited free plugins ($0 fee)</li>
+                    <li><CheckCircle2 size={16} color="#10b981" /> Full analytics and review dashboard</li>
+                    <li><CheckCircle2 size={16} color="#10b981" /> Option to add address &amp; sell paid plugins anytime later</li>
+                  </ul>
                 </div>
-              </div>
-              <ul className="dev-check-list">
-                <li><CheckCircle2 size={16} /> Publish unlimited free plugins ($0 upload fee)</li>
-                <li><CheckCircle2 size={16} /> Option to sell paid plugins via Stripe Connect</li>
-                <li><CheckCircle2 size={16} /> Access full analytics and reviews dashboard</li>
-              </ul>
-            </div>
 
-            <div className="dev-btn-row-stacked" style={{ marginTop: '1.5rem' }}>
-              <button
-                className="dev-btn dev-btn-primary"
-                disabled={loading}
-                onClick={() => handleCompleteOnboarding(false)}
-              >
-                {loading ? 'Completing setup...' : 'Complete Registration & Start Free Uploads'}
-              </button>
-              <button
-                className="dev-btn dev-btn-stripe"
-                disabled={loading}
-                onClick={() => handleCompleteOnboarding(true)}
-              >
-                <CreditCard size={16} /> Connect Stripe for Paid Plugins & Complete Setup
-              </button>
-            </div>
+                {/* ── Mandatory Legal Consent ── */}
+                <div style={{
+                  marginTop: '1.25rem',
+                  padding: '0.85rem 1rem',
+                  background: 'rgba(255, 183, 77, 0.06)',
+                  border: '1px solid rgba(255, 183, 77, 0.25)',
+                  borderRadius: 8,
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={e => setAcceptedTerms(e.target.checked)}
+                      style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+                    />
+                    <span>
+                      I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Marketplace the worldwide license to distribute my plugins, acknowledge platform moderation and takedown authority, and confirm my plugins comply with Mojang's Minecraft EULA.
+                    </span>
+                  </label>
+                </div>
+
+                <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
+                  <button
+                    className="dev-btn dev-btn-primary"
+                    disabled={loading || !acceptedTerms}
+                    onClick={() => handleCompleteOnboarding(false)}
+                  >
+                    {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="dev-monetization-box">
+                  <div className="dev-monetization-header">
+                    <CreditCard size={22} color="#f97316" />
+                    <div>
+                      <h4>{t('developer.onboarding.intent_paid')}</h4>
+                      <p>{t('developer.onboarding.intent_paid_desc')}</p>
+                    </div>
+                  </div>
+                  <ul className="dev-check-list">
+                    <li><CheckCircle2 size={16} color="#10b981" /> Automated payouts directly to your bank account</li>
+                    <li><CheckCircle2 size={16} color="#10b981" /> Set custom pricing, discounts, and coupons</li>
+                    <li><CheckCircle2 size={16} color="#10b981" /> Automated license key generation for buyers</li>
+                  </ul>
+                </div>
+
+                {/* ── Mandatory Legal Consent ── */}
+                <div style={{
+                  marginTop: '1.25rem',
+                  padding: '0.85rem 1rem',
+                  background: 'rgba(255, 183, 77, 0.06)',
+                  border: '1px solid rgba(255, 183, 77, 0.25)',
+                  borderRadius: 8,
+                }}>
+                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    <input
+                      type="checkbox"
+                      checked={acceptedTerms}
+                      onChange={e => setAcceptedTerms(e.target.checked)}
+                      style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
+                    />
+                    <span>
+                      I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Marketplace the worldwide license to distribute my plugins, acknowledge platform moderation and takedown authority, and confirm my plugins comply with Mojang's Minecraft EULA.
+                    </span>
+                  </label>
+                </div>
+
+                <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
+                  <button
+                    className="dev-btn dev-btn-stripe"
+                    disabled={loading || !acceptedTerms}
+                    onClick={() => handleCompleteOnboarding(true)}
+                  >
+                    <CreditCard size={16} /> {loading ? 'Connecting Stripe...' : t('developer.onboarding.btn_connect_stripe')}
+                  </button>
+                  <button
+                    className="dev-btn dev-btn-secondary"
+                    disabled={loading || !acceptedTerms}
+                    onClick={() => handleCompleteOnboarding(false)}
+                  >
+                    {t('developer.onboarding.btn_complete')}
+                  </button>
+                </div>
+              </>
+            )}
 
             <div className="dev-btn-row" style={{ marginTop: '1rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={() => setStep(3)}>Back</button>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
             </div>
           </div>
         )}

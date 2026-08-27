@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   LineChart, Line
@@ -83,6 +84,7 @@ const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: a
 };
 
 const DashboardOverview = () => {
+  const { t } = useTranslation();
   const { processedData, totals, ratingSummary, timeframe, setTimeframe, recentActivity, trends } = useAnalytics();
   const timeframes = ['Today', '7 Days', '1 Month', '1 Year'];
 
@@ -90,7 +92,7 @@ const DashboardOverview = () => {
     <div className="dashboard-wrapper">
       <header className="dashboard-top-nav">
         <div>
-          <h1>Overview</h1>
+          <h1>{t('developer.dashboard.overview')}</h1>
           <p className="subtitle">Real-time performance for the <strong>{timeframe}</strong> period</p>
         </div>
         <div className="segment-control">
@@ -110,7 +112,7 @@ const DashboardOverview = () => {
         <main className="main-stats">
           <div className="kpi-row" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
             <KpiCard
-              title="Revenue"
+              title={t('developer.dashboard.total_revenue')}
               value={`$${totals.earnings.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}
               comparison={trends?.earnings}
               icon={DollarSign}
@@ -118,7 +120,7 @@ const DashboardOverview = () => {
               dataKey="earnings"
             />
             <KpiCard
-              title="Downloads"
+              title={t('developer.dashboard.total_downloads')}
               value={totals.downloads.toLocaleString()}
               comparison={trends?.downloads}
               icon={Download}
@@ -134,8 +136,8 @@ const DashboardOverview = () => {
               dataKey="conversion" 
             />
             <KpiCard
-              title="Avg Rating"
-              value={ratingSummary?.averageRating ? `★ ${ratingSummary.averageRating.toFixed(1)}` : '★ --'}
+              title={t('developer.dashboard.avg_rating')}
+              value={ratingSummary?.averageRating ? `${ratingSummary.averageRating.toFixed(1)} / 5.0` : '--'}
               comparison={0}
               icon={Star}
               chartData={processedData}
@@ -143,84 +145,142 @@ const DashboardOverview = () => {
             />
           </div>
 
-          <div className="chart-container-v2" style={{ marginBottom: '1.5rem' }}>
-            <div className="chart-header">
-              <h3>Revenue Growth</h3>
-              <div className="chart-legend">
-                <span className="legend-item earnings">Earnings ($)</span>
+          {/* Charts Row */}
+          <div className="charts-grid-v2">
+            <div className="chart-container-v2">
+              <div className="chart-header">
+                <h3>Views vs Downloads</h3>
+                <div className="chart-legend">
+                  <span className="legend-item" style={{ color: '#3b82f6' }}>Views</span>
+                  <span className="legend-item" style={{ color: '#10b981' }}>Downloads</span>
+                </div>
               </div>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="viewsGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="dlsGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}} 
+                      dy={10} 
+                  />
+                  <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}}
+                      tickFormatter={formatValue}
+                  />
+                  <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="views" 
+                    name="Views" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2} 
+                    fillOpacity={1} 
+                    fill="url(#viewsGrad)" 
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="downloads" 
+                    name="Downloads" 
+                    stroke="#10b981" 
+                    strokeWidth={2} 
+                    fillOpacity={1} 
+                    fill="url(#dlsGrad)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <ResponsiveContainer width="100%" height={320}>
-              <AreaChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#94a3b8', fontSize: 12}} 
-                    dy={10} 
-                />
-                <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#94a3b8', fontSize: 12}}
-                    tickFormatter={formatValue}
-                />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
-                <Area
-                  type="monotone"
-                  dataKey="earnings"
-                  name="Earnings ($)"
-                  stroke="#6366f1"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#chartGradient)"
-                  animationDuration={1500}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
 
-          {/* ── Rating Over Time Chart ── */}
-          <div className="chart-container-v2">
-            <div className="chart-header">
-              <h3>Rating Over Time</h3>
-              <div className="chart-legend">
-                <span className="legend-item" style={{ color: '#f59e0b' }}>★ Daily Rating (1-5)</span>
+            <div className="chart-container-v2">
+              <div className="chart-header">
+                <h3>Revenue Growth (€)</h3>
+                <div className="chart-legend">
+                  <span className="legend-item" style={{ color: '#f97316' }}>Gross Sales</span>
+                </div>
               </div>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                      <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}} 
+                      dy={10} 
+                  />
+                  <YAxis 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}}
+                      tickFormatter={formatValue}
+                  />
+                  <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+                  <Area 
+                    type="monotone" 
+                    dataKey="revenue" 
+                    name="Revenue" 
+                    stroke="#f97316" 
+                    strokeWidth={2} 
+                    fillOpacity={1} 
+                    fill="url(#revGrad)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#94a3b8', fontSize: 12}} 
-                    dy={10} 
-                />
-                <YAxis 
-                    domain={[1, 5]}
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{fill: '#94a3b8', fontSize: 12}}
-                />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
-                <Line
-                  type="monotone"
-                  dataKey="avgRating"
-                  name="Rating"
-                  stroke="#f59e0b"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: '#f59e0b' }}
-                  animationDuration={1500}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+
+            {/* ── Rating Over Time Chart ── */}
+            <div className="chart-container-v2">
+              <div className="chart-header">
+                <h3>Rating Over Time</h3>
+                <div className="chart-legend">
+                  <span className="legend-item" style={{ color: '#f59e0b' }}>Daily Rating (1-5)</span>
+                </div>
+              </div>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
+                  <XAxis 
+                      dataKey="date" 
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}} 
+                      dy={10} 
+                  />
+                  <YAxis 
+                      domain={[1, 5]}
+                      axisLine={false} 
+                      tickLine={false} 
+                      tick={{fill: '#94a3b8', fontSize: 12}}
+                  />
+                  <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
+                  <Line
+                    type="monotone"
+                    dataKey="avgRating"
+                    name="Rating"
+                    stroke="#f59e0b"
+                    strokeWidth={3}
+                    dot={{ r: 4, fill: '#f59e0b' }}
+                    animationDuration={1500}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </main>
 
@@ -245,7 +305,7 @@ const DashboardOverview = () => {
                     const pct = ratingSummary.totalReviews > 0 ? (b.count / ratingSummary.totalReviews) * 100 : 0;
                     return (
                       <div key={b.stars} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.78rem' }}>
-                        <span style={{ width: '32px', color: 'var(--text-muted)' }}>{b.stars} ★</span>
+                        <span style={{ width: '48px', color: 'var(--text-muted)' }}>{b.stars} Stars</span>
                         <div style={{ flex: 1, height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
                           <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: '3px' }} />
                         </div>

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../api';
 import { useAuth } from '../App';
@@ -6,7 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
-import { Sparkles, History, ChevronRight } from 'lucide-react';
+import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock } from 'lucide-react';
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -52,14 +53,15 @@ const REVIEW_REPORT_REASONS = [
 const MAX_REVIEW_LENGTH = 2000;
 
 const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number; onRate?: (n: number) => void }) => (
-  <div className="star-rating-container">
+  <div className="star-rating-container" style={{ display: 'flex', gap: 2 }}>
   {[...Array(max)].map((_, i) => (
     <span
     key={i}
     className={`star-icon ${i < rating ? 'filled' : 'empty'} ${onRate ? 'interactive' : ''}`}
     onClick={() => onRate && onRate(i + 1)}
+    style={{ display: 'inline-flex', alignItems: 'center' }}
     >
-    {i < rating ? '★' : '☆'}
+    <Star size={16} fill={i < rating ? 'currentColor' : 'none'} />
     </span>
   ))}
   </div>
@@ -136,6 +138,7 @@ const formatDate = (dateStr: string) => {
 };
 
 const PluginDetail = () => {
+  const { i18n } = useTranslation();
   const { id: rawId, slug } = useParams();
   const id = rawId ? rawId.split('-')[0] : rawId;
   const { user } = useAuth();
@@ -148,7 +151,6 @@ const PluginDetail = () => {
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
-  const [selectedLanguage] = useState('en');
   const [currentDescription, setCurrentDescription] = useState('');
 
   // Coupon state
@@ -263,19 +265,20 @@ const PluginDetail = () => {
     if (plugin?.translated_descriptions) {
       try {
         const translations = JSON.parse(plugin.translated_descriptions);
+        const activeLang = (i18n.language || 'en').slice(0, 2);
         setCurrentDescription(
-          translations[selectedLanguage] ||
+          translations[activeLang] ||
           translations['en'] ||
-          Object.values(translations)[0] as string ||
+          (Object.values(translations)[0] as string) ||
           ''
         );
       } catch {
         setCurrentDescription('Description not available.');
       }
-    } else {
-      setCurrentDescription('Description not available.');
+    } else if (plugin?.description) {
+      setCurrentDescription(plugin.description);
     }
-  }, [plugin, selectedLanguage]);
+  }, [plugin, i18n.language]);
 
   // ── Lightbox helpers ─────────────────────────────────────────────────────
   const screenshots = plugin?.screenshots ?? [];
@@ -348,6 +351,10 @@ const PluginDetail = () => {
     if (plugin.type === 'paid') {
       // Already owns it — download directly, no checkout
       if (ownsPlugin) {
+        if (plugin.is_preorder) {
+          alert('You have successfully pre-ordered this plugin! You will receive an automated email notification the moment the developer releases the downloadable version.');
+          return;
+        }
         try {
           await triggerDownload(`/plugins/${id}/download/premium`);
         } catch {
@@ -365,8 +372,12 @@ const PluginDetail = () => {
         if (err?.response?.status === 409) {
           // Webhook already recorded purchase before redirect resolved
           setOwnsPlugin(true);
-          alert('You already own this plugin — downloading now.');
-          await triggerDownload(`/plugins/${id}/download/premium`);
+          if (plugin.is_preorder) {
+            alert('You have pre-ordered this plugin! You will receive an email as soon as it releases.');
+          } else {
+            alert('You already own this plugin — downloading now.');
+            await triggerDownload(`/plugins/${id}/download/premium`);
+          }
         } else {
           alert('Checkout failed. Please try again.');
         }
@@ -406,9 +417,8 @@ const PluginDetail = () => {
     try {
       await api.delete(`/plugins/${id}/reviews`);
       fetchPlugin();
-    } catch (err) {
-      console.error('Failed to delete review', err);
-      alert('Failed to delete review');
+    } catch {
+      alert('Failed to delete review.');
     }
   };
 
@@ -421,12 +431,18 @@ const PluginDetail = () => {
       setReplyOpen(null);
       setReplyText('');
       fetchPlugin();
-    } catch (err) {
-      console.error('Failed to submit reply', err);
-      alert('Failed to submit reply');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to post reply.');
     } finally {
       setReplySubmitting(false);
     }
+  };
+
+  const resetReport = () => {
+    setReportOpen(false);
+    setReportSelected('');
+    setReportCustom('');
+    setReportDone(false);
   };
 
   const submitReport = async (e: React.FormEvent) => {
@@ -437,8 +453,6 @@ const PluginDetail = () => {
     try {
       await api.post(`/plugins/${id}/report`, { reason });
       setReportDone(true);
-      setReportSelected('');
-      setReportCustom('');
     } catch {
       alert('Failed to submit report. Please try again.');
     } finally {
@@ -446,10 +460,10 @@ const PluginDetail = () => {
     }
   };
 
-  const resetReport = () => {
-    setReportOpen(false);
-    setReportSelected('');
-    setReportCustom('');
+  const resetReviewReport = () => {
+    setReviewReportOpen(null);
+    setReviewReportSelected('');
+    setReviewReportCustom('');
   };
 
   const submitReviewReport = async (e: React.FormEvent, reviewId: number) => {
@@ -461,22 +475,15 @@ const PluginDetail = () => {
       await api.post(`/plugins/${id}/reviews/${reviewId}/report`, { reason });
       setReportedReviews(prev => new Set(prev).add(reviewId));
       resetReviewReport();
+      alert('Thank you. The report has been submitted to moderators.');
     } catch {
-      alert('Failed to submit report. Please try again.');
+      alert('Failed to report review. Please try again.');
     } finally {
       setReviewReportSubmitting(false);
     }
   };
 
-  const resetReviewReport = () => {
-    setReviewReportOpen(null);
-    setReviewReportSelected('');
-    setReviewReportCustom('');
-  };
-
-  if (!plugin) return <div className="container"><h2>LOADING...</h2></div>;
-
-  const formatSize = (bytes: number) => {
+  const formatSize = (bytes?: number) => {
     if (!bytes) return '';
     if (bytes >= 1048576) return `(${(bytes / 1048576).toFixed(2)} MB)`;
     if (bytes >= 1024) return `(${(bytes / 1024).toFixed(1)} KB)`;
@@ -486,14 +493,23 @@ const PluginDetail = () => {
   const downloadLabel = (() => {
     const sizeStr = plugin.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
-  if (plugin.type === 'paid') {
-    if (!ownershipChecked) return 'Loading…';
-    return ownsPlugin ? `Download ${sizeStr}` : 'Purchase Plugin';
-  }
+    if (plugin.type === 'paid') {
+      if (!ownershipChecked) return 'Loading…';
+      if (ownsPlugin) {
+        if (plugin.is_preorder) {
+          return 'Pre-Ordered (Awaiting Release)';
+        }
+        return `Download ${sizeStr}`;
+      }
+      if (plugin.is_preorder) {
+        return 'Pre-Order Now';
+      }
+      return 'Purchase Plugin';
+    }
 
-  if (plugin.type === 'adwall' && !adShown) return 'Watch Ad to Download';
+    if (plugin.type === 'adwall' && !adShown) return 'Watch Ad to Download';
 
-  return `Download ${sizeStr}`;
+    return `Download ${sizeStr}`;
   })();
 
   const cleanDesc = currentDescription.replace(/[#*`_\[\]]/g, '').slice(0, 160).trim();
@@ -568,10 +584,61 @@ const PluginDetail = () => {
     {JSON.stringify(productSchema)}
     </script>
 
+    {/* ── Pre-Order Banner ── */}
+    {plugin.is_preorder && (
+      <div style={{
+        marginBottom: '1.5rem',
+        padding: '1.25rem 1.5rem',
+        background: 'linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.04) 100%)',
+        border: '1px solid rgba(249,115,22,0.35)',
+        borderRadius: 12,
+        display: 'flex',
+        alignItems: 'flex-start',
+        gap: '1rem',
+        boxShadow: '0 4px 20px rgba(249,115,22,0.08)'
+      }}>
+        <div style={{
+          width: 38,
+          height: 38,
+          borderRadius: 8,
+          background: 'rgba(249,115,22,0.2)',
+          color: '#f97316',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.2rem',
+          flexShrink: 0
+        }}>
+          ⏳
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f97316', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Available for Pre-Order
+            {plugin.preorder_release_date && (
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, background: 'rgba(249,115,22,0.2)', color: '#f97316', padding: '2px 8px', borderRadius: 4 }}>
+                Expected: {formatDate(plugin.preorder_release_date)}
+              </span>
+            )}
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', lineHeight: 1.5 }}>
+            {ownsPlugin ? (
+              <span style={{ color: '#4ade80', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Check size={16} color="#4ade80" /> You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.
+              </span>
+            ) : (
+              <span>
+                Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* ── Early Access Banner ── */}
     {plugin.is_early_access && (
       <div className="early-access-banner" style={{ marginBottom: '1.5rem' }}>
-        <div className="early-access-icon">⏳</div>
+        <div className="early-access-icon"><Clock size={18} /></div>
         <div className="early-access-content">
           <div className="early-access-title">Early Access Plugin</div>
           <div className="early-access-text">
@@ -585,7 +652,7 @@ const PluginDetail = () => {
     {/* ── Payment success banner ── */}
     {showPaymentSuccess && (
       <div className="payment-success-banner">
-      <span className="success-icon">🎉</span>
+      <span className="success-icon"><CheckCircle2 size={24} color="#10b981" /></span>
       <div className="banner-content">
       <div className="banner-title">
       Purchase successful!
@@ -753,7 +820,9 @@ const PluginDetail = () => {
       <div className="review-big-avg">{stats.avg}</div>
       <div className="review-stars-row">
       {[1, 2, 3, 4, 5].map(n => (
-        <span key={n} className={`review-star-icon ${n <= Math.round(Number(stats.avg)) ? 'filled' : 'empty'}`}>★</span>
+        <span key={n} className={`review-star-icon ${n <= Math.round(Number(stats.avg)) ? 'filled' : 'empty'}`}>
+          <Star size={14} fill={n <= Math.round(Number(stats.avg)) ? 'currentColor' : 'none'} />
+        </span>
       ))}
       </div>
       <div className="review-total-label">{stats.total.toLocaleString()} Ratings</div>
@@ -793,7 +862,9 @@ const PluginDetail = () => {
       </div>
       <div className="review-item-stars">
       {[1, 2, 3, 4, 5].map(n => (
-        <span key={n} className={`review-star-sm ${n <= r.rating ? 'filled' : 'empty'}`}>★</span>
+        <span key={n} className={`review-star-sm ${n <= r.rating ? 'filled' : 'empty'}`}>
+          <Star size={12} fill={n <= r.rating ? 'currentColor' : 'none'} />
+        </span>
       ))}
       </div>
       <ExpandableText className="review-item-body" text={r.comment} limit={400} />
@@ -824,7 +895,9 @@ const PluginDetail = () => {
       {/* Review Report & Reply Buttons */}
       <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
         {reportedReviews.has(r.id) ? (
-          <p style={{ fontSize: '0.75rem', color: 'var(--success)', margin: 0 }}>✓ Report submitted</p>
+          <p style={{ fontSize: '0.75rem', color: 'var(--success)', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Check size={13} /> Report submitted
+          </p>
         ) : reviewReportOpen === r.id ? (
           <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px', width: '100%' }}>
             <label className="report-form-label">Reason for reporting this review</label>
@@ -902,12 +975,12 @@ const PluginDetail = () => {
         ) : (
           <>
             {user && user.username === r.username ? (
-              <button className="btn-report" onClick={deleteReview} style={{ fontSize: '0.7rem', color: '#ff4d4f' }}>
-                🗑 Delete my review
+              <button className="btn-report" onClick={deleteReview} style={{ fontSize: '0.7rem', color: '#ff4d4f', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Trash2 size={12} /> Delete my review
               </button>
             ) : user && (
-              <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem' }}>
-                🚩 Report review
+              <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                <Flag size={12} /> Report review
               </button>
             )}
 
@@ -915,9 +988,9 @@ const PluginDetail = () => {
               <button 
                 className="btn-report" 
                 onClick={() => setReplyOpen(r.id)} 
-                style={{ fontSize: '0.7rem', color: 'var(--primary)' }}
+                style={{ fontSize: '0.7rem', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
               >
-                💬 Reply as developer
+                <MessageSquare size={12} /> Reply as developer
               </button>
             )}
           </>
@@ -930,7 +1003,7 @@ const PluginDetail = () => {
     {user ? (
       hasReviewed ? (
         <div className="review-already-posted">
-        <span className="review-already-icon">✓</span>
+        <span className="review-already-icon"><Check size={14} /></span>
         <div style={{ flex: 1 }}>
         <div className="review-already-title">Review posted</div>
         <div className="review-already-sub">You've already reviewed this plugin. Thanks for the feedback!</div>
@@ -986,14 +1059,19 @@ const PluginDetail = () => {
     {/* Price / owned indicator */}
     <div className="price-hero-section">
     {plugin.type === 'paid' && ownsPlugin ? (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--success, #4ade80)', fontWeight: 700, fontSize: '0.9rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: plugin.is_preorder ? '#f97316' : 'var(--success, #4ade80)', fontWeight: 700, fontSize: '0.9rem' }}>
       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
       </svg>
-      Purchased
+      {plugin.is_preorder ? 'Pre-Ordered (Awaiting Release)' : 'Purchased'}
       </div>
     ) : plugin.type === 'paid' ? (
       <div>
+        {plugin.is_preorder && (
+          <span style={{ display: 'inline-block', fontSize: '0.68rem', fontWeight: 800, background: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 4, padding: '1px 6px', marginBottom: '0.35rem' }}>
+            PRE-ORDER
+          </span>
+        )}
         {(() => {
           const base = plugin.price_cents;
           const salePrice = plugin.sale_active && plugin.sale_discount_percent > 0 
@@ -1156,8 +1234,8 @@ const PluginDetail = () => {
     {user && !reportDone && (
       <>
       {!reportOpen ? (
-        <button className="btn-report" onClick={() => setReportOpen(true)}>
-        🚩 Report plugin
+        <button className="btn-report" onClick={() => setReportOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+          <Flag size={12} /> Report plugin
         </button>
       ) : (
         <form onSubmit={submitReport} className="report-form">
@@ -1205,7 +1283,9 @@ const PluginDetail = () => {
       </>
     )}
     {reportDone && (
-      <p className="report-done">✓ Report submitted. Thanks for keeping the marketplace safe.</p>
+      <p className="report-done" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <Check size={14} /> Report submitted. Thanks for keeping the marketplace safe.
+      </p>
     )}
     </div>
     </div>

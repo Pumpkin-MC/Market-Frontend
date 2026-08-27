@@ -5,7 +5,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Minus, DollarSign, 
-  Download, MousePointer2, Star, BarChart3, Globe
+  Download, MousePointer2, Star, Globe
 } from 'lucide-react';
 import { useAnalytics } from '../useAnalytics';
 
@@ -155,7 +155,7 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
           />
           <KpiCard
             title="Avg Rating"
-            value={ratingSummary?.averageRating ? `★ ${ratingSummary.averageRating.toFixed(1)}` : '★ --'}
+            value={ratingSummary?.averageRating ? `${ratingSummary.averageRating.toFixed(1)} / 5.0` : '--'}
             comparison={0}
             icon={Star}
             chartData={processedData}
@@ -167,56 +167,60 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
       {/* Grid: Charts & Rating Breakdown */}
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.25rem', marginTop: '1.25rem' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          {/* Revenue & Download Growth */}
+          {/* Performance Trends */}
           <div className="mp-card">
             <div className="mp-card-title">
-              <BarChart3 size={16} />
-              Downloads & Revenue Over Time
+              <TrendingUp size={16} />
+              Performance Trends
             </div>
-            <ResponsiveContainer width="100%" height={280}>
+            <ResponsiveContainer width="100%" height={260}>
               <AreaChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="dlGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3ecf8e" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#3ecf8e" stopOpacity={0}/>
+                  <linearGradient id="dlGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f97316" stopOpacity={0.2}/>
+                    <stop offset="95%" stopColor="#f97316" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} tickFormatter={formatValue} />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
-                <Area type="monotone" dataKey="downloads" name="Downloads" stroke="#3ecf8e" strokeWidth={3} fillOpacity={1} fill="url(#dlGradient)" animationDuration={1200} />
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} />
+                <YAxis stroke="#64748b" fontSize={12} tickLine={false} tickFormatter={formatValue} />
+                <Tooltip content={<CustomTooltip />} />
+                <Area type="monotone" dataKey="downloads" name="Downloads" stroke="#3b82f6" strokeWidth={2} fill="url(#dlGrad)" />
+                <Area type="monotone" dataKey="revenue" name="Revenue (€)" stroke="#f97316" strokeWidth={2} fill="url(#revGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
 
-          {/* Rating History */}
+          {/* Rating Trend Line Chart */}
           <div className="mp-card">
             <div className="mp-card-title">
-              <Star size={16} color="#f59e0b" />
-              Rating Trend Over Time
+              <Star size={16} />
+              Rating Trend (1-5)
             </div>
-            <ResponsiveContainer width="100%" height={240}>
-              <LineChart data={processedData} margin={{ top: 20, right: 20, left: -20, bottom: 0 }}>
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} dy={10} />
-                <YAxis domain={[1, 5]} axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12}} />
-                <Tooltip content={<CustomTooltip active={undefined} payload={undefined} label={undefined} />} />
-                <Line type="monotone" dataKey="avgRating" name="Rating" stroke="#f59e0b" strokeWidth={3} dot={{ r: 4, fill: '#f59e0b' }} animationDuration={1200} />
+            <ResponsiveContainer width="100%" height={200}>
+              <LineChart data={processedData} margin={{ top: 10, right: 20, left: -20, bottom: 0 }}>
+                <XAxis dataKey="date" stroke="#64748b" fontSize={12} tickLine={false} />
+                <YAxis domain={[1, 5]} stroke="#64748b" fontSize={12} tickLine={false} />
+                <Tooltip content={<CustomTooltip />} />
+                <Line type="monotone" dataKey="avgRating" name="Avg Rating" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3, fill: '#f59e0b' }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Right Sidebar: Rating Histogram & Traffic Sources */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          {/* Rating Breakdown */}
           {ratingSummary && (
-            <div className="mp-card">
+            <div className="mp-card" style={{ marginBottom: '1.25rem' }}>
               <div className="mp-card-title">
-                <Star size={16} fill="#f59e0b" color="#f59e0b" />
+                <Star size={16} />
                 Rating Breakdown
               </div>
-
-              <div style={{ textAlign: 'center', margin: '1rem 0' }}>
-                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--mp-text)' }}>
+              <div style={{ textAlign: 'center', margin: '1.25rem 0' }}>
+                <div style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--mp-text-1)', lineHeight: 1 }}>
                   {ratingSummary.averageRating.toFixed(1)}
                 </div>
                 <div style={{ fontSize: '0.8rem', color: 'var(--mp-text-2)' }}>
@@ -229,7 +233,7 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
                   const pct = ratingSummary.totalReviews > 0 ? (b.count / ratingSummary.totalReviews) * 100 : 0;
                   return (
                     <div key={b.stars} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
-                      <span style={{ width: '32px', color: 'var(--mp-text-2)' }}>{b.stars} ★</span>
+                      <span style={{ width: '48px', color: 'var(--mp-text-2)' }}>{b.stars} Stars</span>
                       <div style={{ flex: 1, height: '7px', background: 'rgba(255,255,255,0.06)', borderRadius: '4px', overflow: 'hidden' }}>
                         <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: '4px' }} />
                       </div>

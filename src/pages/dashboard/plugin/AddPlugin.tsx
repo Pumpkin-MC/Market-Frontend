@@ -4,10 +4,12 @@ import {
     Globe, ImageIcon, Plus, Search, X, Upload, FileCode,
     DollarSign, CheckCircle, ChevronRight, ChevronLeft,
     Zap, Lock, AlertTriangle, Tag, Store, User, Sparkles,
+    ShieldCheck,
 } from 'lucide-react';
 import api from '../../../api';
 import { useAuth } from '../../../App';
 import { DeveloperOnboardingModal } from '../../../components/DeveloperOnboardingModal';
+import { validateWasmFile, validateAndSanitizeImage } from '../../../utils/fileValidation';
 import './AddPlugin.css';
 
 // ── Locale helpers ────────────────────────────────────────────────────────────
@@ -58,35 +60,6 @@ const MAX_SCREENSHOTS        = 8;
 const PREVIEW_MAX_WIDTH    = 800;
 const SCREENSHOT_MAX_WIDTH = 1920;
 const IMAGE_QUALITY        = 0.80;
-
-// ── Image compression helper ──────────────────────────────────────────────────
-const compressImage = (file: File, maxWidth: number, quality: number): Promise<File> =>
-    new Promise((resolve, reject) => {
-        const img = new Image();
-        const url = URL.createObjectURL(file);
-        img.onload = () => {
-            URL.revokeObjectURL(url);
-            const ratio = Math.min(1, maxWidth / img.width);
-            const w = Math.round(img.width  * ratio);
-            const h = Math.round(img.height * ratio);
-            const canvas = document.createElement('canvas');
-            canvas.width  = w;
-            canvas.height = h;
-            const ctx = canvas.getContext('2d')!;
-            ctx.drawImage(img, 0, 0, w, h);
-            canvas.toBlob(
-                blob => {
-                    if (!blob) { reject(new Error('Canvas toBlob failed')); return; }
-                    const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
-                    resolve(new File([blob], name, { type: 'image/jpeg' }));
-                },
-                'image/jpeg',
-                quality,
-            );
-        };
-        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Image load failed')); };
-        img.src = url;
-    });
 
 // ── Formatting helpers ────────────────────────────────────────────────────────
 const fmtBytes = (b: number): string => {
@@ -246,6 +219,39 @@ const AddPlugin = () => {
         );
     }
 
+    if (user && user.is_developer && !user.totp_enabled) {
+        return (
+            <div className="ap-root" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '2rem 1rem' }}>
+                <div style={{
+                    maxWidth: 520, width: '100%', padding: '2.5rem', background: 'var(--mp-surface, #14171c)',
+                    borderRadius: 16, border: '1px solid var(--mp-border, rgba(255,255,255,0.1))', textAlign: 'center',
+                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
+                }}>
+                    <div style={{
+                        width: 60, height: 60, borderRadius: '50%', background: 'rgba(249, 115, 22, 0.15)',
+                        color: 'var(--mp-accent, #f97316)', display: 'inline-flex', alignItems: 'center',
+                        justifyContent: 'center', marginBottom: '1.25rem'
+                    }}>
+                        <Lock size={28} />
+                    </div>
+                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: 'var(--mp-text, #fff)' }}>
+                        Two-Factor Authentication Required
+                    </h2>
+                    <p style={{ color: 'var(--mp-muted, #94a3b8)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
+                        To protect Minecraft servers and prevent unauthorized plugin uploads from compromised accounts, all developers must enable <strong>Two-Factor Authentication (2FA)</strong> before publishing plugins.
+                    </p>
+                    <button
+                        className="mp-btn mp-btn-primary"
+                        style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
+                        onClick={() => navigate('/settings?tab=security')}
+                    >
+                        <ShieldCheck size={16} /> Enable 2FA in Security Settings →
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     // ── Step 1: Store Listing ──
     const [descriptions, setDescriptions] = useState<Record<string, string>>({ [DEFAULT_LOCALE]: '' });
     const [activeLocale, setActiveLocale] = useState(DEFAULT_LOCALE);
@@ -267,6 +273,8 @@ const AddPlugin = () => {
     const [licenseType, setLicenseType] = useState<LicenseType>('free');
     const [price, setPrice]             = useState(4.99);
     const [isEarlyAccess, setIsEarlyAccess] = useState(false);
+    const [isPreorder, setIsPreorder]   = useState(false);
+    const [preorderReleaseDate, setPreorderReleaseDate] = useState('');
     const stripeConnected               = user.stripe_ready;
 
     // ── Step 2: Binary ──
@@ -305,42 +313,79 @@ const AddPlugin = () => {
 
     const hasFieldErrors = Object.keys(fieldErrors).length > 0;
 
+    // ── Instant validation states ──
+    const [wasmValidationErr, setWasmValidationErr] = useState<string | null>(null);
+    const [wasmFormatInfo, setWasmFormatInfo]       = useState<string | null>(null);
+    const [validatingWasm, setValidatingWasm]       = useState(false);
+    const [previewValidationErr, setPreviewValidationErr] = useState<string | null>(null);
+    const [screenshotValidationErr, setScreenshotValidationErr] = useState<string | null>(null);
+
     // ── Image helpers ──
     const setPreviewFile = async (file: File) => {
-        if (file.size > 20 * 1024 * 1024) { alert('Image is too large to process (max 20 MB original). Please resize it first.'); return; }
+        setPreviewValidationErr(null);
         setCompressingPreview(true);
         try {
-            const compressed = await compressImage(file, PREVIEW_MAX_WIDTH, IMAGE_QUALITY);
-            setPreviewImage(compressed);
-            const r = new FileReader();
-            r.onload = e => setPreviewImageUrl(e.target?.result as string);
-            r.readAsDataURL(compressed);
-        } catch { alert('Could not process image. Please try a different file.'); }
-        finally { setCompressingPreview(false); }
+            const res = await validateAndSanitizeImage(file, {
+                maxWidth: PREVIEW_MAX_WIDTH,
+                maxHeight: PREVIEW_MAX_WIDTH,
+                quality: IMAGE_QUALITY,
+                minWidth: 32,
+                minHeight: 32,
+            });
+            if (!res.valid || !res.file) {
+                setPreviewValidationErr(res.error || 'Failed to validate preview image.');
+                setPreviewImage(null);
+                setPreviewImageUrl(null);
+                return;
+            }
+            setPreviewImage(res.file);
+            setPreviewImageUrl(res.previewUrl ?? null);
+        } catch (err: any) {
+            setPreviewValidationErr(err.message || 'Could not process image.');
+            setPreviewImage(null);
+            setPreviewImageUrl(null);
+        } finally {
+            setCompressingPreview(false);
+        }
     };
 
-    const removePreviewImage = () => { setPreviewImage(null); setPreviewImageUrl(null); };
+    const removePreviewImage = () => {
+        setPreviewImage(null);
+        setPreviewImageUrl(null);
+        setPreviewValidationErr(null);
+    };
 
     const addScreenshots = async (files: FileList | File[]) => {
         if (screenshots.length >= MAX_SCREENSHOTS) {
             alert(`Maximum ${MAX_SCREENSHOTS} screenshots allowed.`);
             return;
         }
+        setScreenshotValidationErr(null);
         setCompressingScreenshot(true);
         try {
             for (const f of Array.from(files)) {
                 if (screenshots.length >= MAX_SCREENSHOTS) break;
-                if (f.size > 20 * 1024 * 1024) { alert(`"${f.name}" is too large (max 20 MB original). Skipping.`); continue; }
-                const compressed = await compressImage(f, SCREENSHOT_MAX_WIDTH, IMAGE_QUALITY);
-                setScreenshots(p => [...p, compressed]);
-                const r = new FileReader();
-                await new Promise<void>(res => {
-                    r.onload = e => { setScreenshotPreviews(p => [...p, e.target?.result as string]); res(); };
-                    r.readAsDataURL(compressed);
+                const res = await validateAndSanitizeImage(f, {
+                    maxWidth: SCREENSHOT_MAX_WIDTH,
+                    maxHeight: SCREENSHOT_MAX_WIDTH,
+                    quality: IMAGE_QUALITY,
+                    minWidth: 100,
+                    minHeight: 100,
                 });
+                if (!res.valid || !res.file) {
+                    setScreenshotValidationErr(res.error || `Invalid screenshot "${f.name}".`);
+                    continue;
+                }
+                setScreenshots(p => [...p, res.file!]);
+                if (res.previewUrl) {
+                    setScreenshotPreviews(p => [...p, res.previewUrl!]);
+                }
             }
-        } catch { alert('One or more images could not be processed.'); }
-        finally { setCompressingScreenshot(false); }
+        } catch (err: any) {
+            setScreenshotValidationErr(err.message || 'One or more images could not be processed.');
+        } finally {
+            setCompressingScreenshot(false);
+        }
     };
 
     const removeScreenshot = (i: number) => {
@@ -362,15 +407,33 @@ const AddPlugin = () => {
         if (activeLocale === code) setActiveLocale(DEFAULT_LOCALE);
     };
 
-    // ── WASM setter ───────────────────────────────────────────────────────────
-    const handleWasmFile = (file: File | null) => {
-        if (!file) { setWasmFile(null); return; }
-        if (!file.name.endsWith('.wasm')) { alert('Please upload a .wasm file.'); return; }
-        if (file.size > MAX_WASM_BYTES) {
-            alert(`Plugin binary exceeds the ${fmtBytes(MAX_WASM_BYTES)} limit (your file: ${fmtBytes(file.size)}). Please optimise or split your plugin.`);
+    // ── WASM setter with instant bytecode verification ───────────────────────────
+    const handleWasmFile = async (file: File | null) => {
+        if (!file) {
+            setWasmFile(null);
+            setWasmValidationErr(null);
             return;
         }
-        setWasmFile(file);
+        setValidatingWasm(true);
+        setWasmValidationErr(null);
+        try {
+            const res = await validateWasmFile(file);
+            if (!res.valid) {
+                setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
+                setWasmFile(null);
+                setWasmFormatInfo(null);
+                return;
+            }
+            setWasmFile(file);
+            setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
+            setWasmValidationErr(null);
+        } catch (err: any) {
+            setWasmValidationErr(err.message || 'Failed to inspect WebAssembly binary.');
+            setWasmFile(null);
+            setWasmFormatInfo(null);
+        } finally {
+            setValidatingWasm(false);
+        }
     };
 
     // ── Proceed guard ─────────────────────────────────────────────────────────
@@ -385,7 +448,7 @@ const AddPlugin = () => {
             !priceTooLow &&
             !hasFieldErrors
         );
-        if (step === 2) return wasmFile !== null && !wasmTooLarge;
+        if (step === 2) return isPreorder || (wasmFile !== null && !wasmTooLarge);
         return true;
     };
 
@@ -393,7 +456,7 @@ const AddPlugin = () => {
     const handleSubmit = async () => {
         if (hasFieldErrors)       { alert('Please fix validation errors before publishing.'); return; }
         if (imageBudgetExceeded)  { alert('Total image size exceeds 5 MB. Please remove some screenshots.'); return; }
-        if (wasmTooLarge)         { alert('Plugin binary exceeds 5 MB.'); return; }
+        if (!isPreorder && wasmTooLarge) { alert('Plugin binary exceeds 5 MB.'); return; }
         setSubmitting(true);
         try {
             const fd = new FormData();
@@ -406,6 +469,10 @@ const AddPlugin = () => {
             fd.append('type',                    licenseType);
             fd.append('price', licenseType === 'paid' ? String(Math.round(price * 100)) : '0');
             fd.append('is_early_access',         String(isEarlyAccess));
+            fd.append('is_preorder',             String(isPreorder));
+            if (isPreorder && preorderReleaseDate) {
+                fd.append('preorder_release_date', new Date(preorderReleaseDate).toISOString());
+            }
             if (previewImage) fd.append('preview_image', previewImage);
             if (wasmFile)     fd.append('wasm', wasmFile);
             screenshots.forEach(f => fd.append('screenshots', f));
@@ -766,7 +833,7 @@ const AddPlugin = () => {
                                                 <p style={{ fontSize: '0.72rem', color: 'var(--mp-text-3)', marginBottom: '0.65rem' }}>
                                                     {previewImage ? fmtBytes(previewImage.size) : ''}
                                                     {previewImage && (
-                                                        <span style={{ marginLeft: '0.4rem', fontSize: '0.68rem', color: 'var(--mp-accent)', background: 'rgba(79,126,255,0.1)', border: '1px solid rgba(79,126,255,0.2)', borderRadius: 3, padding: '0.05rem 0.3rem' }}>compressed</span>
+                                                        <span style={{ marginLeft: '0.4rem', fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 3, padding: '0.05rem 0.3rem' }}>verified image</span>
                                                     )}
                                                 </p>
                                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
@@ -782,11 +849,18 @@ const AddPlugin = () => {
                                             </>
                                         ) : (
                                             <p style={{ fontSize: '0.75rem', color: 'var(--mp-text-3)', lineHeight: 1.55 }}>
-                                                Shown as the listing card thumbnail. Images are automatically compressed to JPEG. Drag & drop or click the box to upload.
+                                                Shown as the listing card thumbnail. Images are verified and safely sanitized. Drag & drop or click the box to upload.
                                             </p>
                                         )}
                                     </div>
                                 </div>
+
+                                {previewValidationErr && (
+                                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{previewValidationErr}</span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Screenshots */}
@@ -822,10 +896,17 @@ const AddPlugin = () => {
                                         onDrop={e => { e.preventDefault(); setImgDragOver(false); if (!compressingScreenshot) addScreenshots(e.dataTransfer.files); }}
                                         onClick={() => !compressingScreenshot && document.getElementById('ap-screenshots')?.click()}>
                                         <div className="mp-dropzone-icon"><ImageIcon size={20} /></div>
-                                        <p>{compressingScreenshot ? <strong>Compressing…</strong> : <><strong>Drag & drop screenshots</strong> or click to browse</>}</p>
-                                        <small>Multiple files · auto-compressed to JPEG · first screenshot = cover</small>
+                                        <p>{compressingScreenshot ? <strong>Validating & compressing…</strong> : <><strong>Drag & drop screenshots</strong> or click to browse</>}</p>
+                                        <small>Multiple files · auto-sanitized & verified · first screenshot = cover</small>
                                         <input id="ap-screenshots" type="file" accept="image/*" multiple
                                             onChange={e => e.target.files && addScreenshots(e.target.files)} />
+                                    </div>
+                                )}
+
+                                {screenshotValidationErr && (
+                                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{screenshotValidationErr}</span>
                                     </div>
                                 )}
 
@@ -958,6 +1039,40 @@ const AddPlugin = () => {
                                         <p style={{ fontSize: '0.7rem', color: 'var(--mp-text-3)', marginTop: '0.5rem' }}>
                                             Stripe fees are estimates. Payouts occur according to your Stripe schedule.
                                         </p>
+
+                                        {/* Pre-Order Option */}
+                                        <div style={{ marginTop: '1.25rem', paddingTop: '1.25rem', borderTop: '1px solid var(--mp-border)' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                                <div>
+                                                    <div style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--mp-text-1)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                                        <Tag size={14} color="var(--mp-accent)" /> Available for Pre-Order
+                                                    </div>
+                                                    <div style={{ fontSize: '0.72rem', color: 'var(--mp-muted, #94a3b8)', marginTop: '0.15rem' }}>
+                                                        Allow buyers to pre-order. When released, all pre-order buyers receive an automatic notification email.
+                                                    </div>
+                                                </div>
+                                                <label className="mp-toggle" style={{ marginLeft: '1rem', flexShrink: 0 }}>
+                                                    <input type="checkbox" checked={isPreorder} onChange={e => setIsPreorder(e.target.checked)} />
+                                                    <span className="mp-toggle-slider" />
+                                                </label>
+                                            </div>
+
+                                            {isPreorder && (
+                                                <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
+                                                    <label className="mp-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
+                                                    <input
+                                                        type="date"
+                                                        className="mp-input"
+                                                        value={preorderReleaseDate}
+                                                        onChange={e => setPreorderReleaseDate(e.target.value)}
+                                                        style={{ maxWidth: 220 }}
+                                                    />
+                                                    <p style={{ fontSize: '0.7rem', color: 'var(--mp-text-3)', marginTop: '0.4rem' }}>
+                                                        Uploading a binary in Step 3 is optional while pre-order is enabled.
+                                                    </p>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -987,26 +1102,43 @@ const AddPlugin = () => {
 
                                 <div
                                     className={`mp-dropzone ${wasmDragOver ? 'drag-over' : ''}`}
+                                    style={{ opacity: validatingWasm ? 0.6 : 1, cursor: validatingWasm ? 'wait' : 'pointer' }}
                                     onDragOver={e => { e.preventDefault(); setWasmDragOver(true); }}
                                     onDragLeave={() => setWasmDragOver(false)}
-                                    onDrop={e => { e.preventDefault(); setWasmDragOver(false); handleWasmFile(e.dataTransfer.files[0] ?? null); }}
-                                    onClick={() => document.getElementById('ap-wasm')?.click()}>
+                                    onDrop={e => { e.preventDefault(); setWasmDragOver(false); if (!validatingWasm) handleWasmFile(e.dataTransfer.files[0] ?? null); }}
+                                    onClick={() => !validatingWasm && document.getElementById('ap-wasm')?.click()}>
                                     <div className="mp-dropzone-icon"><Upload size={20} /></div>
-                                    <p><strong>Drag & drop your .wasm file</strong> or click to browse</p>
-                                    <small>.wasm only · max 5 MB</small>
+                                    <p>
+                                        {validatingWasm ? (
+                                            <strong>Inspecting & validating WebAssembly binary…</strong>
+                                        ) : (
+                                            <><strong>Drag & drop your .wasm file</strong> or click to browse</>
+                                        )}
+                                    </p>
+                                    <small>.wasm only · max 5 MB · validated instantly on drop</small>
                                     <input id="ap-wasm" type="file" accept=".wasm"
                                         onChange={e => handleWasmFile(e.target.files?.[0] ?? null)} />
                                 </div>
 
-                                {wasmFile && (
+                                {wasmValidationErr && (
+                                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{wasmValidationErr}</span>
+                                    </div>
+                                )}
+
+                                {wasmFile && !wasmValidationErr && (
                                     <>
-                                        <div className="mp-file-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <FileCode size={14} />
-                                            {wasmFile.name}
+                                        <div className="mp-file-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
+                                            <CheckCircle size={15} color="#10b981" />
+                                            <span style={{ fontWeight: 600, color: 'var(--mp-text-1)' }}>{wasmFile.name}</span>
+                                            <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 6px', borderRadius: 4 }}>
+                                                Verified {wasmFormatInfo || '.wasm'}
+                                            </span>
                                             <span style={{ marginLeft: 'auto', color: wasmTooLarge ? 'var(--mp-error)' : 'var(--mp-text-3)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
                                                 {fmtBytes(wasmFile.size)}
                                             </span>
-                                            <button type="button" onClick={() => setWasmFile(null)}
+                                            <button type="button" onClick={() => { setWasmFile(null); setWasmValidationErr(null); setWasmFormatInfo(null); }}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mp-text-3)', display: 'flex', padding: 0 }}
                                                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--mp-error)')}
                                                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--mp-text-3)')}>
@@ -1113,9 +1245,31 @@ const AddPlugin = () => {
                                                     </div>
                                                     <SizeBudget usedBytes={wasmFile.size} maxBytes={MAX_WASM_BYTES} label="Plugin binary size" />
                                                 </>
+                                            ) : isPreorder ? (
+                                                <div className="ap-review-field">
+                                                    <span>Pre-Order Listing</span>
+                                                    <strong style={{ color: 'var(--mp-accent)' }}>Binary deferred until release</strong>
+                                                </div>
                                             ) : (
                                                 <p style={{ fontSize: '0.82rem', color: 'var(--mp-error)' }}>No .wasm file — required</p>
                                             )}
+                                        </div>
+
+                                        {/* Developer Certification Notice */}
+                                        <div style={{
+                                            gridColumn: '1 / -1',
+                                            padding: '0.85rem 1rem',
+                                            background: 'rgba(255, 183, 77, 0.05)',
+                                            border: '1px solid rgba(255, 183, 77, 0.25)',
+                                            borderRadius: 8,
+                                            fontSize: '0.75rem',
+                                            color: '#cbd5e1',
+                                            lineHeight: 1.55,
+                                        }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#ffb74d', fontWeight: 600, marginBottom: '0.25rem' }}>
+                                                <ShieldCheck size={14} /> Developer Certification
+                                            </div>
+                                            By publishing this plugin, you certify that this software contains no malicious code, adheres to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Developer Distribution Agreement</a>, complies with Mojang's Minecraft EULA, and grants Pumpkin Marketplace full moderation and distribution authority.
                                         </div>
                                     </div>
                                 </div>
@@ -1182,7 +1336,7 @@ const AddPlugin = () => {
                     ) : (
                         <button className="mp-btn mp-btn-success"
                             onClick={handleSubmit}
-                            disabled={submitting || !wasmFile || imageBudgetExceeded || wasmTooLarge || hasFieldErrors}>
+                            disabled={submitting || (!isPreorder && !wasmFile) || imageBudgetExceeded || (!isPreorder && wasmTooLarge) || hasFieldErrors}>
                             {submitting ? 'Publishing…' : 'Publish Plugin'}
                             {!submitting && <CheckCircle size={16} />}
                         </button>

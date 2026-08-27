@@ -112,6 +112,10 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
 
                     {plugin.type === 'free' ? (
                         <span className="pcv2-price-badge free">Free</span>
+                    ) : plugin.is_preorder ? (
+                        <span className="pcv2-price-badge paid" style={{ background: '#f97316', color: '#fff' }}>
+                            Pre-Order • {priceInfo.display}
+                        </span>
                     ) : isSale ? (
                         <span className="pcv2-price-badge sale">
                             <span className="pcv2-price-original">{priceInfo.originalDisplay}</span>
@@ -126,6 +130,11 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
                 <div className="pcv2-info">
                     <p className="pcv2-name">
                         {plugin.name}
+                        {plugin.is_preorder && (
+                            <span style={{ marginLeft: 6, fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)', verticalAlign: 'middle' }}>
+                                Pre-Order
+                            </span>
+                        )}
                         {plugin.is_early_access && <span className="pcv2-badge-ea">Early Access</span>}
                     </p>
                     <p className="pcv2-dev">by {plugin.dev_name}</p>

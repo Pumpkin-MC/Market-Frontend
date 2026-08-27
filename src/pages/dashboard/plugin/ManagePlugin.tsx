@@ -32,6 +32,8 @@ export type PluginData = {
     sale_active?: boolean;
     sale_discount_percent?: number;
     is_early_access?: boolean;
+    is_preorder?: boolean;
+    preorder_release_date?: string;
     youtube_video_url?: string;
 };
 

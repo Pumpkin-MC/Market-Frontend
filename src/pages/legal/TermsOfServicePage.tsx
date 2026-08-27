@@ -65,14 +65,29 @@ In the event of a disputed charge, please contact support@pumpkinmc.org before i
   },
   {
     id: 'refunds',
-    title: '7. Refunds & Disputes',
-    content: `Due to the digital nature of Plugins, all sales are generally non-refundable. Refunds may be issued at PumpkinMC's sole discretion in the following circumstances:
+    title: '7. Digital Withdrawal Waiver & Refund Policy',
+    content: `Digital Content & Right of Withdrawal Waiver:
+Due to the digital nature of software downloads, when you purchase and download a Plugin, you expressly consent to immediate performance of the contract and acknowledge that you lose your statutory 14-day right of withdrawal under EU Consumer Rights Directive (2011/83/EU) once the download or key generation commences.
 
-• The Plugin does not function as described and the seller has not resolved the issue within 72 hours of a support request.
-• The Plugin contains malicious code or functionality that harms your server or players.
-• A duplicate purchase was made in error within 24 hours.
+When Refunds Are Granted:
+We want all buyers to have a safe and fair experience. Refunds may be approved under the following conditions:
+• Technical Defect: The Plugin has a verifiable critical defect on supported server software, and the developer fails to provide a working fix or update within 5 business days of your support request.
+• Material Misrepresentation: The Plugin is missing core advertised features explicitly listed on its store page.
+• Accidental Duplicate Purchase: You accidentally purchased the identical Plugin twice within 24 hours.
+• Security & Policy Violation: The Plugin is found to contain unauthorized backdoors, malware, or violates our safety policies.
 
-To request a refund, contact support@pumpkinmc.org with your order details and a description of the issue. PumpkinMC will review all refund requests and respond within 5 business days.`
+Non-Refundable Circumstances:
+• Change of Mind ("Buyer's Remorse"): Deciding you no longer need the Plugin or purchased by mistake after downloading.
+• Incompatibility with Unsupported Versions: Attempting to run the Plugin on an incompatible server engine or Minecraft version clearly marked unsupported on the store listing.
+• Configuration / Administration Issues: Inability or lack of technical knowledge to configure YAML/JSON files or server environments.
+
+Dispute & Refund Workflow:
+1. Contact the Developer: Reach out directly to the developer using their support email or Discord listed on the Plugin page.
+2. 5-Day Resolution Window: Give the developer 5 business days to assist or resolve the defect.
+3. Escalate to PumpkinMarket: If the developer is unresponsive or unable to resolve the verified defect, forward your proof of purchase and communication to support@pumpkinmc.org.
+
+License Revocation:
+Upon any approved refund or chargeback, the associated cryptographic license key is immediately revoked, and download access from your Library is disabled.`
   },
   {
     id: 'sellers',
@@ -150,8 +165,6 @@ const TermsOfServicePage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&display=swap');
-
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
@@ -427,7 +440,7 @@ const TermsOfServicePage = () => {
 
         {/* Hero */}
         <div className="tos-hero">
-          <div className="tos-badge">📜 Legal</div>
+          <div className="tos-badge">Legal</div>
           <h1 className="tos-title">
             Plugin Marketplace<br /><span>Terms of Service</span>
           </h1>
@@ -481,7 +494,7 @@ const TermsOfServicePage = () => {
             or join our <a href="https://discord.gg/pumpkinmc">Discord server</a>.
           </p>
           <Link to="/register" className="accept-btn">
-            🎃 Create an account
+            Create an account
           </Link>
         </footer>
 

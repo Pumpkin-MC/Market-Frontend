@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import api from '../../api';
 
@@ -27,6 +28,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 }
 
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ username: '', email: '', password: '', website: '' });
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const turnstileRef = useRef<any>(null);
@@ -112,7 +114,6 @@ const RegisterPage = () => {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; -webkit-font-smoothing: antialiased; }
 
@@ -269,7 +270,7 @@ const RegisterPage = () => {
       <div className="register-page">
         <div className="register-card">
           <div className="card-header">
-            <h1 className="card-title">Create your account</h1>
+            <h1 className="card-title">{t('auth.register_title')}</h1>
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
@@ -288,7 +289,7 @@ const RegisterPage = () => {
 
             {/* Username */}
             <div className="form-field">
-              <label className="field-label" htmlFor="username">Username</label>
+              <label className="field-label" htmlFor="username">{t('auth.username')}</label>
               <div className="field-input-wrapper">
                 <input
                   id="username" className="field-input" type="text" placeholder="johndoe"
@@ -301,7 +302,7 @@ const RegisterPage = () => {
 
             {/* Email */}
             <div className="form-field">
-              <label className="field-label" htmlFor="email">Email address</label>
+              <label className="field-label" htmlFor="email">{t('auth.email')}</label>
               <div className="field-input-wrapper">
                 <input
                   id="email"
@@ -346,7 +347,7 @@ const RegisterPage = () => {
 
             {/* Password */}
             <div className="form-field">
-              <label className="field-label" htmlFor="password">Password</label>
+              <label className="field-label" htmlFor="password">{t('auth.password')}</label>
               <div className="field-input-wrapper">
                 <input
                   id="password"
@@ -359,32 +360,28 @@ const RegisterPage = () => {
                 />
                 <button
                   type="button"
-                  className="password-toggle"
-                  onClick={() => setShowPassword(s => !s)}
-                  tabIndex={-1}
+                  className="pw-toggle-btn"
+                  onClick={() => setShowPassword(p => !p)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  tabIndex={-1}
                 >
                   {showPassword ? (
-                    /* eye-off icon */
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-                      <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                      <line x1="1" y1="1" x2="23" y2="23"/>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 00-2.79.588l.77.771A5.944 5.944 0 018 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0114.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                      <path d="M11.297 9.176a3.5 3.5 0 00-4.474-4.474l.823.823a2.5 2.5 0 012.829 2.829l.822.822zm-2.943 1.299l.822.822a3.5 3.5 0 01-4.474-4.474l.823.823a2.5 2.5 0 002.829 2.829z"/>
+                      <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 001.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 018 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.709.709zm10.296 8.884l-12-12 .708-.708 12 12-.708.708z"/>
                     </svg>
                   ) : (
-                    /* eye icon */
-                    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                      <circle cx="12" cy="12" r="3"/>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 011.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0114.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 011.172 8z"/>
+                      <path d="M8 5.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM4.5 8a3.5 3.5 0 117 0 3.5 3.5 0 01-7 0z"/>
                     </svg>
                   )}
                 </button>
               </div>
 
-              {/* Strength meter — shown as soon as the user starts typing */}
               {showStrengthMeter && (
                 <div className="strength-meter">
-                  {/* 5 segment bars */}
                   <div className="strength-bars">
                     {[1,2,3,4,5].map(i => (
                       <div className="strength-bar" key={i}>
@@ -406,7 +403,6 @@ const RegisterPage = () => {
                     <span>{PASSWORD_REQUIREMENTS.filter(r => r.test(form.password)).length}/{PASSWORD_REQUIREMENTS.length} requirements met</span>
                   </div>
 
-                  {/* Per-requirement checklist */}
                   <ul className="requirements-list">
                     {PASSWORD_REQUIREMENTS.map((req, idx) => {
                       const met = req.test(form.password);
@@ -418,10 +414,12 @@ const RegisterPage = () => {
                       return (
                         <li key={idx} className={cls}>
                           <span className="req-icon">
-                            {met && (
-                              <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-                                <path d="M1.5 4l2 2 3-3" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            {met ? (
+                              <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                <path d="M2.5 6l2.5 2.5 4.5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                               </svg>
+                            ) : (
+                              <span className="req-bullet" />
                             )}
                           </span>
                           {req.label}
@@ -433,7 +431,8 @@ const RegisterPage = () => {
               )}
             </div>
 
-            <div className="captcha-container">
+            {/* Turnstile Captcha */}
+            <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'center' }}>
               <Turnstile
                 ref={turnstileRef}
                 siteKey="0x4AAAAAAClcSibyhKfR0H6o"
@@ -448,7 +447,7 @@ const RegisterPage = () => {
               {isSubmitting ? (
                 <><span className="spinner" />Creating account…</>
               ) : (
-                'Create account'
+                t('auth.create_account')
               )}
             </button>
           </form>
@@ -461,7 +460,7 @@ const RegisterPage = () => {
           <div className="divider" />
 
           <div className="card-footer">
-            Already have an account? <Link to="/login">Sign in</Link>
+            {t('auth.have_account')} <Link to="/login">{t('auth.sign_in')}</Link>
           </div>
         </div>
       </div>

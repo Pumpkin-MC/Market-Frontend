@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate } from 'react-router-dom';
 import { Settings, Plus, ExternalLink, Sparkles } from 'lucide-react';
@@ -8,6 +9,7 @@ import { getPluginUrl } from '../../utils/url';
 
 // --- Main Component ---
 const DashboardPlugins = () => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const { timeSeries } = useAnalytics();
     const navigate = useNavigate();
@@ -81,19 +83,19 @@ const DashboardPlugins = () => {
         <div className="dashboard-grid-layout">
             <div className="data-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h3>My Active Plugins</h3>
+                    <h3>{t('developer.dashboard.plugins')}</h3>
                     <button className="btn btn-primary" onClick={() => navigate('/dashboard/add-plugin')}>
                         <Plus size={18} style={{ marginRight: '8px' }} />
-                        Add New Plugin
+                        {t('developer.dashboard.add_plugin')}
                     </button>
                 </div>
                 
                 <table className="data-table">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Downloads</th>
-                            <th>Earnings</th>
+                            <th>{t('plugin.version')}</th>
+                            <th>{t('developer.dashboard.total_downloads')}</th>
+                            <th>{t('developer.dashboard.total_revenue')}</th>
                             <th>Dates</th>
                             <th style={{ textAlign: 'right' }}>Actions</th>
                         </tr>
@@ -135,7 +137,7 @@ const DashboardPlugins = () => {
                                             style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
                                         >
                                             <Settings size={16} />
-                                            Manage
+                                            {t('developer.dashboard.manage_plugin')}
                                         </button>
                                     </div>
                                 </td>

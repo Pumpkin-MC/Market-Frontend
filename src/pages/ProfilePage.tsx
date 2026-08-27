@@ -6,11 +6,13 @@ import { useAuth } from '../App';
 import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../components/DeveloperOnboardingModal';
 import { getPluginUrl } from '../utils/url';
+import { openCookiePreferencesModal } from '../utils/consent';
 import {
   User, Mail, Lock, Shield, CreditCard,
   BookOpen, AlertTriangle, LogOut, CheckCircle,
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
-  Smartphone, Key, Trash2, Code, Sparkles, Building2
+  Smartphone, Key, Trash2, Code, Sparkles, Building2,
+  ShieldCheck, Download, Sliders, Package
 } from 'lucide-react';
 
 interface LibraryEntry {
@@ -21,17 +23,19 @@ interface LibraryEntry {
   dev_name:     string;
   amount_cents: number;
   purchased_at: string;
+  is_preorder?: boolean;
 }
 
-type Tab = 'account' | 'security' | 'developer' | 'notifications' | 'library' | 'danger';
+type Tab = 'account' | 'security' | 'developer' | 'notifications' | 'library' | 'privacy' | 'danger';
 
 const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger?: boolean }[] = [
-  { key: 'account',       label: 'Account',        icon: User        },
-  { key: 'security',      label: 'Security',        icon: Shield      },
-  { key: 'developer',     label: 'Developer Profile', icon: Code     },
-  { key: 'notifications', label: 'Notifications',   icon: Bell        },
-  { key: 'library',       label: 'Library',         icon: BookOpen    },
-  { key: 'danger',        label: 'Danger Zone',     icon: AlertTriangle, danger: true },
+  { key: 'account',       label: 'Account',             icon: User        },
+  { key: 'security',      label: 'Security',            icon: Shield      },
+  { key: 'developer',     label: 'Developer Profile',   icon: Code        },
+  { key: 'notifications', label: 'Notifications',       icon: Bell        },
+  { key: 'library',       label: 'Library',             icon: BookOpen    },
+  { key: 'privacy',       label: 'Privacy & Data',      icon: ShieldCheck },
+  { key: 'danger',        label: 'Danger Zone',         icon: AlertTriangle, danger: true },
 ];
 
 const ProfilePage = () => {
@@ -240,8 +244,29 @@ const ProfilePage = () => {
     }
   };
 
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExportData = async () => {
+    setIsExporting(true);
+    try {
+      const res = await api.get('/user/export-data');
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(res.data, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute('href', dataStr);
+      downloadAnchor.setAttribute('download', `pumpkinmarket-data-export-${user?.username || 'user'}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Personal data export downloaded successfully!');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to export your data.', 'error');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleDeleteAccount = async () => {
-    if (!window.confirm('Are you sure you want to delete your account? This action is irreversible.')) return;
+    if (!window.confirm('Are you sure you want to permanently delete your account? Under GDPR Article 17 (Right to erasure), all your account data, developer profile, uploaded plugins, and reviews will be permanently wiped.')) return;
     try {
       await api.delete('/user');
       logout();
@@ -867,7 +892,7 @@ const ProfilePage = () => {
 
               {libraryError && (
                 <div className="library-error">
-                  <span style={{ fontSize: '1.5rem' }}>⚠️</span>
+                  <AlertTriangle size={20} color="#f59e0b" />
                   <span>{libraryError}</span>
                 </div>
               )}
@@ -875,7 +900,7 @@ const ProfilePage = () => {
               {!libraryLoading && !libraryError && library.length === 0 && (
                 <div className="library-empty">
                   <div className="library-empty-bg" />
-                  <div className="library-empty-icon">📦</div>
+                  <div className="library-empty-icon"><Package size={36} color="var(--mp-text-3, #64748b)" /></div>
                   <p className="library-empty-title">Your library is empty</p>
                   <p className="library-empty-sub">Purchased plugins will appear here, ready to download anytime.</p>
                   <Link to="/" className="btn" style={{ marginTop: '1.25rem', fontSize: '0.8rem', padding: '0.6rem 1.4rem' }}>
@@ -901,11 +926,11 @@ const ProfilePage = () => {
                             {entry.name.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        <div className="library-owned-badge">
+                        <div className="library-owned-badge" style={entry.is_preorder ? { background: '#f97316' } : undefined}>
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                             <polyline points="20 6 9 17 4 12"/>
                           </svg>
-                          Owned
+                          {entry.is_preorder ? 'Pre-Ordered' : 'Owned'}
                         </div>
                         {entry.category && (
                           <div className="library-card-category-tag">{entry.category}</div>
@@ -930,6 +955,87 @@ const ProfilePage = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ══ PRIVACY & DATA ═════════════════════════════════════════ */}
+          {activeTab === 'privacy' && (
+            <div className="profile-section">
+              <div className="settings-section-header">
+                <h2 className="section-title" style={{ marginBottom: 0 }}>
+                  <span>Privacy</span> & Data
+                </h2>
+                <p className="settings-section-sub">
+                  Manage your personal data, download an export of your account, and configure cookie settings.
+                </p>
+              </div>
+
+              {/* Data Portability */}
+              <SettingsCard
+                title="Export Account Data"
+                icon={Download}
+                description="Download a copy of your account data including your purchases, licenses, reviews, and developer details in JSON format."
+              >
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  Generate a structured machine-readable export of all data associated with your PumpkinMarket account.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleExportData}
+                  className="settings-btn settings-btn-primary"
+                  disabled={isExporting}
+                >
+                  <Download size={15} />
+                  {isExporting ? <><span className="spinner-sm" />Generating Export…</> : 'Download Data Export (.json)'}
+                </button>
+              </SettingsCard>
+
+              {/* Cookie & Tracking Consent */}
+              <SettingsCard
+                title="Cookie Preferences"
+                icon={Sliders}
+                description="Choose what cookies and tracking technologies are enabled while you browse PumpkinMarket."
+              >
+                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                  You can update your preferences or turn off analytics cookies at any time without affecting your marketplace experience.
+                </p>
+                <button
+                  type="button"
+                  onClick={openCookiePreferencesModal}
+                  className="settings-btn settings-btn-secondary"
+                >
+                  <Sliders size={15} />
+                  Manage Cookie Preferences
+                </button>
+              </SettingsCard>
+
+              {/* Privacy Controls Summary */}
+              <SettingsCard
+                title="Data & Privacy Controls"
+                icon={ShieldCheck}
+                description="How you can access, update, or remove your data on PumpkinMarket."
+              >
+                <div className="settings-faq">
+                  <div className="settings-faq-item">
+                    <p className="settings-faq-q">Access & Portability</p>
+                    <p className="settings-faq-a">You can request and download a full copy of your account records at any time using the export tool above.</p>
+                  </div>
+                  <div className="settings-faq-item">
+                    <p className="settings-faq-q">Updating Your Information</p>
+                    <p className="settings-faq-a">Keep your email, username, country, and developer profile up to date anytime directly from your settings tabs.</p>
+                  </div>
+                  <div className="settings-faq-item">
+                    <p className="settings-faq-q">Deleting Your Account</p>
+                    <p className="settings-faq-a">Permanently delete your account and all associated data anytime in the Danger Zone tab.</p>
+                  </div>
+                  <div className="settings-faq-item">
+                    <p className="settings-faq-q">Contact & Support</p>
+                    <p className="settings-faq-a">
+                      Have questions about your data or privacy? Contact our team anytime at <a href="mailto:privacy@pumpkinmc.org" style={{ color: 'var(--primary)' }}>privacy@pumpkinmc.org</a>.
+                    </p>
+                  </div>
+                </div>
+              </SettingsCard>
             </div>
           )}
 

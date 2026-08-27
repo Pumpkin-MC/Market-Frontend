@@ -4,25 +4,29 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+    <meta name="description" content="Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers." />
+    <meta name="theme-color" content="#ff6b00" />
+    <meta property="og:title" content="Pumpkin Market" />
+    <meta property="og:description" content="Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Pumpkin Market" />
     <link rel="search" type="application/opensearchdescription+xml" title="Pumpkin Market" href="/opensearch.xml" />
     <title>Pumpkin Market</title>
-  </head>
-  <body>
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-QK7NXQQ2ZP"
-    ></script>
+    <!-- Privacy-friendly Google Consent Mode v2 Default -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag() {
         dataLayer.push(arguments);
       }
-      gtag("js", new Date());
-      gtag("config", "G-QK7NXQQ2ZP");
+      gtag("consent", "default", {
+        analytics_storage: "denied",
+        ad_storage: "denied",
+        ad_user_data: "denied",
+        ad_personalization: "denied",
+      });
     </script>
+  </head>
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

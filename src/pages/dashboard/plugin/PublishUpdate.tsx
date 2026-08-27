@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
+import { validateWasmFile } from '../../../utils/fileValidation';
 
 type Props = { plugin: PluginData; onSaved: () => void };
 
@@ -13,6 +14,9 @@ const TRACKS = [
 
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [wasmFile, setWasmFile] = useState<File | null>(null);
+    const [wasmValidationErr, setWasmValidationErr] = useState<string | null>(null);
+    const [wasmFormatInfo, setWasmFormatInfo]       = useState<string | null>(null);
+    const [validatingWasm, setValidatingWasm]       = useState(false);
     const [version, setVersion] = useState('');
     const [track, setTrack] = useState<'stable' | 'beta' | 'alpha'>('stable');
     const [releaseNotes, setReleaseNotes] = useState('');
@@ -20,12 +24,40 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [uploading, setUploading] = useState(false);
     const [published, setPublished] = useState(false);
 
+    const handleFileValidation = async (file: File | null) => {
+        if (!file) {
+            setWasmFile(null);
+            setWasmValidationErr(null);
+            setWasmFormatInfo(null);
+            return;
+        }
+        setValidatingWasm(true);
+        setWasmValidationErr(null);
+        try {
+            const res = await validateWasmFile(file);
+            if (!res.valid) {
+                setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
+                setWasmFile(null);
+                setWasmFormatInfo(null);
+                return;
+            }
+            setWasmFile(file);
+            setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
+            setWasmValidationErr(null);
+        } catch (err: any) {
+            setWasmValidationErr(err.message || 'Failed to inspect file.');
+            setWasmFile(null);
+            setWasmFormatInfo(null);
+        } finally {
+            setValidatingWasm(false);
+        }
+    };
+
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setDragOver(false);
         const file = e.dataTransfer.files[0];
-        if (file && file.name.endsWith('.wasm')) setWasmFile(file);
-        else alert('Please drop a valid .wasm file.');
+        if (file) handleFileValidation(file);
     };
 
     const handlePublish = async () => {
@@ -168,31 +200,46 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
 
                 <div
                     className={`mp-dropzone ${dragOver ? 'drag-over' : ''}`}
+                    style={{ opacity: validatingWasm ? 0.6 : 1, cursor: validatingWasm ? 'wait' : 'pointer' }}
                     onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                     onDragLeave={() => setDragOver(false)}
                     onDrop={handleDrop}
-                    onClick={() => document.getElementById('wasm-upload-input')?.click()}
+                    onClick={() => !validatingWasm && document.getElementById('wasm-upload-input')?.click()}
                 >
                     <div className="mp-dropzone-icon">
                         <Upload size={20} />
                     </div>
                     <p>
-                        <strong>Drag & drop your .wasm file</strong> or click to browse
+                        {validatingWasm ? (
+                            <strong>Validating WebAssembly binary structure…</strong>
+                        ) : (
+                            <><strong>Drag & drop your .wasm file</strong> or click to browse</>
+                        )}
                     </p>
-                    <small>.wasm only</small>
+                    <small>.wasm only · max 5 MB · validated on drop</small>
                     <input
                         id="wasm-upload-input"
                         type="file"
                         accept=".wasm"
-                        onChange={e => setWasmFile(e.target.files?.[0] ?? null)}
+                        onChange={e => handleFileValidation(e.target.files?.[0] ?? null)}
                     />
                 </div>
 
-                {wasmFile && (
-                    <div className="mp-file-badge">
-                        <FileCode size={14} />
-                        {wasmFile.name}
-                        <span style={{marginLeft:'auto', color:'var(--mp-text-3)'}}>
+                {wasmValidationErr && (
+                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{wasmValidationErr}</span>
+                    </div>
+                )}
+
+                {wasmFile && !wasmValidationErr && (
+                    <div className="mp-file-badge" style={{ borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
+                        <CheckCircle size={15} color="#10b981" />
+                        <span style={{ fontWeight: 600, color: 'var(--mp-text-1)' }}>{wasmFile.name}</span>
+                        <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 6px', borderRadius: 4, marginLeft: '0.5rem' }}>
+                            Verified {wasmFormatInfo || '.wasm'}
+                        </span>
+                        <span style={{ marginLeft: 'auto', color: 'var(--mp-text-3)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
                             {(wasmFile.size / 1024).toFixed(1)} KB
                         </span>
                     </div>
@@ -203,7 +250,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 <button
                     className="mp-btn mp-btn-primary"
                     onClick={handlePublish}
-                    disabled={!wasmFile || uploading}
+                    disabled={!wasmFile || uploading || validatingWasm}
                 >
                     <Send size={15} />
                     {uploading ? 'Publishing…' : 'Publish Update'}

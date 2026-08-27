@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Globe, ImageIcon, Plus, Save, Search, X } from 'lucide-react';
+import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle } from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
+import { validateAndSanitizeImage } from '../../../utils/fileValidation';
 
 const PLUGIN_CATEGORIES = [
     "Admin Tools","Economy","Fun","World Management","Utilities","Chat","Other"
@@ -176,12 +177,34 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
     const [iconFile, setIconFile] = useState<File | null>(null);
     const [iconPreview, setIconPreview] = useState<string | null>(plugin.preview_path || null);
+    const [iconValidationErr, setIconValidationErr] = useState<string | null>(null);
+    const [screenshotValidationErr, setScreenshotValidationErr] = useState<string | null>(null);
+    const [processingImage, setProcessingImage] = useState(false);
 
-    const handleIconChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        setIconValidationErr(null);
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setIconFile(file);
-            setIconPreview(URL.createObjectURL(file));
+            setProcessingImage(true);
+            try {
+                const res = await validateAndSanitizeImage(file, {
+                    maxWidth: 512,
+                    maxHeight: 512,
+                    quality: 0.85,
+                    minWidth: 32,
+                    minHeight: 32,
+                });
+                if (!res.valid || !res.file) {
+                    setIconValidationErr(res.error || 'Invalid icon file.');
+                    return;
+                }
+                setIconFile(res.file);
+                setIconPreview(res.previewUrl || URL.createObjectURL(res.file));
+            } catch (err: any) {
+                setIconValidationErr(err.message || 'Could not process icon.');
+            } finally {
+                setProcessingImage(false);
+            }
         }
     };
 
@@ -222,13 +245,36 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const handleScreenshotUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-        const fd = new FormData();
-        Array.from(files).forEach(f => fd.append('screenshots', f));
+        setScreenshotValidationErr(null);
+        setProcessingImage(true);
+        const validFiles: File[] = [];
         try {
-            const res = await api.post(`/plugins/${plugin.id}/screenshots`, fd);
-            setScreenshots(prev => [...prev, ...(res.data.screenshots || [])]);
+            for (const f of Array.from(files)) {
+                const res = await validateAndSanitizeImage(f, {
+                    maxWidth: 1920,
+                    maxHeight: 1080,
+                    quality: 0.82,
+                    minWidth: 100,
+                    minHeight: 100,
+                });
+                if (!res.valid || !res.file) {
+                    setScreenshotValidationErr(res.error || `Invalid screenshot "${f.name}".`);
+                    continue;
+                }
+                validFiles.push(res.file);
+            }
+
+            if (validFiles.length > 0) {
+                const fd = new FormData();
+                validFiles.forEach(f => fd.append('screenshots', f));
+                const res = await api.post(`/plugins/${plugin.id}/screenshots`, fd);
+                setScreenshots(prev => [...prev, ...(res.data.screenshots || [])]);
+            }
         } catch {
-            alert('Screenshot upload failed.');
+            setScreenshotValidationErr('Screenshot upload failed.');
+        } finally {
+            setProcessingImage(false);
+            e.target.value = '';
         }
     };
 
@@ -264,9 +310,9 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                 {!iconPreview && name.charAt(0).toUpperCase()}
                             </div>
                             <div>
-                                <label htmlFor="icon-upload-input" className="mp-btn mp-btn-secondary" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.82rem' }}>
+                                <label htmlFor="icon-upload-input" className="mp-btn mp-btn-secondary" style={{ cursor: processingImage ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.82rem', opacity: processingImage ? 0.7 : 1 }}>
                                     <ImageIcon size={14} />
-                                    Change Icon
+                                    {processingImage ? 'Validating & Sanitizing…' : 'Change Icon'}
                                 </label>
                                 <input
                                     id="icon-upload-input"
@@ -274,12 +320,19 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                     accept="image/png,image/jpeg,image/webp"
                                     onChange={handleIconChange}
                                     style={{ display: 'none' }}
+                                    disabled={processingImage}
                                 />
                                 <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.74rem', color: 'var(--mp-text-3)' }}>
-                                    Square image recommended (PNG, JPEG, WebP). Max 2MB.
+                                    Square image recommended (PNG, JPEG, WebP). Max 2MB. Validated on selection.
                                 </p>
                             </div>
                         </div>
+                        {iconValidationErr && (
+                            <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                                <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{iconValidationErr}</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="mp-form-group">
@@ -469,8 +522,14 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     <input id="screenshot-upload" type="file" accept="image/*" multiple
                         style={{display:'none'}} onChange={handleScreenshotUpload} />
                 </div>
+                {screenshotValidationErr && (
+                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{screenshotValidationErr}</span>
+                    </div>
+                )}
                 <p style={{marginTop:'0.75rem', fontSize:'0.76rem', color:'var(--mp-text-3)'}}>
-                    Recommended: 16:9 aspect ratio, min 1280×720px. PNG or JPEG.
+                    Recommended: 16:9 aspect ratio, min 1280×720px. PNG, JPEG, or WebP. Validated on selection.
                 </p>
             </div>
         </div>

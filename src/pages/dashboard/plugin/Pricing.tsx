@@ -32,6 +32,10 @@ const Pricing = ({ plugin, onSaved }: Props) => {
     const [price, setPrice]               = useState((plugin.price_cents ?? 0) / 100 || 4.99);
     const [isSaleActive, setIsSaleActive] = useState(plugin.sale_active ?? false);
     const [discountPercent, setDiscountPercent] = useState(plugin.sale_discount_percent || 20);
+    const [isPreorder, setIsPreorder]     = useState(plugin.is_preorder ?? false);
+    const [preorderReleaseDate, setPreorderReleaseDate] = useState(
+        plugin.preorder_release_date ? plugin.preorder_release_date.split('T')[0] : ''
+    );
     const [priceTooLow, setPriceTooLow]   = useState(false);
 
     const stripeConnected = user.stripe_ready;
@@ -71,6 +75,12 @@ const Pricing = ({ plugin, onSaved }: Props) => {
         if (licenseType === 'paid') {
             fd.append('sale_active',           isSaleActive.toString());
             fd.append('sale_discount_percent', discountPercent.toString());
+            fd.append('is_preorder',           isPreorder.toString());
+            if (isPreorder && preorderReleaseDate) {
+                fd.append('preorder_release_date', new Date(preorderReleaseDate).toISOString());
+            } else {
+                fd.append('preorder_release_date', '');
+            }
         }
 
         try {
@@ -255,6 +265,43 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                     >
                                         End Sale
                                     </button>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* ── Pre-Order Settings ── */}
+                        <div className="mp-card" style={{ marginTop: '1.5rem' }}>
+                            <div className="mp-card-title">
+                                <Tag size={14} />Pre-Order Mode
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+                                <div>
+                                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--mp-text-1)' }}>
+                                        Accept Pre-Orders
+                                    </div>
+                                    <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)', marginTop: '0.2rem' }}>
+                                        Mark this plugin as available for pre-order. When you publish the first release or disable pre-order, all pre-order buyers will be emailed automatically.
+                                    </div>
+                                </div>
+                                <label className="mp-toggle" style={{ marginLeft: '1rem', flexShrink: 0 }}>
+                                    <input type="checkbox" checked={isPreorder} onChange={e => setIsPreorder(e.target.checked)} />
+                                    <span className="mp-toggle-slider" />
+                                </label>
+                            </div>
+
+                            {isPreorder && (
+                                <div style={{ marginTop: '1rem', padding: '0.85rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
+                                    <label className="mp-label" style={{ fontSize: '0.78rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
+                                    <input
+                                        type="date"
+                                        className="mp-input"
+                                        value={preorderReleaseDate}
+                                        onChange={e => setPreorderReleaseDate(e.target.value)}
+                                        style={{ maxWidth: 220 }}
+                                    />
+                                    <p style={{ fontSize: '0.72rem', color: 'var(--mp-text-3)', marginTop: '0.4rem' }}>
+                                        Displayed on the store page so buyers know when to expect the release.
+                                    </p>
                                 </div>
                             )}
                         </div>

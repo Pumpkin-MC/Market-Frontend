@@ -21,7 +21,11 @@ import AddPlugin from './pages/dashboard/plugin/AddPlugin';
 import TermsOfServicePage from './pages/legal/TermsOfServicePage';
 import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
 import GuidelinesPage from './pages/legal/GuidelinesPage';
+import DeveloperTermsPage from './pages/legal/DeveloperTermsPage';
+import LegalNoticePage from './pages/legal/LegalNoticePage';
 import AdminPanel from './pages/admin/AdminPanel';
+import { CookieBanner } from './components/CookieBanner';
+import { openCookiePreferencesModal } from './utils/consent';
 import './App.css';
 
 import api from './api';
@@ -123,6 +127,7 @@ const App = () => (
   <Router>
     <AuthProvider>
       <ScrollToTop />
+      <CookieBanner />
       <Routes>
         {/* All marketplace routes share MainLayout (original navbar + footer) */}
         <Route element={<MainLayout />}>
@@ -134,6 +139,10 @@ const App = () => (
           <Route path="terms" element={<TermsOfServicePage />} />
           <Route path="privacy" element={<PrivacyPolicyPage />} />
           <Route path="guidelines" element={<GuidelinesPage />} />
+          <Route path="developer-terms" element={<DeveloperTermsPage />} />
+          <Route path="legal/developer-terms" element={<DeveloperTermsPage />} />
+          <Route path="legal-notice" element={<LegalNoticePage />} />
+          <Route path="impressum" element={<LegalNoticePage />} />
           <Route path="login" element={<LoginPage />} />
           <Route path="register" element={<RegisterPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
@@ -383,6 +392,44 @@ const Footer = () => (
       >
         Guidelines
       </Link>
+
+      <Link
+        to="/developer-terms"
+        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+      >
+        Developer Terms
+      </Link>
+
+      <Link
+        to="/legal-notice"
+        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+      >
+        Legal Notice
+      </Link>
+
+      <button
+        type="button"
+        onClick={openCookiePreferencesModal}
+        style={{
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          fontFamily: 'inherit',
+          fontSize: '12px',
+          color: 'inherit',
+          opacity: 0.4,
+          textDecoration: 'none'
+        }}
+        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
+        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
+      >
+        Cookie Preferences
+      </button>
     </div>
   </footer>
 );

@@ -15,7 +15,7 @@ let homeCache: {
 } | null = null;
 
 const Home = () => {
-    const { i18n } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
@@ -215,40 +215,40 @@ const Home = () => {
             <div className="container" id="browse">
 
                 <section className="home-section" ref={popularRef}>
-                    <h2 className="section-title"><span>Most</span> Popular</h2>
+                    <h2 className="section-title"><span>{t('home.trending')}</span></h2>
                     <div className="home-plugin-grid">
                         {popular.length > 0 ? (
-                            popular.map((plugin) => (
-                                <PluginCard key={`pop-${plugin.id}`} plugin={plugin} hideDescription />
+                            popular.slice(0, 10).map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} />
                             ))
                         ) : (
-                            <div className="section-placeholder">{loading ? 'Loading popular plugins...' : 'Scroll to load popular plugins'}</div>
+                            <p className="no-plugins">{t('home.no_plugins')}</p>
                         )}
                     </div>
                 </section>
 
                 <section className="home-section" ref={newestRef}>
-                    <h2 className="section-title"><span>New</span> & Trending</h2>
+                    <h2 className="section-title"><span>{t('home.latest')}</span></h2>
                     <div className="home-plugin-grid">
                         {newest.length > 0 ? (
-                            newest.map((plugin) => (
-                                <PluginCard key={`new-${plugin.id}`} plugin={plugin} hideDescription />
+                            newest.slice(0, 10).map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} />
                             ))
                         ) : (
-                            <div className="section-placeholder">{loading ? 'Loading new plugins...' : 'Scroll to load new plugins'}</div>
+                            <p className="no-plugins">{t('home.no_plugins')}</p>
                         )}
                     </div>
                 </section>
 
                 <section className="home-section">
-                    <h2 className="section-title"><span>All</span> Plugins ({allPlugins.length})</h2>
+                    <h2 className="section-title"><span>{t('home.all_plugins')}</span></h2>
                     <div className="home-plugin-grid">
                         {allPlugins.length > 0 ? (
-                            allPlugins.map((plugin) => (
-                                <PluginCard key={`all-${plugin.id}`} plugin={plugin} hideDescription />
+                            allPlugins.map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} />
                             ))
                         ) : (
-                            <div className="section-placeholder">{loading ? 'Loading all plugins...' : 'No plugins available'}</div>
+                            <p className="no-plugins">{t('home.no_plugins')}</p>
                         )}
                     </div>
                 </section>
