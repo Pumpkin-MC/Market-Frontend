@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate } from 'react-router-dom';
-import { Settings, Plus, ExternalLink, Sparkles, Search, BarChart2, Package } from 'lucide-react';
+import { Settings, Plus, ExternalLink, Sparkles, Search, BarChart2, Package, CheckCircle, X, ArrowRightLeft } from 'lucide-react';
+import api from '../../api';
 import { useAuth } from '../../App';
 import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal';
 import { getPluginUrl } from '../../utils/url';
@@ -16,6 +17,47 @@ const DashboardPlugins = () => {
     const [isDevModalOpen, setIsDevModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
+    const [incomingTransfers, setIncomingTransfers] = useState<any[]>([]);
+    const [transferLoadingId, setTransferLoadingId] = useState<number | null>(null);
+
+    useEffect(() => {
+        fetchIncomingTransfers();
+    }, []);
+
+    const fetchIncomingTransfers = async () => {
+        try {
+            const res = await api.get('/user/transfers/incoming');
+            setIncomingTransfers(Array.isArray(res.data) ? res.data : []);
+        } catch {
+            setIncomingTransfers([]);
+        }
+    };
+
+    const handleAcceptTransfer = async (transferId: number) => {
+        setTransferLoadingId(transferId);
+        try {
+            await api.post(`/user/transfers/${transferId}/accept`);
+            await fetchIncomingTransfers();
+            window.location.reload();
+        } catch (err: any) {
+            alert(err.response?.data?.error || 'Failed to accept transfer request.');
+        } finally {
+            setTransferLoadingId(null);
+        }
+    };
+
+    const handleRejectTransfer = async (transferId: number) => {
+        if (!window.confirm('Are you sure you want to decline this transfer request?')) return;
+        setTransferLoadingId(transferId);
+        try {
+            await api.post(`/user/transfers/${transferId}/reject`);
+            setIncomingTransfers(prev => prev.filter(t => t.id !== transferId));
+        } catch (err: any) {
+            alert(err.response?.data?.error || 'Failed to decline transfer request.');
+        } finally {
+            setTransferLoadingId(null);
+        }
+    };
 
     // Grouping analytics data by plugin ID
     const plugins = useMemo(() => {
@@ -35,8 +77,8 @@ const DashboardPlugins = () => {
                     earnings: 0,
                     views: 0,
                     avgRating: curr.avgRating || 0,
-                    created_at: curr.created_at,
-                    updated_at: curr.updated_at
+                    created_at: curr.createdAt || curr.created_at,
+                    updated_at: curr.updatedAt || curr.updated_at
                 };
             }
             acc[id].downloads += (curr.downloads || 0);
@@ -132,6 +174,81 @@ const DashboardPlugins = () => {
                         {t('developer.dashboard.add_plugin')}
                     </button>
                 </div>
+
+                {/* Incoming Plugin Transfer Requests */}
+                {incomingTransfers.length > 0 && (
+                    <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {incomingTransfers.map((req: any) => (
+                            <div key={req.id} style={{
+                                background: 'rgba(249, 115, 22, 0.08)',
+                                border: '1px solid rgba(249, 115, 22, 0.35)',
+                                borderRadius: '12px',
+                                padding: '1.25rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '1rem',
+                                flexWrap: 'wrap'
+                            }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                    <div style={{
+                                        width: '48px',
+                                        height: '48px',
+                                        borderRadius: '10px',
+                                        background: req.preview_url ? `url(${req.preview_url}) center/cover no-repeat` : 'rgba(249, 115, 22, 0.2)',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        fontWeight: 700,
+                                        color: '#f97316',
+                                        fontSize: '1.2rem',
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(249, 115, 22, 0.3)'
+                                    }}>
+                                        {!req.preview_url && req.plugin_name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--dash-text-primary)' }}>
+                                                {req.plugin_name}
+                                            </span>
+                                            <span className="dev-plugins-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#f97316', border: '1px solid rgba(249, 115, 22, 0.3)' }}>
+                                                <ArrowRightLeft size={11} style={{ marginRight: 4 }} /> Ownership Transfer Request
+                                            </span>
+                                        </div>
+                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--dash-text-muted)' }}>
+                                            <strong>@{req.sender_name}</strong> has requested to transfer ownership of this plugin to your account.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                    <button
+                                        className="btn btn-primary"
+                                        style={{ padding: '0.5rem 1.1rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                        onClick={() => handleAcceptTransfer(req.id)}
+                                        disabled={transferLoadingId === req.id}
+                                    >
+                                        <CheckCircle size={15} />
+                                        {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
+                                    </button>
+                                    <button
+                                        className="btn"
+                                        style={{
+                                            padding: '0.5rem 1rem', fontSize: '0.82rem',
+                                            background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)',
+                                            color: 'var(--dash-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px'
+                                        }}
+                                        onClick={() => handleRejectTransfer(req.id)}
+                                        disabled={transferLoadingId === req.id}
+                                    >
+                                        <X size={15} /> Decline
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 {/* Toolbar */}
                 <div className="dev-plugins-toolbar">

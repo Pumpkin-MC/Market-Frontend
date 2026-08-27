@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import api from '../../../api';
+import { useAuth } from '../../../App';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    Circle, BarChart3, Key, Star
+    Circle, BarChart3, Key, Star, ArrowRightLeft
 } from 'lucide-react';
 
 import StoreListing from './StoreListing';
@@ -12,6 +13,7 @@ import Pricing from './Pricing';
 import Coupons from './Coupons';
 import Licenses from './Licenses';
 import PluginReviewsTab from './PluginReviewsTab';
+import TransferOwnership from './TransferOwnership';
 import DangerZone from './DangerZone';
 import PluginAnalyticsTab from './PluginAnalyticsTab';
 import './ManagePlugin.css';
@@ -35,36 +37,46 @@ export type PluginData = {
     is_preorder?: boolean;
     preorder_release_date?: string;
     youtube_video_url?: string;
+    dev_id?: number;
 };
 
 const NAV_ITEMS = [
-    { key: 'listing',   label: 'Store Listing',    icon: LayoutGrid  },
-    { key: 'update',    label: 'Publish Update',   icon: Upload      },
-    { key: 'analytics', label: 'Analytics',        icon: BarChart3   },
-    { key: 'reviews',   label: 'Reviews',          icon: Star        },
-    { key: 'pricing',   label: 'Pricing',          icon: DollarSign  },
-    { key: 'licenses',  label: 'Licenses',         icon: Key         },
-    { key: 'coupons',   label: 'Coupons',          icon: Tag         },
-    { key: 'danger',    label: 'Danger Zone',      icon: Trash2      },
+    { key: 'listing',   label: 'Store Listing',    icon: LayoutGrid       },
+    { key: 'update',    label: 'Publish Update',   icon: Upload           },
+    { key: 'analytics', label: 'Analytics',        icon: BarChart3        },
+    { key: 'reviews',   label: 'Reviews',          icon: Star             },
+    { key: 'pricing',   label: 'Pricing',          icon: DollarSign       },
+    { key: 'licenses',  label: 'Licenses',         icon: Key              },
+    { key: 'coupons',   label: 'Coupons',          icon: Tag              },
+    { key: 'transfer',  label: 'Transfer',         icon: ArrowRightLeft   },
+    { key: 'danger',    label: 'Danger Zone',      icon: Trash2           },
 ];
 
 const ManagePlugin = () => {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('listing');
     const [loading, setLoading] = useState(true);
     const [plugin, setPlugin] = useState<PluginData | null>(null);
 
     useEffect(() => {
-        fetchPlugin();
-    }, [id]);
+        if (user) {
+            fetchPlugin();
+        }
+    }, [id, user]);
 
     const fetchPlugin = async () => {
         try {
             const res = await api.get(`/plugins/${id}`);
-            setPlugin(res.data);
+            const data = res.data;
+            if (!user || (data.dev_id !== user.id && user.role !== 'admin')) {
+                navigate('/dashboard/plugins', { replace: true });
+                return;
+            }
+            setPlugin(data);
         } catch {
-            navigate('/dashboard/plugins');
+            navigate('/dashboard/plugins', { replace: true });
         } finally {
             setLoading(false);
         }
@@ -153,6 +165,9 @@ const ManagePlugin = () => {
                 )}
                 {activeTab === 'coupons' && (
                     <Coupons plugin={plugin} />
+                )}
+                {activeTab === 'transfer' && (
+                    <TransferOwnership plugin={plugin} />
                 )}
                 {activeTab === 'danger' && (
                     <DangerZone plugin={plugin} />

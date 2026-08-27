@@ -12,7 +12,7 @@ import {
   BookOpen, AlertTriangle, LogOut, CheckCircle,
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
-  ShieldCheck, Download, Sliders, Package
+  ShieldCheck, Download, Sliders, Package, Laptop, Tablet
 } from 'lucide-react';
 
 interface LibraryEntry {
@@ -244,6 +244,56 @@ const ProfilePage = () => {
         showToast(err.response?.data?.error || 'Failed to update developer profile.', 'error');
       }
     });
+  };
+
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
+  const [revokingAllSessions, setRevokingAllSessions] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'security') {
+      fetchSessions();
+    }
+  }, [activeTab]);
+
+  const fetchSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await api.get('/user/sessions');
+      setSessions(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setSessions([]);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionId: string) => {
+    setRevokingSessionId(sessionId);
+    try {
+      await api.delete(`/user/sessions/${sessionId}`);
+      setSessions(prev => prev.filter(s => s.id !== sessionId));
+      showToast('Session revoked successfully.');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to revoke session.', 'error');
+    } finally {
+      setRevokingSessionId(null);
+    }
+  };
+
+  const handleRevokeOtherSessions = async () => {
+    if (!window.confirm('Are you sure you want to sign out of all other devices?')) return;
+    setRevokingAllSessions(true);
+    try {
+      await api.post('/user/sessions/revoke-others');
+      setSessions(prev => prev.filter(s => s.is_current));
+      showToast('Signed out of all other devices.');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to sign out of other sessions.', 'error');
+    } finally {
+      setRevokingAllSessions(false);
+    }
   };
 
   useEffect(() => {
@@ -673,6 +723,125 @@ const ProfilePage = () => {
                       />
                       <button type="submit" className="settings-btn settings-btn-primary">Verify & Enable</button>
                     </form>
+                  </div>
+                )}
+              </SettingsCard>
+
+              {/* Active Devices & Sessions */}
+              <SettingsCard
+                title="Active Devices & Sessions"
+                icon={Laptop}
+                description="Review browsers and devices currently logged into your account. You can revoke unrecognized sessions at any time."
+              >
+                {sessionsLoading ? (
+                  <p className="settings-hint" style={{ textAlign: 'center', padding: '1.5rem 0' }}>Loading active devices…</p>
+                ) : sessions.length === 0 ? (
+                  <p className="settings-hint">No active sessions found.</p>
+                ) : (
+                  <div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                      {sessions.map((s: any) => {
+                        const isMobile = s.device_type === 'mobile';
+                        const isTablet = s.device_type === 'tablet';
+                        const DeviceIcon = isMobile ? Smartphone : isTablet ? Tablet : Laptop;
+
+                        return (
+                          <div
+                            key={s.id}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: '1rem',
+                              padding: '1rem 1.15rem',
+                              borderRadius: '10px',
+                              background: s.is_current ? 'rgba(249, 115, 22, 0.06)' : 'rgba(255,255,255,0.02)',
+                              border: s.is_current ? '1px solid rgba(249, 115, 22, 0.3)' : '1px solid rgba(255,255,255,0.07)',
+                              flexWrap: 'wrap'
+                            }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                              <div style={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '8px',
+                                background: s.is_current ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255,255,255,0.05)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: s.is_current ? 'var(--mp-accent, #f97316)' : 'var(--dash-text-muted, #94a3b8)',
+                                flexShrink: 0
+                              }}>
+                                <DeviceIcon size={20} />
+                              </div>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--dash-text-primary, #fff)' }}>
+                                      {s.device_name || s.os || 'Web Device'}
+                                    </span>
+                                    {s.is_current && (
+                                      <span style={{
+                                        fontSize: '0.72rem',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        background: 'rgba(16, 185, 129, 0.15)',
+                                        color: '#10b981',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        fontWeight: 600
+                                      }}>
+                                        Current Device
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted, #94a3b8)', marginTop: '0.25rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                    <span>{s.browser || 'Web Browser'}</span>
+                                    {s.os && s.os !== s.device_name && (
+                                      <span>• {s.os}</span>
+                                    )}
+                                    {s.country && (
+                                      <span>• {s.country}</span>
+                                    )}
+                                    {s.ip_address && (
+                                      <span>• IP: {s.ip_address}</span>
+                                    )}
+                                    <span>
+                                      • {s.is_current ? 'Active now' : `Last active ${new Date(s.last_active_at).toLocaleDateString()} ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                    </span>
+                                  </div>
+                                </div>
+                            </div>
+
+                            {!s.is_current && (
+                              <button
+                                type="button"
+                                className="settings-btn settings-btn-danger-outline"
+                                style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                onClick={() => handleRevokeSession(s.id)}
+                                disabled={revokingSessionId === s.id}
+                              >
+                                <LogOut size={13} />
+                                {revokingSessionId === s.id ? 'Revoking…' : 'Revoke'}
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {sessions.length > 1 && (
+                      <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                        <button
+                          type="button"
+                          className="settings-btn settings-btn-danger-outline"
+                          onClick={handleRevokeOtherSessions}
+                          disabled={revokingAllSessions}
+                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        >
+                          <LogOut size={14} />
+                          {revokingAllSessions ? 'Signing out…' : 'Sign Out of All Other Devices'}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </SettingsCard>

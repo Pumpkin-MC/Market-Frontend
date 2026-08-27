@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DollarSign, ExternalLink, Save, Zap, Lock, Percent, Tag, AlertTriangle } from 'lucide-react';
+import { DollarSign, ExternalLink, Save, Zap, Lock, Percent, Tag, AlertTriangle, CheckCircle, ShieldCheck } from 'lucide-react';
 import api from '../../../api';
 import type { PluginData } from './ManagePlugin';
 import { useAuth } from '../../../App';
@@ -27,6 +27,8 @@ const Pricing = ({ plugin, onSaved }: Props) => {
     const navigate = useNavigate();
     const { user }  = useAuth();
     const [saving, setSaving] = useState(false);
+    const [pricingSuccess, setPricingSuccess] = useState(false);
+    const [pricingError, setPricingError] = useState<string | null>(null);
 
     const [licenseType, setLicenseType]   = useState<LicenseType>(plugin.type === 'paid' ? 'paid' : 'free');
     const [price, setPrice]               = useState((plugin.price_cents ?? 0) / 100 || 4.99);
@@ -84,10 +86,15 @@ const Pricing = ({ plugin, onSaved }: Props) => {
         }
 
         try {
+            setPricingError(null);
+            setPricingSuccess(false);
             await api.put(`/plugins/${plugin.id}`, fd);
+            setPricingSuccess(true);
             onSaved();
-        } catch {
-            alert('Failed to save pricing.');
+            setTimeout(() => setPricingSuccess(false), 3000);
+        } catch (err: any) {
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to save pricing.';
+            setPricingError(msg);
         } finally {
             setSaving(false);
         }
@@ -325,7 +332,38 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                     </>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '2rem' }}>
+                {pricingError && (
+                    <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginTop: '1.5rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
+                            <div>
+                                <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
+                                    {pricingError.toLowerCase().includes('2fa') || pricingError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Pricing Error'}
+                                </strong>
+                                <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{pricingError}</span>
+                            </div>
+                        </div>
+                        {(pricingError.toLowerCase().includes('2fa') || pricingError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                            <button
+                                type="button"
+                                className="mp-btn mp-btn-primary"
+                                style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                onClick={() => navigate('/settings?tab=security')}
+                            >
+                                <ShieldCheck size={16} /> Enable 2FA →
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {pricingSuccess && (
+                    <div className="mp-banner success" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', marginTop: '1.5rem', marginBottom: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px' }}>
+                        <CheckCircle size={20} color="#10b981" />
+                        <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>Pricing settings saved successfully!</span>
+                    </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
                     <button
                         type="submit"
                         className="mp-btn mp-btn-primary"

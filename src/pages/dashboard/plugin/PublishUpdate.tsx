@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock, ShieldAlert, ShieldCheck, Lock } from 'lucide-react';
 import api from '../../../api';
+import { useAuth } from '../../../App';
 import type { PluginData } from './ManagePlugin';
 import { validateWasmFile } from '../../../utils/fileValidation';
 
@@ -13,6 +15,8 @@ const TRACKS = [
 ] as const;
 
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [wasmFile, setWasmFile] = useState<File | null>(null);
     const [wasmValidationErr, setWasmValidationErr] = useState<string | null>(null);
     const [wasmFormatInfo, setWasmFormatInfo]       = useState<string | null>(null);
@@ -23,6 +27,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [dragOver, setDragOver] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [published, setPublished] = useState(false);
+    const [publishError, setPublishError] = useState<string | null>(null);
 
     const handleFileValidation = async (file: File | null) => {
         if (!file) {
@@ -63,6 +68,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const handlePublish = async () => {
         if (!wasmFile) return;
         setUploading(true);
+        setPublishError(null);
         const fd = new FormData();
         fd.append('wasm', wasmFile);
         if (version) fd.append('version', version);
@@ -79,8 +85,9 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 setVersion('');
                 setReleaseNotes('');
             }, 3000);
-        } catch {
-            alert('Publish failed.');
+        } catch (err: any) {
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Publish failed. Please check your inputs and try again.';
+            setPublishError(msg);
         } finally {
             setUploading(false);
         }
@@ -120,6 +127,28 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 <h2>Publish Update</h2>
                 <p>Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes — like Google Play, but for your plugin marketplace.</p>
             </div>
+
+            {user && !user.totp_enabled && (
+                <div className="mp-banner warn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1.5rem', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <ShieldAlert size={24} color="#f97316" style={{ flexShrink: 0 }} />
+                        <div>
+                            <strong style={{ color: '#f97316', display: 'block', fontSize: '0.95rem' }}>Two-Factor Authentication (2FA) Required</strong>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--mp-text-2)' }}>
+                                To protect servers and prevent unauthorized plugin uploads, 2FA is required before publishing updates.
+                            </span>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        className="mp-btn mp-btn-primary"
+                        style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => navigate('/settings?tab=security')}
+                    >
+                        <ShieldCheck size={16} /> Enable 2FA →
+                    </button>
+                </div>
+            )}
 
             {/* ── Release Track ── */}
             <div className="mp-card">
@@ -249,6 +278,30 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     </div>
                 )}
             </div>
+
+            {publishError && (
+                <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
+                        <div>
+                            <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
+                                {publishError.toLowerCase().includes('2fa') || publishError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Publish Failed'}
+                            </strong>
+                            <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{publishError}</span>
+                        </div>
+                    </div>
+                    {(publishError.toLowerCase().includes('2fa') || publishError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                        <button
+                            type="button"
+                            className="mp-btn mp-btn-primary"
+                            style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            onClick={() => navigate('/settings?tab=security')}
+                        >
+                            <ShieldCheck size={16} /> Enable 2FA →
+                        </button>
+                    )}
+                </div>
+            )}
 
             <div style={{display:'flex', justifyContent:'flex-end', gap:'0.75rem'}}>
                 <button

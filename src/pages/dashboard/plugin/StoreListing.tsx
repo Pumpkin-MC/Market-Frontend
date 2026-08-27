@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
 import api from '../../../api';
+import { useAuth } from '../../../App';
 import type { PluginData } from './ManagePlugin';
 import { validateAndSanitizeImage } from '../../../utils/fileValidation';
 
@@ -137,7 +139,11 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
 type Props = { plugin: PluginData; onSaved: () => void };
 
 const StoreListing = ({ plugin, onSaved }: Props) => {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
+    const [saveSuccess, setSaveSuccess] = useState(false);
+    const [saveError, setSaveError] = useState<string | null>(null);
     const [name, setName] = useState(plugin.name);
     const [descriptions, setDescriptions] = useState<Record<string, string>>(() => {
         const parsed = JSON.parse(plugin.translated_descriptions || '{}');
@@ -211,6 +217,8 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
+        setSaveError(null);
+        setSaveSuccess(false);
         const fd = new FormData();
         fd.append('name', name);
         fd.append('translated_descriptions', JSON.stringify(descriptions));
@@ -224,9 +232,12 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         }
         try {
             await api.put(`/plugins/${plugin.id}`, fd);
+            setSaveSuccess(true);
             onSaved();
-        } catch {
-            alert('Failed to save.');
+            setTimeout(() => setSaveSuccess(false), 3000);
+        } catch (err: any) {
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to save plugin details.';
+            setSaveError(msg);
         } finally {
             setSaving(false);
         }
@@ -237,8 +248,9 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         try {
             await api.delete(`/plugins/screenshots/${screenId}`);
             setScreenshots(prev => prev.filter(s => s.id !== screenId));
-        } catch {
-            alert('Failed to delete screenshot.');
+        } catch (err: any) {
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to delete screenshot.';
+            setSaveError(msg);
         }
     };
 
@@ -511,6 +523,37 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                         {activeLocale === DEFAULT_LOCALE && ' · This is the default language shown when no translation is available.'}
                     </p>
                 </div>
+
+                {saveError && (
+                    <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1.25rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                            <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
+                            <div>
+                                <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
+                                    {saveError.toLowerCase().includes('2fa') || saveError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Save Error'}
+                                </strong>
+                                <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{saveError}</span>
+                            </div>
+                        </div>
+                        {(saveError.toLowerCase().includes('2fa') || saveError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                            <button
+                                type="button"
+                                className="mp-btn mp-btn-primary"
+                                style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                onClick={() => navigate('/settings?tab=security')}
+                            >
+                                <ShieldCheck size={16} /> Enable 2FA →
+                            </button>
+                        )}
+                    </div>
+                )}
+
+                {saveSuccess && (
+                    <div className="mp-banner success" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', marginBottom: '1.25rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px' }}>
+                        <CheckCircle size={20} color="#10b981" />
+                        <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>Listing details saved successfully!</span>
+                    </div>
+                )}
 
                 <div style={{display:'flex', justifyContent:'flex-end'}}>
                     <button type="submit" className="mp-btn mp-btn-primary" disabled={saving}>
