@@ -216,7 +216,7 @@ h3 {
 
 .nav-search-input-wrap input {
   width: 100%;
-  padding: 8px 16px 8px 40px;
+  padding: 8px 34px 8px 40px;
   border-radius: 20px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
@@ -224,6 +224,26 @@ h3 {
   font-size: 0.875rem;
   outline: none;
   transition: all 0.2s ease;
+}
+
+.nav-search-clear {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border-radius: 50%;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.nav-search-clear:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .nav-search-input-wrap input::placeholder {

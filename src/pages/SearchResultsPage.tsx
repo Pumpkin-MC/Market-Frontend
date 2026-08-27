@@ -65,7 +65,7 @@ const SearchResultsPage = () => {
   return (
     <div className="container">
       <SEO 
-        title={searchQuery ? `Search results for "${searchQuery}"` : "All Plugins"}
+        title={searchQuery ? `${searchQuery} - Plugins` : "All Plugins"}
         description={`Browse our collection of Minecraft plugins. ${searchQuery ? `Showing results for ${searchQuery}.` : ''}`}
       />
       
@@ -103,14 +103,22 @@ const SearchResultsPage = () => {
             <label>Price Range ($)</label>
             <div className="price-range-inputs">
               <input 
+                id="searchMinPrice"
+                name="minPrice"
                 type="number" 
+                inputMode="decimal"
+                autoComplete="off"
                 placeholder="Min" 
                 value={minPrice} 
                 onChange={e => setMinPrice(e.target.value)}
               />
               <span>-</span>
               <input 
+                id="searchMaxPrice"
+                name="maxPrice"
                 type="number" 
+                inputMode="decimal"
+                autoComplete="off"
                 placeholder="Max" 
                 value={maxPrice} 
                 onChange={e => setMaxPrice(e.target.value)}
@@ -122,10 +130,7 @@ const SearchResultsPage = () => {
         <main className="search-main">
           <div className="search-header">
             <h1 className="search-title">
-              {searchQuery
-                ? <>Results <span>for "{searchQuery}"</span></>
-                : 'All Plugins'
-              }
+              <span>All</span> Plugins
               <small className="results-count">({plugins.length} found)</small>
             </h1>
 
@@ -159,7 +164,7 @@ const SearchResultsPage = () => {
                 <div className="empty-state">
                   <p>
                     {searchQuery
-                      ? `No plugins found for "${searchQuery}" with these filters.`
+                      ? `No plugins found matching your search and filters.`
                       : 'No plugins available with these filters.'
                     }
                   </p>

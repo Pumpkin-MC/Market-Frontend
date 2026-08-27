@@ -373,12 +373,16 @@ const LoginPage = () => {
                 <div className="field-input-wrapper">
                   <input
                     id="totpCode"
+                    name="totpCode"
                     className="login-input no-icon"
                     type="text"
                     placeholder="000000"
-                    maxLength={6}
+                    maxLength={8}
                     value={totpCode}
-                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
+                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    autoComplete="one-time-code"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     required
                     disabled={isSubmitting}
                     autoFocus
@@ -393,6 +397,7 @@ const LoginPage = () => {
                   <div className="field-input-wrapper">
                     <input
                       id="email"
+                      name="email"
                       className={`login-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
                       type="email"
                       placeholder="you@company.com"
@@ -436,6 +441,7 @@ const LoginPage = () => {
                   <div className="field-input-wrapper">
                     <input
                       id="password"
+                      name="password"
                       className="login-input no-icon"
                       type="password"
                       placeholder="••••••••"

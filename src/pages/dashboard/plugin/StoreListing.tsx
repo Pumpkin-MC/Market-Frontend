@@ -336,48 +336,79 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     </div>
 
                     <div className="mp-form-group">
-                        <label className="mp-label">Plugin Name</label>
-                        <input className="mp-input" type="text" value={name}
-                            onChange={e => setName(e.target.value)} required />
+                        <label className="mp-label" htmlFor="listingPluginName">Plugin Name</label>
+                        <input
+                            id="listingPluginName"
+                            name="pluginName"
+                            className="mp-input"
+                            type="text"
+                            value={name}
+                            onChange={e => setName(e.target.value)}
+                            autoComplete="off"
+                            required
+                        />
                     </div>
 
                     <div className="mp-form-row">
                         <div className="mp-form-group">
-                            <label className="mp-label">Category</label>
-                            <select className="mp-select" value={category} onChange={e => setCategory(e.target.value)}>
+                            <label className="mp-label" htmlFor="listingPluginCategory">Category</label>
+                            <select id="listingPluginCategory" name="category" className="mp-select" value={category} onChange={e => setCategory(e.target.value)}>
                                 {PLUGIN_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
                         <div className="mp-form-group">
-                            <label className="mp-label">Source Link</label>
-                            <input className="mp-input" type="url" value={sourceLink}
+                            <label className="mp-label" htmlFor="listingPluginSourceLink">Source Link</label>
+                            <input
+                                id="listingPluginSourceLink"
+                                name="sourceLink"
+                                className="mp-input"
+                                type="url"
+                                value={sourceLink}
                                 onChange={e => setSourceLink(e.target.value)}
-                                placeholder="https://github.com/you/plugin" />
+                                placeholder="https://github.com/you/plugin"
+                                autoComplete="url"
+                            />
                         </div>
                     </div>
 
                     <div className="mp-form-row">
                         <div className="mp-form-group">
-                            <label className="mp-label">
+                            <label className="mp-label" htmlFor="listingPluginKeywords">
                                 Keywords <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(comma-separated)</span>
                             </label>
-                            <input className="mp-input" type="text" value={keywords}
+                            <input
+                                id="listingPluginKeywords"
+                                name="keywords"
+                                className="mp-input"
+                                type="text"
+                                value={keywords}
                                 onChange={e => setKeywords(e.target.value)}
-                                placeholder="economy, shop, currency" />
+                                placeholder="economy, shop, currency"
+                                autoComplete="off"
+                            />
                         </div>
                         <div className="mp-form-group">
-                            <label className="mp-label">
+                            <label className="mp-label" htmlFor="listingPluginYoutubeUrl">
                                 YouTube Video URL <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(optional)</span>
                             </label>
-                            <input className="mp-input" type="url" value={youtubeVideoUrl}
+                            <input
+                                id="listingPluginYoutubeUrl"
+                                name="youtubeVideoUrl"
+                                className="mp-input"
+                                type="url"
+                                value={youtubeVideoUrl}
                                 onChange={e => setYoutubeVideoUrl(e.target.value)}
-                                placeholder="https://www.youtube.com/watch?v=..." />
+                                placeholder="https://www.youtube.com/watch?v=..."
+                                autoComplete="url"
+                            />
                         </div>
                     </div>
 
                     <div className="mp-form-group">
                         <label className="mp-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none', marginTop: '0.5rem' }}>
                             <input
+                                id="listingPluginEarlyAccess"
+                                name="earlyAccess"
                                 type="checkbox"
                                 checked={isEarlyAccess}
                                 onChange={e => setIsEarlyAccess(e.target.checked)}

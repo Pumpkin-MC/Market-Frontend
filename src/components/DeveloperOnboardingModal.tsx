@@ -177,13 +177,16 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
 
             <div className="dev-form-group">
-              <label>{t('developer.onboarding.display_name_label')}</label>
+              <label htmlFor="onboardingDisplayName">{t('developer.onboarding.display_name_label')}</label>
               <input
+                id="onboardingDisplayName"
+                name="displayName"
                 type="text"
                 className="dev-input"
                 placeholder={t('developer.onboarding.display_name_placeholder')}
                 value={displayName}
                 onChange={e => setDisplayName(e.target.value)}
+                autoComplete="nickname"
                 maxLength={60}
                 autoFocus
               />
@@ -234,51 +237,63 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {isSellingPaid && step === 2 && (
           <div className="dev-step-content">
             <div className="dev-form-group">
-              <label className="dev-field-label">
+              <label className="dev-field-label" htmlFor="onboardingLegalName">
                 <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
               </label>
               <input
+                id="onboardingLegalName"
+                name="legalName"
                 type="text"
                 className="dev-input"
                 value={legalName}
                 onChange={e => setLegalName(e.target.value)}
                 placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                autoComplete="name"
                 required
               />
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><MapPin size={14} /> {t('developer.onboarding.street_label')}</label>
+              <label className="dev-field-label" htmlFor="onboardingStreetAddress"><MapPin size={14} /> {t('developer.onboarding.street_label')}</label>
               <input
+                id="onboardingStreetAddress"
+                name="streetAddress"
                 type="text"
                 className="dev-input"
                 value={streetAddress}
                 onChange={e => setStreetAddress(e.target.value)}
                 placeholder="123 Main St, Suite 400"
+                autoComplete="street-address"
                 required
               />
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="dev-form-group">
-                <label className="dev-field-label">{t('developer.onboarding.city_label')}</label>
+                <label className="dev-field-label" htmlFor="onboardingCity">{t('developer.onboarding.city_label')}</label>
                 <input
+                  id="onboardingCity"
+                  name="city"
                   type="text"
                   className="dev-input"
                   value={city}
                   onChange={e => setCity(e.target.value)}
                   placeholder="City"
+                  autoComplete="address-level2"
                   required
                 />
               </div>
               <div className="dev-form-group">
-                <label className="dev-field-label">{t('developer.onboarding.postal_label')}</label>
+                <label className="dev-field-label" htmlFor="onboardingPostalCode">{t('developer.onboarding.postal_label')}</label>
                 <input
+                  id="onboardingPostalCode"
+                  name="postalCode"
                   type="text"
                   className="dev-input"
                   value={postalCode}
                   onChange={e => setPostalCode(e.target.value)}
                   placeholder="10001"
+                  autoComplete="postal-code"
                   required
                 />
               </div>
@@ -286,11 +301,14 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
               <div className="dev-form-group">
-                <label className="dev-field-label"><Globe size={14} /> {t('developer.onboarding.country_label')}</label>
+                <label className="dev-field-label" htmlFor="onboardingCountry"><Globe size={14} /> {t('developer.onboarding.country_label')}</label>
                 <select
+                  id="onboardingCountry"
+                  name="country"
                   className="dev-input dev-select"
                   value={country}
                   onChange={e => setCountry(e.target.value)}
+                  autoComplete="country"
                   required
                 >
                   <option value="">Select country...</option>
@@ -301,13 +319,16 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
               </div>
 
               <div className="dev-form-group">
-                <label className="dev-field-label">{t('developer.onboarding.vat_label')}</label>
+                <label className="dev-field-label" htmlFor="onboardingVatId">{t('developer.onboarding.vat_label')}</label>
                 <input
+                  id="onboardingVatId"
+                  name="vatId"
                   type="text"
                   className="dev-input"
                   value={vatId}
                   onChange={e => setVatId(e.target.value)}
                   placeholder="EU123456789 or Tax ID"
+                  autoComplete="off"
                 />
               </div>
             </div>
@@ -329,36 +350,45 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {((!isSellingPaid && step === 2) || (isSellingPaid && step === 3)) && (
           <div className="dev-step-content">
             <div className="dev-form-group">
-              <label className="dev-field-label"><Mail size={14} /> {t('developer.onboarding.support_email_label')} *</label>
+              <label className="dev-field-label" htmlFor="onboardingSupportEmail"><Mail size={14} /> {t('developer.onboarding.support_email_label')} *</label>
               <input
+                id="onboardingSupportEmail"
+                name="supportEmail"
                 type="email"
                 className="dev-input"
                 value={supportEmail}
                 onChange={e => setSupportEmail(e.target.value)}
                 placeholder="support@yourdomain.com"
+                autoComplete="email"
                 required
               />
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><Globe size={14} /> {t('developer.onboarding.website_label')}</label>
+              <label className="dev-field-label" htmlFor="onboardingWebsiteUrl"><Globe size={14} /> {t('developer.onboarding.website_label')}</label>
               <input
+                id="onboardingWebsiteUrl"
+                name="websiteUrl"
                 type="url"
                 className="dev-input"
                 value={websiteUrl}
                 onChange={e => setWebsiteUrl(e.target.value)}
                 placeholder="https://yourwebsite.com"
+                autoComplete="url"
               />
             </div>
 
             <div className="dev-form-group">
-              <label className="dev-field-label"><Code2 size={14} /> {t('developer.onboarding.github_label')}</label>
+              <label className="dev-field-label" htmlFor="onboardingGithubUrl"><Code2 size={14} /> {t('developer.onboarding.github_label')}</label>
               <input
+                id="onboardingGithubUrl"
+                name="githubUrl"
                 type="text"
                 className="dev-input"
                 value={githubUrl}
                 onChange={e => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/yourname"
+                autoComplete="url"
               />
             </div>
 

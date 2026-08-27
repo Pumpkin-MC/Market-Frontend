@@ -75,11 +75,15 @@ const DangerZone = ({ plugin }: Props) => {
                 <div className="mp-danger-input-row">
                     <div className="mp-form-group">
                         <input
+                            id="deleteConfirmInput"
+                            name="deleteConfirm"
                             className="mp-input"
                             type="text"
                             value={deleteConfirm}
                             onChange={e => setDeleteConfirm(e.target.value)}
                             placeholder={plugin.name}
+                            autoComplete="off"
+                            spellCheck={false}
                             style={{fontFamily:'var(--font-mono)'}}
                         />
                     </div>

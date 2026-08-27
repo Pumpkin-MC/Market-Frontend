@@ -166,15 +166,19 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 </div>
 
                 <div className="mp-form-group">
-                    <label className="mp-label">
+                    <label className="mp-label" htmlFor="pluginVersionTag">
                         Version Tag <span style={{color:'var(--mp-text-3)', fontWeight:400}}>(optional — e.g. 1.2.3)</span>
                     </label>
                     <input
+                        id="pluginVersionTag"
+                        name="version"
                         className="mp-input"
                         type="text"
                         value={version}
                         onChange={e => setVersion(e.target.value)}
                         placeholder="1.0.0"
+                        autoComplete="off"
+                        spellCheck={false}
                         style={{fontFamily:'var(--font-mono)'}}
                     />
                 </div>

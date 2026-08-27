@@ -109,13 +109,17 @@ const Licenses = ({ plugin }: Props) => {
                     </p>
                     <form onSubmit={handleGrantLicense} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div className="mp-form-group">
-                            <label className="mp-label">User (Username, Email, or User ID)</label>
+                            <label className="mp-label" htmlFor="licenseUserIdentifier">User (Username, Email, or User ID)</label>
                             <input
+                                id="licenseUserIdentifier"
+                                name="userIdentifier"
                                 type="text"
                                 className="mp-input"
                                 placeholder="e.g. alex or alex@example.com"
                                 value={userIdentifier}
                                 onChange={e => setUserIdentifier(e.target.value)}
+                                autoComplete="off"
+                                spellCheck={false}
                                 required
                             />
                         </div>

@@ -292,7 +292,7 @@ const RegisterPage = () => {
               <label className="field-label" htmlFor="username">{t('auth.username')}</label>
               <div className="field-input-wrapper">
                 <input
-                  id="username" className="field-input" type="text" placeholder="johndoe"
+                  id="username" name="username" className="field-input" type="text" placeholder="johndoe"
                   onChange={e => setForm({ ...form, username: e.target.value })}
                   required disabled={isSubmitting} autoComplete="username"
                   autoCapitalize="none" spellCheck={false}
@@ -306,6 +306,7 @@ const RegisterPage = () => {
               <div className="field-input-wrapper">
                 <input
                   id="email"
+                  name="email"
                   className={`field-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
                   type="email" placeholder="you@company.com"
                   value={form.email}
@@ -351,6 +352,7 @@ const RegisterPage = () => {
               <div className="field-input-wrapper">
                 <input
                   id="password"
+                  name="password"
                   className="field-input password-input"
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Create a strong password"

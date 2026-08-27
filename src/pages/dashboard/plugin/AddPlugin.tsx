@@ -567,16 +567,19 @@ const AddPlugin = () => {
 
                                 {/* Name */}
                                 <div className="mp-form-group">
-                                    <label className="mp-label">
+                                    <label className="mp-label" htmlFor="pluginName">
                                         Plugin Name <span className="ap-required">*</span>
                                         <CharCount current={name.length} max={MAX_NAME_LEN} />
                                     </label>
                                     <input
+                                        id="pluginName"
+                                        name="pluginName"
                                         className="mp-input"
                                         type="text"
                                         value={name}
                                         onChange={e => setName(e.target.value)}
                                         placeholder="My Awesome Plugin"
+                                        autoComplete="off"
                                         autoFocus
                                         style={{ borderColor: fieldErrors.name ? 'var(--mp-error)' : undefined }}
                                     />
@@ -586,8 +589,8 @@ const AddPlugin = () => {
                                 <div className="mp-form-row">
                                     {/* Category */}
                                     <div className="mp-form-group">
-                                        <label className="mp-label">Category</label>
-                                        <select className="mp-select" value={category}
+                                        <label className="mp-label" htmlFor="pluginCategory">Category</label>
+                                        <select id="pluginCategory" name="category" className="mp-select" value={category}
                                             onChange={e => setCategory(e.target.value)}>
                                             {PLUGIN_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
                                         </select>
@@ -596,17 +599,20 @@ const AddPlugin = () => {
 
                                     {/* Source link */}
                                     <div className="mp-form-group">
-                                        <label className="mp-label">
+                                        <label className="mp-label" htmlFor="pluginSourceLink">
                                             Source Link{' '}
                                             <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
                                             <CharCount current={sourceLink.length} max={MAX_SOURCE_LINK_LEN} />
                                         </label>
                                         <input
+                                            id="pluginSourceLink"
+                                            name="sourceLink"
                                             className="mp-input"
                                             type="url"
                                             value={sourceLink}
                                             onChange={e => setSourceLink(e.target.value)}
                                             placeholder="https://github.com/you/plugin"
+                                            autoComplete="url"
                                             style={{ borderColor: fieldErrors.sourceLink ? 'var(--mp-error)' : undefined }}
                                         />
                                         <FieldError msg={fieldErrors.sourceLink} />
@@ -616,17 +622,20 @@ const AddPlugin = () => {
                                 <div className="mp-form-row">
                                     {/* Keywords */}
                                     <div className="mp-form-group">
-                                        <label className="mp-label">
+                                        <label className="mp-label" htmlFor="pluginKeywords">
                                             Keywords{' '}
                                             <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(comma-separated)</span>
                                             <CharCount current={keywords.length} max={MAX_KEYWORDS_LEN} />
                                         </label>
                                         <input
+                                            id="pluginKeywords"
+                                            name="keywords"
                                             className="mp-input"
                                             type="text"
                                             value={keywords}
                                             onChange={e => setKeywords(e.target.value)}
                                             placeholder="economy, shop, currency"
+                                            autoComplete="off"
                                             style={{ borderColor: fieldErrors.keywords ? 'var(--mp-error)' : undefined }}
                                         />
                                         <FieldError msg={fieldErrors.keywords} />
@@ -634,17 +643,20 @@ const AddPlugin = () => {
 
                                     {/* YouTube Video URL */}
                                     <div className="mp-form-group">
-                                        <label className="mp-label">
+                                        <label className="mp-label" htmlFor="pluginYoutubeUrl">
                                             YouTube Video URL{' '}
                                             <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
                                             <CharCount current={youtubeVideoUrl.length} max={MAX_YOUTUBE_URL_LEN} />
                                         </label>
                                         <input
+                                            id="pluginYoutubeUrl"
+                                            name="youtubeVideoUrl"
                                             className="mp-input"
                                             type="url"
                                             value={youtubeVideoUrl}
                                             onChange={e => setYoutubeVideoUrl(e.target.value)}
                                             placeholder="https://www.youtube.com/watch?v=..."
+                                            autoComplete="url"
                                             style={{ borderColor: fieldErrors.youtubeVideoUrl ? 'var(--mp-error)' : undefined }}
                                         />
                                         <FieldError msg={fieldErrors.youtubeVideoUrl} />
@@ -655,6 +667,8 @@ const AddPlugin = () => {
                                 <div className="mp-form-group">
                                     <label className="mp-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none' }}>
                                         <input
+                                            id="pluginEarlyAccess"
+                                            name="earlyAccess"
                                             type="checkbox"
                                             checked={isEarlyAccess}
                                             onChange={e => setIsEarlyAccess(e.target.checked)}
@@ -672,13 +686,16 @@ const AddPlugin = () => {
                             <div className="mp-card">
                                 <div className="mp-card-title"><User size={14} />Authorship</div>
                                 <div className="mp-form-group" style={{ marginBottom: 0 }}>
-                                    <label className="mp-label">Developer Name</label>
+                                    <label className="mp-label" htmlFor="pluginDeveloperName">Developer Name</label>
                                     <input
+                                        id="pluginDeveloperName"
+                                        name="developerName"
                                         className="mp-input"
                                         type="text"
                                         value={developerName}
                                         onChange={e => setDeveloperName(e.target.value)}
                                         placeholder={user?.username ?? 'Developer or studio name'}
+                                        autoComplete="name"
                                     />
                                     <span style={{ fontSize: '0.74rem', color: 'var(--mp-text-3)', marginTop: '0.3rem', display: 'block' }}>
                                         The person or team who built the plugin. Leave blank to use your account name.
@@ -998,7 +1015,7 @@ const AddPlugin = () => {
 
                                 {licenseType === 'paid' && stripeConnected && (
                                     <div className="mp-form-group" style={{ marginTop: '1.5rem', animation: 'fadeIn 0.2s ease' }}>
-                                        <label className="mp-label">Base Price (EUR)</label>
+                                        <label className="mp-label" htmlFor="pluginBasePrice">Base Price (EUR)</label>
                                         {priceTooLow && (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.5rem', padding: '0.45rem 0.65rem', background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.35)', borderRadius: 6, fontSize: '0.75rem', color: 'var(--mp-error, #ff4d4f)' }}>
                                                 <AlertTriangle size={13} style={{ flexShrink: 0 }} />
@@ -1007,9 +1024,19 @@ const AddPlugin = () => {
                                         )}
                                         <div style={{ position: 'relative', maxWidth: 160 }}>
                                             <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: priceTooLow ? 'var(--mp-error, #ff4d4f)' : 'var(--mp-text-3)', fontSize: '0.85rem' }}>€</span>
-                                            <input className="mp-input" type="number" step="0.01" min="0.99" value={price}
+                                            <input
+                                                id="pluginBasePrice"
+                                                name="price"
+                                                className="mp-input"
+                                                type="number"
+                                                step="0.01"
+                                                min="0.99"
+                                                inputMode="decimal"
+                                                autoComplete="off"
+                                                value={price}
                                                 onChange={e => setPrice(parseFloat(e.target.value) || 0)}
-                                                style={{ paddingLeft: '1.6rem', borderColor: priceTooLow ? 'var(--mp-error, #ff4d4f)' : undefined }} />
+                                                style={{ paddingLeft: '1.6rem', borderColor: priceTooLow ? 'var(--mp-error, #ff4d4f)' : undefined }}
+                                            />
                                         </div>
                                         {(() => {
                                             const priceCents    = Math.round(price * 100);
@@ -1052,17 +1079,26 @@ const AddPlugin = () => {
                                                     </div>
                                                 </div>
                                                 <label className="mp-toggle" style={{ marginLeft: '1rem', flexShrink: 0 }}>
-                                                    <input type="checkbox" checked={isPreorder} onChange={e => setIsPreorder(e.target.checked)} />
+                                                    <input
+                                                        id="pluginIsPreorder"
+                                                        name="isPreorder"
+                                                        type="checkbox"
+                                                        checked={isPreorder}
+                                                        onChange={e => setIsPreorder(e.target.checked)}
+                                                    />
                                                     <span className="mp-toggle-slider" />
                                                 </label>
                                             </div>
 
                                             {isPreorder && (
                                                 <div style={{ marginTop: '0.85rem', padding: '0.85rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
-                                                    <label className="mp-label" style={{ fontSize: '0.75rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
+                                                    <label className="mp-label" htmlFor="pluginPreorderReleaseDate" style={{ fontSize: '0.75rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
                                                     <input
+                                                        id="pluginPreorderReleaseDate"
+                                                        name="preorderReleaseDate"
                                                         type="date"
                                                         className="mp-input"
+                                                        autoComplete="off"
                                                         value={preorderReleaseDate}
                                                         onChange={e => setPreorderReleaseDate(e.target.value)}
                                                         style={{ maxWidth: 220 }}

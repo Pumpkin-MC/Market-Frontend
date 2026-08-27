@@ -143,10 +143,14 @@ const AdminPanel = () => {
             <div className="admin-controls">
                 <div className="admin-search">
                     <input 
-                        type="text" 
+                        id="adminSearchInput"
+                        name="adminSearch"
+                        type="search" 
                         placeholder={`Search ${activeTab}...`} 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
                     />
                 </div>
                 {activeTab === 'logs' && (

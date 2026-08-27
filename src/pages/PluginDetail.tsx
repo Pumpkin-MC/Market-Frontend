@@ -1157,11 +1157,16 @@ const PluginDetail = () => {
         <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Have a promo code?</label>
         <div style={{ display: 'flex', gap: '8px' }}>
           <input
+            id="detailPromoCode"
+            name="promoCode"
             type="text"
             value={couponCode}
             onChange={e => setCouponCode(e.target.value.toUpperCase())}
             placeholder="PROMOCODE"
             disabled={validatingCoupon || appliedCoupon !== null}
+            autoComplete="off"
+            autoCapitalize="characters"
+            spellCheck={false}
             style={{ 
               flex: 1, 
               padding: '8px 12px', 

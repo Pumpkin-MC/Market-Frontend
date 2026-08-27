@@ -38,6 +38,110 @@ const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger
   { key: 'danger',        label: 'Danger Zone',         icon: AlertTriangle, danger: true },
 ];
 
+// ── Settings Subcomponents (defined at module level to prevent remounting on state changes) ──
+
+interface SettingsCardProps {
+  title?: string;
+  description?: string;
+  icon?: React.FC<{ size?: number }>;
+  children: React.ReactNode;
+}
+
+const SettingsCard: React.FC<SettingsCardProps> = ({ title, description, icon: Icon, children }) => (
+  <div className="settings-card">
+    {(title || Icon) && (
+      <div className="settings-card-header">
+        {Icon && <div className="settings-card-icon"><Icon size={16} /></div>}
+        <div>
+          {title && <p className="settings-card-title">{title}</p>}
+          {description && <p className="settings-card-desc">{description}</p>}
+        </div>
+      </div>
+    )}
+    <div className="settings-card-body">{children}</div>
+  </div>
+);
+
+interface FieldProps {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}
+
+const Field: React.FC<FieldProps> = ({ label, hint, children }) => (
+  <div className="settings-field">
+    <label className="settings-label">{label}</label>
+    {hint && <p className="settings-hint">{hint}</p>}
+    {children}
+  </div>
+);
+
+interface SaveBtnProps {
+  isSaving?: boolean;
+  label?: string;
+}
+
+const SaveBtn: React.FC<SaveBtnProps> = ({ isSaving = false, label = 'Save Changes' }) => (
+  <button type="submit" className="settings-btn settings-btn-primary" disabled={isSaving}>
+    {isSaving ? <><span className="spinner-sm" />{label.replace('Save', 'Saving')}…</> : label}
+  </button>
+);
+
+interface ToggleProps {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  desc?: string;
+}
+
+const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, desc }) => (
+  <div className="settings-toggle-row">
+    <div>
+      <p className="settings-toggle-label">{label}</p>
+      {desc && <p className="settings-toggle-desc">{desc}</p>}
+    </div>
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      className={`settings-toggle ${checked ? 'on' : ''}`}
+      onClick={() => onChange(!checked)}
+    >
+      <span className="settings-toggle-thumb" />
+    </button>
+  </div>
+);
+
+interface PwInputProps {
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  show: boolean;
+  onToggle: () => void;
+  autoComplete?: string;
+  id?: string;
+  name?: string;
+}
+
+const PwInput: React.FC<PwInputProps> = ({ placeholder, value, onChange, show, onToggle, autoComplete, id, name }) => (
+  <div className="settings-pw-wrap">
+    <input
+      id={id}
+      name={name}
+      type={show ? 'text' : 'password'}
+      className="settings-input"
+      placeholder={placeholder}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      autoComplete={autoComplete}
+      required
+    />
+    <button type="button" className="settings-pw-eye" onClick={onToggle} tabIndex={-1} aria-label={show ? 'Hide password' : 'Show password'}>
+      {show ? <EyeOff size={16} /> : <Eye size={16} />}
+    </button>
+  </div>
+);
+
 const ProfilePage = () => {
   const { user, login, logout, refreshUser } = useAuth();
   const navigate  = useNavigate();
@@ -316,75 +420,6 @@ const ProfilePage = () => {
     }
   };
 
-  // ── helpers ──────────────────────────────────────────────────────────────────
-
-  const SettingsCard = ({ title, description, icon: Icon, children }: {
-    title: string; description?: string; icon?: React.FC<{ size?: number }>; children: React.ReactNode;
-  }) => (
-    <div className="settings-card">
-      {(title || Icon) && (
-        <div className="settings-card-header">
-          {Icon && <div className="settings-card-icon"><Icon size={16} /></div>}
-          <div>
-            <p className="settings-card-title">{title}</p>
-            {description && <p className="settings-card-desc">{description}</p>}
-          </div>
-        </div>
-      )}
-      <div className="settings-card-body">{children}</div>
-    </div>
-  );
-
-  const Field = ({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) => (
-    <div className="settings-field">
-      <label className="settings-label">{label}</label>
-      {hint && <p className="settings-hint">{hint}</p>}
-      {children}
-    </div>
-  );
-
-  const SaveBtn = ({ id, label = 'Save Changes' }: { id: string; label?: string }) => (
-    <button type="submit" className="settings-btn settings-btn-primary" disabled={saving[id]}>
-      {saving[id] ? <><span className="spinner-sm" />{label.replace('Save', 'Saving')}…</> : label}
-    </button>
-  );
-
-  const Toggle = ({ checked, onChange, label, desc }: { checked: boolean; onChange: (v: boolean) => void; label: string; desc?: string }) => (
-    <div className="settings-toggle-row">
-      <div>
-        <p className="settings-toggle-label">{label}</p>
-        {desc && <p className="settings-toggle-desc">{desc}</p>}
-      </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        className={`settings-toggle ${checked ? 'on' : ''}`}
-        onClick={() => onChange(!checked)}
-      >
-        <span className="settings-toggle-thumb" />
-      </button>
-    </div>
-  );
-
-  const PwInput = ({ placeholder, value, onChange, show, onToggle }: {
-    placeholder: string; value: string; onChange: (v: string) => void; show: boolean; onToggle: () => void;
-  }) => (
-    <div className="settings-pw-wrap">
-      <input
-        type={show ? 'text' : 'password'}
-        className="settings-input"
-        placeholder={placeholder}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        required
-      />
-      <button type="button" className="settings-pw-eye" onClick={onToggle} tabIndex={-1}>
-        {show ? <EyeOff size={16} /> : <Eye size={16} />}
-      </button>
-    </div>
-  );
-
   // ── render ────────────────────────────────────────────────────────────────────
 
   return (
@@ -452,22 +487,28 @@ const ProfilePage = () => {
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
                     <Field label="Username">
                       <input
+                        id="accountUsername"
+                        name="username"
                         className="settings-input"
                         type="text"
                         value={formData.username}
                         onChange={e => setFormData({ ...formData, username: e.target.value })}
                         placeholder="Your username"
+                        autoComplete="username"
                         required
                       />
                     </Field>
 
                     <Field label="Email Address">
                       <input
+                        id="accountEmail"
+                        name="email"
                         className="settings-input"
                         type="email"
                         value={formData.email}
                         onChange={e => setFormData({ ...formData, email: e.target.value })}
                         placeholder="your@email.com"
+                        autoComplete="email"
                         required
                       />
                     </Field>
@@ -475,9 +516,12 @@ const ProfilePage = () => {
 
                   <Field label="Country">
                     <select
+                      id="accountCountry"
+                      name="country"
                       className="settings-input settings-select"
                       value={formData.country}
                       onChange={e => setFormData({ ...formData, country: e.target.value })}
+                      autoComplete="country"
                       required
                     >
                       <option value="">Select a country…</option>
@@ -490,7 +534,7 @@ const ProfilePage = () => {
                   </Field>
 
                   <div style={{ marginTop: '0.5rem' }}>
-                    <SaveBtn id="accountInfo" label="Save Changes" />
+                    <SaveBtn isSaving={saving['accountInfo']} label="Save Changes" />
                   </div>
                 </form>
               </SettingsCard>
@@ -522,35 +566,44 @@ const ProfilePage = () => {
                 }}>
                   <Field label="Current Password">
                     <PwInput
+                      id="currentPassword"
+                      name="currentPassword"
                       placeholder="Current password"
                       value={formData.currentPassword}
                       onChange={v => setFormData({ ...formData, currentPassword: v })}
                       show={showCurrentPw}
                       onToggle={() => setShowCurrentPw(s => !s)}
+                      autoComplete="current-password"
                     />
                   </Field>
                   <Field label="New Password">
                     <PwInput
+                      id="newPassword"
+                      name="newPassword"
                       placeholder="New password"
                       value={formData.newPassword}
                       onChange={v => setFormData({ ...formData, newPassword: v })}
                       show={showNewPw}
                       onToggle={() => setShowNewPw(s => !s)}
+                      autoComplete="new-password"
                     />
                   </Field>
                   <Field label="Confirm New Password">
                     <PwInput
+                      id="confirmPassword"
+                      name="confirmPassword"
                       placeholder="Repeat new password"
                       value={formData.confirmPassword}
                       onChange={v => setFormData({ ...formData, confirmPassword: v })}
                       show={showConfirmPw}
                       onToggle={() => setShowConfirmPw(s => !s)}
+                      autoComplete="new-password"
                     />
                   </Field>
                   {formData.newPassword && formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
                     <p className="settings-inline-error"><AlertCircle size={13} /> Passwords do not match</p>
                   )}
-                  <SaveBtn id="password" label="Update Password" />
+                  <SaveBtn isSaving={saving['password']} label="Update Password" />
                 </form>
               </SettingsCard>
 
@@ -566,11 +619,14 @@ const ProfilePage = () => {
                     <form onSubmit={disable2fa} style={{ marginTop: '1.5rem' }}>
                       <Field label="Confirm with your password to disable">
                         <PwInput
+                          id="disable2faPassword"
+                          name="disable2faPassword"
                           placeholder="Your current password"
                           value={formData.disable2faPassword}
                           onChange={v => setFormData({ ...formData, disable2faPassword: v })}
                           show={show2faPw}
                           onToggle={() => setShow2faPw(s => !s)}
+                          autoComplete="current-password"
                         />
                       </Field>
                       <button type="submit" className="settings-btn settings-btn-danger-outline">
@@ -602,12 +658,18 @@ const ProfilePage = () => {
                     <form onSubmit={confirm2faSetup} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem' }}>
                       <input
                         type="text"
+                        id="verify2faCode"
+                        name="code"
                         className="settings-input settings-code-input"
                         placeholder="000 000"
-                        maxLength={6}
+                        maxLength={8}
                         value={verify2faCode}
-                        onChange={e => setVerify2faCode(e.target.value.replace(/\D/g, ''))}
+                        onChange={e => setVerify2faCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
                         required
+                        autoFocus
                       />
                       <button type="submit" className="settings-btn settings-btn-primary">Verify & Enable</button>
                     </form>
@@ -663,93 +725,120 @@ const ProfilePage = () => {
 
                         <Field label="Public Display Name">
                           <input
+                            id="devDisplayName"
+                            name="displayName"
                             className="settings-input"
                             type="text"
                             value={devProfileForm.displayName}
                             onChange={e => setDevProfileForm({ ...devProfileForm, displayName: e.target.value })}
+                            autoComplete="nickname"
                             required
                           />
                         </Field>
 
                         <Field label="Legal Full Name / Business Name" hint="Used for internal verification & tax compliance">
                           <input
+                            id="devLegalName"
+                            name="legalName"
                             className="settings-input"
                             type="text"
                             value={devProfileForm.legalName}
                             onChange={e => setDevProfileForm({ ...devProfileForm, legalName: e.target.value })}
+                            autoComplete="name"
                           />
                         </Field>
 
                         <Field label="Street Address">
                           <input
+                            id="devStreetAddress"
+                            name="streetAddress"
                             className="settings-input"
                             type="text"
                             value={devProfileForm.streetAddress}
                             onChange={e => setDevProfileForm({ ...devProfileForm, streetAddress: e.target.value })}
                             placeholder="123 Main St"
+                            autoComplete="street-address"
                           />
                         </Field>
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                           <Field label="City">
                             <input
+                              id="devCity"
+                              name="city"
                               className="settings-input"
                               type="text"
                               value={devProfileForm.city}
                               onChange={e => setDevProfileForm({ ...devProfileForm, city: e.target.value })}
+                              autoComplete="address-level2"
                             />
                           </Field>
                           <Field label="Postal / ZIP Code">
                             <input
+                              id="devPostalCode"
+                              name="postalCode"
                               className="settings-input"
                               type="text"
                               value={devProfileForm.postalCode}
                               onChange={e => setDevProfileForm({ ...devProfileForm, postalCode: e.target.value })}
+                              autoComplete="postal-code"
                             />
                           </Field>
                         </div>
 
                         <Field label="VAT / Tax ID" hint="Optional for businesses">
                           <input
+                            id="devVatId"
+                            name="vatId"
                             className="settings-input"
                             type="text"
                             value={devProfileForm.vatId}
                             onChange={e => setDevProfileForm({ ...devProfileForm, vatId: e.target.value })}
                             placeholder="EU123456789"
+                            autoComplete="off"
                           />
                         </Field>
 
                         <Field label="Support Email" hint="Public email for plugin buyers to contact you">
                           <input
+                            id="devSupportEmail"
+                            name="supportEmail"
                             className="settings-input"
                             type="email"
                             value={devProfileForm.supportEmail}
                             onChange={e => setDevProfileForm({ ...devProfileForm, supportEmail: e.target.value })}
                             placeholder="support@domain.com"
+                            autoComplete="email"
                           />
                         </Field>
 
                         <Field label="Website URL">
                           <input
+                            id="devWebsiteUrl"
+                            name="websiteUrl"
                             className="settings-input"
                             type="url"
                             value={devProfileForm.websiteUrl}
                             onChange={e => setDevProfileForm({ ...devProfileForm, websiteUrl: e.target.value })}
                             placeholder="https://website.com"
+                            autoComplete="url"
                           />
                         </Field>
 
                         <Field label="GitHub Profile">
                           <input
+                            id="devGithubUrl"
+                            name="githubUrl"
                             className="settings-input"
                             type="text"
                             value={devProfileForm.githubUrl}
                             onChange={e => setDevProfileForm({ ...devProfileForm, githubUrl: e.target.value })}
                             placeholder="https://github.com/username"
+                            autoComplete="url"
                           />
                         </Field>
 
-                        <SaveBtn id="devProfile" label="Save Developer Info" />
+                        <SaveBtn isSaving={saving['devProfile']} label="Save Developer Info" />
                       </form>
                     </SettingsCard>
                   )}

@@ -163,14 +163,18 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                             )}
 
                             <div className="mp-form-group" style={{ marginBottom: 0 }}>
-                                <label className="mp-label">Price (EUR)</label>
+                                <label className="mp-label" htmlFor="pluginPriceInput">Price (EUR)</label>
                                 <div style={{ position: 'relative', maxWidth: 180 }}>
                                     <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: priceTooLow ? 'var(--mp-error, #ff4d4f)' : 'var(--mp-text-3)', fontSize: '0.85rem' }}>€</span>
                                     <input
+                                        id="pluginPriceInput"
+                                        name="price"
                                         className="mp-input"
                                         type="number"
                                         step="0.01"
                                         min="0.99"
+                                        inputMode="decimal"
+                                        autoComplete="off"
                                         value={price}
                                         onChange={e => handlePriceChange(e.target.value)}
                                         style={{ paddingLeft: '1.6rem', borderColor: priceTooLow ? 'var(--mp-error, #ff4d4f)' : undefined }}
@@ -201,13 +205,17 @@ const Pricing = ({ plugin, onSaved }: Props) => {
 
                             {/* Discount % — always visible when paid */}
                             <div className="mp-form-group">
-                                <label className="mp-label">Discount</label>
+                                <label className="mp-label" htmlFor="pluginDiscountPercent">Discount</label>
                                 <div style={{ position: 'relative', maxWidth: 180 }}>
                                     <input
+                                        id="pluginDiscountPercent"
+                                        name="discountPercent"
                                         className="mp-input"
                                         type="number"
                                         min="1"
                                         max="99"
+                                        inputMode="numeric"
+                                        autoComplete="off"
                                         value={discountPercent}
                                         onChange={e => setDiscountPercent(Math.min(99, Math.max(1, parseInt(e.target.value) || 0)))}
                                         style={{ paddingRight: '2.2rem' }}
@@ -284,17 +292,26 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                     </div>
                                 </div>
                                 <label className="mp-toggle" style={{ marginLeft: '1rem', flexShrink: 0 }}>
-                                    <input type="checkbox" checked={isPreorder} onChange={e => setIsPreorder(e.target.checked)} />
+                                    <input
+                                        id="pricingIsPreorder"
+                                        name="isPreorder"
+                                        type="checkbox"
+                                        checked={isPreorder}
+                                        onChange={e => setIsPreorder(e.target.checked)}
+                                    />
                                     <span className="mp-toggle-slider" />
                                 </label>
                             </div>
 
                             {isPreorder && (
                                 <div style={{ marginTop: '1rem', padding: '0.85rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
-                                    <label className="mp-label" style={{ fontSize: '0.78rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
+                                    <label className="mp-label" htmlFor="pricingPreorderReleaseDate" style={{ fontSize: '0.78rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
                                     <input
+                                        id="pricingPreorderReleaseDate"
+                                        name="preorderReleaseDate"
                                         type="date"
                                         className="mp-input"
+                                        autoComplete="off"
                                         value={preorderReleaseDate}
                                         onChange={e => setPreorderReleaseDate(e.target.value)}
                                         style={{ maxWidth: 220 }}

@@ -273,12 +273,14 @@ const ForgotPasswordPage = () => {
               <div className="field-input-wrapper">
                 <input
                   id="email"
+                  name="email"
                   className={`auth-input${emailIsInvalid ? ' email-invalid' : ''}${emailIsValid ? ' email-valid' : ''}`}
                   type="email"
                   placeholder="you@company.com"
                   value={email}
                   onChange={handleEmailChange}
                   onBlur={handleEmailBlur}
+                  autoComplete="email"
                   required
                   disabled={isSubmitting}
                 />

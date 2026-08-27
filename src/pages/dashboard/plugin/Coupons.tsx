@@ -96,13 +96,18 @@ const Coupons = ({ plugin }: Props) => {
                     </div>
                     <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                         <div className="mp-form-group">
-                            <label className="mp-label">Promo Code</label>
+                            <label className="mp-label" htmlFor="couponCode">Promo Code</label>
                             <input
+                                id="couponCode"
+                                name="code"
                                 className="mp-input"
                                 type="text"
                                 value={code}
                                 onChange={e => setCode(e.target.value.toUpperCase())}
                                 placeholder="E.g., SAVE50"
+                                autoComplete="off"
+                                autoCapitalize="characters"
+                                spellCheck={false}
                                 required
                                 style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
                             />
@@ -110,11 +115,15 @@ const Coupons = ({ plugin }: Props) => {
 
                         <div className="mp-form-row">
                             <div className="mp-form-group">
-                                <label className="mp-label">Discount %</label>
+                                <label className="mp-label" htmlFor="couponDiscount">Discount %</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                     <input
+                                        id="couponDiscount"
+                                        name="discountPercent"
                                         className="mp-input"
                                         type="number"
+                                        inputMode="numeric"
+                                        autoComplete="off"
                                         min={1}
                                         max={99}
                                         value={discountPercent}
@@ -125,10 +134,14 @@ const Coupons = ({ plugin }: Props) => {
                             </div>
 
                             <div className="mp-form-group">
-                                <label className="mp-label">Max Uses (Optional)</label>
+                                <label className="mp-label" htmlFor="couponMaxUses">Max Uses (Optional)</label>
                                 <input
+                                    id="couponMaxUses"
+                                    name="maxRedemptions"
                                     className="mp-input"
                                     type="number"
+                                    inputMode="numeric"
+                                    autoComplete="off"
                                     min={1}
                                     value={maxRedemptions}
                                     onChange={e => setMaxRedemptions(e.target.value)}
@@ -138,10 +151,13 @@ const Coupons = ({ plugin }: Props) => {
                         </div>
 
                         <div className="mp-form-group">
-                            <label className="mp-label">Expiration Date (Optional)</label>
+                            <label className="mp-label" htmlFor="couponExpiresAt">Expiration Date (Optional)</label>
                             <input
+                                id="couponExpiresAt"
+                                name="expiresAt"
                                 className="mp-input"
                                 type="datetime-local"
+                                autoComplete="off"
                                 value={expiresAt}
                                 onChange={e => setExpiresAt(e.target.value)}
                             />

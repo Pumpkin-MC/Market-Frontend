@@ -190,11 +190,13 @@ const ResetPasswordPage = () => {
               <label className="field-label" htmlFor="password">New Password</label>
               <input
                 id="password"
+                name="password"
                 className="auth-input"
                 type="password"
                 placeholder="••••••••"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
+                autoComplete="new-password"
                 required
                 disabled={isSubmitting}
               />
@@ -204,11 +206,13 @@ const ResetPasswordPage = () => {
               <label className="field-label" htmlFor="confirmPassword">Confirm New Password</label>
               <input
                 id="confirmPassword"
+                name="confirmPassword"
                 className="auth-input"
                 type="password"
                 placeholder="••••••••"
                 value={confirmPassword}
                 onChange={e => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
                 required
                 disabled={isSubmitting}
               />
