@@ -221,6 +221,19 @@
     "customize": "設定を変更",
     "save": "設定を保存"
   },
+  "search": {
+    "recent_title": "最近の検索",
+    "clear_recent": "クリア",
+    "no_suggestions": "候補が見つかりません",
+    "press_enter": "Enterを押して検索",
+    "categories_title": "カテゴリー",
+    "plugins_title": "プラグイン",
+    "authors_title": "開発者",
+    "tags_title": "タグ",
+    "plugin_count": "1個のプラグイン",
+    "plugins_count": "{{count}}個のプラグイン",
+    "view_all_results": "「{{query}}」の全検索結果を表示"
+  },
   "common": {
     "save": "保存",
     "cancel": "キャンセル",

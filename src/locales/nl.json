@@ -221,6 +221,19 @@
     "customize": "Aanpassen",
     "save": "Voorkeuren Opslaan"
   },
+  "search": {
+    "recent_title": "Recente zoekopdrachten",
+    "clear_recent": "Wissen",
+    "no_suggestions": "Geen suggesties gevonden",
+    "press_enter": "Druk op Enter om te zoeken",
+    "categories_title": "Categorieën",
+    "plugins_title": "Plugins",
+    "authors_title": "Ontwikkelaars",
+    "tags_title": "Tags",
+    "plugin_count": "1 plugin",
+    "plugins_count": "{{count}} plugins",
+    "view_all_results": "Bekijk alle resultaten voor \"{{query}}\""
+  },
   "common": {
     "save": "Opslaan",
     "cancel": "Annuleren",

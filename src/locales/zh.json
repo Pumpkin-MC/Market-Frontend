@@ -221,6 +221,19 @@
     "customize": "自定义设置",
     "save": "保存偏好"
   },
+  "search": {
+    "recent_title": "最近搜索",
+    "clear_recent": "清除",
+    "no_suggestions": "未找到搜索建议",
+    "press_enter": "按 Enter 搜索",
+    "categories_title": "分类",
+    "plugins_title": "插件",
+    "authors_title": "开发者",
+    "tags_title": "标签",
+    "plugin_count": "1 个插件",
+    "plugins_count": "{{count}} 个插件",
+    "view_all_results": "查看“{{query}}”的所有结果"
+  },
   "common": {
     "save": "保存",
     "cancel": "取消",

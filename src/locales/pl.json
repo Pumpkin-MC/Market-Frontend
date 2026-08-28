@@ -221,6 +221,19 @@
     "customize": "Dostosuj",
     "save": "Zapisz Ustawienia"
   },
+  "search": {
+    "recent_title": "Ostatnie wyszukiwania",
+    "clear_recent": "Wyczyść",
+    "no_suggestions": "Brak sugestii",
+    "press_enter": "Naciśnij Enter, aby wyszukać",
+    "categories_title": "Kategorie",
+    "plugins_title": "Wtyczki",
+    "authors_title": "Twórcy",
+    "tags_title": "Tagi",
+    "plugin_count": "1 wtyczka",
+    "plugins_count": "{{count}} wtyczek",
+    "view_all_results": "Zobacz wszystkie wyniki dla \"{{query}}\""
+  },
   "common": {
     "save": "Zapisz",
     "cancel": "Anuluj",

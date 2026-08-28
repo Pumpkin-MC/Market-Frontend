@@ -221,6 +221,19 @@
     "customize": "Настроить",
     "save": "Сохранить настройки"
   },
+  "search": {
+    "recent_title": "Недавние поиски",
+    "clear_recent": "Очистить",
+    "no_suggestions": "Подсказок не найдено",
+    "press_enter": "Нажмите Enter для поиска",
+    "categories_title": "Категории",
+    "plugins_title": "Плагины",
+    "authors_title": "Разработчики",
+    "tags_title": "Теги",
+    "plugin_count": "1 плагин",
+    "plugins_count": "Плагинов: {{count}}",
+    "view_all_results": "Все результаты для «{{query}}»"
+  },
   "common": {
     "save": "Сохранить",
     "cancel": "Отмена",

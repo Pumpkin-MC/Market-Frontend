@@ -100,12 +100,10 @@ const ForgotPasswordPage = () => {
         .auth-card {
           width: 100%;
           max-width: 440px;
-          background: #ffffff;
+          background: var(--surface, #141414);
+          border: 1px solid var(--border, #2A2A2A);
           border-radius: 12px;
-          box-shadow:
-            0 0 0 1px rgba(60, 66, 87, 0.08),
-            0 2px 4px rgba(60, 66, 87, 0.04),
-            0 8px 24px rgba(60, 66, 87, 0.08);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
           padding: 40px;
           animation: cardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
@@ -119,8 +117,8 @@ const ForgotPasswordPage = () => {
 
         .card-title {
           font-size: 22px;
-          font-weight: 600;
-          color: #0a2540;
+          font-weight: 700;
+          color: var(--text, #EAEAEA);
           letter-spacing: -0.4px;
           line-height: 1.3;
         }
@@ -128,7 +126,7 @@ const ForgotPasswordPage = () => {
         .card-subtitle {
           margin-top: 6px;
           font-size: 14px;
-          color: #697386;
+          color: var(--text-muted, #888888);
           line-height: 1.5;
         }
 
@@ -137,8 +135,8 @@ const ForgotPasswordPage = () => {
         .field-label {
           display: block;
           font-size: 13px;
-          font-weight: 500;
-          color: #3c4257;
+          font-weight: 600;
+          color: var(--text, #EAEAEA);
           margin-bottom: 6px;
           letter-spacing: 0.01em;
         }
@@ -151,28 +149,38 @@ const ForgotPasswordPage = () => {
           padding: 0 40px 0 14px;
           font-size: 15px;
           font-family: inherit;
-          color: #0a2540;
-          background: #ffffff;
-          border: 1.5px solid #e0e5ec;
+          color: var(--text, #EAEAEA);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1.5px solid var(--border, #2A2A2A);
           border-radius: 7px;
           outline: none;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
           -webkit-appearance: none;
         }
 
+        .auth-input::placeholder { color: var(--text-muted, #888888); font-size: 14px; }
+        .auth-input:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.25); }
+
         .auth-input:focus {
-          border-color: #ff6b00;
-          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.16);
+          border-color: var(--primary, #FF7518);
+          background: rgba(0, 0, 0, 0.4);
+          box-shadow: 0 0 0 3px rgba(255, 117, 24, 0.2);
+        }
+
+        .auth-input:disabled {
+          background: rgba(255, 255, 255, 0.02);
+          color: var(--text-muted, #666666);
+          cursor: not-allowed;
         }
 
         .auth-input.email-invalid {
-          border-color: #df1b41 !important;
-          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.12) !important;
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
         }
 
         .auth-input.email-valid {
-          border-color: #1a9e5f !important;
-          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.12) !important;
+          border-color: #22c55e !important;
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
         }
 
         .field-status-icon {
@@ -194,47 +202,54 @@ const ForgotPasswordPage = () => {
           font-weight: 500;
         }
 
-        .field-message.invalid { color: #df1b41; }
+        .field-message.invalid { color: #ef4444; }
 
         .error-banner {
-          background: #fff8f8;
-          border: 1.5px solid #fecdd3;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1.5px solid rgba(239, 68, 68, 0.35);
           border-radius: 7px;
           padding: 12px 14px;
           margin-bottom: 20px;
-          color: #df1b41;
+          color: #ef4444;
           font-size: 13px;
         }
 
         .success-banner {
-          background: #f0fff4;
-          border: 1.5px solid #c6f6d5;
+          background: rgba(34, 197, 94, 0.12);
+          border: 1.5px solid rgba(34, 197, 94, 0.35);
           border-radius: 7px;
           padding: 12px 14px;
           margin-bottom: 20px;
-          color: #2f855a;
+          color: #22c55e;
           font-size: 13px;
         }
 
         .submit-btn {
           width: 100%;
           height: 46px;
-          background: #ff6b00;
+          background: var(--primary, #FF7518);
           color: white;
           border: none;
           border-radius: 7px;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
-          transition: background 0.15s ease;
+          transition: background 0.15s ease, box-shadow 0.15s ease;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
         }
 
-        .submit-btn:hover:not(:disabled) { background: #e85d00; }
-        .submit-btn:disabled { background: #ffb380; cursor: not-allowed; }
+        .submit-btn:hover:not(:disabled) {
+          background: #e85d00;
+          box-shadow: 0 4px 14px rgba(255, 117, 24, 0.35);
+        }
+
+        .submit-btn:disabled {
+          background: rgba(255, 117, 24, 0.5);
+          cursor: not-allowed;
+        }
 
         .spinner {
           width: 16px; height: 16px;
@@ -246,15 +261,18 @@ const ForgotPasswordPage = () => {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .divider { height: 1px; background: #e8ecf1; margin: 24px 0; }
+        .divider { height: 1px; background: var(--border, #2A2A2A); margin: 24px 0; }
 
-        .card-footer { text-align: center; font-size: 13.5px; color: #697386; }
+        .card-footer { text-align: center; font-size: 13.5px; color: var(--text-muted, #888888); }
 
         .card-footer a {
-          color: #ff6b00;
+          color: var(--primary, #FF7518);
           text-decoration: none;
-          font-weight: 500;
+          font-weight: 600;
+          transition: color 0.15s;
         }
+
+        .card-footer a:hover { color: #ff944d; text-decoration: underline; }
       `}</style>
 
       <div className="auth-page">
@@ -286,14 +304,14 @@ const ForgotPasswordPage = () => {
                 />
                 {emailIsInvalid && (
                   <svg className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
-                    <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="10" cy="10" r="9" stroke="#ef4444" strokeWidth="1.5"/>
+                    <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
                   </svg>
                 )}
                 {emailIsValid && (
                   <svg className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
-                    <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <circle cx="10" cy="10" r="9" stroke="#22c55e" strokeWidth="1.5"/>
+                    <path d="M6 10l3 3 5-5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
               </div>
@@ -309,7 +327,7 @@ const ForgotPasswordPage = () => {
                 onSuccess={(token) => setCaptchaToken(token)}
                 onExpire={() => setCaptchaToken(null)}
                 onError={() => setCaptchaToken(null)}
-                options={{ theme: 'light', appearance: 'interaction-only' } as any}
+                options={{ theme: 'dark', appearance: 'interaction-only' } as any}
               />
             </div>
 

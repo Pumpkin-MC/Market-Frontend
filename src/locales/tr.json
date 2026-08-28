@@ -221,6 +221,19 @@
     "customize": "Tercihleri Özelleştir",
     "save": "Tercihleri Kaydet"
   },
+  "search": {
+    "recent_title": "Son Aramalar",
+    "clear_recent": "Temizle",
+    "no_suggestions": "Öneri bulunamadı",
+    "press_enter": "Aramak için Enter'a basın",
+    "categories_title": "Kategoriler",
+    "plugins_title": "Eklentiler",
+    "authors_title": "Geliştiriciler",
+    "tags_title": "Etiketler",
+    "plugin_count": "1 eklenti",
+    "plugins_count": "{{count}} eklenti",
+    "view_all_results": "\"{{query}}\" için tüm sonuçları gör"
+  },
   "common": {
     "save": "Kaydet",
     "cancel": "İptal",

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, NavLink, useNavigate, Outlet, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Search, Store, X } from 'lucide-react';
+import { Store } from 'lucide-react';
 import Home from './pages/Home';
 import PluginDetail from './pages/PluginDetail';
 import LoginPage from './pages/auth/LoginPage'; 
@@ -26,6 +26,7 @@ import LegalNoticePage from './pages/legal/LegalNoticePage';
 import AdminPanel from './pages/admin/AdminPanel';
 import { CookieBanner } from './components/CookieBanner';
 import { openCookiePreferencesModal } from './utils/consent';
+import { NavSearch } from './components/NavSearch';
 import './App.css';
 
 import api from './api';
@@ -272,44 +273,7 @@ const DashboardLayout = () => {
 // --- Components ---
 const Navbar = ({ user }: any) => {
   const { t } = useTranslation();
-  const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/search') {
-      return new URLSearchParams(window.location.search).get('q') || '';
-    }
-    return '';
-  });
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const navigate = useNavigate();
-
-  // Sync searchQuery with URL 'q' parameter when navigating
-  useEffect(() => {
-    if (location.pathname === '/search') {
-      const urlQuery = new URLSearchParams(location.search).get('q') || '';
-      setSearchQuery(urlQuery);
-    } else {
-      setSearchQuery('');
-    }
-  }, [location.pathname, location.search]);
-
-  const handleSearch = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter') {
-      const query = searchQuery.trim();
-      if (query) {
-        navigate(`/search?q=${encodeURIComponent(query)}`);
-      } else {
-        navigate('/search');
-      }
-      setIsMenuOpen(false);
-    }
-  };
-
-  const handleClear = () => {
-    setSearchQuery('');
-    if (location.pathname === '/search') {
-      navigate('/search');
-    }
-  };
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
@@ -341,32 +305,9 @@ const Navbar = ({ user }: any) => {
           {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
         </div>
 
-        {/* ── Center Search Bar ── */}
+        {/* ── Center Search Bar with Suggestions ── */}
         <div className="nav-search-center">
-          <div className="nav-search-input-wrap">
-            <Search size={16} className="nav-search-icon" />
-            <input
-              type="search"
-              name="q"
-              placeholder={t('nav.search_placeholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearch}
-              autoComplete="off"
-              autoCorrect="off"
-              spellCheck={false}
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                className="nav-search-clear"
-                onClick={handleClear}
-                aria-label="Clear search"
-              >
-                <X size={14} />
-              </button>
-            )}
-          </div>
+          <NavSearch onNavigate={() => setIsMenuOpen(false)} />
         </div>
 
         <div className="nav-actions">

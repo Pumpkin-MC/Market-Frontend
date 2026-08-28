@@ -120,17 +120,6 @@ const LoginPage = () => {
   return (
     <>
       <style>{`
-        *, *::before, *::after {
-          box-sizing: border-box;
-          margin: 0;
-          padding: 0;
-        }
-
-        body {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-          -webkit-font-smoothing: antialiased;
-        }
-
         .login-page {
           display: flex;
           flex-direction: column;
@@ -142,12 +131,10 @@ const LoginPage = () => {
         .login-card {
           width: 100%;
           max-width: 440px;
-          background: #ffffff;
+          background: var(--surface, #141414);
+          border: 1px solid var(--border, #2A2A2A);
           border-radius: 12px;
-          box-shadow:
-            0 0 0 1px rgba(60, 66, 87, 0.08),
-            0 2px 4px rgba(60, 66, 87, 0.04),
-            0 8px 24px rgba(60, 66, 87, 0.08);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
           padding: 40px;
           animation: cardIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
@@ -161,8 +148,8 @@ const LoginPage = () => {
 
         .card-title {
           font-size: 22px;
-          font-weight: 600;
-          color: #0a2540;
+          font-weight: 700;
+          color: var(--text, #EAEAEA);
           letter-spacing: -0.4px;
           line-height: 1.3;
         }
@@ -170,7 +157,7 @@ const LoginPage = () => {
         .card-subtitle {
           margin-top: 6px;
           font-size: 14px;
-          color: #697386;
+          color: var(--text-muted, #888888);
           line-height: 1.5;
         }
 
@@ -179,8 +166,8 @@ const LoginPage = () => {
         .field-label {
           display: block;
           font-size: 13px;
-          font-weight: 500;
-          color: #3c4257;
+          font-weight: 600;
+          color: var(--text, #EAEAEA);
           margin-bottom: 6px;
           letter-spacing: 0.01em;
         }
@@ -193,37 +180,38 @@ const LoginPage = () => {
           padding: 0 40px 0 14px;
           font-size: 15px;
           font-family: inherit;
-          color: #0a2540;
-          background: #ffffff;
-          border: 1.5px solid #e0e5ec;
+          color: var(--text, #EAEAEA);
+          background: rgba(255, 255, 255, 0.05);
+          border: 1.5px solid var(--border, #2A2A2A);
           border-radius: 7px;
           outline: none;
-          transition: border-color 0.15s ease, box-shadow 0.15s ease;
+          transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
           -webkit-appearance: none;
         }
 
-        .login-input::placeholder { color: #a3acb9; font-size: 14px; }
-        .login-input:hover:not(:disabled) { border-color: #c1c9d5; }
+        .login-input::placeholder { color: var(--text-muted, #888888); font-size: 14px; }
+        .login-input:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.25); }
 
         .login-input:focus {
-          border-color: #ff6b00;
-          box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.16);
+          border-color: var(--primary, #FF7518);
+          background: rgba(0, 0, 0, 0.4);
+          box-shadow: 0 0 0 3px rgba(255, 117, 24, 0.2);
         }
 
         .login-input:disabled {
-          background: #f7fafc;
-          color: #a3acb9;
+          background: rgba(255, 255, 255, 0.02);
+          color: var(--text-muted, #666666);
           cursor: not-allowed;
         }
 
         .login-input.email-invalid {
-          border-color: #df1b41 !important;
-          box-shadow: 0 0 0 3px rgba(223, 27, 65, 0.12) !important;
+          border-color: #ef4444 !important;
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
         }
 
         .login-input.email-valid {
-          border-color: #1a9e5f !important;
-          box-shadow: 0 0 0 3px rgba(26, 158, 95, 0.12) !important;
+          border-color: #22c55e !important;
+          box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.2) !important;
         }
 
         /* no-icon variant (password field) */
@@ -260,15 +248,15 @@ const LoginPage = () => {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        .field-message.invalid { color: #df1b41; }
-        .field-message.valid   { color: #1a9e5f; }
+        .field-message.invalid { color: #ef4444; }
+        .field-message.valid   { color: #22c55e; }
 
         .error-banner {
           display: flex;
           align-items: flex-start;
           gap: 10px;
-          background: #fff8f8;
-          border: 1.5px solid #fecdd3;
+          background: rgba(239, 68, 68, 0.12);
+          border: 1.5px solid rgba(239, 68, 68, 0.35);
           border-radius: 7px;
           padding: 12px 14px;
           margin-bottom: 20px;
@@ -283,18 +271,18 @@ const LoginPage = () => {
           80%       { transform: translateX(3px); }
         }
 
-        .error-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; color: #df1b41; }
-        .error-text { font-size: 13px; color: #df1b41; line-height: 1.5; }
+        .error-icon { flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px; color: #ef4444; }
+        .error-text { font-size: 13px; color: #ef4444; line-height: 1.5; }
 
         .submit-btn {
           width: 100%;
           height: 46px;
-          background: #ff6b00;
+          background: var(--primary, #FF7518);
           color: white;
           border: none;
           border-radius: 7px;
           font-size: 15px;
-          font-weight: 500;
+          font-weight: 600;
           font-family: inherit;
           letter-spacing: -0.1px;
           cursor: pointer;
@@ -308,14 +296,14 @@ const LoginPage = () => {
 
         .submit-btn:hover:not(:disabled) {
           background: #e85d00;
-          box-shadow: 0 4px 12px rgba(255, 107, 0, 0.35);
+          box-shadow: 0 4px 14px rgba(255, 117, 24, 0.35);
           transform: translateY(-1px);
         }
 
         .submit-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 
         .submit-btn:disabled {
-          background: #ffb380;
+          background: rgba(255, 117, 24, 0.5);
           cursor: not-allowed;
           transform: none;
           box-shadow: none;
@@ -331,18 +319,18 @@ const LoginPage = () => {
 
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        .divider { height: 1px; background: #e8ecf1; margin: 24px 0; }
+        .divider { height: 1px; background: var(--border, #2A2A2A); margin: 24px 0; }
 
-        .card-footer { text-align: center; font-size: 13.5px; color: #697386; }
+        .card-footer { text-align: center; font-size: 13.5px; color: var(--text-muted, #888888); }
 
         .card-footer a {
-          color: #ff6b00;
+          color: var(--primary, #FF7518);
           text-decoration: none;
-          font-weight: 500;
+          font-weight: 600;
           transition: color 0.15s;
         }
 
-        .card-footer a:hover { color: #e85d00; text-decoration: underline; }
+        .card-footer a:hover { color: #ff944d; text-decoration: underline; }
       `}</style>
 
       <div className="login-page">
@@ -369,7 +357,7 @@ const LoginPage = () => {
             {requires2fa ? (
               <div className="form-field">
                 <label className="field-label" htmlFor="totpCode">Authentication Code</label>
-                <p style={{ fontSize: '13px', color: '#697386', marginBottom: '12px' }}>Enter the 6-digit code from your authenticator app.</p>
+                <p style={{ fontSize: '13px', color: 'var(--text-muted, #888)', marginBottom: '12px' }}>Enter the 6-digit code from your authenticator app.</p>
                 <div className="field-input-wrapper">
                   <input
                     id="totpCode"
@@ -410,14 +398,14 @@ const LoginPage = () => {
                     />
                     {emailIsInvalid && (
                       <svg key="x" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="9" stroke="#df1b41" strokeWidth="1.5"/>
-                        <path d="M7 7l6 6M13 7l-6 6" stroke="#df1b41" strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="10" cy="10" r="9" stroke="#ef4444" strokeWidth="1.5"/>
+                        <path d="M7 7l6 6M13 7l-6 6" stroke="#ef4444" strokeWidth="1.5" strokeLinecap="round"/>
                       </svg>
                     )}
                     {emailIsValid && (
                       <svg key="check" className="field-status-icon" viewBox="0 0 20 20" fill="none">
-                        <circle cx="10" cy="10" r="9" stroke="#1a9e5f" strokeWidth="1.5"/>
-                        <path d="M6 10l3 3 5-5" stroke="#1a9e5f" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <circle cx="10" cy="10" r="9" stroke="#22c55e" strokeWidth="1.5"/>
+                        <path d="M6 10l3 3 5-5" stroke="#22c55e" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     )}
                   </div>
@@ -434,7 +422,7 @@ const LoginPage = () => {
                 <div className="form-field">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                     <label className="field-label" htmlFor="password" style={{ marginBottom: 0 }}>{t('auth.password')}</label>
-                    <Link to="/forgot-password" style={{ fontSize: '13px', color: '#ff6b00', textDecoration: 'none', fontWeight: 500 }}>
+                    <Link to="/forgot-password" style={{ fontSize: '13px', color: 'var(--primary, #FF7518)', textDecoration: 'none', fontWeight: 500 }}>
                       Forgot password?
                     </Link>
                   </div>
@@ -463,7 +451,7 @@ const LoginPage = () => {
                   onSuccess={(token) => setCaptchaToken(token)}
                   onExpire={() => setCaptchaToken(null)}
                   onError={() => setCaptchaToken(null)}
-                  options={{ theme: 'light', appearance: 'interaction-only' } as any}
+                  options={{ theme: 'dark', appearance: 'interaction-only' } as any}
                 />
               </div>
             )}

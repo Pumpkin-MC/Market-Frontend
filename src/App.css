@@ -53,7 +53,6 @@ h3 {
 .page-title,
 .auth-title {
   font-size: clamp(2.5rem, 5vw, 4rem);
-  text-transform: uppercase;
 }
 
 .page-title span {
@@ -1100,8 +1099,6 @@ h3 {
 
 .filter-title {
   font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 1px;
   margin: 0;
 }
 
@@ -1650,8 +1647,6 @@ h3 {
   color: var(--primary, #FF7518);
   margin-bottom: 0.25rem;
   font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .early-access-text {
@@ -1713,7 +1708,6 @@ h3 {
 
 .plugin-title {
   font-size: 3.5rem;
-  text-transform: uppercase;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -2007,8 +2001,6 @@ h3 {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .plugin-recent-update-badge {
@@ -2529,8 +2521,6 @@ h3 {
 .review-form-title {
   font-size: 1rem;
   font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
   margin: 0 0 1.5rem 0;
   color: var(--text);
 }
@@ -3052,8 +3042,6 @@ h3 {
   font-weight: 800;
   color: var(--text);
   margin: 0 0 0.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
 }
 
 .library-empty-sub {

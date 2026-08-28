@@ -221,6 +221,19 @@
     "customize": "Personalizar",
     "save": "Guardar preferencias"
   },
+  "search": {
+    "recent_title": "Búsquedas recientes",
+    "clear_recent": "Borrar",
+    "no_suggestions": "No se encontraron sugerencias",
+    "press_enter": "Presiona Enter para buscar",
+    "categories_title": "Categorías",
+    "plugins_title": "Plugins",
+    "authors_title": "Desarrolladores",
+    "tags_title": "Etiquetas",
+    "plugin_count": "1 plugin",
+    "plugins_count": "{{count}} plugins",
+    "view_all_results": "Ver todos los resultados de «{{query}}»"
+  },
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar",

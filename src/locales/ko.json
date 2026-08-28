@@ -221,6 +221,19 @@
     "customize": "설정 변경",
     "save": "설정 저장"
   },
+  "search": {
+    "recent_title": "최근 검색",
+    "clear_recent": "지우기",
+    "no_suggestions": "추천 검색어가 없습니다",
+    "press_enter": "Enter를 눌러 검색",
+    "categories_title": "카테고리",
+    "plugins_title": "플러그인",
+    "authors_title": "개발자",
+    "tags_title": "태그",
+    "plugin_count": "플러그인 1개",
+    "plugins_count": "플러그인 {{count}}개",
+    "view_all_results": "\"{{query}}\" 전체 결과 보기"
+  },
   "common": {
     "save": "저장",
     "cancel": "취소",

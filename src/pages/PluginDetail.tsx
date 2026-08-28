@@ -919,7 +919,7 @@ const PluginDetail = () => {
           wordBreak: 'break-word'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)', textTransform: 'uppercase' }}>Developer Response</span>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>Developer Response</span>
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(r.replied_at)}</span>
           </div>
           <ExpandableText 
@@ -1407,7 +1407,7 @@ const PluginDetail = () => {
             alignItems: 'center',
             background: 'linear-gradient(to right, rgba(255, 117, 24, 0.05), transparent)'
           }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 800 }}>Update History</h2>
+            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', fontWeight: 800 }}>Update History</h2>
           </div>
           
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
