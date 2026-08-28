@@ -5,9 +5,6 @@ import {
   Search,
   X,
   Clock,
-  User,
-  Folder,
-  Tag,
   Package,
   ArrowRight,
   CornerDownLeft,
@@ -33,22 +30,11 @@ export interface SearchSuggestionPlugin {
   is_preorder: boolean;
 }
 
-export interface SearchSuggestionAuthor {
-  id: number;
-  username: string;
-  plugin_count: number;
-}
-
-export interface SearchSuggestionCategory {
-  name: string;
-  plugin_count: number;
-}
-
 export interface SearchSuggestionsResponse {
   plugins: SearchSuggestionPlugin[];
-  authors: SearchSuggestionAuthor[];
-  categories: SearchSuggestionCategory[];
-  tags: string[];
+  authors?: any[];
+  categories?: any[];
+  tags?: string[];
 }
 
 const RECENT_SEARCHES_KEY = 'pumpkin_market_recent_searches';
@@ -113,42 +99,9 @@ const setCachedSuggestions = (term: string, data: SearchSuggestionsResponse) => 
   clientSuggestionCache.set(term.toLowerCase(), data);
 };
 
-const HighlightMatch: React.FC<{ text: string; query: string }> = ({ text, query }) => {
-  if (!query.trim()) return <>{text}</>;
-  const trimmed = query.trim();
-  const escaped = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
-  return (
-    <>
-      {parts.map((part, i) =>
-        part.toLowerCase() === trimmed.toLowerCase() ? (
-          <mark key={i} className="nav-search-highlight">
-            {part}
-          </mark>
-        ) : (
-          part
-        )
-      )}
-    </>
-  );
-};
-
-const getAuthorAccentColor = (name: string) => {
-  const colors = [
-    '#f97316', '#3b82f6', '#10b981', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#eab308', '#14b8a6',
-  ];
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-  return colors[Math.abs(hash) % colors.length];
-};
-
 type FlattenedItem =
   | { kind: 'recent'; query: string }
   | { kind: 'plugin'; plugin: SearchSuggestionPlugin }
-  | { kind: 'author'; author: SearchSuggestionAuthor }
-  | { kind: 'category'; category: SearchSuggestionCategory }
-  | { kind: 'tag'; tag: string }
   | { kind: 'view_all'; query: string };
 
 interface NavSearchProps {
@@ -290,18 +243,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
       suggestions.plugins.forEach((plugin) => {
         items.push({ kind: 'plugin', plugin });
       });
-      // Categories
-      suggestions.categories.forEach((category) => {
-        items.push({ kind: 'category', category });
-      });
-      // Authors
-      suggestions.authors.forEach((author) => {
-        items.push({ kind: 'author', author });
-      });
-      // Tags
-      suggestions.tags.forEach((tag) => {
-        items.push({ kind: 'tag', tag });
-      });
       // View all results
       items.push({ kind: 'view_all', query: trimmed });
     }
@@ -339,36 +280,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
           saveRecentSearch(item.plugin.name);
           refreshRecentSearches();
           navigate(getPluginUrl(item.plugin));
-          setIsOpen(false);
-          setSelectedIndex(-1);
-          inputRef.current?.blur();
-          onNavigate?.();
-          break;
-        }
-        case 'author': {
-          saveRecentSearch(item.author.username);
-          refreshRecentSearches();
-          navigate(`/profile/${encodeURIComponent(item.author.username)}`);
-          setIsOpen(false);
-          setSelectedIndex(-1);
-          inputRef.current?.blur();
-          onNavigate?.();
-          break;
-        }
-        case 'category': {
-          saveRecentSearch(item.category.name);
-          refreshRecentSearches();
-          navigate(`/search?category=${encodeURIComponent(item.category.name)}`);
-          setIsOpen(false);
-          setSelectedIndex(-1);
-          inputRef.current?.blur();
-          onNavigate?.();
-          break;
-        }
-        case 'tag': {
-          saveRecentSearch(item.tag);
-          refreshRecentSearches();
-          navigate(`/search?q=${encodeURIComponent(item.tag)}`);
           setIsOpen(false);
           setSelectedIndex(-1);
           inputRef.current?.blur();
@@ -435,12 +346,7 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     refreshRecentSearches();
   };
 
-  const hasSuggestions =
-    suggestions &&
-    (suggestions.plugins.length > 0 ||
-      suggestions.authors.length > 0 ||
-      suggestions.categories.length > 0 ||
-      suggestions.tags.length > 0);
+  const hasSuggestions = Boolean(suggestions && suggestions.plugins.length > 0);
 
   const showRecentDropdown = isOpen && !query.trim() && recentSearches.length > 0;
   const showSuggestionsDropdown = isOpen && query.trim().length > 0;
@@ -563,221 +469,97 @@ export const NavSearch: React.FC<NavSearchProps> = ({
                 </div>
               )}
 
-              {suggestions && (
+              {suggestions && hasSuggestions && (
                 <div className="nav-search-results-list">
-                  {/* Category matches */}
-                  {suggestions.categories.length > 0 && (
-                    <div className="nav-search-section">
-                      <div className="nav-search-section-header">
-                        <span className="nav-search-section-title">
-                          <Folder size={13} />
-                          {t('search.categories_title')}
-                        </span>
-                      </div>
-                      {suggestions.categories.map((cat) => {
-                        const itemIndex = flattenedItems.findIndex(
-                          (it) => it.kind === 'category' && it.category.name === cat.name
-                        );
-                        const isSelected = selectedIndex === itemIndex;
-                        return (
-                          <div
-                            key={`cat-${cat.name}`}
-                            className={`nav-search-item nav-search-category-item ${
-                              isSelected ? 'selected' : ''
-                            }`}
-                            onClick={() => handleSelectItem({ kind: 'category', category: cat })}
-                            role="option"
-                            aria-selected={isSelected}
-                          >
-                            <div className="nav-search-icon-circle category">
-                              <Folder size={13} />
-                            </div>
-                            <span className="nav-search-item-title">
-                              <HighlightMatch text={cat.name} query={query} />
-                            </span>
-                            <span className="nav-search-item-badge">
-                              {cat.plugin_count === 1
-                                ? t('search.plugin_count')
-                                : t('search.plugins_count', { count: cat.plugin_count })}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
                   {/* Plugin matches */}
-                  {suggestions.plugins.length > 0 && (
-                    <div className="nav-search-section">
-                      <div className="nav-search-section-header">
-                        <span className="nav-search-section-title">
-                          <Package size={13} />
-                          {t('search.plugins_title')}
-                        </span>
-                      </div>
-                      {suggestions.plugins.map((plugin) => {
-                        const itemIndex = flattenedItems.findIndex(
-                          (it) => it.kind === 'plugin' && it.plugin.id === plugin.id
-                        );
-                        const isSelected = selectedIndex === itemIndex;
+                  <div className="nav-search-section">
+                    <div className="nav-search-section-header">
+                      <span className="nav-search-section-title">
+                        <Package size={13} />
+                        {t('search.plugins_title')}
+                      </span>
+                    </div>
+                    {suggestions.plugins.map((plugin) => {
+                      const itemIndex = flattenedItems.findIndex(
+                        (it) => it.kind === 'plugin' && it.plugin.id === plugin.id
+                      );
+                      const isSelected = selectedIndex === itemIndex;
 
-                        const isFree = plugin.type === 'free';
-                        const isSale = plugin.sale_active && plugin.sale_discount_percent > 0;
-                        const price = plugin.price_cents / 100;
-                        const discountedPrice = isSale
-                          ? (price * (1 - plugin.sale_discount_percent / 100)).toFixed(2)
-                          : price.toFixed(2);
+                      const isFree = plugin.type === 'free';
+                      const isSale = plugin.sale_active && plugin.sale_discount_percent > 0;
+                      const price = plugin.price_cents / 100;
+                      const discountedPrice = isSale
+                        ? (price * (1 - plugin.sale_discount_percent / 100)).toFixed(2)
+                        : price.toFixed(2);
 
-                        return (
-                          <div
-                            key={`plugin-${plugin.id}`}
-                            className={`nav-search-item nav-search-plugin-item ${
-                              isSelected ? 'selected' : ''
-                            }`}
-                            onClick={() => handleSelectItem({ kind: 'plugin', plugin })}
-                            role="option"
-                            aria-selected={isSelected}
-                          >
-                            <div className="nav-search-plugin-thumb">
-                              {plugin.preview_path ? (
-                                <img src={plugin.preview_path} alt={plugin.name} />
-                              ) : (
-                                <div className="nav-search-thumb-fallback">
-                                  {plugin.name.charAt(0).toUpperCase()}
-                                </div>
+                      return (
+                        <div
+                          key={`plugin-${plugin.id}`}
+                          className={`nav-search-item nav-search-plugin-item ${
+                            isSelected ? 'selected' : ''
+                          }`}
+                          onClick={() => handleSelectItem({ kind: 'plugin', plugin })}
+                          role="option"
+                          aria-selected={isSelected}
+                        >
+                          <div className="nav-search-plugin-thumb">
+                            {plugin.preview_path ? (
+                              <img src={plugin.preview_path} alt={plugin.name} />
+                            ) : (
+                              <div className="nav-search-thumb-fallback">
+                                {plugin.name.charAt(0).toUpperCase()}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="nav-search-plugin-info">
+                            <div className="nav-search-plugin-title-row">
+                              <span className="nav-search-plugin-name">
+                                {plugin.name}
+                              </span>
+                              {plugin.is_preorder && (
+                                <span className="nav-search-pill preorder">
+                                  {t('plugin.pre_order')}
+                                </span>
                               )}
                             </div>
-
-                            <div className="nav-search-plugin-info">
-                              <div className="nav-search-plugin-title-row">
-                                <span className="nav-search-plugin-name">
-                                  <HighlightMatch text={plugin.name} query={query} />
-                                </span>
-                                {plugin.is_preorder && (
-                                  <span className="nav-search-pill preorder">
-                                    {t('plugin.pre_order')}
-                                  </span>
-                                )}
-                              </div>
-                              <div className="nav-search-plugin-meta">
-                                <span className="nav-search-plugin-dev">
-                                  by <HighlightMatch text={plugin.dev_name} query={query} />
-                                </span>
-                                {plugin.category && (
-                                  <>
-                                    <span className="nav-search-meta-dot">·</span>
-                                    <span className="nav-search-plugin-cat">{plugin.category}</span>
-                                  </>
-                                )}
-                              </div>
+                            <div className="nav-search-plugin-meta">
+                              <span className="nav-search-plugin-dev">
+                                by {plugin.dev_name}
+                              </span>
+                              {plugin.category && (
+                                <>
+                                  <span className="nav-search-meta-dot">·</span>
+                                  <span className="nav-search-plugin-cat">{plugin.category}</span>
+                                </>
+                              )}
                             </div>
+                          </div>
 
-                            <div className="nav-search-plugin-pricing">
-                              {isFree ? (
-                                <span className="nav-search-price-badge free">
-                                  {t('plugin.free')}
+                          <div className="nav-search-plugin-pricing">
+                            {isFree ? (
+                              <span className="nav-search-price-badge free">
+                                {t('plugin.free')}
+                              </span>
+                            ) : isSale ? (
+                              <div className="nav-search-sale-wrap">
+                                <span className="nav-search-sale-discount">
+                                  -{plugin.sale_discount_percent}%
                                 </span>
-                              ) : isSale ? (
-                                <div className="nav-search-sale-wrap">
-                                  <span className="nav-search-sale-discount">
-                                    -{plugin.sale_discount_percent}%
-                                  </span>
-                                  <span className="nav-search-price-badge paid">
-                                    €{discountedPrice}
-                                  </span>
-                                </div>
-                              ) : (
                                 <span className="nav-search-price-badge paid">
-                                  €{price.toFixed(2)}
+                                  €{discountedPrice}
                                 </span>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Author matches */}
-                  {suggestions.authors.length > 0 && (
-                    <div className="nav-search-section">
-                      <div className="nav-search-section-header">
-                        <span className="nav-search-section-title">
-                          <User size={13} />
-                          {t('search.authors_title')}
-                        </span>
-                      </div>
-                      {suggestions.authors.map((author) => {
-                        const itemIndex = flattenedItems.findIndex(
-                          (it) => it.kind === 'author' && it.author.id === author.id
-                        );
-                        const isSelected = selectedIndex === itemIndex;
-                        const accentColor = getAuthorAccentColor(author.username);
-
-                        return (
-                          <div
-                            key={`author-${author.id}`}
-                            className={`nav-search-item nav-search-author-item ${
-                              isSelected ? 'selected' : ''
-                            }`}
-                            onClick={() => handleSelectItem({ kind: 'author', author })}
-                            role="option"
-                            aria-selected={isSelected}
-                          >
-                            <div
-                              className="nav-search-author-avatar"
-                              style={{ backgroundColor: accentColor }}
-                            >
-                              {author.username.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="nav-search-author-info">
-                              <span className="nav-search-item-title">
-                                <HighlightMatch text={author.username} query={query} />
+                              </div>
+                            ) : (
+                              <span className="nav-search-price-badge paid">
+                                €{price.toFixed(2)}
                               </span>
-                            </div>
-                            <span className="nav-search-item-badge">
-                              {author.plugin_count === 1
-                                ? t('search.plugin_count')
-                                : t('search.plugins_count', { count: author.plugin_count })}
-                            </span>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Tags matches */}
-                  {suggestions.tags.length > 0 && (
-                    <div className="nav-search-section">
-                      <div className="nav-search-section-header">
-                        <span className="nav-search-section-title">
-                          <Tag size={13} />
-                          {t('search.tags_title')}
-                        </span>
-                      </div>
-                      <div className="nav-search-tags-grid">
-                        {suggestions.tags.map((tag) => {
-                          const itemIndex = flattenedItems.findIndex(
-                            (it) => it.kind === 'tag' && it.tag === tag
-                          );
-                          const isSelected = selectedIndex === itemIndex;
-                          return (
-                            <button
-                              key={`tag-${tag}`}
-                              type="button"
-                              className={`nav-search-tag-chip ${isSelected ? 'selected' : ''}`}
-                              onClick={() => handleSelectItem({ kind: 'tag', tag })}
-                            >
-                              <span className="nav-search-tag-hash">#</span>
-                              <span className="nav-search-tag-text">
-                                <HighlightMatch text={tag} query={query} />
-                              </span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
