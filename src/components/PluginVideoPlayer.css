@@ -1,0 +1,211 @@
+/* ==========================================================================
+   PumpkinMarket Custom Video Player & HUD Styles
+   ========================================================================== */
+
+.plugin-video-wrapper {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 15px;
+  outline: none;
+}
+
+.plugin-video-wrapper:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.3);
+}
+
+.plugin-video-frame-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.plugin-video-frame-container iframe,
+.plugin-video-frame-container > div {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0;
+}
+
+.plugin-video-click-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+/* Center Play/Pause Floating Action Button */
+.plugin-video-center-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.85);
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: rgba(14, 14, 14, 0.78);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.6);
+}
+
+.plugin-video-center-btn.visible {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.plugin-video-wrapper:hover .plugin-video-center-btn {
+  border-color: rgba(var(--primary-rgb), 0.6);
+  color: var(--primary);
+  background: rgba(20, 20, 20, 0.9);
+}
+
+/* Bottom HUD Overlay Bar */
+.plugin-video-hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  padding: 18px 14px 10px;
+  background: linear-gradient(to top, rgba(10, 10, 10, 0.9) 0%, rgba(10, 10, 10, 0.45) 55%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.plugin-video-hud.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+/* Timeline / Seek Bar */
+.plugin-video-timeline {
+  width: 100%;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+}
+
+.plugin-video-timeline-bg {
+  width: 100%;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  position: relative;
+  transition: height 0.15s ease;
+}
+
+.plugin-video-timeline:hover .plugin-video-timeline-bg {
+  height: 5px;
+}
+
+.plugin-video-timeline-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--primary);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.plugin-video-timeline-thumb {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 8px rgba(var(--primary-rgb), 0.8);
+  opacity: 0;
+  transform: scale(0.6);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.plugin-video-timeline:hover .plugin-video-timeline-thumb {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* HUD Row & Controls */
+.plugin-video-hud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.plugin-video-time {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+}
+
+.plugin-video-time .time-divider {
+  color: rgba(255, 255, 255, 0.2);
+  margin: 0 3px;
+}
+
+.plugin-video-actions {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+/* HUD Glass Buttons */
+.plugin-hud-btn {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgba(22, 22, 22, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+.plugin-hud-btn:hover {
+  background: rgba(var(--primary-rgb), 0.18);
+  border-color: rgba(var(--primary-rgb), 0.5);
+  color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.plugin-hud-btn.muted {
+  color: var(--text-muted);
+}

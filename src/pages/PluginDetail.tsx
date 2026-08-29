@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
+import { PluginVideoPlayer } from '../components/PluginVideoPlayer';
 import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock } from 'lucide-react';
 
 const getYoutubeVideoId = (url: string) => {
@@ -25,12 +26,6 @@ const getYoutubeVideoId = (url: string) => {
   } catch {
     return null;
   }
-};
-
-const getYoutubeEmbedUrl = (url: string) => {
-  if (!url) return '';
-  const videoId = getYoutubeVideoId(url);
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
 };
 
 const REPORT_REASONS = [
@@ -747,16 +742,7 @@ const PluginDetail = () => {
     {((Array.isArray(plugin.screenshots) && plugin.screenshots.length > 0) || plugin.youtube_video_url) && (
       <div className="screenshot-gallery">
         {mainScreenshot === 'video' ? (
-          <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: '8px', marginBottom: '15px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <iframe
-              src={getYoutubeEmbedUrl(plugin.youtube_video_url)}
-              title="YouTube video player"
-              frameBorder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 0 }}
-            />
-          </div>
+          <PluginVideoPlayer url={plugin.youtube_video_url} />
         ) : (
           <img
             src={mainScreenshot || plugin.screenshots[0]?.path}
