@@ -47,8 +47,9 @@ i18n
       escapeValue: false, // React already escapes values
     },
     detection: {
-      order: ['navigator', 'htmlTag'],
-      caches: [], // Always auto-detect based on the user's browser/system region
+      order: ['localStorage', 'navigator', 'htmlTag'],
+      lookupLocalStorage: 'i18nextLng',
+      caches: ['localStorage'],
     },
   });
 

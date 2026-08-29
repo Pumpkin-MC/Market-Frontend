@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../App';
+import { SecuritySetupCards } from './SecuritySetupCards';
 import './DeveloperOnboardingModal.css';
 
 interface DeveloperOnboardingModalProps {
@@ -44,6 +45,8 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const hasSecureAuth = Boolean(user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey);
 
   if (!isOpen) return null;
 
@@ -425,6 +428,18 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   </ul>
                 </div>
 
+                {/* ── Security Requirement for Developers ── */}
+                {!hasSecureAuth && (
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <SecuritySetupCards
+                      title="Developer Security Requirement"
+                      description="To publish plugins and protect developer payouts, you must set up a Passkey or Two-Factor Authentication before completing onboarding."
+                      isRequired={true}
+                      onComplete={() => {}}
+                    />
+                  </div>
+                )}
+
                 {/* ── Mandatory Legal Consent ── */}
                 <div style={{
                   marginTop: '1.25rem',
@@ -449,7 +464,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
                   <button
                     className="dev-btn dev-btn-primary"
-                    disabled={loading || !acceptedTerms}
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
                     onClick={() => handleCompleteOnboarding(false)}
                   >
                     {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
@@ -472,6 +487,18 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     <li><CheckCircle2 size={16} color="#10b981" /> Automated license key generation for buyers</li>
                   </ul>
                 </div>
+
+                {/* ── Security Requirement for Developers ── */}
+                {!hasSecureAuth && (
+                  <div style={{ marginTop: '1.25rem' }}>
+                    <SecuritySetupCards
+                      title="Developer Security Requirement"
+                      description="To publish plugins and protect developer payouts, you must set up a Passkey or Two-Factor Authentication before completing onboarding."
+                      isRequired={true}
+                      onComplete={() => {}}
+                    />
+                  </div>
+                )}
 
                 {/* ── Mandatory Legal Consent ── */}
                 <div style={{
@@ -497,14 +524,14 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
                   <button
                     className="dev-btn dev-btn-stripe"
-                    disabled={loading || !acceptedTerms}
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
                     onClick={() => handleCompleteOnboarding(true)}
                   >
                     <CreditCard size={16} /> {loading ? 'Connecting Stripe...' : t('developer.onboarding.btn_connect_stripe')}
                   </button>
                   <button
                     className="dev-btn dev-btn-secondary"
-                    disabled={loading || !acceptedTerms}
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
                     onClick={() => handleCompleteOnboarding(false)}
                   >
                     {t('developer.onboarding.btn_complete')}

@@ -9,6 +9,7 @@ import {
 import api from '../../../api';
 import { useAuth } from '../../../App';
 import { DeveloperOnboardingModal } from '../../../components/DeveloperOnboardingModal';
+import { SecuritySetupCards } from '../../../components/SecuritySetupCards';
 import { validateWasmFile, validateAndSanitizeImage } from '../../../utils/fileValidation';
 import './AddPlugin.css';
 
@@ -219,35 +220,20 @@ const AddPlugin = () => {
         );
     }
 
-    if (user && user.is_developer && !user.totp_enabled) {
+    const hasSecureAuth = Boolean(
+        user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey
+    );
+
+    if (user && user.is_developer && !hasSecureAuth) {
         return (
             <div className="ap-root" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '2rem 1rem' }}>
-                <div style={{
-                    maxWidth: 520, width: '100%', padding: '2.5rem', background: 'var(--mp-surface, #14171c)',
-                    borderRadius: 16, border: '1px solid var(--mp-border, rgba(255,255,255,0.1))', textAlign: 'center',
-                    boxShadow: '0 8px 32px rgba(0,0,0,0.3)'
-                }}>
-                    <div style={{
-                        width: 60, height: 60, borderRadius: '50%', background: 'rgba(249, 115, 22, 0.15)',
-                        color: 'var(--mp-accent, #f97316)', display: 'inline-flex', alignItems: 'center',
-                        justifyContent: 'center', marginBottom: '1.25rem'
-                    }}>
-                        <Lock size={28} />
-                    </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: 'var(--mp-text, #fff)' }}>
-                        Two-Factor Authentication Required
-                    </h2>
-                    <p style={{ color: 'var(--mp-muted, #94a3b8)', fontSize: '0.9rem', lineHeight: 1.5, marginBottom: '1.75rem' }}>
-                        To protect Minecraft servers and prevent unauthorized plugin uploads from compromised accounts, all developers must enable <strong>Two-Factor Authentication (2FA)</strong> before publishing plugins.
-                    </p>
-                    <button
-                        className="mp-btn mp-btn-primary"
-                        style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', cursor: 'pointer' }}
-                        onClick={() => navigate('/settings?tab=security')}
-                    >
-                        <ShieldCheck size={16} /> Enable 2FA in Security Settings →
-                    </button>
-                </div>
+                <SecuritySetupCards
+                    title="Developer Security Setup"
+                    description="To protect Minecraft server owners from unauthorized uploads and supply-chain attacks, developers are required to configure either a Passkey (Biometrics) or Two-Factor Authentication (2FA) before publishing plugins."
+                    isRequired={true}
+                    canSkip={false}
+                    onComplete={() => refreshUser?.()}
+                />
             </div>
         );
     }

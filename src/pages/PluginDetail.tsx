@@ -52,6 +52,26 @@ const REVIEW_REPORT_REASONS = [
 ];
 const MAX_REVIEW_LENGTH = 2000;
 
+const safeMarkdownComponents = {
+  a: ({ href, children, ...props }: any) => {
+    const isSafe = typeof href === 'string' && (href.startsWith('http://') || href.startsWith('https://') || href.startsWith('/'));
+    if (!isSafe) {
+      return <span>{children}</span>;
+    }
+    const isExternal = href.startsWith('http://') || href.startsWith('https://');
+    return (
+      <a
+        href={href}
+        target={isExternal ? '_blank' : undefined}
+        rel={isExternal ? 'noopener noreferrer nofollow' : undefined}
+        {...props}
+      >
+        {children}
+      </a>
+    );
+  },
+};
+
 const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number; onRate?: (n: number) => void }) => (
   <div className="star-rating-container" style={{ display: 'flex', gap: 2 }}>
   {[...Array(max)].map((_, i) => (
@@ -818,7 +838,7 @@ const PluginDetail = () => {
           </div>
           <div className={`plugin-recent-update-body markdown-content ${isLong ? 'is-clamped' : ''}`}>
             {latest.release_notes ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>
                 {latest.release_notes}
               </ReactMarkdown>
             ) : (
@@ -843,7 +863,7 @@ const PluginDetail = () => {
 
     {/* DESCRIPTION */}
     <div className="markdown-content">
-    <ReactMarkdown remarkPlugins={[remarkGfm]}>{currentDescription}</ReactMarkdown>
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{currentDescription}</ReactMarkdown>
     </div>
 
     <hr className="divider" />
@@ -1432,7 +1452,7 @@ const PluginDetail = () => {
                 </div>
                 <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
                   {v.release_notes ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{v.release_notes}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{v.release_notes}</ReactMarkdown>
                   ) : (
                     <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
                   )}

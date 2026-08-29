@@ -2,6 +2,8 @@ import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
+import { startAuthentication } from '@simplewebauthn/browser';
+import { Fingerprint, AlertCircle } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../App';
 
@@ -19,6 +21,9 @@ const LoginPage = () => {
   const [requires2fa, setRequires2fa] = useState(false);
   const [tempToken, setTempToken] = useState<string | null>(null);
   const [totpCode, setTotpCode] = useState('');
+  const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const [codeError, setCodeError] = useState('');
 
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -46,15 +51,25 @@ const LoginPage = () => {
     if (requires2fa) {
       setIsSubmitting(true);
       setError('');
+      setCodeError('');
       try {
-        const res = await api.post('/auth/login/2fa', {
-          temp_token: tempToken,
-          code: totpCode,
-        });
-        login(res.data.token);
-        navigate('/dashboard');
+        if (useRecoveryCode) {
+          const res = await api.post('/auth/login/recovery-code', {
+            tempToken,
+            code: recoveryCode.trim(),
+          });
+          login(res.data.token);
+          navigate('/dashboard');
+        } else {
+          const res = await api.post('/auth/login/2fa', {
+            temp_token: tempToken,
+            code: totpCode,
+          });
+          login(res.data.token);
+          navigate('/dashboard');
+        }
       } catch (err: any) {
-        setError(err.response?.data?.error || 'Invalid 2FA code.');
+        setCodeError(err.response?.data?.error || (useRecoveryCode ? 'Invalid recovery code' : 'Invalid 2FA code'));
       } finally {
         setIsSubmitting(false);
       }
@@ -109,6 +124,36 @@ const LoginPage = () => {
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Invalid credentials.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePasskeyLogin = async () => {
+    setError('');
+    setIsSubmitting(true);
+    try {
+      const startRes = await api.post('/auth/passkey/login/start', {
+        email: form.email.trim() || undefined,
+      });
+
+      const credential = await startAuthentication({
+        optionsJSON: startRes.data.options,
+      });
+
+      const finishRes = await api.post('/auth/passkey/login/finish', {
+        challengeId: startRes.data.challengeId,
+        credential,
+      });
+
+      if (finishRes.data.token) {
+        login(finishRes.data.token);
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      if (err.name !== 'NotAllowedError') {
+        setError(err.response?.data?.error || err.message || 'Passkey authentication failed.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -341,7 +386,7 @@ const LoginPage = () => {
           </div>
 
           <form onSubmit={handleSubmit} noValidate>
-            {error && (
+            {!requires2fa && error && (
               <div className="error-banner">
                 <svg className="error-icon" viewBox="0 0 16 16" fill="currentColor">
                   <path d="M8 0a8 8 0 100 16A8 8 0 008 0zm.75 4.75a.75.75 0 00-1.5 0v3.5a.75.75 0 001.5 0v-3.5zm-.75 6a1 1 0 110 2 1 1 0 010-2z"/>
@@ -356,30 +401,146 @@ const LoginPage = () => {
 
             {requires2fa ? (
               <div className="form-field">
-                <label className="field-label" htmlFor="totpCode">Authentication Code</label>
-                <p style={{ fontSize: '13px', color: 'var(--text-muted, #888)', marginBottom: '12px' }}>Enter the 6-digit code from your authenticator app.</p>
-                <div className="field-input-wrapper">
-                  <input
-                    id="totpCode"
-                    name="totpCode"
-                    className="login-input no-icon"
-                    type="text"
-                    placeholder="000000"
-                    maxLength={8}
-                    value={totpCode}
-                    onChange={e => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    autoComplete="one-time-code"
-                    inputMode="numeric"
-                    pattern="[0-9]*"
-                    required
-                    disabled={isSubmitting}
-                    autoFocus
-                    style={{ letterSpacing: '0.2em', textAlign: 'center', fontSize: '1.2rem', fontFamily: 'var(--font-mono, monospace)' }}
-                  />
-                </div>
+                {!useRecoveryCode ? (
+                  <>
+                    <label className="field-label" htmlFor="totpCode">Authentication Code</label>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted, #888)', marginBottom: '12px' }}>
+                      Enter the 6-digit code from your authenticator app.
+                    </p>
+                    <div className="field-input-wrapper">
+                      <input
+                        id="totpCode"
+                        name="totpCode"
+                        className="login-input no-icon"
+                        type="text"
+                        placeholder="000000"
+                        maxLength={8}
+                        value={totpCode}
+                        onChange={e => {
+                          setCodeError('');
+                          setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                        }}
+                        autoComplete="one-time-code"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        required
+                        disabled={isSubmitting}
+                        autoFocus
+                        style={{
+                          letterSpacing: '0.2em',
+                          textAlign: 'center',
+                          fontSize: '1.2rem',
+                          fontFamily: 'var(--font-mono, monospace)',
+                          borderColor: codeError ? '#ef4444' : undefined,
+                          boxShadow: codeError ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginTop: '14px', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setUseRecoveryCode(true); setCodeError(''); setError(''); }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--primary, #FF7518)',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          textDecoration: 'none',
+                          fontWeight: 500,
+                        }}
+                      >
+                        Lost access to your phone? Use a recovery code →
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label className="field-label" htmlFor="recoveryCode">Emergency Recovery Code</label>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted, #888)', marginBottom: '12px' }}>
+                      Enter one of your 12-character backup recovery codes.
+                    </p>
+                    <div className="field-input-wrapper">
+                      <input
+                        id="recoveryCode"
+                        name="recoveryCode"
+                        className="login-input no-icon"
+                        type="text"
+                        placeholder="xxxx-xxxx-xxxx"
+                        value={recoveryCode}
+                        onChange={e => {
+                          setCodeError('');
+                          setRecoveryCode(e.target.value);
+                        }}
+                        autoComplete="off"
+                        required
+                        disabled={isSubmitting}
+                        autoFocus
+                        style={{
+                          letterSpacing: '0.08em',
+                          textAlign: 'center',
+                          fontSize: '1.05rem',
+                          fontFamily: 'var(--font-mono, monospace)',
+                          borderColor: codeError ? '#ef4444' : undefined,
+                          boxShadow: codeError ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                        }}
+                      />
+                    </div>
+                    <div style={{ marginTop: '14px', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => { setUseRecoveryCode(false); setCodeError(''); setError(''); }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'var(--text-muted, #888)',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                          textDecoration: 'none',
+                          fontWeight: 500,
+                        }}
+                      >
+                        ← Back to authenticator app code
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <>
+                <button
+                  type="button"
+                  onClick={handlePasskeyLogin}
+                  disabled={isSubmitting}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    marginBottom: '1.25rem',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    border: '1px solid var(--border, #2A2A2A)',
+                    borderRadius: '7px',
+                    color: 'var(--text, #EAEAEA)',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.6rem',
+                    cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)')}
+                >
+                  <Fingerprint size={18} color="#4ade80" /> Sign in with a Passkey
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', margin: '0 0 1.25rem 0', gap: '0.75rem' }}>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border, #2A2A2A)' }} />
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted, #888)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>or email & password</span>
+                  <div style={{ flex: 1, height: 1, background: 'var(--border, #2A2A2A)' }} />
+                </div>
+
                 <div className="form-field">
                   <label className="field-label" htmlFor="email">{t('auth.email')}</label>
                   <div className="field-input-wrapper">
@@ -456,11 +617,34 @@ const LoginPage = () => {
               </div>
             )}
 
-            <button className="submit-btn" type="submit" disabled={isSubmitting}>
+            <button
+              className="submit-btn"
+              type="submit"
+              disabled={isSubmitting}
+              style={
+                codeError
+                  ? {
+                      backgroundColor: '#ef4444',
+                      borderColor: '#ef4444',
+                      color: '#fff',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.45rem',
+                      fontWeight: 600,
+                    }
+                  : undefined
+              }
+            >
               {isSubmitting ? (
                 <><span className="spinner" />{t('common.loading')}</>
+              ) : codeError ? (
+                <>
+                  <AlertCircle size={18} />
+                  <span>{codeError} — Try Again</span>
+                </>
               ) : requires2fa ? (
-                'Verify'
+                useRecoveryCode ? 'Verify Recovery Code' : 'Verify & Sign In'
               ) : (
                 t('auth.sign_in')
               )}

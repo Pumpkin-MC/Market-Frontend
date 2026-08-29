@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../api';
 import { useAuth } from '../App';
@@ -7,12 +8,16 @@ import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../components/DeveloperOnboardingModal';
 import { getPluginUrl } from '../utils/url';
 import { openCookiePreferencesModal } from '../utils/consent';
+import { startRegistration } from '@simplewebauthn/browser';
+import { RecoveryCodesModal } from '../components/RecoveryCodesModal';
+import { ChangePasswordModal } from '../components/ChangePasswordModal';
 import {
   User, Mail, Lock, Shield, CreditCard,
   BookOpen, AlertTriangle, LogOut, CheckCircle,
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
-  ShieldCheck, Download, Sliders, Package, Laptop, Tablet
+  ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
+  Fingerprint, Plus, ShieldAlert, RefreshCw
 } from 'lucide-react';
 
 interface LibraryEntry {
@@ -144,6 +149,7 @@ const PwInput: React.FC<PwInputProps> = ({ placeholder, value, onChange, show, o
 
 const ProfilePage = () => {
   const { user, login, logout, refreshUser } = useAuth();
+  const { i18n } = useTranslation();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -157,13 +163,9 @@ const ProfilePage = () => {
   }, [location]);
 
   const [formData, setFormData] = useState({
-    username: '', email: '', country: '',
-    password: '', currentPassword: '', disable2faPassword: '',
-    newPassword: '', confirmPassword: '',
+    username: '', email: '', country: '', language: '',
+    password: '', disable2faPassword: '',
   });
-  const [showCurrentPw, setShowCurrentPw]   = useState(false);
-  const [showNewPw, setShowNewPw]           = useState(false);
-  const [showConfirmPw, setShowConfirmPw]   = useState(false);
   const [show2faPw, setShow2faPw]           = useState(false);
 
   const [toast, setToast] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
@@ -197,10 +199,11 @@ const ProfilePage = () => {
         username: user.username || '',
         email: user.email || '',
         country: user.country || '',
+        language: user.preferred_language || prev.language || (i18n.language ? i18n.language.split('-')[0] : 'en'),
       }));
       setIs2faEnabled(user.totp_enabled || false);
     }
-  }, [user]);
+  }, [user, i18n.language]);
 
   // Developer Profile State
   const [isDevModalOpen, setIsDevModalOpen] = useState(false);
@@ -251,11 +254,110 @@ const ProfilePage = () => {
   const [revokingSessionId, setRevokingSessionId] = useState<string | null>(null);
   const [revokingAllSessions, setRevokingAllSessions] = useState(false);
 
+  const [passkeys, setPasskeys] = useState<any[]>([]);
+  const [passkeysLoading, setPasskeysLoading] = useState(false);
+  const [showAddPasskeyModal, setShowAddPasskeyModal] = useState(false);
+  const [newPasskeyName, setNewPasskeyName] = useState('');
+  const [passkeyRegistering, setPasskeyRegistering] = useState(false);
+
+  const [recoveryStatus, setRecoveryStatus] = useState<{ remaining: number; total: number; hasCodes: boolean } | null>(null);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [showRegenModal, setShowRegenModal] = useState(false);
+  const [regenPassword, setRegenPassword] = useState('');
+  const [regenLoading, setRegenLoading] = useState(false);
+  const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
+  const [showCodesModal, setShowCodesModal] = useState(false);
+  const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
+  const [verify2faError, setVerify2faError] = useState('');
+  const [verify2faLoading, setVerify2faLoading] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'security') {
       fetchSessions();
+      fetchPasskeys();
+      fetchRecoveryStatus();
     }
   }, [activeTab]);
+
+  const fetchRecoveryStatus = async () => {
+    setRecoveryLoading(true);
+    try {
+      const res = await api.get('/user/recovery-codes');
+      setRecoveryStatus(res.data);
+    } catch {
+      setRecoveryStatus(null);
+    } finally {
+      setRecoveryLoading(false);
+    }
+  };
+
+  const handleGenerateRecoveryCodes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegenLoading(true);
+    try {
+      const res = await api.post('/user/recovery-codes/generate', { password: regenPassword });
+      setGeneratedCodes(res.data.codes || []);
+      setShowRegenModal(false);
+      setRegenPassword('');
+      setShowCodesModal(true);
+      fetchRecoveryStatus();
+      showToast('New recovery codes generated.');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to generate recovery codes.', 'error');
+    } finally {
+      setRegenLoading(false);
+    }
+  };
+
+  const fetchPasskeys = async () => {
+    setPasskeysLoading(true);
+    try {
+      const res = await api.get('/user/passkeys');
+      setPasskeys(Array.isArray(res.data) ? res.data : []);
+    } catch {
+      setPasskeys([]);
+    } finally {
+      setPasskeysLoading(false);
+    }
+  };
+
+  const handleRegisterPasskey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasskeyRegistering(true);
+    try {
+      const startRes = await api.post('/user/passkey/register/start');
+      const credential = await startRegistration({ optionsJSON: startRes.data });
+      const finishRes = await api.post('/user/passkey/register/finish', {
+        name: newPasskeyName.trim() || 'My Passkey',
+        credential,
+      });
+      if (finishRes.data.token) login(finishRes.data.token);
+      showToast('Passkey registered successfully!');
+      setNewPasskeyName('');
+      setShowAddPasskeyModal(false);
+      fetchPasskeys();
+      refreshUser?.();
+    } catch (err: any) {
+      if (err.name !== 'NotAllowedError') {
+        showToast(err.response?.data?.error || err.message || 'Failed to register passkey.', 'error');
+      }
+    } finally {
+      setPasskeyRegistering(false);
+    }
+  };
+
+  const handleDeletePasskey = async (id: number) => {
+    if (!window.confirm('Are you sure you want to remove this passkey?')) return;
+    try {
+      const res = await api.delete(`/user/passkeys/${id}`);
+      if (res.data.token) login(res.data.token);
+      showToast('Passkey removed.');
+      fetchPasskeys();
+      refreshUser?.();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to remove passkey.', 'error');
+    }
+  };
 
   const fetchSessions = async () => {
     setSessionsLoading(true);
@@ -316,19 +418,6 @@ const ProfilePage = () => {
     try { await fn(); } finally { setSaving(s => ({ ...s, [key]: false })); }
   };
 
-  const handleUpdate = async (e: React.FormEvent, endpoint: string, payload: object, key: string) => {
-    e.preventDefault();
-    await withSaving(key, async () => {
-      try {
-        const res = await api.post(endpoint, payload);
-        if (res.data.token) login(res.data.token);
-        showToast(res.data.message || 'Updated successfully!');
-      } catch (err: any) {
-        showToast(err.response?.data?.error || 'Update failed.', 'error');
-      }
-    });
-  };
-
   const handleSaveAccountInfo = async (e: React.FormEvent) => {
     e.preventDefault();
     await withSaving('accountInfo', async () => {
@@ -357,10 +446,23 @@ const ProfilePage = () => {
 
       if (formData.country && formData.country !== user?.country) {
         try {
-          await api.post('/user/change-country', { newCountry: formData.country });
+          const res = await api.post('/user/change-country', { newCountry: formData.country });
+          if (res.data.token) login(res.data.token);
           updatedAny = true;
         } catch (err: any) {
           showToast(err.response?.data?.error || 'Failed to update country.', 'error');
+          return;
+        }
+      }
+
+      if (formData.language && formData.language !== user?.preferred_language) {
+        try {
+          const res = await api.post('/user/change-language', { newLanguage: formData.language });
+          if (res.data.token) login(res.data.token);
+          i18n.changeLanguage(formData.language);
+          updatedAny = true;
+        } catch (err: any) {
+          showToast(err.response?.data?.error || 'Failed to update preferred language.', 'error');
           return;
         }
       }
@@ -445,22 +547,29 @@ const ProfilePage = () => {
 
   const confirm2faSetup = async (e: React.FormEvent) => {
     e.preventDefault();
+    setVerify2faError('');
+    setVerify2faLoading(true);
     try {
-      await api.post('/user/2fa/verify', { code: verify2faCode });
+      const res = await api.post('/user/2fa/verify', { code: verify2faCode });
+      if (res.data.token) login(res.data.token);
       setIs2faEnabled(true);
       setSetup2faData(null);
       setVerify2faCode('');
+      setVerify2faError('');
       showToast('2FA enabled successfully!');
       refreshUser?.();
     } catch (err: any) {
-      showToast(err.response?.data?.error || 'Invalid 2FA code.', 'error');
+      setVerify2faError(err.response?.data?.error || 'Invalid 2FA code');
+    } finally {
+      setVerify2faLoading(false);
     }
   };
 
   const disable2fa = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await api.post('/user/2fa/disable', { password: formData.disable2faPassword });
+      const res = await api.post('/user/2fa/disable', { password: formData.disable2faPassword });
+      if (res.data.token) login(res.data.token);
       setIs2faEnabled(false);
       setFormData({ ...formData, disable2faPassword: '' });
       showToast('2FA has been disabled.');
@@ -564,24 +673,50 @@ const ProfilePage = () => {
                     </Field>
                   </div>
 
-                  <Field label="Country">
-                    <select
-                      id="accountCountry"
-                      name="country"
-                      className="settings-input settings-select"
-                      value={formData.country}
-                      onChange={e => setFormData({ ...formData, country: e.target.value })}
-                      autoComplete="country"
-                      required
-                    >
-                      <option value="">Select a country…</option>
-                      {Object.entries(getCodeList())
-                        .sort((a, b) => a[1].localeCompare(b[1]))
-                        .map(([code, name]) => (
-                          <option key={code} value={code}>{name}</option>
-                        ))}
-                    </select>
-                  </Field>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                    <Field label="Country">
+                      <select
+                        id="accountCountry"
+                        name="country"
+                        className="settings-input settings-select"
+                        value={formData.country}
+                        onChange={e => setFormData({ ...formData, country: e.target.value })}
+                        autoComplete="country"
+                        required
+                      >
+                        <option value="">Select a country…</option>
+                        {Object.entries(getCodeList())
+                          .sort((a, b) => a[1].localeCompare(b[1]))
+                          .map(([code, name]) => (
+                            <option key={code} value={code}>{name}</option>
+                          ))}
+                      </select>
+                    </Field>
+
+                    <Field label="Preferred Language">
+                      <select
+                        id="accountLanguage"
+                        name="language"
+                        className="settings-input settings-select"
+                        value={formData.language ? formData.language.split('-')[0] : 'en'}
+                        onChange={e => setFormData({ ...formData, language: e.target.value })}
+                      >
+                        <option value="en">English</option>
+                        <option value="de">Deutsch (German)</option>
+                        <option value="fr">Français (French)</option>
+                        <option value="es">Español (Spanish)</option>
+                        <option value="it">Italiano (Italian)</option>
+                        <option value="nl">Nederlands (Dutch)</option>
+                        <option value="pt">Português (Portuguese)</option>
+                        <option value="pl">Polski (Polish)</option>
+                        <option value="ru">Русский (Russian)</option>
+                        <option value="tr">Türkçe (Turkish)</option>
+                        <option value="ja">日本語 (Japanese)</option>
+                        <option value="ko">한국어 (Korean)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                      </select>
+                    </Field>
+                  </div>
 
                   <div style={{ marginTop: '0.5rem' }}>
                     <SaveBtn isSaving={saving['accountInfo']} label="Save Changes" />
@@ -602,59 +737,149 @@ const ProfilePage = () => {
               </div>
 
               {/* Password */}
-              <SettingsCard title="Change Password" description="Use a strong, unique password you don't use elsewhere." icon={Key}>
-                <form onSubmit={e => {
-                  if (formData.newPassword !== formData.confirmPassword) {
-                    e.preventDefault();
-                    showToast('Passwords do not match.', 'error');
-                    return;
-                  }
-                  handleUpdate(e, '/user/settings', {
-                    currentPassword: formData.currentPassword,
-                    newPassword: formData.newPassword,
-                  }, 'password');
-                }}>
-                  <Field label="Current Password">
-                    <PwInput
-                      id="currentPassword"
-                      name="currentPassword"
-                      placeholder="Current password"
-                      value={formData.currentPassword}
-                      onChange={v => setFormData({ ...formData, currentPassword: v })}
-                      show={showCurrentPw}
-                      onToggle={() => setShowCurrentPw(s => !s)}
-                      autoComplete="current-password"
-                    />
-                  </Field>
-                  <Field label="New Password">
-                    <PwInput
-                      id="newPassword"
-                      name="newPassword"
-                      placeholder="New password"
-                      value={formData.newPassword}
-                      onChange={v => setFormData({ ...formData, newPassword: v })}
-                      show={showNewPw}
-                      onToggle={() => setShowNewPw(s => !s)}
-                      autoComplete="new-password"
-                    />
-                  </Field>
-                  <Field label="Confirm New Password">
-                    <PwInput
-                      id="confirmPassword"
-                      name="confirmPassword"
-                      placeholder="Repeat new password"
-                      value={formData.confirmPassword}
-                      onChange={v => setFormData({ ...formData, confirmPassword: v })}
-                      show={showConfirmPw}
-                      onToggle={() => setShowConfirmPw(s => !s)}
-                      autoComplete="new-password"
-                    />
-                  </Field>
-                  {formData.newPassword && formData.confirmPassword && formData.newPassword !== formData.confirmPassword && (
-                    <p className="settings-inline-error"><AlertCircle size={13} /> Passwords do not match</p>
-                  )}
-                  <SaveBtn isSaving={saving['password']} label="Update Password" />
-                </form>
+              <SettingsCard title="Password" description="Use a strong, unique password you don't use elsewhere." icon={Key}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                    Protect your account with a strong password. You can also choose to log out of other active devices when updating your password.
+                  </div>
+                  <button
+                    type="button"
+                    className="settings-btn settings-btn-primary"
+                    onClick={() => setShowChangePasswordModal(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
+                  >
+                    <Key size={15} /> Change Password
+                  </button>
+                </div>
+              </SettingsCard>
+
+              {/* Passkeys */}
+              <SettingsCard
+                title="Passkeys & Biometrics"
+                icon={Fingerprint}
+                description="Sign in securely and instantly with Touch ID, Face ID, Windows Hello, or physical security keys."
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                    Passkeys provide phishing-resistant security backed by hardware cryptographic keys on your device.
+                  </div>
+                  <button
+                    type="button"
+                    className="settings-btn settings-btn-primary"
+                    onClick={() => setShowAddPasskeyModal(true)}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
+                  >
+                    <Plus size={15} /> Add Passkey
+                  </button>
+                </div>
+
+                {showAddPasskeyModal && (
+                  <form onSubmit={handleRegisterPasskey} style={{
+                    padding: '1.25rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: 12,
+                    border: '1px solid var(--mp-border, rgba(255,255,255,0.1))',
+                    marginBottom: '1.25rem'
+                  }}>
+                    <p style={{ margin: '0 0 0.75rem 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--mp-text, #fff)' }}>
+                      Register a New Passkey
+                    </p>
+                    <Field label="Passkey Name (e.g. MacBook Pro Touch ID, Windows Hello)" hint="Give your passkey a descriptive nickname so you recognize the device later.">
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="e.g. MacBook Pro Touch ID"
+                        value={newPasskeyName}
+                        onChange={e => setNewPasskeyName(e.target.value)}
+                        autoFocus
+                      />
+                    </Field>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                      <button
+                        type="submit"
+                        className="settings-btn settings-btn-primary"
+                        disabled={passkeyRegistering}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                      >
+                        <Fingerprint size={16} /> {passkeyRegistering ? 'Prompting Device...' : 'Continue with Biometrics'}
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-btn settings-btn-danger-outline"
+                        onClick={() => { setShowAddPasskeyModal(false); setNewPasskeyName(''); }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {passkeysLoading ? (
+                  <p style={{ color: 'var(--mp-muted, #94a3b8)', fontSize: '0.88rem' }}>Loading registered passkeys...</p>
+                ) : passkeys.length === 0 ? (
+                  <div className="settings-status-row warn">
+                    <AlertCircle size={16} />
+                    <span>No passkeys registered yet. Add one to enable passwordless biometrics.</span>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {passkeys.map(pk => (
+                      <div
+                        key={pk.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.85rem 1.1rem',
+                          background: 'rgba(255,255,255,0.02)',
+                          border: '1px solid var(--mp-border, rgba(255,255,255,0.08))',
+                          borderRadius: 10,
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                          <div style={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: 8,
+                            background: 'rgba(34, 197, 94, 0.12)',
+                            color: '#4ade80',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}>
+                            <Fingerprint size={20} />
+                          </div>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
+                              {pk.name}
+                            </div>
+                            <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)' }}>
+                              Added {pk.createdAt ? new Date(pk.createdAt).toLocaleDateString() : 'recently'}
+                              {pk.lastUsedAt && ` • Last used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
+                            </div>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleDeletePasskey(pk.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#f87171',
+                            cursor: 'pointer',
+                            padding: '0.4rem',
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                          }}
+                          title="Delete Passkey"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </SettingsCard>
 
               {/* 2FA */}
@@ -666,23 +891,32 @@ const ProfilePage = () => {
                       <CheckCircle size={16} />
                       <span>2FA is currently <strong>enabled</strong> on your account.</span>
                     </div>
-                    <form onSubmit={disable2fa} style={{ marginTop: '1.5rem' }}>
-                      <Field label="Confirm with your password to disable">
-                        <PwInput
-                          id="disable2faPassword"
-                          name="disable2faPassword"
-                          placeholder="Your current password"
-                          value={formData.disable2faPassword}
-                          onChange={v => setFormData({ ...formData, disable2faPassword: v })}
-                          show={show2faPw}
-                          onToggle={() => setShow2faPw(s => !s)}
-                          autoComplete="current-password"
-                        />
-                      </Field>
-                      <button type="submit" className="settings-btn settings-btn-danger-outline">
-                        Disable 2FA
-                      </button>
-                    </form>
+                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                      <div className="settings-status-row warn" style={{ marginTop: '1.25rem' }}>
+                        <Shield size={16} />
+                        <span>
+                          Staff members ({user.role === 'admin' ? 'Administrator' : 'Moderator'}) are required to keep 2FA enabled for platform security.
+                        </span>
+                      </div>
+                    ) : (
+                      <form onSubmit={disable2fa} style={{ marginTop: '1.5rem' }}>
+                        <Field label="Confirm with your password to disable">
+                          <PwInput
+                            id="disable2faPassword"
+                            name="disable2faPassword"
+                            placeholder="Your current password"
+                            value={formData.disable2faPassword}
+                            onChange={v => setFormData({ ...formData, disable2faPassword: v })}
+                            show={show2faPw}
+                            onToggle={() => setShow2faPw(s => !s)}
+                            autoComplete="current-password"
+                          />
+                        </Field>
+                        <button type="submit" className="settings-btn settings-btn-danger-outline">
+                          Disable 2FA
+                        </button>
+                      </form>
+                    )}
                   </div>
                 ) : !setup2faData ? (
                   <div>
@@ -705,7 +939,7 @@ const ProfilePage = () => {
                       <code className="settings-secret">{setup2faData.secret}</code>
                     </p>
                     <p className="settings-2fa-step" style={{ marginTop: '1.5rem' }}><span>2</span> Enter the 6-digit code from your app:</p>
-                    <form onSubmit={confirm2faSetup} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem' }}>
+                    <form onSubmit={confirm2faSetup} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem', flexWrap: 'wrap' }}>
                       <input
                         type="text"
                         id="verify2faCode"
@@ -714,16 +948,122 @@ const ProfilePage = () => {
                         placeholder="000 000"
                         maxLength={8}
                         value={verify2faCode}
-                        onChange={e => setVerify2faCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        onChange={e => {
+                          setVerify2faError('');
+                          setVerify2faCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                        }}
                         autoComplete="one-time-code"
                         inputMode="numeric"
                         pattern="[0-9]*"
                         required
                         autoFocus
+                        style={{
+                          borderColor: verify2faError ? '#ef4444' : undefined,
+                          boxShadow: verify2faError ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
+                        }}
                       />
-                      <button type="submit" className="settings-btn settings-btn-primary">Verify & Enable</button>
+                      <button
+                        type="submit"
+                        className={`settings-btn ${verify2faError ? 'settings-btn-danger' : 'settings-btn-primary'}`}
+                        disabled={verify2faLoading}
+                        style={
+                          verify2faError
+                            ? {
+                                backgroundColor: '#ef4444',
+                                borderColor: '#ef4444',
+                                color: '#fff',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '0.4rem',
+                              }
+                            : undefined
+                        }
+                      >
+                        {verify2faLoading ? (
+                          'Verifying...'
+                        ) : verify2faError ? (
+                          <>
+                            <AlertCircle size={15} /> {verify2faError} — Try Again
+                          </>
+                        ) : (
+                          'Verify & Enable'
+                        )}
+                      </button>
                     </form>
                   </div>
+                )}
+              </SettingsCard>
+
+              {/* Recovery Codes */}
+              <SettingsCard
+                title="Emergency Recovery Codes"
+                icon={ShieldAlert}
+                description="One-time use backup codes to regain access to your account if you lose your phone or security key."
+              >
+                {recoveryLoading ? (
+                  <p className="settings-hint" style={{ padding: '0.75rem 0' }}>Loading recovery codes status...</p>
+                ) : (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                      {recoveryStatus?.hasCodes ? (
+                        <span>You have <strong>{recoveryStatus.remaining}</strong> of <strong>{recoveryStatus.total}</strong> recovery codes remaining.</span>
+                      ) : (
+                        <span>No active recovery codes. Generate a set of backup codes to prevent getting locked out.</span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-primary"
+                      onClick={() => setShowRegenModal(true)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
+                    >
+                      <RefreshCw size={14} /> {recoveryStatus?.hasCodes ? 'Generate New Codes' : 'Generate Codes'}
+                    </button>
+                  </div>
+                )}
+
+                {showRegenModal && (
+                  <form onSubmit={handleGenerateRecoveryCodes} style={{
+                    padding: '1.25rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    borderRadius: 12,
+                    border: '1px solid var(--mp-border, rgba(255,255,255,0.1))',
+                    marginBottom: '1rem'
+                  }}>
+                    <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--mp-text, #fff)' }}>
+                      Confirm Password to Generate Recovery Codes
+                    </p>
+                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: 'var(--mp-muted, #94a3b8)' }}>
+                      Generating new recovery codes will automatically invalidate all previously generated codes.
+                    </p>
+                    <Field label="Your Current Password">
+                      <input
+                        type="password"
+                        className="settings-input"
+                        placeholder="••••••••"
+                        value={regenPassword}
+                        onChange={e => setRegenPassword(e.target.value)}
+                        autoFocus
+                        required
+                      />
+                    </Field>
+                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                      <button
+                        type="submit"
+                        className="settings-btn settings-btn-primary"
+                        disabled={regenLoading}
+                      >
+                        {regenLoading ? 'Generating...' : 'Generate 10 Codes'}
+                      </button>
+                      <button
+                        type="button"
+                        className="settings-btn settings-btn-danger-outline"
+                        onClick={() => { setShowRegenModal(false); setRegenPassword(''); }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
                 )}
               </SettingsCard>
 
@@ -1339,6 +1679,21 @@ const ProfilePage = () => {
         onSuccess={() => {
           refreshUser?.();
           setActiveTab('developer');
+        }}
+      />
+
+      <RecoveryCodesModal
+        isOpen={showCodesModal}
+        codes={generatedCodes}
+        onClose={() => setShowCodesModal(false)}
+      />
+
+      <ChangePasswordModal
+        isOpen={showChangePasswordModal}
+        onClose={() => setShowChangePasswordModal(false)}
+        onSuccess={() => {
+          showToast('Password changed successfully.', 'success');
+          fetchSessions();
         }}
       />
     </div>

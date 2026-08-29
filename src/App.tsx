@@ -63,34 +63,56 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const { i18n } = useTranslation();
+
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      const payload = decodeToken(token);
-      if (payload && payload.exp * 1000 > Date.now()) {
-        setUser(payload);
-      } else {
+    const initAuth = async () => {
+      try {
+        const res = await api.get('/user/me');
+        if (res.data?.token) {
+          const payload = decodeToken(res.data.token);
+          if (payload && payload.exp * 1000 > Date.now()) {
+            setUser(payload);
+            if (payload.preferred_language && i18n.language !== payload.preferred_language) {
+              i18n.changeLanguage(payload.preferred_language);
+            }
+          }
+        }
+      } catch (e) {
+        setUser(null);
+      } finally {
+        // Clean up legacy localStorage token if present
         localStorage.removeItem('token');
+        setLoading(false);
       }
-    }
-    setLoading(false);
-  }, []);
+    };
+    initAuth();
+  }, [i18n]);
 
   const login = (token: string) => {
-    localStorage.setItem('token', token);
+    // Decode token for client-side state without persisting in localStorage
     const payload = decodeToken(token);
     setUser(payload);
+    if (payload?.preferred_language && i18n.language !== payload.preferred_language) {
+      i18n.changeLanguage(payload.preferred_language);
+    }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
+  const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } catch (e) {
+      console.error('Failed to logout cleanly on server', e);
+    } finally {
+      localStorage.removeItem('token');
+      setUser(null);
+    }
   };
 
   const refreshUser = async () => {
     try {
       const res = await api.get('/user/me');
-      if (res.data.token) {
+      if (res.data?.token) {
         login(res.data.token);
       }
     } catch (e) {
@@ -325,6 +347,63 @@ const Navbar = ({ user }: any) => {
   );
 };
 
+const LanguageSelector = () => {
+  const { i18n } = useTranslation();
+  const { user, login } = useAuth();
+
+  const handleLanguageChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newLang = e.target.value;
+    i18n.changeLanguage(newLang);
+    if (user) {
+      try {
+        const res = await api.post('/user/change-language', { newLanguage: newLang });
+        if (res.data.token) {
+          login(res.data.token);
+        }
+      } catch (err) {
+        console.error('Failed to update language on server', err);
+      }
+    }
+  };
+
+  const currentLang = i18n.language ? i18n.language.split('-')[0] : 'en';
+
+  return (
+    <select
+      aria-label="Language selection"
+      value={currentLang}
+      onChange={handleLanguageChange}
+      style={{
+        background: 'rgba(255, 255, 255, 0.05)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
+        color: 'inherit',
+        fontSize: '12px',
+        padding: '2px 8px',
+        borderRadius: '6px',
+        opacity: 0.6,
+        cursor: 'pointer',
+        outline: 'none',
+      }}
+      onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+      onMouseLeave={e => (e.currentTarget.style.opacity = '0.6')}
+    >
+      <option value="en" style={{ background: '#18181b', color: '#fff' }}>English</option>
+      <option value="de" style={{ background: '#18181b', color: '#fff' }}>Deutsch</option>
+      <option value="fr" style={{ background: '#18181b', color: '#fff' }}>Français</option>
+      <option value="es" style={{ background: '#18181b', color: '#fff' }}>Español</option>
+      <option value="it" style={{ background: '#18181b', color: '#fff' }}>Italiano</option>
+      <option value="nl" style={{ background: '#18181b', color: '#fff' }}>Nederlands</option>
+      <option value="pt" style={{ background: '#18181b', color: '#fff' }}>Português</option>
+      <option value="pl" style={{ background: '#18181b', color: '#fff' }}>Polski</option>
+      <option value="ru" style={{ background: '#18181b', color: '#fff' }}>Русский</option>
+      <option value="tr" style={{ background: '#18181b', color: '#fff' }}>Türkçe</option>
+      <option value="ja" style={{ background: '#18181b', color: '#fff' }}>日本語</option>
+      <option value="ko" style={{ background: '#18181b', color: '#fff' }}>한국어</option>
+      <option value="zh" style={{ background: '#18181b', color: '#fff' }}>中文</option>
+    </select>
+  );
+};
+
 const Footer = () => (
   <footer style={{ padding: '16px 24px' }}>
     <div style={{
@@ -392,6 +471,8 @@ const Footer = () => (
         Legal Notice
       </Link>
 
+      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
+
       <button
         type="button"
         onClick={openCookiePreferencesModal}
@@ -411,6 +492,10 @@ const Footer = () => (
       >
         Cookie Preferences
       </button>
+
+      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
+
+      <LanguageSelector />
     </div>
   </footer>
 );

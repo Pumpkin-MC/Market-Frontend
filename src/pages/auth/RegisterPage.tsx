@@ -28,7 +28,7 @@ function getStrength(pw: string): { score: number; label: string; color: string 
 }
 
 const RegisterPage = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [form, setForm] = useState({ username: '', email: '', password: '', website: '' });
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const turnstileRef = useRef<any>(null);
@@ -98,7 +98,8 @@ const RegisterPage = () => {
     }
 
     try {
-      await api.post('/auth/register', { ...form, captchaToken: currentToken });
+      const language = i18n.language ? i18n.language.split('-')[0] : 'en';
+      await api.post('/auth/register', { ...form, captchaToken: currentToken, language });
       navigate('/check-email', { state: { email: form.email } });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
