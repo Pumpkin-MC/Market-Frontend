@@ -1,33 +1,40 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Store } from 'lucide-react';
-import Home from './pages/Home';
-import PluginDetail from './pages/PluginDetail';
-import LoginPage from './pages/auth/LoginPage'; 
-import RegisterPage from './pages/auth/RegisterPage'; 
-import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
-import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import VerifyEmailPage from './pages/auth/VerifyEmailPage';
-import ConfirmEmailChangePage from './pages/auth/ConfirmEmailChangePage';
-import CheckEmailPage from './pages/auth/CheckEmailPage';
-import ProfilePage from './pages/ProfilePage';
-import AuthorProfilePage from './pages/AuthorProfilePage';
-import SearchResultsPage from './pages/SearchResultsPage';
-import DashboardAudience from './pages/dashboard/DashboardAudience';
-import DashboardPlugins from './pages/dashboard/DashboardPlugins';
-import ManagePlugin from './pages/dashboard/plugin/ManagePlugin';
-import AddPlugin from './pages/dashboard/plugin/AddPlugin';
-import TermsOfServicePage from './pages/legal/TermsOfServicePage';
-import PrivacyPolicyPage from './pages/legal/PrivacyPolicyPage';
-import GuidelinesPage from './pages/legal/GuidelinesPage';
-import DeveloperTermsPage from './pages/legal/DeveloperTermsPage';
-import LegalNoticePage from './pages/legal/LegalNoticePage';
-import AdminPanel from './pages/admin/AdminPanel';
 import { CookieBanner } from './components/CookieBanner';
 import { openCookiePreferencesModal } from './utils/consent';
 import { NavSearch } from './components/NavSearch';
 import './App.css';
+
+// --- Lazy Loaded Pages ---
+const Home = React.lazy(() => import('./pages/Home'));
+const PluginDetail = React.lazy(() => import('./pages/PluginDetail'));
+const LoginPage = React.lazy(() => import('./pages/auth/LoginPage'));
+const RegisterPage = React.lazy(() => import('./pages/auth/RegisterPage'));
+const ForgotPasswordPage = React.lazy(() => import('./pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage = React.lazy(() => import('./pages/auth/ResetPasswordPage'));
+const VerifyEmailPage = React.lazy(() => import('./pages/auth/VerifyEmailPage'));
+const ConfirmEmailChangePage = React.lazy(() => import('./pages/auth/ConfirmEmailChangePage'));
+const CheckEmailPage = React.lazy(() => import('./pages/auth/CheckEmailPage'));
+const ProfilePage = React.lazy(() => import('./pages/ProfilePage'));
+const AuthorProfilePage = React.lazy(() => import('./pages/AuthorProfilePage'));
+const SearchResultsPage = React.lazy(() => import('./pages/SearchResultsPage'));
+const DashboardAudience = React.lazy(() => import('./pages/dashboard/DashboardAudience'));
+const DashboardPlugins = React.lazy(() => import('./pages/dashboard/DashboardPlugins'));
+const ManagePlugin = React.lazy(() => import('./pages/dashboard/plugin/ManagePlugin'));
+const TermsOfServicePage = React.lazy(() => import('./pages/legal/TermsOfServicePage'));
+const PrivacyPolicyPage = React.lazy(() => import('./pages/legal/PrivacyPolicyPage'));
+const GuidelinesPage = React.lazy(() => import('./pages/legal/GuidelinesPage'));
+const DeveloperTermsPage = React.lazy(() => import('./pages/legal/DeveloperTermsPage'));
+const LegalNoticePage = React.lazy(() => import('./pages/legal/LegalNoticePage'));
+const AdminPanel = React.lazy(() => import('./pages/admin/AdminPanel'));
+
+const PageLoader = () => (
+  <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, fontSize: '0.9rem' }}>
+    Loading...
+  </div>
+);
 
 import api from './api';
 
@@ -182,7 +189,7 @@ const App = () => (
           <Route index element={<Navigate to="/dashboard/plugins" replace />} />
           <Route path="audience" element={<DashboardAudience />} />
           <Route path="plugins" element={<DashboardPlugins />} />
-          <Route path="add-plugin" element={<AddPlugin />} />
+          <Route path="add-plugin" element={<Navigate to="/dashboard/plugins?create=true" replace />} />
           <Route path="manage-plugin/:id" element={<ManagePlugin />} />
         </Route>
       </Routes>
@@ -195,7 +202,11 @@ const MainLayout = () => {
   return (
     <>
       <Navbar user={user} />
-      <main><Outlet /></main>
+      <main>
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
       <Footer />
     </>
   );
@@ -228,9 +239,13 @@ const DeveloperStudioNavbar = ({ user }: any) => {
 
       <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
         <div className="nav-links">
-          <NavLink to="/dashboard/plugins" onClick={() => setIsMenuOpen(false)}>Plugins</NavLink>
-          <NavLink to="/dashboard/audience" onClick={() => setIsMenuOpen(false)}>Audience</NavLink>
-          <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>
+          {user?.is_developer && (
+            <>
+              <NavLink to="/dashboard/plugins" onClick={() => setIsMenuOpen(false)}>Plugins</NavLink>
+              <NavLink to="/dashboard/audience" onClick={() => setIsMenuOpen(false)}>Audience</NavLink>
+              <NavLink to="/dashboard/plugins?create=true" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>
+            </>
+          )}
           {user && (user.role === 'admin' || user.role === 'moderator') && (
             <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>
           )}
@@ -243,36 +258,23 @@ const DeveloperStudioNavbar = ({ user }: any) => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              color: 'var(--primary)',
-              textDecoration: 'none',
-              fontWeight: 600,
+              gap: '0.45rem',
+              color: 'var(--text-muted, #94a3b8)',
               fontSize: '0.85rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.03em',
-              padding: '6px 14px',
-              borderRadius: '20px',
-              background: 'rgba(255, 117, 24, 0.1)',
-              border: '1px solid rgba(255, 117, 24, 0.3)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(255, 117, 24, 0.2)';
-              e.currentTarget.style.borderColor = 'var(--primary)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(255, 117, 24, 0.1)';
-              e.currentTarget.style.borderColor = 'rgba(255, 117, 24, 0.3)';
+              fontWeight: 500,
+              textDecoration: 'none',
+              padding: '0.45rem 0.85rem',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              background: 'rgba(255, 255, 255, 0.03)',
+              transition: 'all 0.2s ease',
             }}
           >
-            <Store size={14} />
-            <span>Marketplace</span>
+            <Store size={15} />
+            <span>Store</span>
           </Link>
-
-          {user ? (
+          {user && (
             <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
-          ) : (
-            <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>Login</Link>
           )}
         </div>
       </div>
@@ -286,7 +288,9 @@ const DashboardLayout = () => {
     <div className="dashboard-container">
       <DeveloperStudioNavbar user={user} />
       <div className="dashboard-content">
-        <Outlet />
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
       </div>
     </div>
   );
@@ -323,7 +327,7 @@ const Navbar = ({ user }: any) => {
           {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
             <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('nav.dashboard')}</NavLink>
           )}
-          {user && <NavLink to="/dashboard/add-plugin" onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
+          {user && <NavLink to={user.is_developer ? "/dashboard/plugins?create=true" : "/dashboard/plugins"} onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
           {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
         </div>
 

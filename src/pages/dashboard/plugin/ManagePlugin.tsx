@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import api from '../../../api';
 import { useAuth } from '../../../App';
+import { useTranslation } from 'react-i18next';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    Circle, BarChart3, Key, Star, ArrowRightLeft
+    Circle, BarChart3, Key, Star, ArrowRightLeft,
+    Rocket, Eye, PowerOff
 } from 'lucide-react';
 
 import StoreListing from './StoreListing';
@@ -16,6 +18,8 @@ import PluginReviewsTab from './PluginReviewsTab';
 import TransferOwnership from './TransferOwnership';
 import DangerZone from './DangerZone';
 import PluginAnalyticsTab from './PluginAnalyticsTab';
+import PublishReadinessModal from './PublishReadinessModal';
+import { getPluginUrl } from '../../../utils/url';
 import './ManagePlugin.css';
 
 export type PluginData = {
@@ -53,12 +57,15 @@ const NAV_ITEMS = [
 ];
 
 const ManagePlugin = () => {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('listing');
     const [loading, setLoading] = useState(true);
     const [plugin, setPlugin] = useState<PluginData | null>(null);
+    const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
+    const [unpublishing, setUnpublishing] = useState(false);
 
     useEffect(() => {
         if (user) {
@@ -84,6 +91,24 @@ const ManagePlugin = () => {
 
     const refreshPlugin = () => fetchPlugin();
 
+    const handleUnpublish = async () => {
+        if (!plugin) return;
+        const confirm = window.confirm(
+            `Take "${plugin.name}" offline?\n\nThis will remove the plugin from marketplace search and category browsing until you publish it again.`
+        );
+        if (!confirm) return;
+
+        setUnpublishing(true);
+        try {
+            await api.post(`/plugins/${plugin.id}/unpublish`);
+            await fetchPlugin();
+        } catch (err: any) {
+            alert(err.response?.data?.error || 'Failed to unpublish plugin.');
+        } finally {
+            setUnpublishing(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="mp-loading">
@@ -95,11 +120,7 @@ const ManagePlugin = () => {
 
     if (!plugin) return null;
 
-    const statusColor = {
-        published: 'var(--mp-success)',
-        draft:     'var(--mp-muted)',
-        review:    'var(--mp-warn)',
-    }[plugin.status ?? 'published'];
+    const isLive = plugin.status === 'published';
 
     return (
         <div className="mp-root">
@@ -112,9 +133,9 @@ const ManagePlugin = () => {
                     <div>
                         <p className="mp-plugin-name">{plugin.name}</p>
                         <div className="mp-plugin-status">
-                            <Circle size={7} fill={statusColor} color={statusColor} />
-                            <span style={{ color: statusColor }}>
-                                {plugin.status ?? 'published'}
+                            <Circle size={7} fill={isLive ? 'var(--mp-success)' : 'var(--mp-muted)'} color={isLive ? 'var(--mp-success)' : 'var(--mp-muted)'} />
+                            <span style={{ color: isLive ? 'var(--mp-success)' : 'var(--mp-muted)' }}>
+                                {isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)')}
                             </span>
                         </div>
                     </div>
@@ -145,6 +166,62 @@ const ManagePlugin = () => {
 
             {/* ── Main Content ──────────────────────────────────────── */}
             <main className="mp-main">
+                {/* Top Google/Apple/Steam style publishing & status bar */}
+                <div className="mp-top-bar">
+                    <div className="mp-top-bar-left">
+                        <div className={`mp-status-pill ${isLive ? 'published' : 'draft'}`}>
+                            <span className="mp-status-dot-pulse" />
+                            <span>{isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)')}</span>
+                        </div>
+                        <span className="mp-top-bar-desc">
+                            {isLive
+                                ? 'This plugin is public. You can publish updates or manage store details.'
+                                : 'Draft changes are private. Complete your store listing & binary build, then publish.'}
+                        </span>
+                    </div>
+
+                    <div className="mp-top-bar-actions">
+                        {!isLive ? (
+                            <>
+                                <button
+                                    className="mp-action-btn mp-action-btn-secondary"
+                                    onClick={() => setIsPublishModalOpen(true)}
+                                    title="Check what requirements remain before publishing"
+                                >
+                                    Check Readiness
+                                </button>
+                                <button
+                                    className="mp-action-btn mp-action-btn-primary"
+                                    onClick={() => setIsPublishModalOpen(true)}
+                                >
+                                    <Rocket size={15} />
+                                    {t('developer.dashboard.btn_publish_store', 'Publish to Store')}
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    to={getPluginUrl(plugin)}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="mp-action-btn mp-action-btn-secondary"
+                                >
+                                    <Eye size={15} />
+                                    View on Store
+                                </Link>
+                                <button
+                                    className="mp-action-btn mp-action-btn-danger"
+                                    disabled={unpublishing}
+                                    onClick={handleUnpublish}
+                                >
+                                    <PowerOff size={15} />
+                                    {unpublishing ? 'Unpublishing…' : t('developer.dashboard.btn_unpublish_store', 'Take Offline')}
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </div>
+
                 {activeTab === 'listing' && (
                     <StoreListing plugin={plugin} onSaved={refreshPlugin} />
                 )}
@@ -173,6 +250,17 @@ const ManagePlugin = () => {
                     <DangerZone plugin={plugin} />
                 )}
             </main>
+
+            {/* Readiness & Publish Modal */}
+            <PublishReadinessModal
+                isOpen={isPublishModalOpen}
+                pluginId={plugin.id}
+                pluginName={plugin.name}
+                isPublished={isLive}
+                onClose={() => setIsPublishModalOpen(false)}
+                onPublished={refreshPlugin}
+                onNavigateTab={(tabKey) => setActiveTab(tabKey)}
+            />
         </div>
     );
 };

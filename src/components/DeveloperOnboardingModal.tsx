@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCodeList } from 'country-list';
 import {
-  Building2, User, Globe, Mail, CheckCircle2, ChevronRight,
-  AlertCircle, CreditCard, Sparkles, Code2, ShieldCheck, MapPin,
-  Gift, DollarSign,
+  Globe, Mail, CheckCircle2, ChevronRight,
+  AlertCircle, CreditCard, Code2, ShieldCheck, MapPin,
+  Gift,
 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../App';
@@ -12,22 +12,27 @@ import { SecuritySetupCards } from './SecuritySetupCards';
 import './DeveloperOnboardingModal.css';
 
 interface DeveloperOnboardingModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   onSuccess?: () => void;
+  embedded?: boolean;
 }
 
 export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> = ({
-  isOpen,
+  isOpen = true,
   onClose,
   onSuccess,
+  embedded = false,
 }) => {
   const { t } = useTranslation();
   const { user, login } = useAuth();
   const [step, setStep] = useState<number>(1);
   const [entityType, setEntityType] = useState<'individual' | 'organization'>('individual');
+  const [orgType, setOrgType] = useState<string>('');
   const [displayName, setDisplayName] = useState(user?.username || '');
-  const [isSellingPaid, setIsSellingPaid] = useState<boolean>(false);
+  const [nameChecking, setNameChecking] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
+  const [isSellingPaid, setIsSellingPaid] = useState<boolean | null>(null);
 
   // Legal / Address (for paid sellers)
   const [legalName, setLegalName] = useState('');
@@ -46,12 +51,37 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Debounced check for developer display name availability
+  useEffect(() => {
+    const trimmed = displayName.trim();
+    if (!trimmed) {
+      setNameError(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setNameChecking(true);
+      try {
+        const res = await api.get(`/user/developer/check-name?name=${encodeURIComponent(trimmed)}`);
+        if (res.data?.available === false) {
+          setNameError(res.data.message || t('developer.onboarding.name_taken_error'));
+        } else {
+          setNameError(null);
+        }
+      } catch (err: any) {
+        if (err.response?.data?.error) {
+          setNameError(err.response.data.error);
+        }
+      } finally {
+        setNameChecking(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [displayName, t]);
+
   const hasSecureAuth = Boolean(user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey);
 
-  if (!isOpen) return null;
-
-  // Max steps: 3 for Free, 4 for Paid
-  const totalSteps = isSellingPaid ? 4 : 3;
+  if (!embedded && !isOpen) return null;
 
   const handleCompleteOnboarding = async (connectStripe: boolean) => {
     if (!acceptedTerms) {
@@ -90,7 +120,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       }
 
       onSuccess?.();
-      onClose();
+      onClose?.();
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to complete developer onboarding');
     } finally {
@@ -106,14 +136,47 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
     setStep(s => Math.max(1, s - 1));
   };
 
-  return (
-    <div className="dev-modal-overlay">
-      <div className="dev-modal-container">
+  const handleStep2Next = async () => {
+    const trimmed = displayName.trim();
+    if (!trimmed) return;
+    setNameChecking(true);
+    try {
+      const res = await api.get(`/user/developer/check-name?name=${encodeURIComponent(trimmed)}`);
+      if (res.data?.available === false) {
+        setNameError(res.data.message || t('developer.onboarding.name_taken_error'));
+        return;
+      }
+      setNameError(null);
+      nextStep();
+    } catch (err: any) {
+      setNameError(err.response?.data?.error || 'Failed to verify developer name');
+    } finally {
+      setNameChecking(false);
+    }
+  };
+
+  const isStep2Valid = Boolean(displayName.trim() && !nameError && !nameChecking);
+
+  const isStep3Valid = Boolean(
+    isSellingPaid !== null &&
+    (isSellingPaid === false ||
+      (isSellingPaid === true &&
+        legalName.trim() &&
+        streetAddress.trim() &&
+        city.trim() &&
+        postalCode.trim() &&
+        country))
+  );
+
+  const content = (
+    <div className="dev-modal-container">
+      {!embedded && onClose && (
         <button className="dev-modal-close" onClick={onClose} aria-label="Close modal">&times;</button>
+      )}
 
         <div className="dev-modal-header">
           <div className="dev-modal-badge">
-            <Sparkles size={14} /> {t('developer.onboarding.badge')}
+            {t('developer.onboarding.badge')}
           </div>
           <h2>{t('developer.onboarding.title')}</h2>
           <p>
@@ -125,21 +188,15 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
         {/* Step Indicator */}
         <div className="dev-steps-nav">
-          <div className={`dev-step-pill ${step >= 1 ? 'active' : ''}`}>{t('developer.onboarding.step_profile')}</div>
+          <div className={`dev-step-pill ${step >= 1 ? 'active' : ''}`}>1. {t('developer.onboarding.step_account_type')}</div>
           <div className="dev-step-line" />
-          {isSellingPaid && (
-            <>
-              <div className={`dev-step-pill ${step >= 2 ? 'active' : ''}`}>{t('developer.onboarding.step_seller')}</div>
-              <div className="dev-step-line" />
-            </>
-          )}
-          <div className={`dev-step-pill ${step >= (isSellingPaid ? 3 : 2) ? 'active' : ''}`}>
-            {isSellingPaid ? `3. ${t('developer.onboarding.step_links')}` : `2. ${t('developer.onboarding.step_links')}`}
-          </div>
+          <div className={`dev-step-pill ${step >= 2 ? 'active' : ''}`}>2. {t('developer.onboarding.step_name')}</div>
           <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= totalSteps ? 'active' : ''}`}>
-            {totalSteps}. {t('developer.onboarding.step_finish')}
-          </div>
+          <div className={`dev-step-pill ${step >= 3 ? 'active' : ''}`}>3. {t('developer.onboarding.step_monetization')}</div>
+          <div className="dev-step-line" />
+          <div className={`dev-step-pill ${step >= 4 ? 'active' : ''}`}>4. {t('developer.onboarding.step_links')}</div>
+          <div className="dev-step-line" />
+          <div className={`dev-step-pill ${step >= 5 ? 'active' : ''}`}>5. {t('developer.onboarding.step_finish')}</div>
         </div>
 
         {error && (
@@ -149,34 +206,89 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </div>
         )}
 
-        {/* ── STEP 1: Entity Type, Public Name & Plan ── */}
+        {/* ── STEP 1: Account Type (Google Play Style) ── */}
         {step === 1 && (
           <div className="dev-step-content">
-            <label className="dev-field-label">{t('developer.onboarding.entity_question')}</label>
-            <div className="dev-entity-grid">
-              <button
-                type="button"
-                className={`dev-entity-card ${entityType === 'individual' ? 'selected' : ''}`}
-                onClick={() => setEntityType('individual')}
-              >
-                <div className="dev-entity-icon"><User size={22} /></div>
-                <div>
-                  <h4>{t('developer.onboarding.individual_title')}</h4>
-                  <p>{t('developer.onboarding.individual_desc')}</p>
+            <div className="dev-account-types-container">
+              {/* An organization */}
+              <div className={`dev-account-card ${entityType === 'organization' ? 'selected' : ''}`}>
+                <div className="dev-account-card-header">
+                  <h3 className="dev-account-card-title">{t('developer.onboarding.org_title')}</h3>
+                  <p className="dev-account-card-desc">
+                    {t('developer.onboarding.org_desc')}
+                  </p>
                 </div>
-              </button>
 
-              <button
-                type="button"
-                className={`dev-entity-card ${entityType === 'organization' ? 'selected' : ''}`}
-                onClick={() => setEntityType('organization')}
-              >
-                <div className="dev-entity-icon"><Building2 size={22} /></div>
-                <div>
-                  <h4>{t('developer.onboarding.org_title')}</h4>
-                  <p>{t('developer.onboarding.org_desc')}</p>
+                <div className="dev-account-card-field">
+                  <label htmlFor="orgTypeSelect">{t('developer.onboarding.org_type_label')}</label>
+                  <select
+                    id="orgTypeSelect"
+                    className="dev-input dev-select"
+                    value={orgType}
+                    onChange={e => {
+                      setOrgType(e.target.value);
+                      setEntityType('organization');
+                    }}
+                  >
+                    <option value="">{t('developer.onboarding.org_type_placeholder')}</option>
+                    <option value="company">Company / Studio</option>
+                    <option value="nonprofit">Non-profit / Open Source Organization</option>
+                    <option value="education">Educational Institution</option>
+                    <option value="other">Other entity</option>
+                  </select>
                 </div>
-              </button>
+
+                <div className="dev-account-card-actions">
+                  <button
+                    type="button"
+                    className="dev-account-get-started-btn"
+                    disabled={!orgType}
+                    onClick={() => {
+                      setEntityType('organization');
+                      nextStep();
+                    }}
+                  >
+                    {t('developer.onboarding.btn_get_started')}
+                  </button>
+                </div>
+              </div>
+
+              {/* Yourself */}
+              <div className={`dev-account-card ${entityType === 'individual' ? 'selected' : ''}`}>
+                <div className="dev-account-card-header">
+                  <h3 className="dev-account-card-title">{t('developer.onboarding.individual_title')}</h3>
+                  <p className="dev-account-card-desc">
+                    {t('developer.onboarding.individual_desc')}
+                  </p>
+                </div>
+
+                <div className="dev-account-card-actions">
+                  <button
+                    type="button"
+                    className="dev-account-get-started-btn"
+                    onClick={() => {
+                      setEntityType('individual');
+                      nextStep();
+                    }}
+                  >
+                    {t('developer.onboarding.btn_get_started')}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP 2: Developer Public Name / Brand ── */}
+        {step === 2 && (
+          <div className="dev-step-content">
+            <div style={{ marginBottom: '1.25rem' }}>
+              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '0.35rem' }}>
+                {t('developer.onboarding.dev_name_title')}
+              </h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', lineHeight: 1.5, margin: 0 }}>
+                {t('developer.onboarding.dev_name_desc')}
+              </p>
             </div>
 
             <div className="dev-form-group">
@@ -185,162 +297,221 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 id="onboardingDisplayName"
                 name="displayName"
                 type="text"
-                className="dev-input"
-                placeholder={t('developer.onboarding.display_name_placeholder')}
+                className={`dev-input ${nameError ? 'dev-input-error' : ''}`}
+                placeholder={entityType === 'organization' ? 'e.g. PixelCraft Studios' : t('developer.onboarding.display_name_placeholder')}
                 value={displayName}
-                onChange={e => setDisplayName(e.target.value)}
+                onChange={e => {
+                  setDisplayName(e.target.value);
+                  setNameError(null);
+                }}
                 autoComplete="nickname"
                 maxLength={60}
                 autoFocus
               />
-              <span className="dev-hint">{t('developer.onboarding.display_name_hint')}</span>
+              {nameError ? (
+                <span className="dev-field-error">
+                  <AlertCircle size={14} />
+                  <span>{nameError}</span>
+                </span>
+              ) : (
+                <span className="dev-hint">{t('developer.onboarding.display_name_hint')}</span>
+              )}
             </div>
 
-            <div className="dev-form-group">
-              <label>{t('developer.onboarding.intent_label')}</label>
-              <div className="dev-entity-grid">
-                <button
-                  type="button"
-                  className={`dev-entity-card ${!isSellingPaid ? 'active' : ''}`}
-                  onClick={() => setIsSellingPaid(false)}
-                >
-                  <div className="dev-entity-icon"><Gift size={22} color="#10b981" /></div>
-                  <div>
-                    <h4>{t('developer.onboarding.intent_free')}</h4>
-                    <p>{t('developer.onboarding.intent_free_desc')}</p>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  className={`dev-entity-card ${isSellingPaid ? 'active' : ''}`}
-                  onClick={() => setIsSellingPaid(true)}
-                >
-                  <div className="dev-entity-icon"><DollarSign size={22} color="#f97316" /></div>
-                  <div>
-                    <h4>{t('developer.onboarding.intent_paid')}</h4>
-                    <p>{t('developer.onboarding.intent_paid_desc')}</p>
-                  </div>
-                </button>
-              </div>
+            <div className="dev-btn-row" style={{ marginTop: '1.5rem' }}>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
+              <button
+                className="dev-btn dev-btn-primary"
+                disabled={!isStep2Valid}
+                onClick={handleStep2Next}
+              >
+                {nameChecking ? 'Checking...' : t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
+              </button>
             </div>
-
-            <button
-              className="dev-btn dev-btn-primary"
-              style={{ marginTop: '1.25rem' }}
-              disabled={!displayName.trim()}
-              onClick={nextStep}
-            >
-              {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
-            </button>
           </div>
         )}
 
-        {/* ── STEP 2 (Paid Only): Legal Seller Identity & Address ── */}
-        {isSellingPaid && step === 2 && (
+        {/* ── STEP 3: Monetization & Seller Details ── */}
+        {step === 3 && (
           <div className="dev-step-content">
+            {/* Required Radio Question: Do you plan to publish Paid plugins? */}
             <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingLegalName">
-                <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
+              <label className="dev-field-label" style={{ marginBottom: '0.6rem', display: 'block', fontWeight: 600 }}>
+                {t('developer.onboarding.plan_paid_question')}
               </label>
-              <input
-                id="onboardingLegalName"
-                name="legalName"
-                type="text"
-                className="dev-input"
-                value={legalName}
-                onChange={e => setLegalName(e.target.value)}
-                placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
-                autoComplete="name"
-                required
-              />
-            </div>
 
-            <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingStreetAddress"><MapPin size={14} /> {t('developer.onboarding.street_label')}</label>
-              <input
-                id="onboardingStreetAddress"
-                name="streetAddress"
-                type="text"
-                className="dev-input"
-                value={streetAddress}
-                onChange={e => setStreetAddress(e.target.value)}
-                placeholder="123 Main St, Suite 400"
-                autoComplete="street-address"
-                required
-              />
-            </div>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <label style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.55rem',
+                  cursor: 'pointer',
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '8px',
+                  background: isSellingPaid === true ? 'rgba(249, 115, 22, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                  border: `1px solid ${isSellingPaid === true ? '#f97316' : 'rgba(255, 255, 255, 0.1)'}`,
+                  color: isSellingPaid === true ? '#fff' : '#cbd5e1',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <input
+                    type="radio"
+                    name="planPaidChoice"
+                    checked={isSellingPaid === true}
+                    onChange={() => setIsSellingPaid(true)}
+                    style={{ accentColor: '#f97316', width: 16, height: 16, cursor: 'pointer' }}
+                  />
+                  {t('developer.onboarding.option_yes')}
+                </label>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingCity">{t('developer.onboarding.city_label')}</label>
-                <input
-                  id="onboardingCity"
-                  name="city"
-                  type="text"
-                  className="dev-input"
-                  value={city}
-                  onChange={e => setCity(e.target.value)}
-                  placeholder="City"
-                  autoComplete="address-level2"
-                  required
-                />
-              </div>
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingPostalCode">{t('developer.onboarding.postal_label')}</label>
-                <input
-                  id="onboardingPostalCode"
-                  name="postalCode"
-                  type="text"
-                  className="dev-input"
-                  value={postalCode}
-                  onChange={e => setPostalCode(e.target.value)}
-                  placeholder="10001"
-                  autoComplete="postal-code"
-                  required
-                />
-              </div>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingCountry"><Globe size={14} /> {t('developer.onboarding.country_label')}</label>
-                <select
-                  id="onboardingCountry"
-                  name="country"
-                  className="dev-input dev-select"
-                  value={country}
-                  onChange={e => setCountry(e.target.value)}
-                  autoComplete="country"
-                  required
-                >
-                  <option value="">Select country...</option>
-                  {Object.entries(getCodeList()).map(([code, name]) => (
-                    <option key={code} value={code}>{name}</option>
-                  ))}
-                </select>
+                <label style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.55rem',
+                  cursor: 'pointer',
+                  padding: '0.6rem 1.25rem',
+                  borderRadius: '8px',
+                  background: isSellingPaid === false ? 'rgba(249, 115, 22, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                  border: `1px solid ${isSellingPaid === false ? '#f97316' : 'rgba(255, 255, 255, 0.1)'}`,
+                  color: isSellingPaid === false ? '#fff' : '#cbd5e1',
+                  fontWeight: 600,
+                  fontSize: '0.9rem',
+                  transition: 'all 0.2s ease',
+                }}>
+                  <input
+                    type="radio"
+                    name="planPaidChoice"
+                    checked={isSellingPaid === false}
+                    onChange={() => setIsSellingPaid(false)}
+                    style={{ accentColor: '#f97316', width: 16, height: 16, cursor: 'pointer' }}
+                  />
+                  {t('developer.onboarding.option_no')}
+                </label>
               </div>
 
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingVatId">{t('developer.onboarding.vat_label')}</label>
-                <input
-                  id="onboardingVatId"
-                  name="vatId"
-                  type="text"
-                  className="dev-input"
-                  value={vatId}
-                  onChange={e => setVatId(e.target.value)}
-                  placeholder="EU123456789 or Tax ID"
-                  autoComplete="off"
-                />
-              </div>
+              {/* If clicked yes, display all the new required seller fields below */}
+              {isSellingPaid === true && (
+                <div style={{
+                  marginTop: '1.25rem',
+                  padding: '1.25rem',
+                  background: 'rgba(249, 115, 22, 0.04)',
+                  border: '1px solid rgba(249, 115, 22, 0.25)',
+                  borderRadius: '10px',
+                }}>
+                  <div className="dev-form-group">
+                    <label className="dev-field-label" htmlFor="onboardingLegalName">
+                      <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
+                    </label>
+                    <input
+                      id="onboardingLegalName"
+                      name="legalName"
+                      type="text"
+                      className="dev-input"
+                      value={legalName}
+                      onChange={e => setLegalName(e.target.value)}
+                      placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                      autoComplete="name"
+                      required
+                    />
+                  </div>
+
+                  <div className="dev-form-group">
+                    <label className="dev-field-label" htmlFor="onboardingStreetAddress">
+                      <MapPin size={14} /> {t('developer.onboarding.street_label')}
+                    </label>
+                    <input
+                      id="onboardingStreetAddress"
+                      name="streetAddress"
+                      type="text"
+                      className="dev-input"
+                      value={streetAddress}
+                      onChange={e => setStreetAddress(e.target.value)}
+                      placeholder="123 Main St, Suite 400"
+                      autoComplete="street-address"
+                      required
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingCity">{t('developer.onboarding.city_label')}</label>
+                      <input
+                        id="onboardingCity"
+                        name="city"
+                        type="text"
+                        className="dev-input"
+                        value={city}
+                        onChange={e => setCity(e.target.value)}
+                        placeholder="City"
+                        autoComplete="address-level2"
+                        required
+                      />
+                    </div>
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingPostalCode">{t('developer.onboarding.postal_label')}</label>
+                      <input
+                        id="onboardingPostalCode"
+                        name="postalCode"
+                        type="text"
+                        className="dev-input"
+                        value={postalCode}
+                        onChange={e => setPostalCode(e.target.value)}
+                        placeholder="10001"
+                        autoComplete="postal-code"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingCountry">
+                        <Globe size={14} /> {t('developer.onboarding.country_label')}
+                      </label>
+                      <select
+                        id="onboardingCountry"
+                        name="country"
+                        className="dev-input dev-select"
+                        value={country}
+                        onChange={e => setCountry(e.target.value)}
+                        autoComplete="country"
+                        required
+                      >
+                        <option value="">Select country...</option>
+                        {Object.entries(getCodeList()).map(([code, name]) => (
+                          <option key={code} value={code}>{name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingVatId">{t('developer.onboarding.vat_label')}</label>
+                      <input
+                        id="onboardingVatId"
+                        name="vatId"
+                        type="text"
+                        className="dev-input"
+                        value={vatId}
+                        onChange={e => setVatId(e.target.value)}
+                        placeholder="EU123456789 or Tax ID"
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="dev-btn-row" style={{ marginTop: '1.25rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
               <button
                 className="dev-btn dev-btn-primary"
-                disabled={!legalName.trim() || !streetAddress.trim() || !city.trim() || !postalCode.trim() || !country}
+                disabled={!isStep3Valid}
                 onClick={nextStep}
               >
                 {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
@@ -349,8 +520,8 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </div>
         )}
 
-        {/* ── STEP (Free: Step 2, Paid: Step 3): Support Contact & Portfolio Links ── */}
-        {((!isSellingPaid && step === 2) || (isSellingPaid && step === 3)) && (
+        {/* ── STEP 4: Support Contact & Portfolio Links ── */}
+        {step === 4 && (
           <div className="dev-step-content">
             <div className="dev-form-group">
               <label className="dev-field-label" htmlFor="onboardingSupportEmail"><Mail size={14} /> {t('developer.onboarding.support_email_label')} *</label>
@@ -408,8 +579,8 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </div>
         )}
 
-        {/* ── STEP (Free: Step 3, Paid: Step 4): Finish & Confirmation ── */}
-        {step === totalSteps && (
+        {/* ── STEP 5: Finish & Confirmation ── */}
+        {step === 5 && (
           <div className="dev-step-content">
             {!isSellingPaid ? (
               <>
@@ -545,7 +716,20 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
           </div>
         )}
+    </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="dev-onboarding-embedded">
+        {content}
       </div>
+    );
+  }
+
+  return (
+    <div className="dev-modal-overlay">
+      {content}
     </div>
   );
 };

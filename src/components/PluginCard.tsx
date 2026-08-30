@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
 import { getPluginUrl } from '../utils/url';
+import { extractYoutubeVideoId } from './PluginVideoPlayer';
 
 const getAccentColor = (name: string) => {
     const colors = [
@@ -31,8 +31,7 @@ const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; ori
     };
 };
 
-const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDescription?: boolean }) => {
-    const { i18n } = useTranslation();
+const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
     const timerRef = useRef<any>(null);
@@ -40,41 +39,37 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
 
     const accent = useMemo(() => getAccentColor(plugin?.name || ''), [plugin?.name]);
     
-    const getDescription = (translatedStr?: string) => {
-        if (!translatedStr) return 'No description available.';
-        try {
-            const data = JSON.parse(translatedStr);
-            const currentLang = (i18n.language || 'en').split('-')[0];
-            return data[currentLang] || data.en || Object.values(data)[0] || 'No description available.';
-        } catch {
-            return 'No description available.';
-        }
-    };
-
     const priceInfo = useMemo(() => (plugin ? getEffectivePrice(plugin) : { display: '€0.00', isSale: false, originalDisplay: '' }), [plugin]);
     const isSale = plugin?.type === 'paid' && priceInfo.isSale;
-    const desc = getDescription(plugin?.translated_descriptions);
     const initial = (plugin?.name || '?').charAt(0).toUpperCase();
+
+    const videoId = useMemo(() => {
+        return extractYoutubeVideoId(plugin?.youtube_video_url);
+    }, [plugin?.youtube_video_url]);
 
     const slideshowImages = useMemo(() => {
         if (!plugin) return [];
-        const images = [];
-        if (plugin.preview_path) images.push(plugin.preview_path);
+        const images: string[] = [];
+        if (plugin.preview_path) {
+            images.push(plugin.preview_path);
+        } else if (videoId) {
+            images.push(`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`);
+        }
         if (plugin.screenshots && plugin.screenshots.length > 0) {
             images.push(...plugin.screenshots);
         }
         return images;
-    }, [plugin?.preview_path, plugin?.screenshots]);
+    }, [plugin?.preview_path, plugin?.screenshots, videoId]);
 
     if (!plugin) return null;
 
     const startHover = () => {
         setIsHovering(true);
+        if (videoId) return;
         if (slideshowImages.length <= 1) return;
 
         const next = () => setCurrentIndex(prev => (prev + 1) % slideshowImages.length);
-        
-        next(); // Trigger first transition instantly
+        next();
         cycleRef.current = setInterval(next, 2000);
     };
 
@@ -89,7 +84,17 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
         <Link to={getPluginUrl(plugin)} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
             <div className="plugin-card-v2">
                 <div className="pcv2-preview">
-                    {slideshowImages.length > 0 ? (
+                    {isHovering && videoId ? (
+                        <div className="pcv2-video-container">
+                            <iframe
+                                className="pcv2-video-iframe"
+                                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&showinfo=0&iv_load_policy=3`}
+                                title={plugin.name}
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                tabIndex={-1}
+                            />
+                        </div>
+                    ) : slideshowImages.length > 0 ? (
                         <div className="pcv2-slideshow">
                             {slideshowImages.map((src: string, i: number) => (
                                 <img 
@@ -97,10 +102,11 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
                                     src={src} 
                                     className={`pcv2-slideshow-img ${i === currentIndex ? 'active' : ''}`} 
                                     alt={plugin.name}
+                                    loading="lazy"
                                 />
                             ))}
                             
-                            {isHovering && slideshowImages.length > 1 && (
+                            {isHovering && slideshowImages.length > 1 && !videoId && (
                                 <div className="pcv2-slideshow-progress">
                                     {slideshowImages.map((_: any, i: number) => (
                                         <div key={i} className={`pcv2-progress-dot ${i === currentIndex ? 'active' : ''}`} />
@@ -142,7 +148,6 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
                         {plugin.is_early_access && <span className="pcv2-badge-ea">Early Access</span>}
                     </p>
                     <p className="pcv2-dev">by {plugin.dev_name}</p>
-                    {!hideDescription && <p className="pcv2-desc">{desc}</p>}
 
                     <div className="pcv2-footer">
                         <span className="pcv2-stat">
@@ -172,11 +177,6 @@ const PluginCard = ({ plugin, hideDescription = false }: { plugin: any; hideDesc
                         Sale — {plugin.sale_discount_percent}% off
                     </div>
                 )}
-
-                <div
-                    className="pcv2-accent-bar"
-                    style={{ background: `linear-gradient(90deg, ${isSale ? '#ff6b6b' : accent}, transparent)` }}
-                />
             </div>
         </Link>
     );

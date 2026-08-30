@@ -83,11 +83,12 @@ const Field: React.FC<FieldProps> = ({ label, hint, children }) => (
 
 interface SaveBtnProps {
   isSaving?: boolean;
+  disabled?: boolean;
   label?: string;
 }
 
-const SaveBtn: React.FC<SaveBtnProps> = ({ isSaving = false, label = 'Save Changes' }) => (
-  <button type="submit" className="settings-btn settings-btn-primary" disabled={isSaving}>
+const SaveBtn: React.FC<SaveBtnProps> = ({ isSaving = false, disabled = false, label = 'Save Changes' }) => (
+  <button type="submit" className="settings-btn settings-btn-primary" disabled={isSaving || disabled}>
     {isSaving ? <><span className="spinner-sm" />{label.replace('Save', 'Saving')}…</> : label}
   </button>
 );
@@ -149,7 +150,7 @@ const PwInput: React.FC<PwInputProps> = ({ placeholder, value, onChange, show, o
 
 const ProfilePage = () => {
   const { user, login, logout, refreshUser } = useAuth();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate  = useNavigate();
   const location  = useLocation();
 
@@ -211,6 +212,54 @@ const ProfilePage = () => {
   const [devProfileForm, setDevProfileForm] = useState({
     displayName: '', legalName: '', streetAddress: '', city: '', postalCode: '', vatId: '', publishingIntent: '', supportEmail: '', websiteUrl: '', githubUrl: '',
   });
+  const [devNameError, setDevNameError] = useState<string | null>(null);
+  const [devNameChecking, setDevNameChecking] = useState(false);
+  const [devNameAvailable, setDevNameAvailable] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const trimmed = devProfileForm.displayName.trim();
+    if (!trimmed || (devProfile && trimmed.toLowerCase() === (devProfile.display_name || '').toLowerCase())) {
+      setDevNameError(null);
+      setDevNameChecking(false);
+      setDevNameAvailable(null);
+      return;
+    }
+
+    if (trimmed.length < 2) {
+      setDevNameError('Developer name must be at least 2 characters');
+      setDevNameChecking(false);
+      setDevNameAvailable(false);
+      return;
+    }
+
+    if (trimmed.length > 50) {
+      setDevNameError('Developer name cannot exceed 50 characters');
+      setDevNameChecking(false);
+      setDevNameAvailable(false);
+      return;
+    }
+
+    setDevNameChecking(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(`/user/developer/check-name?name=${encodeURIComponent(trimmed)}`);
+        if (res.data.available) {
+          setDevNameError(null);
+          setDevNameAvailable(true);
+        } else {
+          setDevNameError(t('developer.onboarding.name_taken_error', 'This developer name is already taken. Please choose another name.'));
+          setDevNameAvailable(false);
+        }
+      } catch {
+        setDevNameError(null);
+        setDevNameAvailable(null);
+      } finally {
+        setDevNameChecking(false);
+      }
+    }, 350);
+
+    return () => clearTimeout(timer);
+  }, [devProfileForm.displayName, devProfile, t]);
 
   useEffect(() => {
     if (activeTab === 'developer' && user?.is_developer) {
@@ -238,6 +287,10 @@ const ProfilePage = () => {
 
   const handleUpdateDevProfile = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (devNameError || devNameChecking) {
+      showToast(devNameError || 'Checking developer name availability...', 'error');
+      return;
+    }
     await withSaving('devProfile', async () => {
       try {
         const res = await api.put('/user/developer/profile', devProfileForm);
@@ -1232,17 +1285,33 @@ const ProfilePage = () => {
                           />
                         </Field>
 
-                        <Field label="Public Display Name">
+                        <Field label="Public Display Name" hint="Shown on your public developer profile and plugin listings.">
                           <input
                             id="devDisplayName"
                             name="displayName"
                             className="settings-input"
+                            style={devNameError ? { borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)' } : {}}
                             type="text"
                             value={devProfileForm.displayName}
                             onChange={e => setDevProfileForm({ ...devProfileForm, displayName: e.target.value })}
                             autoComplete="nickname"
                             required
                           />
+                          {devNameChecking && (
+                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+                              Checking availability…
+                            </span>
+                          )}
+                          {devNameError && (
+                            <span style={{ fontSize: '0.76rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>
+                              {devNameError}
+                            </span>
+                          )}
+                          {devNameAvailable && !devNameChecking && !devNameError && (
+                            <span style={{ fontSize: '0.76rem', color: '#10b981', marginTop: '4px', display: 'block' }}>
+                              Developer name is available
+                            </span>
+                          )}
                         </Field>
 
                         <Field label="Legal Full Name / Business Name" hint="Used for internal verification & tax compliance">
@@ -1347,7 +1416,7 @@ const ProfilePage = () => {
                           />
                         </Field>
 
-                        <SaveBtn isSaving={saving['devProfile']} label="Save Developer Info" />
+                        <SaveBtn isSaving={saving['devProfile']} disabled={Boolean(devNameError) || devNameChecking} label="Save Developer Info" />
                       </form>
                     </SettingsCard>
                   )}

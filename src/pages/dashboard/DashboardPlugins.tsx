@@ -1,12 +1,14 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
-import { useNavigate } from 'react-router-dom';
-import { Settings, Plus, ExternalLink, Sparkles, Search, BarChart2, Package, CheckCircle, X, ArrowRightLeft } from 'lucide-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Settings, Plus, ExternalLink, Sparkles, Search, BarChart2, Package, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../App';
 import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal';
 import { getPluginUrl } from '../../utils/url';
+
+const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
 
 // --- Main Component ---
 const DashboardPlugins = () => {
@@ -14,11 +16,27 @@ const DashboardPlugins = () => {
     const { user } = useAuth();
     const { timeSeries } = useAnalytics();
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [isDevModalOpen, setIsDevModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
     const [incomingTransfers, setIncomingTransfers] = useState<any[]>([]);
     const [transferLoadingId, setTransferLoadingId] = useState<number | null>(null);
+
+    // Create Draft Plugin modal state
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [newPluginName, setNewPluginName] = useState('');
+    const [newPluginCategory, setNewPluginCategory] = useState('Utilities');
+    const [newPluginType, setNewPluginType] = useState<'free' | 'paid'>('free');
+    const [creatingPlugin, setCreatingPlugin] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (searchParams.get('create') === 'true') {
+            setIsCreateModalOpen(true);
+            setSearchParams({}, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
 
     useEffect(() => {
         fetchIncomingTransfers();
@@ -59,6 +77,28 @@ const DashboardPlugins = () => {
         }
     };
 
+    const handleCreateDraft = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const trimmed = newPluginName.trim();
+        if (!trimmed) return;
+        setCreatingPlugin(true);
+        setCreateError(null);
+        try {
+            const res = await api.post('/plugins/draft', {
+                name: trimmed,
+                category: newPluginCategory,
+                type: newPluginType,
+            });
+            setIsCreateModalOpen(false);
+            setNewPluginName('');
+            navigate(`/dashboard/manage-plugin/${res.data.id}`);
+        } catch (err: any) {
+            setCreateError(err.response?.data?.error || err.response?.data?.message || 'Failed to create plugin draft.');
+        } finally {
+            setCreatingPlugin(false);
+        }
+    };
+
     // Grouping analytics data by plugin ID
     const plugins = useMemo(() => {
         return Object.values(timeSeries.reduce((acc, curr) => {
@@ -73,6 +113,7 @@ const DashboardPlugins = () => {
                     previewPath: curr.previewPath || curr.preview_path,
                     priceCents: curr.priceCents || curr.price_cents || 0,
                     isEarlyAccess: curr.isEarlyAccess || curr.is_early_access || false,
+                    status: curr.status || 'published',
                     downloads: 0, 
                     earnings: 0,
                     views: 0,
@@ -169,7 +210,7 @@ const DashboardPlugins = () => {
                         <h3 className="dev-plugins-title">{t('developer.dashboard.plugins')}</h3>
                         <span className="dev-plugins-count">{plugins.length}</span>
                     </div>
-                    <button className="btn btn-primary" onClick={() => navigate('/dashboard/add-plugin')}>
+                    <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
                         <Plus size={18} style={{ marginRight: '8px' }} />
                         {t('developer.dashboard.add_plugin')}
                     </button>
@@ -199,50 +240,47 @@ const DashboardPlugins = () => {
                                         display: 'flex',
                                         alignItems: 'center',
                                         justifyContent: 'center',
+                                        fontSize: '1.25rem',
                                         fontWeight: 700,
                                         color: '#f97316',
-                                        fontSize: '1.2rem',
                                         flexShrink: 0,
                                         border: '1px solid rgba(249, 115, 22, 0.3)'
                                     }}>
-                                        {!req.preview_url && req.plugin_name.charAt(0).toUpperCase()}
+                                        {!req.preview_url && req.plugin_name?.charAt(0).toUpperCase()}
                                     </div>
                                     <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                            <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--dash-text-primary)' }}>
-                                                {req.plugin_name}
-                                            </span>
-                                            <span className="dev-plugins-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#f97316', border: '1px solid rgba(249, 115, 22, 0.3)' }}>
-                                                <ArrowRightLeft size={11} style={{ marginRight: 4 }} /> Ownership Transfer Request
-                                            </span>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                            <span style={{ fontWeight: 600, fontSize: '1rem' }}>{req.plugin_name}</span>
+                                            {req.plugin_category && (
+                                                <span className="dev-plugins-badge" style={{ fontSize: '0.7rem' }}>
+                                                    {req.plugin_category}
+                                                </span>
+                                            )}
                                         </div>
-                                        <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--dash-text-muted)' }}>
-                                            <strong>@{req.sender_name}</strong> has requested to transfer ownership of this plugin to your account.
-                                        </p>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted)', marginTop: '0.2rem' }}>
+                                            Transfer request from <strong>@{req.sender_name}</strong>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                     <button
-                                        className="btn btn-primary"
-                                        style={{ padding: '0.5rem 1.1rem', fontSize: '0.82rem', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                        onClick={() => handleAcceptTransfer(req.id)}
+                                        className="btn btn-secondary"
                                         disabled={transferLoadingId === req.id}
+                                        onClick={() => handleRejectTransfer(req.id)}
+                                        style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem', color: '#f87171' }}
                                     >
-                                        <CheckCircle size={15} />
-                                        {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
+                                        <X size={14} style={{ marginRight: '4px' }} />
+                                        Decline
                                     </button>
                                     <button
-                                        className="btn"
-                                        style={{
-                                            padding: '0.5rem 1rem', fontSize: '0.82rem',
-                                            background: 'var(--dash-surface-2)', border: '1px solid var(--dash-border)',
-                                            color: 'var(--dash-text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px'
-                                        }}
-                                        onClick={() => handleRejectTransfer(req.id)}
+                                        className="btn btn-primary"
                                         disabled={transferLoadingId === req.id}
+                                        onClick={() => handleAcceptTransfer(req.id)}
+                                        style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
                                     >
-                                        <X size={15} /> Decline
+                                        <CheckCircle size={14} style={{ marginRight: '4px' }} />
+                                        {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
                                     </button>
                                 </div>
                             </div>
@@ -317,6 +355,7 @@ const DashboardPlugins = () => {
                                 const isPaid = pluginType === 'paid' || (p.priceCents && p.priceCents > 0);
                                 const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : 'Free';
                                 const initial = (p.name || '?').charAt(0).toUpperCase();
+                                const isDraft = p.status === 'draft';
 
                                 return (
                                     <tr key={p.id} className="dev-plugins-row">
@@ -403,9 +442,9 @@ const DashboardPlugins = () => {
                                         {/* Visibility & Type */}
                                         <td>
                                             <div className="dev-plugins-visibility-cell">
-                                                <div className="dev-plugins-visibility-status">
-                                                    <span className="dev-plugins-status-dot" />
-                                                    <span>Public</span>
+                                                <div className={`dev-plugins-visibility-status ${isDraft ? 'draft' : ''}`}>
+                                                    <span className={`dev-plugins-status-dot ${isDraft ? 'draft' : ''}`} />
+                                                    <span>{isDraft ? t('developer.dashboard.status_draft', 'Offline (Draft)') : t('developer.dashboard.status_published', 'Published')}</span>
                                                 </div>
                                                 <span className="dev-plugins-type-pill">
                                                     {isPaid ? priceFormatted : 'Free'}
@@ -468,10 +507,10 @@ const DashboardPlugins = () => {
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', opacity: 0.7 }}>
                                             <Package size={36} color="var(--dash-text-muted)" />
                                             <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>
-                                                {searchTerm ? 'No plugins matched your filter.' : 'No plugins published yet.'}
+                                                {searchTerm ? 'No plugins matched your filter.' : 'No plugins created yet.'}
                                             </p>
                                             <small style={{ color: 'var(--dash-text-muted)' }}>
-                                                {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to publish your first creation.'}
+                                                {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to create your first plugin.'}
                                             </small>
                                         </div>
                                     </td>
@@ -481,6 +520,108 @@ const DashboardPlugins = () => {
                     </table>
                 </div>
             </div>
+
+            {/* Create New Plugin Draft Modal */}
+            {isCreateModalOpen && (
+                <div className="create-plugin-overlay" onClick={() => setIsCreateModalOpen(false)}>
+                    <div className="create-plugin-modal" onClick={e => e.stopPropagation()}>
+                        <button className="create-plugin-close" onClick={() => setIsCreateModalOpen(false)} aria-label="Close">
+                            <X size={18} />
+                        </button>
+
+                        <div className="create-plugin-header">
+                            <h3>{t('developer.dashboard.create_plugin_title', 'Create New Plugin')}</h3>
+                            <p>{t('developer.dashboard.create_plugin_desc', 'Set up your plugin draft. You can configure your store listing, upload builds, and test offline before publishing.')}</p>
+                        </div>
+
+                        {createError && (
+                            <div style={{
+                                padding: '0.75rem 1rem',
+                                background: 'rgba(239, 68, 68, 0.12)',
+                                border: '1px solid rgba(239, 68, 68, 0.3)',
+                                borderRadius: '8px',
+                                color: '#f87171',
+                                fontSize: '0.85rem',
+                                marginBottom: '1rem',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.5rem'
+                            }}>
+                                <AlertTriangle size={16} />
+                                <span>{createError}</span>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleCreateDraft} className="create-plugin-form">
+                            <div className="create-plugin-field">
+                                <label htmlFor="newPluginName">Plugin Name *</label>
+                                <input
+                                    id="newPluginName"
+                                    type="text"
+                                    className="create-plugin-input"
+                                    placeholder="e.g. QuantumVault, DragonFly"
+                                    value={newPluginName}
+                                    onChange={e => setNewPluginName(e.target.value)}
+                                    maxLength={64}
+                                    required
+                                    autoFocus
+                                />
+                            </div>
+
+                            <div className="create-plugin-field">
+                                <label htmlFor="newPluginCategory">Category *</label>
+                                <select
+                                    id="newPluginCategory"
+                                    className="create-plugin-select"
+                                    value={newPluginCategory}
+                                    onChange={e => setNewPluginCategory(e.target.value)}
+                                >
+                                    {PLUGIN_CATEGORIES.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="create-plugin-field">
+                                <label>Distribution Type</label>
+                                <div className="create-plugin-type-grid">
+                                    <div
+                                        className={`create-plugin-type-card ${newPluginType === 'free' ? 'selected' : ''}`}
+                                        onClick={() => setNewPluginType('free')}
+                                    >
+                                        <h5>Free Plugin</h5>
+                                        <p>Available to the entire community for free.</p>
+                                    </div>
+                                    <div
+                                        className={`create-plugin-type-card ${newPluginType === 'paid' ? 'selected' : ''}`}
+                                        onClick={() => setNewPluginType('paid')}
+                                    >
+                                        <h5>Paid / Premium</h5>
+                                        <p>Sell licenses with instant Stripe payouts.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="create-plugin-actions">
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() => setIsCreateModalOpen(false)}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="btn btn-primary"
+                                    disabled={!newPluginName.trim() || creatingPlugin}
+                                >
+                                    {creatingPlugin ? 'Creating Draft…' : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

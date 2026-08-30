@@ -10,6 +10,12 @@
   padding: 1.5rem;
 }
 
+.dev-onboarding-embedded {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
 .dev-modal-container {
   background: var(--bg-card, #16181d);
   border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
@@ -108,6 +114,94 @@
   margin-bottom: 1.25rem;
 }
 
+.dev-account-types-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-top: 0.75rem;
+}
+
+.dev-account-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.dev-account-card:hover,
+.dev-account-card.selected {
+  border-color: rgba(249, 115, 22, 0.6);
+  background: rgba(249, 115, 22, 0.03);
+}
+
+.dev-account-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.dev-account-card-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-color, #fff);
+  margin: 0;
+}
+
+.dev-account-card-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted, #94a3b8);
+  line-height: 1.55;
+  margin: 0;
+}
+
+.dev-account-card-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.dev-account-card-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.dev-account-card-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.4rem;
+}
+
+.dev-account-get-started-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.35rem;
+  background: #f97316;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dev-account-get-started-btn:hover:not(:disabled) {
+  background: #ea580c;
+}
+
+.dev-account-get-started-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 .dev-entity-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -186,6 +280,25 @@
 
 .dev-input:focus {
   border-color: #f97316;
+}
+
+.dev-input-error {
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.05) !important;
+}
+
+.dev-input-error:focus {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px #ef4444;
+}
+
+.dev-field-error {
+  font-size: 0.8rem;
+  color: #ef4444;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
 }
 
 .dev-select {

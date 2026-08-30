@@ -208,6 +208,110 @@
     background: var(--mp-bg);
 }
 
+/* ── Top Plugin Management Status Bar ────────────────────────── */
+.mp-top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.25rem 1.75rem;
+    margin-bottom: 2rem;
+    background: var(--mp-surface);
+    border: 1px solid var(--mp-border);
+    border-radius: var(--mp-radius);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    flex-wrap: wrap;
+}
+
+.mp-top-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.mp-status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 99px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.mp-status-pill.published {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.35);
+    color: #34d399;
+}
+
+.mp-status-pill.draft {
+    background: rgba(148, 163, 184, 0.12);
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    color: #94a3b8;
+}
+
+.mp-status-dot-pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 8px currentColor;
+}
+
+.mp-top-bar-desc {
+    font-size: 0.82rem;
+    color: var(--mp-text-2);
+}
+
+.mp-top-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.mp-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1rem;
+    border-radius: var(--mp-radius-sm);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
+    text-decoration: none;
+}
+
+.mp-action-btn-primary {
+    background: #f97316;
+    color: #fff;
+}
+.mp-action-btn-primary:hover {
+    background: #ea580c;
+}
+
+.mp-action-btn-secondary {
+    background: var(--mp-surface-2);
+    border-color: var(--mp-border);
+    color: var(--mp-text);
+}
+.mp-action-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--mp-border-2);
+}
+
+.mp-action-btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+}
+.mp-action-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
 /* ── Shared Tab Components ──────────────────────────────────── */
 .mp-tab-header {
     margin-bottom: 2rem;

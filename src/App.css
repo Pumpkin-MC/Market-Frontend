@@ -1212,16 +1212,14 @@ h3 {
   background: #16191f;
   border: 1px solid rgba(255, 255, 255, 0.07);
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  will-change: transform;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .plugin-card-v2:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   border-color: rgba(255, 255, 255, 0.14);
 }
 
@@ -1239,11 +1237,7 @@ h3 {
   height: 100%;
   object-fit: cover;
   display: block;
-  transition: transform 0.35s ease, opacity 0.3s ease-in-out;
-}
-
-.plugin-card-v2:hover .pcv2-preview-img {
-  transform: scale(1.04);
+  transition: opacity 0.3s ease-in-out;
 }
 
 .pcv2-preview-fallback {
@@ -1386,16 +1380,6 @@ h3 {
   opacity: 0.6;
 }
 
-.pcv2-accent-bar {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 2px; opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.plugin-card-v2:hover .pcv2-accent-bar {
-  opacity: 1;
-}
-
 .pcv2-sale-strip {
   background: linear-gradient(90deg, rgba(255, 107, 107, 0.15), rgba(255, 107, 107, 0.05));
   border-top: 1px solid rgba(255, 107, 107, 0.2);
@@ -1451,6 +1435,28 @@ h3 {
 .pcv2-progress-dot.active {
   background: var(--primary, #FF7518);
   box-shadow: 0 0 8px var(--primary);
+}
+
+/* Video Showcase on Hover */
+.pcv2-video-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  background: #000;
+  overflow: hidden;
+}
+
+.pcv2-video-iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%) scale(1.02);
+  border: none;
+  pointer-events: none;
 }
 
 @media (max-width: 768px) {

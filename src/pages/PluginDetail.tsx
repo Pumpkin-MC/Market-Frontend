@@ -659,10 +659,9 @@ const PluginDetail = () => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: '1.2rem',
           flexShrink: 0
         }}>
-          ⏳
+          <Clock size={20} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f97316', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

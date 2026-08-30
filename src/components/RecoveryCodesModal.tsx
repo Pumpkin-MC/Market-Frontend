@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShieldAlert, Download, Copy, Check, Printer } from 'lucide-react';
+import { ShieldAlert, Download, Copy, Check, Printer, AlertTriangle } from 'lucide-react';
 
 interface RecoveryCodesModalProps {
     isOpen: boolean;
@@ -26,14 +26,14 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
     };
 
     const handleDownload = () => {
-        const text = `PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: ${new Date().toLocaleString()}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n` +
+        const text = `PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: ${new Date().toISOString()}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n` +
             codes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
-            `\n\nKeep these codes in a secure location (e.g., password manager).`;
+            `\n\nStore these codes safely. Never share them with anyone.`;
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `pumpkin-market-recovery-codes-${new Date().toISOString().slice(0, 10)}.txt`;
+        a.download = `pumpkin-market-recovery-codes-${Date.now()}.txt`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -45,48 +45,32 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor: 'rgba(0, 0, 0, 0.8)',
-            backdropFilter: 'blur(6px)',
-            padding: '1rem',
-        }}>
-            <div style={{
-                maxWidth: 540,
-                width: '100%',
-                backgroundColor: 'var(--mp-surface, #14171c)',
-                borderRadius: 16,
-                border: '1px solid var(--mp-border, rgba(255,255,255,0.12))',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)',
-                padding: '2rem',
-                color: 'var(--mp-text, #f8fafc)',
-            }}>
+        <div className="settings-modal-overlay" style={{ zIndex: 9999 }}>
+            <div className="settings-modal-card" style={{ maxWidth: 520, backgroundColor: 'var(--mp-surface, #14171c)', borderRadius: 16, border: '1px solid var(--mp-border, rgba(255,255,255,0.12))', padding: '2rem', color: 'var(--mp-text, #f8fafc)' }}>
                 {/* Header */}
-                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '1rem', marginBottom: '1.25rem' }}>
                     <div style={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: '50%',
-                        backgroundColor: 'rgba(249, 115, 22, 0.15)',
-                        color: 'var(--mp-accent, #f97316)',
-                        display: 'inline-flex',
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        marginBottom: '0.75rem',
+                        flexShrink: 0,
+                        color: '#ef4444',
                     }}>
-                        <ShieldAlert size={26} />
+                        <ShieldAlert size={24} />
                     </div>
-                    <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.4rem 0' }}>
-                        Save Your Emergency Recovery Codes
-                    </h2>
-                    <p style={{ fontSize: '0.88rem', color: 'var(--mp-muted, #94a3b8)', lineHeight: 1.5, margin: 0 }}>
-                        If you lose access to your device or authenticator app, these <strong>one-time backup codes</strong> are the only way to regain access to your account.
-                    </p>
+                    <div>
+                        <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.15rem', fontWeight: 700, color: 'var(--mp-text, #f8fafc)' }}>
+                            Save Your Recovery Codes
+                        </h3>
+                        <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--mp-muted, #94a3b8)', lineHeight: 1.4 }}>
+                            If you ever lose access to your authenticator app or security keys, you can use these 10 one-time codes to regain access to your account.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Warning Alert */}
@@ -99,8 +83,12 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
                     color: '#fca5a5',
                     marginBottom: '1.25rem',
                     lineHeight: 1.4,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
                 }}>
-                    ⚠️ <strong>Important:</strong> We do not store these codes in plaintext and cannot recover them for you. Save them in a password manager now.
+                    <AlertTriangle size={16} style={{ flexShrink: 0 }} />
+                    <span><strong>Important:</strong> We do not store these codes in plaintext and cannot recover them for you. Save them in a password manager now.</span>
                 </div>
 
                 {/* Codes Grid */}

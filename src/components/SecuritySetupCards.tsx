@@ -322,7 +322,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                 color: 'var(--mp-muted, #94a3b8)',
                                 lineHeight: 1.5,
                             }}>
-                                💡 <strong>How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device’s keychain (Apple Keychain, Google Password Manager, Windows Hello, 1Password, or YubiKey). They are 100% phishing-proof.
+                                <strong>How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device’s keychain (Apple Keychain, Google Password Manager, Windows Hello, 1Password, or YubiKey). They are 100% phishing-proof.
                             </div>
 
                             {passkeyError && (
