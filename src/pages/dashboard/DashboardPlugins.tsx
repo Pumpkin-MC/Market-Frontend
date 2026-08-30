@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Settings, Plus, ExternalLink, Sparkles, Search, BarChart2, Package, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { Settings, Plus, ExternalLink, Search, BarChart2, Package, CheckCircle, X, AlertTriangle } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../App';
 import DeveloperOnboardingModal from '../../components/DeveloperOnboardingModal';
@@ -13,11 +13,10 @@ const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 
 // --- Main Component ---
 const DashboardPlugins = () => {
     const { t } = useTranslation();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { timeSeries } = useAnalytics();
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
-    const [isDevModalOpen, setIsDevModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
     const [incomingTransfers, setIncomingTransfers] = useState<any[]>([]);
@@ -169,34 +168,11 @@ const DashboardPlugins = () => {
 
     if (!user?.is_developer) {
         return (
-            <div className="dev-plugins-container">
-                <div className="dev-plugins-card" style={{ textAlign: 'center', padding: '3.5rem 2rem' }}>
-                    <div style={{
-                        width: 64, height: 64, borderRadius: '50%',
-                        background: 'rgba(249, 115, 22, 0.12)', border: '1px solid rgba(249, 115, 22, 0.3)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.25rem'
-                    }}>
-                        <Sparkles size={32} color="#f97316" />
-                    </div>
-                    <h2 style={{ fontSize: '1.5rem', fontWeight: 700, margin: '0 0 0.5rem' }}>Developer Onboarding Required</h2>
-                    <p style={{ color: 'var(--dash-text-muted)', maxWidth: '520px', margin: '0 auto 1.75rem', lineHeight: 1.6 }}>
-                        To manage existing plugins or publish new ones, please complete the free <strong>Developer Onboarding</strong> wizard to set up your creator & legal profile.
-                    </p>
-                    <button
-                        className="btn btn-primary"
-                        style={{ padding: '0.75rem 1.75rem', fontSize: '1rem' }}
-                        onClick={() => setIsDevModalOpen(true)}
-                    >
-                        <Sparkles size={18} style={{ marginRight: '8px' }} />
-                        Complete Free Developer Onboarding
-                    </button>
-
-                    <DeveloperOnboardingModal
-                        isOpen={isDevModalOpen}
-                        onClose={() => setIsDevModalOpen(false)}
-                        onSuccess={() => setIsDevModalOpen(false)}
-                    />
-                </div>
+            <div className="dev-plugins-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '2rem 1rem' }}>
+                <DeveloperOnboardingModal
+                    embedded={true}
+                    onSuccess={() => refreshUser?.()}
+                />
             </div>
         );
     }

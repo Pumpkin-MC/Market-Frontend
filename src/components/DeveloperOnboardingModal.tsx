@@ -25,7 +25,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   embedded = false,
 }) => {
   const { t } = useTranslation();
-  const { user, login } = useAuth();
+  const { user, login, refreshUser } = useAuth();
   const [step, setStep] = useState<number>(1);
   const [entityType, setEntityType] = useState<'individual' | 'organization'>('individual');
   const [orgType, setOrgType] = useState<string>('');
@@ -582,117 +582,93 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {/* ── STEP 5: Finish & Confirmation ── */}
         {step === 5 && (
           <div className="dev-step-content">
-            {!isSellingPaid ? (
-              <>
-                <div className="dev-monetization-box">
-                  <div className="dev-monetization-header">
-                    <Gift size={22} color="#10b981" />
-                    <div>
-                      <h4>Ready to Publish Free Plugins!</h4>
-                      <p>Your developer profile is configured for free &amp; open-source uploads.</p>
-                    </div>
-                  </div>
-                  <ul className="dev-check-list">
-                    <li><CheckCircle2 size={16} color="#10b981" /> Publish unlimited free plugins ($0 fee)</li>
-                    <li><CheckCircle2 size={16} color="#10b981" /> Full analytics and review dashboard</li>
-                    <li><CheckCircle2 size={16} color="#10b981" /> Option to add address &amp; sell paid plugins anytime later</li>
-                  </ul>
-                </div>
-
-                {/* ── Security Requirement for Developers ── */}
-                {!hasSecureAuth && (
-                  <div style={{ marginTop: '1.25rem' }}>
-                    <SecuritySetupCards
-                      title="Developer Security Requirement"
-                      description="To publish plugins and protect developer payouts, you must set up a Passkey or Two-Factor Authentication before completing onboarding."
-                      isRequired={true}
-                      onComplete={() => {}}
-                    />
-                  </div>
+            <div className="dev-monetization-box" style={{ marginBottom: '0.85rem' }}>
+              <div className="dev-monetization-header">
+                {!isSellingPaid ? (
+                  <Gift size={20} color="#10b981" />
+                ) : (
+                  <CreditCard size={20} color="#f97316" />
                 )}
-
-                {/* ── Mandatory Legal Consent ── */}
-                <div style={{
-                  marginTop: '1.25rem',
-                  padding: '0.85rem 1rem',
-                  background: 'rgba(255, 183, 77, 0.06)',
-                  border: '1px solid rgba(255, 183, 77, 0.25)',
-                  borderRadius: 8,
-                }}>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-                    <input
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={e => setAcceptedTerms(e.target.checked)}
-                      style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
-                    />
-                    <span>
-                      I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Marketplace the worldwide license to distribute my plugins, acknowledge platform moderation and takedown authority, and confirm my plugins comply with Mojang's Minecraft EULA.
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
+                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
+                      {!isSellingPaid ? 'Free Creator Profile' : 'Commercial Seller Profile'}
+                    </h4>
+                    <span style={{
+                      fontSize: '0.72rem',
+                      fontWeight: 600,
+                      padding: '0.15rem 0.5rem',
+                      borderRadius: 999,
+                      background: !isSellingPaid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(249, 115, 22, 0.15)',
+                      color: !isSellingPaid ? '#34d399' : '#f97316',
+                      border: `1px solid ${!isSellingPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(249, 115, 22, 0.3)'}`,
+                    }}>
+                      {!isSellingPaid ? 'Free Uploads' : 'Paid + Stripe'}
                     </span>
-                  </label>
+                  </div>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #94a3b8)' }}>
+                    Display: <strong style={{ color: '#fff' }}>{displayName}</strong> • Email: <strong style={{ color: '#fff' }}>{supportEmail}</strong>
+                  </p>
                 </div>
+              </div>
+            </div>
 
-                <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
-                  <button
-                    className="dev-btn dev-btn-primary"
-                    disabled={loading || !acceptedTerms || !hasSecureAuth}
-                    onClick={() => handleCompleteOnboarding(false)}
-                  >
-                    {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
-                  </button>
-                </div>
-              </>
+            {/* ── Security Requirement for Developers ── */}
+            {hasSecureAuth ? (
+              <div style={{
+                padding: '0.65rem 0.85rem',
+                background: 'rgba(34, 197, 94, 0.08)',
+                border: '1px solid rgba(34, 197, 94, 0.25)',
+                borderRadius: 8,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.55rem',
+                color: '#4ade80',
+                fontSize: '0.82rem',
+                marginBottom: '0.85rem',
+              }}>
+                <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                <span><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</span>
+              </div>
             ) : (
-              <>
-                <div className="dev-monetization-box">
-                  <div className="dev-monetization-header">
-                    <CreditCard size={22} color="#f97316" />
-                    <div>
-                      <h4>{t('developer.onboarding.intent_paid')}</h4>
-                      <p>{t('developer.onboarding.intent_paid_desc')}</p>
-                    </div>
-                  </div>
-                  <ul className="dev-check-list">
-                    <li><CheckCircle2 size={16} color="#10b981" /> Automated payouts directly to your bank account</li>
-                    <li><CheckCircle2 size={16} color="#10b981" /> Set custom pricing, discounts, and coupons</li>
-                    <li><CheckCircle2 size={16} color="#10b981" /> Automated license key generation for buyers</li>
-                  </ul>
-                </div>
+              <div style={{ marginBottom: '0.85rem' }}>
+                <SecuritySetupCards
+                  compact={true}
+                  title="Developer Security Requirement"
+                  description="To publish plugins, set up Passkey or 2FA Authenticator before finishing."
+                  isRequired={true}
+                  onComplete={async () => {
+                    if (refreshUser) await refreshUser();
+                  }}
+                />
+              </div>
+            )}
 
-                {/* ── Security Requirement for Developers ── */}
-                {!hasSecureAuth && (
-                  <div style={{ marginTop: '1.25rem' }}>
-                    <SecuritySetupCards
-                      title="Developer Security Requirement"
-                      description="To publish plugins and protect developer payouts, you must set up a Passkey or Two-Factor Authentication before completing onboarding."
-                      isRequired={true}
-                      onComplete={() => {}}
-                    />
-                  </div>
-                )}
+            {/* ── Mandatory Legal Consent ── */}
+            <div style={{
+              padding: '0.75rem 0.85rem',
+              background: 'rgba(255, 183, 77, 0.05)',
+              border: '1px solid rgba(255, 183, 77, 0.2)',
+              borderRadius: 8,
+              marginBottom: '1rem',
+            }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', cursor: 'pointer', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={e => setAcceptedTerms(e.target.checked)}
+                  style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
+                />
+                <span>
+                  I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.
+                </span>
+              </label>
+            </div>
 
-                {/* ── Mandatory Legal Consent ── */}
-                <div style={{
-                  marginTop: '1.25rem',
-                  padding: '0.85rem 1rem',
-                  background: 'rgba(255, 183, 77, 0.06)',
-                  border: '1px solid rgba(255, 183, 77, 0.25)',
-                  borderRadius: 8,
-                }}>
-                  <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.65rem', cursor: 'pointer', fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-                    <input
-                      type="checkbox"
-                      checked={acceptedTerms}
-                      onChange={e => setAcceptedTerms(e.target.checked)}
-                      style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 16, height: 16, flexShrink: 0, cursor: 'pointer' }}
-                    />
-                    <span>
-                      I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Marketplace the worldwide license to distribute my plugins, acknowledge platform moderation and takedown authority, and confirm my plugins comply with Mojang's Minecraft EULA.
-                    </span>
-                  </label>
-                </div>
-
-                <div className="dev-btn-row-stacked" style={{ marginTop: '1.25rem' }}>
+            {/* Actions */}
+            <div className="dev-btn-row-stacked">
+              {isSellingPaid ? (
+                <>
                   <button
                     className="dev-btn dev-btn-stripe"
                     disabled={loading || !acceptedTerms || !hasSecureAuth}
@@ -707,12 +683,22 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   >
                     {t('developer.onboarding.btn_complete')}
                   </button>
-                </div>
-              </>
-            )}
+                </>
+              ) : (
+                <button
+                  className="dev-btn dev-btn-primary"
+                  disabled={loading || !acceptedTerms || !hasSecureAuth}
+                  onClick={() => handleCompleteOnboarding(false)}
+                >
+                  {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                </button>
+              )}
+            </div>
 
-            <div className="dev-btn-row" style={{ marginTop: '1rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
+            <div className="dev-btn-row" style={{ marginTop: '0.85rem' }}>
+              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
             </div>
           </div>
         )}
