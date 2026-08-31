@@ -234,7 +234,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
             }
             return {
                 id: cmd.id,
-                name: cmd.name || '',
+                name: (cmd.name || '').replace(/^\/+/, ''),
                 permission: cmd.permission || '',
                 descriptions: descMap,
             };
@@ -253,9 +253,10 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     };
 
     const updateCommandField = (index: number, field: 'name' | 'permission', value: string) => {
+        const cleanValue = field === 'name' ? value.replace(/^\/+/, '') : value;
         setCommands(prev => {
             const next = [...prev];
-            next[index] = { ...next[index], [field]: value };
+            next[index] = { ...next[index], [field]: cleanValue };
             return next;
         });
     };
@@ -311,10 +312,10 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         setSaveError(null);
         setSaveSuccess(false);
         const validCommands = commands
-            .filter(c => c.name.trim().length > 0)
+            .filter(c => c.name.trim().replace(/^\/+/, '').length > 0)
             .map((c, idx) => ({
                 id: c.id,
-                name: c.name.trim(),
+                name: c.name.trim().replace(/^\/+/, ''),
                 permission: c.permission.trim() || undefined,
                 description: c.descriptions,
                 display_order: idx,
@@ -685,8 +686,9 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                             <input
                                                 className="mp-input"
                                                 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                                placeholder="/spawn [player]"
+                                                placeholder="spawn [player]"
                                                 value={cmd.name}
+                                                maxLength={64}
                                                 onChange={e => updateCommandField(idx, 'name', e.target.value)}
                                                 required
                                             />
@@ -700,6 +702,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                                 style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
                                                 placeholder="pumpkin.command.spawn"
                                                 value={cmd.permission}
+                                                maxLength={128}
                                                 onChange={e => updateCommandField(idx, 'permission', e.target.value)}
                                             />
                                         </div>

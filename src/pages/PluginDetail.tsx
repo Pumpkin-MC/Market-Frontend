@@ -202,173 +202,176 @@ const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] 
   const visibleCommands = expanded ? commands : commands.slice(0, 4);
 
   return (
-    <div className="sidebar-widget commands-widget" style={{ marginTop: '1.25rem', position: 'static' }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem' }}>
-          <Terminal size={14} color="var(--primary)" />
-          {t('plugin.commands.title', 'Commands & Permissions')}
-        </h3>
-        <span style={{
-          fontSize: '0.7rem',
-          fontWeight: 700,
-          background: 'rgba(255, 255, 255, 0.07)',
-          padding: '2px 7px',
-          borderRadius: '999px',
-          color: 'var(--text-muted)'
-        }}>
-          {commands.length}
-        </span>
-      </div>
+    <>
+      <div className="divider-sm" />
+      <div className="commands-widget-section">
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem' }}>
+            <Terminal size={14} color="var(--primary)" />
+            {t('plugin.commands.title', 'Commands & Permissions')}
+          </h3>
+          <span style={{
+            fontSize: '0.7rem',
+            fontWeight: 700,
+            background: 'rgba(255, 255, 255, 0.07)',
+            padding: '2px 7px',
+            borderRadius: '999px',
+            color: 'var(--text-muted)'
+          }}>
+            {commands.length}
+          </span>
+        </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-        {visibleCommands.map((cmd: any, index: number) => {
-          const desc = getLocalizedCommandDescription(cmd.description, activeLang);
-          const cmdCopyKey = `cmd-${cmd.id || index}`;
-          const permCopyKey = `perm-${cmd.id || index}`;
-          const formattedName = cmd.name?.startsWith('/') ? cmd.name : `/${cmd.name}`;
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {visibleCommands.map((cmd: any, index: number) => {
+            const desc = getLocalizedCommandDescription(cmd.description, activeLang);
+            const cmdCopyKey = `cmd-${cmd.id || index}`;
+            const permCopyKey = `perm-${cmd.id || index}`;
+            const formattedName = cmd.name?.startsWith('/') ? cmd.name : `/${cmd.name}`;
 
-          return (
-            <div
-              key={cmd.id || index}
-              style={{
-                background: 'rgba(0, 0, 0, 0.25)',
-                border: '1px solid var(--border)',
-                borderRadius: '8px',
-                padding: '0.75rem',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.4rem',
-              }}
-            >
-              {/* Command row */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                <code style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  color: 'var(--primary, #4ade80)',
-                  wordBreak: 'break-all',
-                }}>
-                  {formattedName}
-                </code>
-                <button
-                  type="button"
-                  onClick={() => handleCopy(formattedName, cmdCopyKey)}
-                  title={t('plugin.commands.copy_command', 'Copy command')}
-                  style={{
-                    background: copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-                    border: `1px solid ${copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                    borderRadius: '4px',
-                    color: copiedId === cmdCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
-                    cursor: 'pointer',
-                    padding: '3px 6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '3px',
-                    fontSize: '0.68rem',
-                    fontWeight: 600,
-                    transition: 'all 0.15s ease',
-                  }}
-                >
-                  {copiedId === cmdCopyKey ? (
-                    <>
-                      <Check size={11} />
-                      <span>{t('plugin.commands.copied', 'Copied')}</span>
-                    </>
-                  ) : (
-                    <Copy size={11} />
-                  )}
-                </button>
-              </div>
-
-              {/* Permission row */}
-              {cmd.permission ? (
+            return (
+              <div
+                key={cmd.id || index}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.25)',
+                  border: '1px solid var(--border)',
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '0.4rem',
+                }}
+              >
+                {/* Command row */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
-                    <Key size={10} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                    <span style={{
-                      fontSize: '0.7rem',
-                      fontFamily: 'var(--font-mono)',
-                      color: 'var(--text-muted)',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}>
-                      {cmd.permission}
-                    </span>
-                  </div>
+                  <code style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.82rem',
+                    fontWeight: 700,
+                    color: 'var(--primary, #4ade80)',
+                    wordBreak: 'break-all',
+                  }}>
+                    {formattedName}
+                  </code>
                   <button
                     type="button"
-                    onClick={() => handleCopy(cmd.permission, permCopyKey)}
-                    title={t('plugin.commands.copy_permission', 'Copy permission')}
+                    onClick={() => handleCopy(formattedName, cmdCopyKey)}
+                    title={t('plugin.commands.copy_command', 'Copy command')}
                     style={{
-                      background: 'none',
-                      border: 'none',
-                      color: copiedId === permCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
+                      background: copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                      border: `1px solid ${copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                      borderRadius: '4px',
+                      color: copiedId === cmdCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
                       cursor: 'pointer',
-                      padding: '2px',
+                      padding: '3px 6px',
                       display: 'flex',
                       alignItems: 'center',
-                      flexShrink: 0,
+                      gap: '3px',
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    {copiedId === permCopyKey ? <Check size={11} /> : <Copy size={10} />}
+                    {copiedId === cmdCopyKey ? (
+                      <>
+                        <Check size={11} />
+                        <span>{t('plugin.commands.copied', 'Copied')}</span>
+                      </>
+                    ) : (
+                      <Copy size={11} />
+                    )}
                   </button>
                 </div>
-              ) : null}
 
-              {/* Description */}
-              {desc ? (
-                <p style={{
-                  margin: '0.15rem 0 0 0',
-                  fontSize: '0.78rem',
-                  color: 'var(--text-2, #94a3b8)',
-                  lineHeight: 1.4,
-                }}>
-                  {desc}
-                </p>
-              ) : null}
-            </div>
-          );
-        })}
+                {/* Permission row */}
+                {cmd.permission ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
+                      <Key size={10} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                      <span style={{
+                        fontSize: '0.7rem',
+                        fontFamily: 'var(--font-mono)',
+                        color: 'var(--text-muted)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        {cmd.permission}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(cmd.permission, permCopyKey)}
+                      title={t('plugin.commands.copy_permission', 'Copy permission')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: copiedId === permCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
+                        cursor: 'pointer',
+                        padding: '2px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      {copiedId === permCopyKey ? <Check size={11} /> : <Copy size={10} />}
+                    </button>
+                  </div>
+                ) : null}
+
+                {/* Description */}
+                {desc ? (
+                  <p style={{
+                    margin: '0.15rem 0 0 0',
+                    fontSize: '0.78rem',
+                    color: 'var(--text-2, #94a3b8)',
+                    lineHeight: 1.4,
+                  }}>
+                    {desc}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+
+        {commands.length > 4 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            style={{
+              width: '100%',
+              marginTop: '0.75rem',
+              background: 'rgba(255, 255, 255, 0.04)',
+              border: '1px solid var(--border)',
+              borderRadius: '6px',
+              color: 'var(--text)',
+              padding: '6px 10px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              transition: 'background 0.15s ease',
+            }}
+          >
+            {expanded ? (
+              <>
+                <ChevronUp size={13} />
+                {t('plugin.commands.show_less', 'Show less')}
+              </>
+            ) : (
+              <>
+                <ChevronDown size={13} />
+                {t('plugin.commands.show_all', 'Show all {{count}} commands', { count: commands.length })}
+              </>
+            )}
+          </button>
+        )}
       </div>
-
-      {commands.length > 4 && (
-        <button
-          type="button"
-          onClick={() => setExpanded(!expanded)}
-          style={{
-            width: '100%',
-            marginTop: '0.75rem',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid var(--border)',
-            borderRadius: '6px',
-            color: 'var(--text)',
-            padding: '6px 10px',
-            fontSize: '0.75rem',
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '4px',
-            transition: 'background 0.15s ease',
-          }}
-        >
-          {expanded ? (
-            <>
-              <ChevronUp size={13} />
-              {t('plugin.commands.show_less', 'Show less')}
-            </>
-          ) : (
-            <>
-              <ChevronDown size={13} />
-              {t('plugin.commands.show_all', 'Show all {{count}} commands', { count: commands.length })}
-            </>
-          )}
-        </button>
-      )}
-    </div>
+    </>
   );
 };
 
@@ -1503,8 +1506,11 @@ const PluginDetail = () => {
         )}
       </div>
     )}
+    </div>
 
-    <div className="divider-sm" />
+    <PluginCommandsSidebarWidget commands={plugin.commands} />
+
+    {(user || reportDone) && <div className="divider-sm" />}
     {user && !reportDone && (
       <>
       {!reportOpen ? (
@@ -1562,9 +1568,6 @@ const PluginDetail = () => {
       </p>
     )}
     </div>
-    </div>
-
-    <PluginCommandsSidebarWidget commands={plugin.commands} />
     </aside>
     </div>
 

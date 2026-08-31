@@ -252,9 +252,10 @@ const AddPlugin = () => {
     };
 
     const updateCommandField = (index: number, field: 'name' | 'permission', value: string) => {
+        const cleanValue = field === 'name' ? value.replace(/^\/+/, '') : value;
         setCommands(prev => {
             const next = [...prev];
-            next[index] = { ...next[index], [field]: value };
+            next[index] = { ...next[index], [field]: cleanValue };
             return next;
         });
     };
@@ -460,9 +461,9 @@ const AddPlugin = () => {
         setSubmitting(true);
         try {
             const validCommands = commands
-                .filter(c => c.name.trim().length > 0)
+                .filter(c => c.name.trim().replace(/^\/+/, '').length > 0)
                 .map((c, idx) => ({
-                    name: c.name.trim(),
+                    name: c.name.trim().replace(/^\/+/, ''),
                     permission: c.permission.trim() || undefined,
                     description: c.descriptions,
                     display_order: idx,
@@ -864,8 +865,9 @@ const AddPlugin = () => {
                                                         <input
                                                             className="mp-input"
                                                             style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                                            placeholder="/spawn [player]"
+                                                            placeholder="spawn [player]"
                                                             value={cmd.name}
+                                                            maxLength={64}
                                                             onChange={e => updateCommandField(idx, 'name', e.target.value)}
                                                             required
                                                         />
@@ -879,6 +881,7 @@ const AddPlugin = () => {
                                                             style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
                                                             placeholder="pumpkin.command.spawn"
                                                             value={cmd.permission}
+                                                            maxLength={128}
                                                             onChange={e => updateCommandField(idx, 'permission', e.target.value)}
                                                         />
                                                     </div>
