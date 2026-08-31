@@ -146,10 +146,24 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const [saveError, setSaveError] = useState<string | null>(null);
     const [name, setName] = useState(plugin.name);
     const [descriptions, setDescriptions] = useState<Record<string, string>>(() => {
-        const parsed = JSON.parse(plugin.translated_descriptions || '{}');
-        // Ensure default locale always exists
-        if (!parsed[DEFAULT_LOCALE]) parsed[DEFAULT_LOCALE] = parsed['en'] ?? '';
-        return parsed;
+        let parsed: Record<string, unknown> = {};
+        try { parsed = JSON.parse(plugin.translated_descriptions || '{}'); } catch { /* ignore */ }
+
+        // Normalize: if a value is a nested object (old format), extract its 'description' string.
+        const flat: Record<string, string> = {};
+        for (const [k, v] of Object.entries(parsed)) {
+            if (typeof v === 'string') {
+                flat[k] = v;
+            } else if (v && typeof v === 'object' && 'description' in v) {
+                flat[k] = String((v as Record<string, unknown>).description ?? '');
+            }
+        }
+
+        // Ensure the default locale always exists.
+        if (!flat[DEFAULT_LOCALE]) {
+            flat[DEFAULT_LOCALE] = flat['en-GB'] ?? flat['en'] ?? '';
+        }
+        return flat;
     });
     const [activeLocale, setActiveLocale] = useState(DEFAULT_LOCALE);
     const [category, setCategory] = useState(plugin.category);

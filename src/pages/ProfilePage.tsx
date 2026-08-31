@@ -379,7 +379,8 @@ const ProfilePage = () => {
     setPasskeyRegistering(true);
     try {
       const startRes = await api.post('/user/passkey/register/start');
-      const credential = await startRegistration({ optionsJSON: startRes.data });
+      const options = startRes.data?.publicKey || startRes.data;
+      const credential = await startRegistration({ optionsJSON: options });
       const finishRes = await api.post('/user/passkey/register/finish', {
         name: newPasskeyName.trim() || 'My Passkey',
         credential,

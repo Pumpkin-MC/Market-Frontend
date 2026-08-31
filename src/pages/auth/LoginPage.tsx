@@ -137,8 +137,9 @@ const LoginPage = () => {
         email: form.email.trim() || undefined,
       });
 
+      const options = startRes.data?.options?.publicKey || startRes.data?.options || startRes.data?.publicKey || startRes.data;
       const credential = await startAuthentication({
-        optionsJSON: startRes.data.options,
+        optionsJSON: options,
       });
 
       const finishRes = await api.post('/auth/passkey/login/finish', {

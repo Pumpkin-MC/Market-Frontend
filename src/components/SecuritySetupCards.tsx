@@ -132,7 +132,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
             setPasskeyError(null);
 
             const startRes = await api.post('/user/passkey/register/start');
-            const options = startRes.data;
+            const options = startRes.data?.publicKey || startRes.data;
 
             const credential = await startRegistration({ optionsJSON: options });
 
