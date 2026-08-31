@@ -76,8 +76,9 @@
       "success": "報告を受け付けました。運営チームが確認いたします。"
     },
     "commands": {
-      "title": "コマンドと権限",
+      "title": "コマンド",
       "no_commands": "このプラグインに登録されているコマンドはありません。",
+      "aliases": "エイリアス",
       "permission": "権限",
       "no_permission": "権限不要",
       "copy_command": "コマンドをコピー",

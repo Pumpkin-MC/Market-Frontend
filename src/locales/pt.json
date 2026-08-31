@@ -76,8 +76,9 @@
       "success": "Denúncia enviada com sucesso. Nossa equipe irá analisar."
     },
     "commands": {
-      "title": "Comandos e Permissões",
+      "title": "Comandos",
       "no_commands": "Nenhum comando listado para este plugin.",
+      "aliases": "Aliases",
       "permission": "Permissão",
       "no_permission": "Nenhuma necessária",
       "copy_command": "Copiar comando",

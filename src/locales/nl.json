@@ -76,8 +76,9 @@
       "success": "Melding verzonden. Ons moderatieteam zal dit onderzoeken."
     },
     "commands": {
-      "title": "Commando's & Permissies",
+      "title": "Commando's",
       "no_commands": "Geen commando's vermeld voor deze plugin.",
+      "aliases": "Aliassen",
       "permission": "Permissie",
       "no_permission": "Geen vereist",
       "copy_command": "Kopieer commando",

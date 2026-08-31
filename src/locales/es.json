@@ -76,8 +76,9 @@
       "success": "Reporte enviado. Nuestro equipo lo revisará."
     },
     "commands": {
-      "title": "Comandos y Permisos",
+      "title": "Comandos",
       "no_commands": "No hay comandos listados para este plugin.",
+      "aliases": "Alias",
       "permission": "Permiso",
       "no_permission": "Ninguno requerido",
       "copy_command": "Copiar comando",

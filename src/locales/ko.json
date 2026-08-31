@@ -76,8 +76,9 @@
       "success": "신고가 접수되었습니다. 검토 후 처리하겠습니다."
     },
     "commands": {
-      "title": "명령어 및 권한",
+      "title": "명령어",
       "no_commands": "이 플러그인에 등록된 명령어가 없습니다.",
+      "aliases": "별칭",
       "permission": "권한",
       "no_permission": "필요 없음",
       "copy_command": "명령어 복사",

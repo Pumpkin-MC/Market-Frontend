@@ -236,6 +236,7 @@ const AddPlugin = () => {
 
     const [commands, setCommands] = useState<Array<{
         name: string;
+        aliases: string;
         permission: string;
         descriptions: Record<string, string>;
     }>>([]);
@@ -245,13 +246,14 @@ const AddPlugin = () => {
             ...prev,
             {
                 name: '',
+                aliases: '',
                 permission: '',
                 descriptions: { [activeLocale]: '' }
             }
         ]);
     };
 
-    const updateCommandField = (index: number, field: 'name' | 'permission', value: string) => {
+    const updateCommandField = (index: number, field: 'name' | 'permission' | 'aliases', value: string) => {
         const cleanValue = field === 'name' ? value.replace(/^\/+/, '') : value;
         setCommands(prev => {
             const next = [...prev];
@@ -462,12 +464,18 @@ const AddPlugin = () => {
         try {
             const validCommands = commands
                 .filter(c => c.name.trim().replace(/^\/+/, '').length > 0)
-                .map((c, idx) => ({
-                    name: c.name.trim().replace(/^\/+/, ''),
-                    permission: c.permission.trim() || undefined,
-                    description: c.descriptions,
-                    display_order: idx,
-                }));
+                .map((c, idx) => {
+                    const aliases = c.aliases
+                        ? c.aliases.split(',').map(a => a.trim().replace(/^\/+/, '')).filter(a => a.length > 0)
+                        : undefined;
+                    return {
+                        name: c.name.trim().replace(/^\/+/, ''),
+                        aliases: aliases && aliases.length > 0 ? aliases : undefined,
+                        permission: c.permission.trim() || undefined,
+                        description: c.descriptions,
+                        display_order: idx,
+                    };
+                });
 
             const metadata = {
                 name,
@@ -810,11 +818,11 @@ const AddPlugin = () => {
                                 )}
                             </div>
 
-                            {/* Commands & Permissions */}
+                            {/* Commands */}
                             <div className="mp-card">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
                                     <div className="mp-card-title" style={{ margin: 0 }}>
-                                        <Terminal size={14} />Commands & Permissions
+                                        <Terminal size={14} />Commands
                                     </div>
                                     <button
                                         type="button"
@@ -857,8 +865,8 @@ const AddPlugin = () => {
                                                     gap: '0.65rem'
                                                 }}
                                             >
-                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                                    <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'flex-start' }}>
+                                                    <div>
                                                         <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
                                                             Command <span style={{ color: 'var(--mp-error)' }}>*</span>
                                                         </label>
@@ -872,7 +880,20 @@ const AddPlugin = () => {
                                                             required
                                                         />
                                                     </div>
-                                                    <div style={{ flex: 1 }}>
+                                                    <div>
+                                                        <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
+                                                            Aliases <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional, comma-separated)</span>
+                                                        </label>
+                                                        <input
+                                                            className="mp-input"
+                                                            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                            placeholder="hub, lobby, s"
+                                                            value={cmd.aliases}
+                                                            maxLength={128}
+                                                            onChange={e => updateCommandField(idx, 'aliases', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <div>
                                                         <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
                                                             Permission Node <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
                                                         </label>

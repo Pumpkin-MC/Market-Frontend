@@ -76,9 +76,10 @@
       "success": "Bildirim iletildi. Moderasyon ekibimiz inceleyecektir."
     },
     "commands": {
-      "title": "Komutlar ve İzinler",
+      "title": "Komutlar",
       "no_commands": "Bu eklenti için listelenmiş komut yok.",
-      "permission": "İzin",
+      "aliases": "Takma Adlar",
+      "permission": "Yetki",
       "no_permission": "Gerekli değil",
       "copy_command": "Komutu kopyala",
       "copy_permission": "İzni kopyala",

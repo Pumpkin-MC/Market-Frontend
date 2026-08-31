@@ -76,8 +76,9 @@
       "success": "Segnalazione inviata. Il team di moderazione verificherà."
     },
     "commands": {
-      "title": "Comandi e Permessi",
+      "title": "Comandi",
       "no_commands": "Nessun comando elencato per questo plugin.",
+      "aliases": "Alias",
       "permission": "Permesso",
       "no_permission": "Nessuno richiesto",
       "copy_command": "Copia comando",

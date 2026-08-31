@@ -1805,8 +1805,6 @@ h3 {
   padding: 2rem;
   border-radius: 12px;
   border: 1px solid var(--border);
-  position: sticky;
-  top: 120px;
 }
 
 .sidebar-widget h3 {

@@ -8,6 +8,7 @@ export interface PluginCommand {
   name: string;
   permission?: string;
   description?: Record<string, string> | string | null;
+  aliases?: string[];
   display_order?: number;
   created_at?: string;
 }

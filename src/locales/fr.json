@@ -76,8 +76,9 @@
       "success": "Signalement envoyé. Notre équipe va l'examiner."
     },
     "commands": {
-      "title": "Commandes et Permissions",
+      "title": "Commandes",
       "no_commands": "Aucune commande listée pour ce plugin.",
+      "aliases": "Alias",
       "permission": "Permission",
       "no_permission": "Aucune requise",
       "copy_command": "Copier la commande",

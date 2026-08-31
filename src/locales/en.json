@@ -76,8 +76,9 @@
       "success": "Report submitted. Our moderation team will investigate."
     },
     "commands": {
-      "title": "Commands & Permissions",
+      "title": "Commands",
       "no_commands": "No commands listed for this plugin.",
+      "aliases": "Aliases",
       "permission": "Permission",
       "no_permission": "None required",
       "copy_command": "Copy command",

@@ -208,7 +208,7 @@ const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
           <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem' }}>
             <Terminal size={14} color="var(--primary)" />
-            {t('plugin.commands.title', 'Commands & Permissions')}
+            {t('plugin.commands.title', 'Commands')}
           </h3>
           <span style={{
             fontSize: '0.7rem',
@@ -282,6 +282,34 @@ const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] 
                     )}
                   </button>
                 </div>
+
+                {/* Aliases row */}
+                {cmd.aliases && Array.isArray(cmd.aliases) && cmd.aliases.length > 0 ? (
+                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem', marginTop: '-0.1rem' }}>
+                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>
+                      {t('plugin.commands.aliases', 'Aliases')}:
+                    </span>
+                    {cmd.aliases.map((alias: string, aIdx: number) => {
+                      const formattedAlias = alias.startsWith('/') ? alias : `/${alias}`;
+                      return (
+                        <span
+                          key={aIdx}
+                          style={{
+                            fontFamily: 'var(--font-mono)',
+                            fontSize: '0.68rem',
+                            color: 'var(--text-2, #cbd5e1)',
+                            background: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '4px',
+                            padding: '1px 5px',
+                          }}
+                        >
+                          {formattedAlias}
+                        </span>
+                      );
+                    })}
+                  </div>
+                ) : null}
 
                 {/* Permission row */}
                 {cmd.permission ? (

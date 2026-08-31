@@ -76,8 +76,9 @@
       "success": "Zgłoszenie wysłane. Zespół moderacji zajmie się sprawą."
     },
     "commands": {
-      "title": "Polecenia i Uprawnienia",
+      "title": "Polecenia",
       "no_commands": "Brak poleceń dla tego pluginu.",
+      "aliases": "Aliasy",
       "permission": "Uprawnienie",
       "no_permission": "Brak wymaganego",
       "copy_command": "Kopiuj polecenie",

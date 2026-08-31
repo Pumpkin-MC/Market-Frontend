@@ -76,8 +76,9 @@
       "success": "Meldung eingereicht. Unser Team wird sie prüfen."
     },
     "commands": {
-      "title": "Befehle & Berechtigungen",
+      "title": "Befehle",
       "no_commands": "Keine Befehle für dieses Plugin angegeben.",
+      "aliases": "Aliasse",
       "permission": "Berechtigung",
       "no_permission": "Keine erforderlich",
       "copy_command": "Befehl kopieren",

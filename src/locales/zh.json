@@ -76,8 +76,9 @@
       "success": "举报已提交，审核团队将尽快处理。"
     },
     "commands": {
-      "title": "命令与权限",
+      "title": "指令",
       "no_commands": "此插件未列出任何指令。",
+      "aliases": "别名",
       "permission": "权限",
       "no_permission": "无需权限",
       "copy_command": "复制指令",
