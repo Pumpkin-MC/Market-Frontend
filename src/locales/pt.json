@@ -74,6 +74,17 @@
       "details_placeholder": "Por favor, forneça mais detalhes...",
       "submit": "Enviar Denúncia",
       "success": "Denúncia enviada com sucesso. Nossa equipe irá analisar."
+    },
+    "commands": {
+      "title": "Comandos e Permissões",
+      "no_commands": "Nenhum comando listado para este plugin.",
+      "permission": "Permissão",
+      "no_permission": "Nenhuma necessária",
+      "copy_command": "Copiar comando",
+      "copy_permission": "Copiar permissão",
+      "copied": "Copiado!",
+      "show_all": "Mostrar todos os {{count}} comandos",
+      "show_less": "Mostrar menos"
     }
   },
   "profile": {

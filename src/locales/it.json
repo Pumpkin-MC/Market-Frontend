@@ -74,6 +74,17 @@
       "details_placeholder": "Fornisci ulteriori dettagli...",
       "submit": "Invia Segnalazione",
       "success": "Segnalazione inviata. Il team di moderazione verificherà."
+    },
+    "commands": {
+      "title": "Comandi e Permessi",
+      "no_commands": "Nessun comando elencato per questo plugin.",
+      "permission": "Permesso",
+      "no_permission": "Nessuno richiesto",
+      "copy_command": "Copia comando",
+      "copy_permission": "Copia permesso",
+      "copied": "Copiato!",
+      "show_all": "Mostra tutti i {{count}} comandi",
+      "show_less": "Mostra meno"
     }
   },
   "profile": {

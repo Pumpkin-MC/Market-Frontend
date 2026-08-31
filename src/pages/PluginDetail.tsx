@@ -8,7 +8,8 @@ import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { PluginVideoPlayer } from '../components/PluginVideoPlayer';
-import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock } from 'lucide-react';
+import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp } from 'lucide-react';
+import type { PluginDetail, PluginCommand } from '../types/plugin';
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -152,6 +153,225 @@ const formatDate = (dateStr: string) => {
   return `${day} ${month}, ${year}`;
 };
 
+const getLocalizedCommandDescription = (
+  rawDescription: string | Record<string, string> | undefined | null,
+  activeLanguage: string
+): string => {
+  if (!rawDescription) return '';
+  if (typeof rawDescription === 'object') {
+    const full = activeLanguage;
+    const short = activeLanguage.slice(0, 2);
+    return (
+      rawDescription[full] ||
+      rawDescription[short] ||
+      rawDescription['en-US'] ||
+      rawDescription['en'] ||
+      rawDescription['en-GB'] ||
+      Object.values(rawDescription)[0] ||
+      ''
+    );
+  }
+  if (typeof rawDescription === 'string') {
+    try {
+      const parsed = JSON.parse(rawDescription);
+      if (parsed && typeof parsed === 'object') {
+        return getLocalizedCommandDescription(parsed, activeLanguage);
+      }
+      return rawDescription;
+    } catch {
+      return rawDescription;
+    }
+  }
+  return '';
+};
+
+const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] }) => {
+  const { t, i18n } = useTranslation();
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+
+  if (!commands || commands.length === 0) return null;
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const activeLang = i18n.language || 'en';
+  const visibleCommands = expanded ? commands : commands.slice(0, 4);
+
+  return (
+    <div className="sidebar-widget commands-widget" style={{ marginTop: '1.25rem', position: 'static' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+        <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem' }}>
+          <Terminal size={14} color="var(--primary)" />
+          {t('plugin.commands.title', 'Commands & Permissions')}
+        </h3>
+        <span style={{
+          fontSize: '0.7rem',
+          fontWeight: 700,
+          background: 'rgba(255, 255, 255, 0.07)',
+          padding: '2px 7px',
+          borderRadius: '999px',
+          color: 'var(--text-muted)'
+        }}>
+          {commands.length}
+        </span>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        {visibleCommands.map((cmd: any, index: number) => {
+          const desc = getLocalizedCommandDescription(cmd.description, activeLang);
+          const cmdCopyKey = `cmd-${cmd.id || index}`;
+          const permCopyKey = `perm-${cmd.id || index}`;
+          const formattedName = cmd.name?.startsWith('/') ? cmd.name : `/${cmd.name}`;
+
+          return (
+            <div
+              key={cmd.id || index}
+              style={{
+                background: 'rgba(0, 0, 0, 0.25)',
+                border: '1px solid var(--border)',
+                borderRadius: '8px',
+                padding: '0.75rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.4rem',
+              }}
+            >
+              {/* Command row */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                <code style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  color: 'var(--primary, #4ade80)',
+                  wordBreak: 'break-all',
+                }}>
+                  {formattedName}
+                </code>
+                <button
+                  type="button"
+                  onClick={() => handleCopy(formattedName, cmdCopyKey)}
+                  title={t('plugin.commands.copy_command', 'Copy command')}
+                  style={{
+                    background: copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                    border: `1px solid ${copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
+                    borderRadius: '4px',
+                    color: copiedId === cmdCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
+                    cursor: 'pointer',
+                    padding: '3px 6px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {copiedId === cmdCopyKey ? (
+                    <>
+                      <Check size={11} />
+                      <span>{t('plugin.commands.copied', 'Copied')}</span>
+                    </>
+                  ) : (
+                    <Copy size={11} />
+                  )}
+                </button>
+              </div>
+
+              {/* Permission row */}
+              {cmd.permission ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
+                    <Key size={10} color="var(--text-muted)" style={{ flexShrink: 0 }} />
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontFamily: 'var(--font-mono)',
+                      color: 'var(--text-muted)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {cmd.permission}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(cmd.permission, permCopyKey)}
+                    title={t('plugin.commands.copy_permission', 'Copy permission')}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: copiedId === permCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
+                      cursor: 'pointer',
+                      padding: '2px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {copiedId === permCopyKey ? <Check size={11} /> : <Copy size={10} />}
+                  </button>
+                </div>
+              ) : null}
+
+              {/* Description */}
+              {desc ? (
+                <p style={{
+                  margin: '0.15rem 0 0 0',
+                  fontSize: '0.78rem',
+                  color: 'var(--text-2, #94a3b8)',
+                  lineHeight: 1.4,
+                }}>
+                  {desc}
+                </p>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      {commands.length > 4 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(!expanded)}
+          style={{
+            width: '100%',
+            marginTop: '0.75rem',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid var(--border)',
+            borderRadius: '6px',
+            color: 'var(--text)',
+            padding: '6px 10px',
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '4px',
+            transition: 'background 0.15s ease',
+          }}
+        >
+          {expanded ? (
+            <>
+              <ChevronUp size={13} />
+              {t('plugin.commands.show_less', 'Show less')}
+            </>
+          ) : (
+            <>
+              <ChevronDown size={13} />
+              {t('plugin.commands.show_all', 'Show all {{count}} commands', { count: commands.length })}
+            </>
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const PluginDetail = () => {
   const { t, i18n } = useTranslation();
   const { id: rawId, slug } = useParams();
@@ -160,7 +380,7 @@ const PluginDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [plugin, setPlugin] = useState<any>(null);
+  const [plugin, setPlugin] = useState<PluginDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
@@ -290,11 +510,14 @@ const PluginDetail = () => {
   useEffect(() => {
     if (plugin?.translated_descriptions) {
       try {
-        const translations = JSON.parse(plugin.translated_descriptions);
+        const translations = typeof plugin.translated_descriptions === 'string'
+          ? JSON.parse(plugin.translated_descriptions)
+          : plugin.translated_descriptions;
         const activeLang = (i18n.language || 'en').slice(0, 2);
         setCurrentDescription(
           translations[activeLang] ||
           translations['en'] ||
+          translations['en-US'] ||
           (Object.values(translations)[0] as string) ||
           ''
         );
@@ -361,6 +584,7 @@ const PluginDetail = () => {
 
   // ── Trigger a blob download ──────────────────────────────────────────────
   const triggerDownload = async (endpoint: string) => {
+    if (!plugin) return;
     const res = await api.get(endpoint, { responseType: 'blob' });
     const url = URL.createObjectURL(res.data);
     const a = document.createElement('a');
@@ -372,6 +596,7 @@ const PluginDetail = () => {
 
   // ── Download / purchase handler ──────────────────────────────────────────
   const handleDownload = async () => {
+    if (!plugin) return;
     if (!user) return navigate('/login', { state: { from: `/plugins/${id}` } });
 
     if (plugin.type === 'paid') {
@@ -581,7 +806,7 @@ const PluginDetail = () => {
         "image": plugin.preview_path || "https://market.pumpkinmc.org/icon.png",
         "offers": {
           "@type": "Offer",
-          "price": plugin.type === 'paid' ? (plugin.price_cents / 100).toFixed(2) : "0.00",
+          "price": plugin.type === 'paid' && plugin.price_cents ? (plugin.price_cents / 100).toFixed(2) : "0.00",
           "priceCurrency": "EUR",
           "availability": "https://schema.org/InStock"
         },
@@ -738,18 +963,18 @@ const PluginDetail = () => {
     <div className="plugin-main-content">
 
     {/* SCREENSHOTS / MEDIA GALLERY */}
-    {((Array.isArray(plugin.screenshots) && plugin.screenshots.length > 0) || plugin.youtube_video_url) && (
+    {((screenshots.length > 0) || plugin.youtube_video_url) && (
       <div className="screenshot-gallery">
         {mainScreenshot === 'video' ? (
-          <PluginVideoPlayer url={plugin.youtube_video_url} />
+          <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
         ) : (
           <img
-            src={mainScreenshot || plugin.screenshots[0]?.path}
+            src={mainScreenshot || screenshots[0]?.path}
             alt="Main"
             className="main-screenshot"
             style={{ cursor: 'pointer' }}
             onClick={() => {
-              const idx = plugin.screenshots.findIndex((s: any) => s.path === (mainScreenshot || plugin.screenshots[0]?.path));
+              const idx = screenshots.findIndex((s: any) => s.path === (mainScreenshot || screenshots[0]?.path));
               openLightbox(idx >= 0 ? idx : 0);
             }}
           />
@@ -777,7 +1002,7 @@ const PluginDetail = () => {
               </div>
             </div>
           )}
-          {plugin.screenshots.map((shot: any) => (
+          {screenshots.map((shot: any) => (
             <img
               key={shot.id}
               src={shot.path}
@@ -1116,9 +1341,10 @@ const PluginDetail = () => {
           </span>
         )}
         {(() => {
-          const base = plugin.price_cents;
-          const salePrice = plugin.sale_active && plugin.sale_discount_percent > 0 
-            ? Math.round(base * (1 - plugin.sale_discount_percent / 100))
+          const base = plugin.price_cents ?? 0;
+          const discount = plugin.sale_discount_percent ?? 0;
+          const salePrice = plugin.sale_active && discount > 0 
+            ? Math.round(base * (1 - discount / 100))
             : base;
           
           const finalPrice = couponDiscount > 0
@@ -1129,15 +1355,15 @@ const PluginDetail = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
               <PriceDisplay cents={finalPrice} />
               
-              {(plugin.sale_active && plugin.sale_discount_percent > 0) || couponDiscount > 0 ? (
+              {(plugin.sale_active && discount > 0) || couponDiscount > 0 ? (
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
                   <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontFamily: 'var(--font-mono)' }}>
-                    €{(plugin.price_cents / 100).toFixed(2)}
+                    €{(base / 100).toFixed(2)}
                   </span>
                   
-                  {plugin.sale_active && plugin.sale_discount_percent > 0 && (
+                  {plugin.sale_active && discount > 0 && (
                     <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(255,107,107,0.1) ', border: '1px solid rgba(255,107,107,0.2) ', color: '#ff6b6b', borderRadius: 4, padding: '1px 6px' }}>
-                      -{plugin.sale_discount_percent}% SALE
+                      -{discount}% SALE
                     </span>
                   )}
                   
@@ -1249,7 +1475,7 @@ const PluginDetail = () => {
     )}
 
     <div className="sidebar-stats">
-    <div className="stat-item"><strong>{plugin.downloads.toLocaleString()}</strong> Downloads</div>
+    <div className="stat-item"><strong>{(plugin.downloads ?? 0).toLocaleString()}</strong> Downloads</div>
     {plugin.created_at && (
       <div className="stat-item">Released: <strong>{formatDate(plugin.created_at)}</strong></div>
     )}
@@ -1337,6 +1563,8 @@ const PluginDetail = () => {
     )}
     </div>
     </div>
+
+    <PluginCommandsSidebarWidget commands={plugin.commands} />
     </aside>
     </div>
 
@@ -1416,11 +1644,11 @@ const PluginDetail = () => {
           </div>
           
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
-            {Array.isArray(plugin.versions) && plugin.versions.map((v: any, idx: number) => (
+            {(plugin.versions ?? []).map((v: any, idx: number, arr: any[]) => (
               <div key={v.id} style={{ 
-                marginBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
-                paddingBottom: idx === plugin.versions.length - 1 ? 0 : '32px',
-                borderBottom: idx === plugin.versions.length - 1 ? 'none' : '1px solid var(--border)'
+                marginBottom: idx === arr.length - 1 ? 0 : '32px',
+                paddingBottom: idx === arr.length - 1 ? 0 : '32px',
+                borderBottom: idx === arr.length - 1 ? 'none' : '1px solid var(--border)'
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
                   <span style={{ 

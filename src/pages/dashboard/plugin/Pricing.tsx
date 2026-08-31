@@ -70,20 +70,17 @@ const Pricing = ({ plugin, onSaved }: Props) => {
         if (licenseType === 'paid' && price < 0.99) { setPriceTooLow(true); return; }
 
         setSaving(true);
-        const fd = new FormData();
-        fd.append('type', licenseType);
-        fd.append('price', (licenseType === 'paid' ? priceCents : 0).toString());
+        const metadata = {
+            type: licenseType,
+            price: licenseType === 'paid' ? priceCents : 0,
+            saleActive: licenseType === 'paid' ? isSaleActive : false,
+            saleDiscountPercent: licenseType === 'paid' ? discountPercent : 0,
+            isPreorder: licenseType === 'paid' ? isPreorder : false,
+            preorderReleaseDate: licenseType === 'paid' && isPreorder && preorderReleaseDate ? new Date(preorderReleaseDate).toISOString() : undefined,
+        };
 
-        if (licenseType === 'paid') {
-            fd.append('sale_active',           isSaleActive.toString());
-            fd.append('sale_discount_percent', discountPercent.toString());
-            fd.append('is_preorder',           isPreorder.toString());
-            if (isPreorder && preorderReleaseDate) {
-                fd.append('preorder_release_date', new Date(preorderReleaseDate).toISOString());
-            } else {
-                fd.append('preorder_release_date', '');
-            }
-        }
+        const fd = new FormData();
+        fd.append('metadata', JSON.stringify(metadata));
 
         try {
             setPricingError(null);

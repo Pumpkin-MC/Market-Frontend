@@ -74,6 +74,17 @@
       "details_placeholder": "请提供更多详细信息...",
       "submit": "提交举报",
       "success": "举报已提交，审核团队将尽快处理。"
+    },
+    "commands": {
+      "title": "命令与权限",
+      "no_commands": "此插件未列出任何指令。",
+      "permission": "权限",
+      "no_permission": "无需权限",
+      "copy_command": "复制指令",
+      "copy_permission": "复制权限节点",
+      "copied": "已复制！",
+      "show_all": "展开全部 {{count}} 条指令",
+      "show_less": "收起"
     }
   },
   "profile": {

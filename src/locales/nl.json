@@ -74,6 +74,17 @@
       "details_placeholder": "Geef aanvullende details...",
       "submit": "Melding Versturen",
       "success": "Melding verzonden. Ons moderatieteam zal dit onderzoeken."
+    },
+    "commands": {
+      "title": "Commando's & Permissies",
+      "no_commands": "Geen commando's vermeld voor deze plugin.",
+      "permission": "Permissie",
+      "no_permission": "Geen vereist",
+      "copy_command": "Kopieer commando",
+      "copy_permission": "Kopieer permissie",
+      "copied": "Gekopieerd!",
+      "show_all": "Toon alle {{count}} commando's",
+      "show_less": "Toon minder"
     }
   },
   "profile": {

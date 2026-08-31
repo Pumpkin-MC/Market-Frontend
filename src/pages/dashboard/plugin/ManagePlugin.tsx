@@ -22,27 +22,10 @@ import PublishReadinessModal from './PublishReadinessModal';
 import { getPluginUrl } from '../../../utils/url';
 import './ManagePlugin.css';
 
-export type PluginData = {
-    id: number;
-    name: string;
-    translated_descriptions: string;
-    category: string;
-    source_link: string;
-    keywords: string;
-    price_cents: number;
-    type: 'free' | 'paid' | 'adwall';
-    screenshots: { id: number; path: string }[];
-    preview_path?: string;
-    version?: string;
-    status?: 'published' | 'draft' | 'review';
-    sale_active?: boolean;
-    sale_discount_percent?: number;
-    is_early_access?: boolean;
-    is_preorder?: boolean;
-    preorder_release_date?: string;
-    youtube_video_url?: string;
-    dev_id?: number;
-};
+import type { Plugin, PluginCommand } from '../../../types/plugin';
+
+export type PluginCommandItem = PluginCommand;
+export type PluginData = Plugin;
 
 const NAV_ITEMS = [
     { key: 'listing',   label: 'Store Listing',    icon: LayoutGrid       },

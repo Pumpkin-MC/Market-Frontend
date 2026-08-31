@@ -74,6 +74,17 @@
       "details_placeholder": "Bitte gib weitere Details an...",
       "submit": "Meldung absenden",
       "success": "Meldung eingereicht. Unser Team wird sie prüfen."
+    },
+    "commands": {
+      "title": "Befehle & Berechtigungen",
+      "no_commands": "Keine Befehle für dieses Plugin angegeben.",
+      "permission": "Berechtigung",
+      "no_permission": "Keine erforderlich",
+      "copy_command": "Befehl kopieren",
+      "copy_permission": "Berechtigung kopieren",
+      "copied": "Kopiert!",
+      "show_all": "Alle {{count}} Befehle anzeigen",
+      "show_less": "Weniger anzeigen"
     }
   },
   "profile": {

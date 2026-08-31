@@ -74,6 +74,17 @@
       "details_placeholder": "Prosimy o podanie dodatkowych szczegółów...",
       "submit": "Wyślij Zgłoszenie",
       "success": "Zgłoszenie wysłane. Zespół moderacji zajmie się sprawą."
+    },
+    "commands": {
+      "title": "Polecenia i Uprawnienia",
+      "no_commands": "Brak poleceń dla tego pluginu.",
+      "permission": "Uprawnienie",
+      "no_permission": "Brak wymaganego",
+      "copy_command": "Kopiuj polecenie",
+      "copy_permission": "Kopiuj uprawnienie",
+      "copied": "Skopiowano!",
+      "show_all": "Pokaż wszystkie {{count}} polecenia",
+      "show_less": "Pokaż mniej"
     }
   },
   "profile": {

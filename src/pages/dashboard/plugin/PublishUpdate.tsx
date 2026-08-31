@@ -71,9 +71,12 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         setPublishError(null);
         const fd = new FormData();
         fd.append('wasm', wasmFile);
-        if (version) fd.append('version', version);
-        fd.append('track', track);
-        if (releaseNotes) fd.append('release_notes', releaseNotes);
+        const metadata = {
+            version: version || undefined,
+            track,
+            releaseNotes: releaseNotes || undefined,
+        };
+        fd.append('metadata', JSON.stringify(metadata));
 
         try {
             await api.put(`/plugins/${plugin.id}`, fd);

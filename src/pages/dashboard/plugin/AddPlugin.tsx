@@ -4,7 +4,7 @@ import {
     Globe, ImageIcon, Plus, Search, X, Upload, FileCode,
     DollarSign, CheckCircle, ChevronRight, ChevronLeft,
     Zap, Lock, AlertTriangle, Tag, Store, User,
-    ShieldCheck,
+    ShieldCheck, Terminal, Trash2,
 } from 'lucide-react';
 import api from '../../../api';
 import { useAuth } from '../../../App';
@@ -234,6 +234,49 @@ const AddPlugin = () => {
     const [preorderReleaseDate, setPreorderReleaseDate] = useState('');
     const stripeConnected               = user.stripe_ready;
 
+    const [commands, setCommands] = useState<Array<{
+        name: string;
+        permission: string;
+        descriptions: Record<string, string>;
+    }>>([]);
+
+    const addCommand = () => {
+        setCommands(prev => [
+            ...prev,
+            {
+                name: '',
+                permission: '',
+                descriptions: { [activeLocale]: '' }
+            }
+        ]);
+    };
+
+    const updateCommandField = (index: number, field: 'name' | 'permission', value: string) => {
+        setCommands(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            return next;
+        });
+    };
+
+    const updateCommandDescription = (index: number, locale: string, value: string) => {
+        setCommands(prev => {
+            const next = [...prev];
+            next[index] = {
+                ...next[index],
+                descriptions: {
+                    ...next[index].descriptions,
+                    [locale]: value,
+                }
+            };
+            return next;
+        });
+    };
+
+    const removeCommand = (index: number) => {
+        setCommands(prev => prev.filter((_, i) => i !== index));
+    };
+
     // ── Step 2: Binary ──
     const [wasmFile, setWasmFile]       = useState<File | null>(null);
     const [wasmDragOver, setWasmDragOver] = useState(false);
@@ -416,20 +459,32 @@ const AddPlugin = () => {
         if (!isPreorder && wasmTooLarge) { alert('Plugin binary exceeds 5 MB.'); return; }
         setSubmitting(true);
         try {
+            const validCommands = commands
+                .filter(c => c.name.trim().length > 0)
+                .map((c, idx) => ({
+                    name: c.name.trim(),
+                    permission: c.permission.trim() || undefined,
+                    description: c.descriptions,
+                    display_order: idx,
+                }));
+
+            const metadata = {
+                name,
+                category,
+                sourceLink: sourceLink || undefined,
+                youtubeVideoUrl: youtubeVideoUrl || undefined,
+                keywords: keywords || undefined,
+                translatedDescriptions: descriptions,
+                type: licenseType,
+                price: licenseType === 'paid' ? Math.round(price * 100) : 0,
+                isEarlyAccess,
+                isPreorder,
+                preorderReleaseDate: isPreorder && preorderReleaseDate ? new Date(preorderReleaseDate).toISOString() : undefined,
+                commands: validCommands,
+            };
+
             const fd = new FormData();
-            fd.append('name',                    name);
-            fd.append('category',                category);
-            fd.append('source_link',             sourceLink);
-            fd.append('youtube_video_url',        youtubeVideoUrl);
-            fd.append('keywords',                keywords);
-            fd.append('translated_descriptions', JSON.stringify(descriptions));
-            fd.append('type',                    licenseType);
-            fd.append('price', licenseType === 'paid' ? String(Math.round(price * 100)) : '0');
-            fd.append('is_early_access',         String(isEarlyAccess));
-            fd.append('is_preorder',             String(isPreorder));
-            if (isPreorder && preorderReleaseDate) {
-                fd.append('preorder_release_date', new Date(preorderReleaseDate).toISOString());
-            }
+            fd.append('metadata', JSON.stringify(metadata));
             if (previewImage) fd.append('preview_image', previewImage);
             if (wasmFile)     fd.append('wasm', wasmFile);
             screenshots.forEach(f => fd.append('screenshots', f));
@@ -450,6 +505,7 @@ const AddPlugin = () => {
         setName(''); setDeveloperName(''); setCategory(PLUGIN_CATEGORIES[0]);
         setSourceLink(''); setYoutubeVideoUrl(''); setKeywords('');
         setDescriptions({ [DEFAULT_LOCALE]: '' }); setActiveLocale(DEFAULT_LOCALE);
+        setCommands([]);
         setPreviewImage(null); setPreviewImageUrl(null);
         setScreenshots([]); setScreenshotPreviews([]);
         setLicenseType('free'); setPrice(4.99); setIsEarlyAccess(false);
@@ -749,6 +805,129 @@ const AddPlugin = () => {
                                     <div className="mp-banner warn" style={{ marginTop: '1rem', marginBottom: 0 }}>
                                         <AlertTriangle size={15} style={{ flexShrink: 0 }} />
                                         A default (American English) description is required to continue.
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Commands & Permissions */}
+                            <div className="mp-card">
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                                    <div className="mp-card-title" style={{ margin: 0 }}>
+                                        <Terminal size={14} />Commands & Permissions
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="mp-btn mp-btn-secondary"
+                                        onClick={addCommand}
+                                        style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                                    >
+                                        <Plus size={13} /> Add Command
+                                    </button>
+                                </div>
+
+                                <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', marginBottom: '1rem', lineHeight: 1.4 }}>
+                                    Specify commands registered by your plugin along with their permissions and descriptions. Descriptions are localized to the active language (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--mp-text-2)' }}>{getLocaleName(activeLocale)}</span>).
+                                </p>
+
+                                {commands.length === 0 ? (
+                                    <div style={{
+                                        padding: '1.5rem 1rem',
+                                        textAlign: 'center',
+                                        background: 'var(--mp-surface-2)',
+                                        borderRadius: 'var(--mp-radius-sm)',
+                                        border: '1px dashed var(--mp-border)',
+                                        color: 'var(--mp-text-3)',
+                                        fontSize: '0.82rem'
+                                    }}>
+                                        No commands added yet. Click <strong>"Add Command"</strong> above to register commands.
+                                    </div>
+                                ) : (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                                        {commands.map((cmd, idx) => (
+                                            <div
+                                                key={idx}
+                                                style={{
+                                                    background: 'var(--mp-surface-2)',
+                                                    border: '1px solid var(--mp-border)',
+                                                    borderRadius: 'var(--mp-radius-sm)',
+                                                    padding: '0.85rem 1rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.65rem'
+                                                }}
+                                            >
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                                    <div style={{ flex: 1 }}>
+                                                        <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
+                                                            Command <span style={{ color: 'var(--mp-error)' }}>*</span>
+                                                        </label>
+                                                        <input
+                                                            className="mp-input"
+                                                            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                            placeholder="/spawn [player]"
+                                                            value={cmd.name}
+                                                            onChange={e => updateCommandField(idx, 'name', e.target.value)}
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <div style={{ flex: 1 }}>
+                                                        <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
+                                                            Permission Node <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
+                                                        </label>
+                                                        <input
+                                                            className="mp-input"
+                                                            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                            placeholder="pumpkin.command.spawn"
+                                                            value={cmd.permission}
+                                                            onChange={e => updateCommandField(idx, 'permission', e.target.value)}
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeCommand(idx)}
+                                                        title="Remove Command"
+                                                        style={{
+                                                            alignSelf: 'flex-end',
+                                                            marginBottom: '2px',
+                                                            background: 'rgba(242, 65, 90, 0.1)',
+                                                            border: '1px solid rgba(242, 65, 90, 0.25)',
+                                                            borderRadius: '6px',
+                                                            color: 'var(--mp-error)',
+                                                            padding: '0.48rem 0.6rem',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            transition: 'background 0.15s',
+                                                        }}
+                                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.2)')}
+                                                        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.1)')}
+                                                    >
+                                                        <Trash2 size={15} />
+                                                    </button>
+                                                </div>
+
+                                                <div>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                                        <label className="mp-label" style={{ fontSize: '0.72rem', margin: 0 }}>
+                                                            Description ({getLocaleName(activeLocale)})
+                                                        </label>
+                                                        <span style={{ fontSize: '0.68rem', color: 'var(--mp-text-3)' }}>
+                                                            {activeLocale !== DEFAULT_LOCALE && !cmd.descriptions[activeLocale] ? (
+                                                                <span>Falls back to: <em style={{ color: 'var(--mp-text-2)' }}>{cmd.descriptions[DEFAULT_LOCALE] || 'English default'}</em></span>
+                                                            ) : null}
+                                                        </span>
+                                                    </div>
+                                                    <input
+                                                        className="mp-input"
+                                                        style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                        placeholder={`What does this command do? (${getLocaleName(activeLocale)})`}
+                                                        value={cmd.descriptions[activeLocale] ?? ''}
+                                                        onChange={e => updateCommandDescription(idx, activeLocale, e.target.value)}
+                                                    />
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
                             </div>
@@ -1217,6 +1396,12 @@ const AddPlugin = () => {
                                                     {licenseType}{licenseType === 'paid' ? ` · €${price.toFixed(2)}` : ''}
                                                 </strong>
                                             </div>
+                                            {commands.length > 0 && (
+                                                <div className="ap-review-field">
+                                                    <span>Commands</span>
+                                                    <strong>{commands.filter(c => c.name.trim()).length} registered</strong>
+                                                </div>
+                                            )}
                                             {(previewImage || screenshots.length > 0) && (
                                                 <SizeBudget usedBytes={totalImageBytes} maxBytes={MAX_TOTAL_IMAGE_BYTES} label="Total image assets" />
                                             )}

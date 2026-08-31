@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
-import { startAuthentication } from '@simplewebauthn/browser';
+import { startAuthentication, browserSupportsWebAuthnAutofill } from '@simplewebauthn/browser';
 import { Fingerprint, AlertCircle } from 'lucide-react';
 import api from '../../api';
 import { useAuth } from '../../App';
@@ -27,6 +27,68 @@ const LoginPage = () => {
 
   const navigate = useNavigate();
   const { login } = useAuth();
+
+  // WebAuthn Autofill (Conditional UI / Mediation)
+  useEffect(() => {
+    let active = true;
+
+    const initAutofill = async () => {
+      try {
+        const supported = await browserSupportsWebAuthnAutofill();
+        if (!supported || !active) return;
+
+        const startRes = await api.post('/auth/passkey/login/start', {});
+        if (!active) return;
+
+        const rawOptions =
+          startRes.data?.options?.publicKey ||
+          startRes.data?.options ||
+          startRes.data?.publicKey ||
+          startRes.data;
+        const options = { ...rawOptions };
+        if (Array.isArray(options.allowCredentials) && options.allowCredentials.length === 0) {
+          delete options.allowCredentials;
+        }
+
+        const credential = await startAuthentication({
+          optionsJSON: options,
+          useBrowserAutofill: true,
+        });
+
+        if (!active) return;
+
+        setIsSubmitting(true);
+        const finishRes = await api.post('/auth/passkey/login/finish', {
+          challengeId: startRes.data.challengeId,
+          credential,
+        });
+
+        if (finishRes.data.token) {
+          login(finishRes.data.token);
+          navigate('/dashboard');
+        }
+      } catch (err: any) {
+        // Ignore user cancellation, timeout, or dismissal during conditional UI autofill
+        if (
+          err.name !== 'AbortError' &&
+          err.name !== 'NotAllowedError' &&
+          err.name !== 'InvalidStateError'
+        ) {
+          console.debug('WebAuthn conditional autofill not completed:', err);
+        }
+      } finally {
+        if (active) {
+          setIsSubmitting(false);
+        }
+      }
+    };
+
+    initAutofill();
+
+    return () => {
+      active = false;
+    };
+  }, [login, navigate]);
 
   const validateEmail = (email: string) =>
     Boolean(String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/));
@@ -137,7 +199,12 @@ const LoginPage = () => {
         email: form.email.trim() || undefined,
       });
 
-      const options = startRes.data?.options?.publicKey || startRes.data?.options || startRes.data?.publicKey || startRes.data;
+      const rawOptions = startRes.data?.options?.publicKey || startRes.data?.options || startRes.data?.publicKey || startRes.data;
+      const options = { ...rawOptions };
+      if (Array.isArray(options.allowCredentials) && options.allowCredentials.length === 0) {
+        delete options.allowCredentials;
+      }
+
       const credential = await startAuthentication({
         optionsJSON: options,
       });
@@ -556,7 +623,7 @@ const LoginPage = () => {
                       onBlur={handleEmailBlur}
                       required
                       disabled={isSubmitting}
-                      autoComplete="email"
+                      autoComplete="username webauthn"
                     />
                     {emailIsInvalid && (
                       <svg key="x" className="field-status-icon" viewBox="0 0 20 20" fill="none">

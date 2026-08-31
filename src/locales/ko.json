@@ -74,6 +74,17 @@
       "details_placeholder": "상세 내용을 입력해 주세요...",
       "submit": "신고 접수",
       "success": "신고가 접수되었습니다. 검토 후 처리하겠습니다."
+    },
+    "commands": {
+      "title": "명령어 및 권한",
+      "no_commands": "이 플러그인에 등록된 명령어가 없습니다.",
+      "permission": "권한",
+      "no_permission": "필요 없음",
+      "copy_command": "명령어 복사",
+      "copy_permission": "권한 노드 복사",
+      "copied": "복사됨!",
+      "show_all": "전체 {{count}}개 명령어 보기",
+      "show_less": "간략히 보기"
     }
   },
   "profile": {

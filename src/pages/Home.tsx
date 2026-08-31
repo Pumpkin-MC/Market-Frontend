@@ -92,14 +92,14 @@ const Home = () => {
 
     const activeImage = featuredImages[heroSubImageIndex] || featuredImages[0];
 
-    const getDesc = (translatedStr?: string) => {
-        if (!translatedStr) return 'Discover this high performance Minecraft plugin.';
+    const getDesc = (translated?: Record<string, string> | string) => {
+        if (!translated) return 'Discover this high performance Minecraft plugin.';
         try {
-            const data = JSON.parse(translatedStr);
+            const data = typeof translated === 'string' ? JSON.parse(translated) : translated;
             const currentLang = i18n.language.split('-')[0];
             return data[currentLang] || data.en || Object.values(data)[0] || 'Discover this high performance Minecraft plugin.';
         } catch {
-            return 'Discover this high performance Minecraft plugin.';
+            return typeof translated === 'string' ? translated : 'Discover this high performance Minecraft plugin.';
         }
     };
 

@@ -74,6 +74,17 @@
       "details_placeholder": "Veuillez préciser le problème...",
       "submit": "Envoyer le signalement",
       "success": "Signalement envoyé. Notre équipe va l'examiner."
+    },
+    "commands": {
+      "title": "Commandes et Permissions",
+      "no_commands": "Aucune commande listée pour ce plugin.",
+      "permission": "Permission",
+      "no_permission": "Aucune requise",
+      "copy_command": "Copier la commande",
+      "copy_permission": "Copier la permission",
+      "copied": "Copié !",
+      "show_all": "Afficher les {{count}} commandes",
+      "show_less": "Afficher moins"
     }
   },
   "profile": {

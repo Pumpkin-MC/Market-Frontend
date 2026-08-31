@@ -74,6 +74,17 @@
       "details_placeholder": "Lütfen detayları belirtin...",
       "submit": "Bildirimi Gönder",
       "success": "Bildirim iletildi. Moderasyon ekibimiz inceleyecektir."
+    },
+    "commands": {
+      "title": "Komutlar ve İzinler",
+      "no_commands": "Bu eklenti için listelenmiş komut yok.",
+      "permission": "İzin",
+      "no_permission": "Gerekli değil",
+      "copy_command": "Komutu kopyala",
+      "copy_permission": "İzni kopyala",
+      "copied": "Kopyalandı!",
+      "show_all": "Tüm {{count}} komutu göster",
+      "show_less": "Daha az göster"
     }
   },
   "profile": {

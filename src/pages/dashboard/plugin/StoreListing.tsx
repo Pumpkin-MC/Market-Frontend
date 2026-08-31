@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle, CheckCircle, ShieldCheck, Lock } from 'lucide-react';
+import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle, CheckCircle, ShieldCheck, Lock, Terminal, Trash2 } from 'lucide-react';
 import api from '../../../api';
 import { useAuth } from '../../../App';
 import type { PluginData } from './ManagePlugin';
@@ -147,7 +147,11 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const [name, setName] = useState(plugin.name);
     const [descriptions, setDescriptions] = useState<Record<string, string>>(() => {
         let parsed: Record<string, unknown> = {};
-        try { parsed = JSON.parse(plugin.translated_descriptions || '{}'); } catch { /* ignore */ }
+        if (typeof plugin.translated_descriptions === 'object' && plugin.translated_descriptions !== null) {
+            parsed = plugin.translated_descriptions as Record<string, unknown>;
+        } else if (typeof plugin.translated_descriptions === 'string') {
+            try { parsed = JSON.parse(plugin.translated_descriptions || '{}'); } catch { /* ignore */ }
+        }
 
         // Normalize: if a value is a nested object (old format), extract its 'description' string.
         const flat: Record<string, string> = {};
@@ -166,7 +170,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         return flat;
     });
     const [activeLocale, setActiveLocale] = useState(DEFAULT_LOCALE);
-    const [category, setCategory] = useState(plugin.category);
+    const [category, setCategory] = useState(plugin.category || 'Utilities');
     const [sourceLink, setSourceLink] = useState(plugin.source_link || '');
     const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(plugin.youtube_video_url || '');
     const [keywords, setKeywords] = useState(plugin.keywords || '');
@@ -201,6 +205,79 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     const [screenshotValidationErr, setScreenshotValidationErr] = useState<string | null>(null);
     const [processingImage, setProcessingImage] = useState(false);
 
+    const [commands, setCommands] = useState<Array<{
+        id?: number;
+        name: string;
+        permission: string;
+        descriptions: Record<string, string>;
+    }>>(() => {
+        if (!plugin.commands || !Array.isArray(plugin.commands)) return [];
+        return plugin.commands.map(cmd => {
+            let descMap: Record<string, string> = {};
+            if (typeof cmd.description === 'string') {
+                try {
+                    const parsed = JSON.parse(cmd.description);
+                    if (parsed && typeof parsed === 'object') {
+                        for (const [k, v] of Object.entries(parsed)) {
+                            descMap[k] = String(v ?? '');
+                        }
+                    } else {
+                        descMap[DEFAULT_LOCALE] = cmd.description;
+                    }
+                } catch {
+                    descMap[DEFAULT_LOCALE] = cmd.description;
+                }
+            } else if (cmd.description && typeof cmd.description === 'object') {
+                for (const [k, v] of Object.entries(cmd.description)) {
+                    descMap[k] = String(v ?? '');
+                }
+            }
+            return {
+                id: cmd.id,
+                name: cmd.name || '',
+                permission: cmd.permission || '',
+                descriptions: descMap,
+            };
+        });
+    });
+
+    const addCommand = () => {
+        setCommands(prev => [
+            ...prev,
+            {
+                name: '',
+                permission: '',
+                descriptions: { [activeLocale]: '' },
+            },
+        ]);
+    };
+
+    const updateCommandField = (index: number, field: 'name' | 'permission', value: string) => {
+        setCommands(prev => {
+            const next = [...prev];
+            next[index] = { ...next[index], [field]: value };
+            return next;
+        });
+    };
+
+    const updateCommandDescription = (index: number, locale: string, value: string) => {
+        setCommands(prev => {
+            const next = [...prev];
+            next[index] = {
+                ...next[index],
+                descriptions: {
+                    ...next[index].descriptions,
+                    [locale]: value,
+                },
+            };
+            return next;
+        });
+    };
+
+    const removeCommand = (index: number) => {
+        setCommands(prev => prev.filter((_, i) => i !== index));
+    };
+
     const handleIconChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         setIconValidationErr(null);
         if (e.target.files && e.target.files[0]) {
@@ -233,14 +310,29 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         setSaving(true);
         setSaveError(null);
         setSaveSuccess(false);
+        const validCommands = commands
+            .filter(c => c.name.trim().length > 0)
+            .map((c, idx) => ({
+                id: c.id,
+                name: c.name.trim(),
+                permission: c.permission.trim() || undefined,
+                description: c.descriptions,
+                display_order: idx,
+            }));
+
+        const metadata = {
+            name,
+            category,
+            sourceLink: sourceLink || undefined,
+            youtubeVideoUrl: youtubeVideoUrl || undefined,
+            keywords: keywords || undefined,
+            translatedDescriptions: descriptions,
+            isEarlyAccess,
+            commands: validCommands,
+        };
+
         const fd = new FormData();
-        fd.append('name', name);
-        fd.append('translated_descriptions', JSON.stringify(descriptions));
-        fd.append('category', category);
-        fd.append('source_link', sourceLink);
-        fd.append('youtube_video_url', youtubeVideoUrl);
-        fd.append('keywords', keywords);
-        fd.append('is_early_access', String(isEarlyAccess));
+        fd.append('metadata', JSON.stringify(metadata));
         if (iconFile) {
             fd.append('preview_image', iconFile);
         }
@@ -536,6 +628,129 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                         Editing: <span style={{fontFamily:'var(--font-mono)', color:'var(--mp-text-2)'}}>{activeLocale}</span>
                         {activeLocale === DEFAULT_LOCALE && ' · This is the default language shown when no translation is available.'}
                     </p>
+                </div>
+
+                {/* ── Commands & Permissions ── */}
+                <div className="mp-card">
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
+                        <div className="mp-card-title" style={{ margin: 0 }}>
+                            <Terminal size={14} />Commands & Permissions
+                        </div>
+                        <button
+                            type="button"
+                            className="mp-btn mp-btn-secondary"
+                            onClick={addCommand}
+                            style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                            <Plus size={13} /> Add Command
+                        </button>
+                    </div>
+
+                    <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', marginBottom: '1rem', lineHeight: 1.4 }}>
+                        List commands registered by your plugin along with their permissions and descriptions. Descriptions are localized to the currently selected language tab (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--mp-text-2)' }}>{getLocaleName(activeLocale)}</span>).
+                    </p>
+
+                    {commands.length === 0 ? (
+                        <div style={{
+                            padding: '1.75rem 1rem',
+                            textAlign: 'center',
+                            background: 'var(--mp-surface-2)',
+                            borderRadius: 'var(--mp-radius-sm)',
+                            border: '1px dashed var(--mp-border)',
+                            color: 'var(--mp-text-3)',
+                            fontSize: '0.82rem'
+                        }}>
+                            No commands added yet. Click <strong>"Add Command"</strong> above to register commands.
+                        </div>
+                    ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                            {commands.map((cmd, idx) => (
+                                <div
+                                    key={idx}
+                                    style={{
+                                        background: 'var(--mp-surface-2)',
+                                        border: '1px solid var(--mp-border)',
+                                        borderRadius: 'var(--mp-radius-sm)',
+                                        padding: '0.85rem 1rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: '0.65rem'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
+                                                Command <span style={{ color: 'var(--mp-error)' }}>*</span>
+                                            </label>
+                                            <input
+                                                className="mp-input"
+                                                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                placeholder="/spawn [player]"
+                                                value={cmd.name}
+                                                onChange={e => updateCommandField(idx, 'name', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div style={{ flex: 1 }}>
+                                            <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
+                                                Permission Node <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
+                                            </label>
+                                            <input
+                                                className="mp-input"
+                                                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                                placeholder="pumpkin.command.spawn"
+                                                value={cmd.permission}
+                                                onChange={e => updateCommandField(idx, 'permission', e.target.value)}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeCommand(idx)}
+                                            title="Remove Command"
+                                            style={{
+                                                alignSelf: 'flex-end',
+                                                marginBottom: '2px',
+                                                background: 'rgba(242, 65, 90, 0.1)',
+                                                border: '1px solid rgba(242, 65, 90, 0.25)',
+                                                borderRadius: '6px',
+                                                color: 'var(--mp-error)',
+                                                padding: '0.48rem 0.6rem',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                transition: 'background 0.15s',
+                                            }}
+                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.2)')}
+                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.1)')}
+                                        >
+                                            <Trash2 size={15} />
+                                        </button>
+                                    </div>
+
+                                    <div>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                                            <label className="mp-label" style={{ fontSize: '0.72rem', margin: 0 }}>
+                                                Description ({getLocaleName(activeLocale)})
+                                            </label>
+                                            <span style={{ fontSize: '0.68rem', color: 'var(--mp-text-3)' }}>
+                                                {activeLocale !== DEFAULT_LOCALE && !cmd.descriptions[activeLocale] ? (
+                                                    <span>Falls back to: <em style={{ color: 'var(--mp-text-2)' }}>{cmd.descriptions[DEFAULT_LOCALE] || 'English default'}</em></span>
+                                                ) : null}
+                                            </span>
+                                        </div>
+                                        <input
+                                            className="mp-input"
+                                            style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
+                                            placeholder={`What does this command do? (${getLocaleName(activeLocale)})`}
+                                            value={cmd.descriptions[activeLocale] ?? ''}
+                                            onChange={e => updateCommandDescription(idx, activeLocale, e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {saveError && (

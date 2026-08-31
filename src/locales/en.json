@@ -74,6 +74,17 @@
       "details_placeholder": "Please provide additional details...",
       "submit": "Submit Report",
       "success": "Report submitted. Our moderation team will investigate."
+    },
+    "commands": {
+      "title": "Commands & Permissions",
+      "no_commands": "No commands listed for this plugin.",
+      "permission": "Permission",
+      "no_permission": "None required",
+      "copy_command": "Copy command",
+      "copy_permission": "Copy permission",
+      "copied": "Copied!",
+      "show_all": "Show all {{count}} commands",
+      "show_less": "Show less"
     }
   },
   "profile": {
