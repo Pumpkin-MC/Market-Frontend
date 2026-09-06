@@ -5,7 +5,8 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, Minus, DollarSign, 
-  Download, MousePointer2, Star, Globe
+  Download, MousePointer2, Star, Globe,
+  Server, Users, Radio, Cpu, Layers, Activity
 } from 'lucide-react';
 import { useAnalytics } from '../useAnalytics';
 
@@ -87,7 +88,7 @@ const KpiCard = ({ title, value, comparison, icon: Icon, chartData, dataKey }: a
 };
 
 export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) => {
-  const { processedData, totals, ratingSummary, referrers, timeframe, setTimeframe, loading } = useAnalytics(pluginId);
+  const { processedData, totals, ratingSummary, referrers, telemetry, timeframe, setTimeframe, loading } = useAnalytics(pluginId);
   const timeframes = ['Today', '7 Days', '1 Month', '1 Year', 'Lifetime'];
 
   if (loading) {
@@ -161,6 +162,202 @@ export const PluginAnalyticsTab: React.FC<Props> = ({ pluginId, pluginName }) =>
             chartData={processedData}
             dataKey="avgRating"
           />
+        </div>
+      </div>
+
+      {/* ── Live Game Server Telemetry (Pumpkin & Vine) ── */}
+      <div className="mp-card" style={{ marginTop: '1.25rem', padding: '1.25rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Server size={18} color="#10b981" />
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, color: 'var(--mp-text-1, #f8fafc)' }}>
+                Live Server Telemetry & Installations
+              </h3>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '2px 8px', borderRadius: '12px', background: 'rgba(16, 185, 129, 0.12)', color: '#10b981', fontSize: '0.72rem', fontWeight: 600 }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', boxShadow: '0 0 6px #10b981' }} />
+                Real-Time Heartbeats
+              </span>
+            </div>
+            <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: 'var(--mp-text-3, #94a3b8)' }}>
+              Direct metrics reported by Minecraft production servers running <strong>{pluginName}</strong> on Pumpkin & Vine.
+            </p>
+          </div>
+        </div>
+
+        {/* 4 Telemetry Metric Badges */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <Server size={14} />
+              Active Servers (24h)
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--mp-text-1, #fff)', marginTop: '4px', lineHeight: 1.1 }}>
+              {telemetry?.activeServers24h?.toLocaleString() ?? 0}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)', marginTop: '4px' }}>
+              {telemetry?.activeServers7d ?? 0} weekly active servers (7d)
+            </div>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#06b6d4', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <Users size={14} />
+              Total Player Reach
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--mp-text-1, #fff)', marginTop: '4px', lineHeight: 1.1 }}>
+              {telemetry?.totalPlayersOnline?.toLocaleString() ?? 0}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)', marginTop: '4px' }}>
+              Concurrent players on active servers
+            </div>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <Activity size={14} />
+              Peak 24h Players
+            </div>
+            <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--mp-text-1, #fff)', marginTop: '4px', lineHeight: 1.1 }}>
+              {telemetry?.peakPlayers24h?.toLocaleString() ?? 0}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)', marginTop: '4px' }}>
+              Highest server player concurrency
+            </div>
+          </div>
+
+          <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '14px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+              <Radio size={14} />
+              Primary Platform
+            </div>
+            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--mp-text-1, #fff)', marginTop: '4px', lineHeight: 1.1, textTransform: 'capitalize' }}>
+              {telemetry?.serverTypes?.[0]?.label || 'Pumpkin'}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)', marginTop: '4px' }}>
+              {telemetry?.serverTypes?.[0]?.percentage ? `${telemetry.serverTypes[0].percentage}% of instances` : 'Awaiting heartbeats'}
+            </div>
+          </div>
+        </div>
+
+        {/* Breakdown sub-grid: Installed Versions, Runtime Environment, Active Server Geography */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+          {/* Installed Version Adoption */}
+          <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--mp-text-1, #fff)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Layers size={16} color="#10b981" />
+              Installed Version Adoption
+            </div>
+            {telemetry?.versions && telemetry.versions.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {telemetry.versions.map((ver, idx) => (
+                  <div key={idx} style={{ fontSize: '0.8rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--mp-text-1, #fff)', fontFamily: 'monospace' }}>
+                        v{ver.label.replace(/^v/, '')}
+                      </span>
+                      <span style={{ color: 'var(--mp-text-3, #94a3b8)', fontSize: '0.75rem' }}>
+                        {ver.count} {ver.count === 1 ? 'server' : 'servers'} ({ver.percentage}%)
+                      </span>
+                    </div>
+                    <div style={{ height: '6px', width: '100%', background: 'rgba(255,255,255,0.05)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${Math.min(ver.percentage, 100)}%`, background: idx === 0 ? '#10b981' : '#3b82f6', borderRadius: '3px' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.8rem', color: 'var(--mp-text-3, #94a3b8)', padding: '1.5rem 0', textAlign: 'center' }}>
+                Awaiting version heartbeats from active servers.
+              </div>
+            )}
+          </div>
+
+          {/* Runtime Environment: Engine, Minecraft Version & OS */}
+          <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--mp-text-1, #fff)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Cpu size={16} color="#06b6d4" />
+              Server Runtime Environment
+            </div>
+
+            {/* Platform engines */}
+            {telemetry?.serverTypes && telemetry.serverTypes.length > 0 && (
+              <div style={{ marginBottom: '12px' }}>
+                <div style={{ fontSize: '0.7rem', color: 'var(--mp-text-3, #94a3b8)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
+                  Server Software
+                </div>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {telemetry.serverTypes.map((st, i) => (
+                    <span key={i} style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: 'var(--mp-text-1, #fff)' }}>
+                      <strong>{st.label}</strong>: {st.count} ({st.percentage}%)
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Minecraft versions */}
+            <div style={{ marginBottom: '12px' }}>
+              <div style={{ fontSize: '0.7rem', color: 'var(--mp-text-3, #94a3b8)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
+                Minecraft Versions
+              </div>
+              {telemetry?.minecraftVersions && telemetry.minecraftVersions.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {telemetry.minecraftVersions.slice(0, 4).map((mc, i) => (
+                    <span key={i} style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(6, 182, 212, 0.08)', border: '1px solid rgba(6, 182, 212, 0.2)', color: '#06b6d4' }}>
+                      MC {mc.label} ({mc.percentage}%)
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)' }}>MC 1.21.x</span>
+              )}
+            </div>
+
+            {/* Operating System */}
+            <div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--mp-text-3, #94a3b8)', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>
+                Server Host OS
+              </div>
+              {telemetry?.operatingSystems && telemetry.operatingSystems.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {telemetry.operatingSystems.slice(0, 3).map((os, i) => (
+                    <span key={i} style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.04)', color: 'var(--mp-text-2, #cbd5e1)' }}>
+                      {os.label} ({os.percentage}%)
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span style={{ fontSize: '0.75rem', color: 'var(--mp-text-3, #94a3b8)' }}>Linux / Bare Metal</span>
+              )}
+            </div>
+          </div>
+
+          {/* Active Server Geography */}
+          <div style={{ background: 'rgba(255,255,255,0.015)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '16px' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--mp-text-1, #fff)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Globe size={16} color="#f59e0b" />
+              Active Server Locations
+            </div>
+            {telemetry?.countries && telemetry.countries.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '180px', overflowY: 'auto' }}>
+                {telemetry.countries.slice(0, 6).map((c, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', padding: '3px 0', borderBottom: i < 5 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
+                    <span style={{ color: 'var(--mp-text-1, #fff)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }} title={c.countryName}>
+                      {c.countryName}
+                    </span>
+                    <span style={{ color: 'var(--mp-text-3, #94a3b8)', fontSize: '0.75rem' }}>
+                      <strong style={{ color: '#f59e0b' }}>{c.servers}</strong> {c.servers === 1 ? 'server' : 'servers'} • {c.players} players
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ fontSize: '0.8rem', color: 'var(--mp-text-3, #94a3b8)', padding: '1.5rem 0', textAlign: 'center' }}>
+                Global server distribution will appear here as instances connect.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -1,11 +1,48 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../../api';
 
+export interface TelemetryDistributionItem {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TelemetryGeoItem {
+  country: string;
+  countryName: string;
+  servers: number;
+  players: number;
+  percentage: number;
+}
+
+export interface PluginTelemetry {
+  activeServers24h: number;
+  activeServers7d: number;
+  totalPlayersOnline: number;
+  peakPlayers24h: number;
+  versions: TelemetryDistributionItem[];
+  serverTypes: TelemetryDistributionItem[];
+  minecraftVersions: TelemetryDistributionItem[];
+  operatingSystems: TelemetryDistributionItem[];
+  countries: TelemetryGeoItem[];
+}
+
+export interface DevMapItem {
+  country: string;
+  countryName: string;
+  servers: number;
+  players: number;
+  visitors: number;
+  freeDownloads: number;
+  buyers: number;
+}
+
 export const useAnalytics = (pluginId?: number) => {
   const [timeSeries, setTimeSeries] = useState<any[]>([]);
   const [ratingSummary, setRatingSummary] = useState<any>(null);
   const [referrers, setReferrers] = useState<any[]>([]);
-  const [mapData, setMapData] = useState<any[]>([]);
+  const [mapData, setMapData] = useState<DevMapItem[]>([]);
+  const [telemetry, setTelemetry] = useState<PluginTelemetry | null>(null);
   const [breakdowns, setBreakdowns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [timeframe, setTimeframe] = useState<string>('Lifetime');
@@ -23,6 +60,7 @@ export const useAnalytics = (pluginId?: number) => {
       setRatingSummary(res.data.ratingSummary || null);
       setReferrers(Array.isArray(res.data.referrers) ? res.data.referrers : []);
       setMapData(Array.isArray(res.data.mapData) ? res.data.mapData : []);
+      setTelemetry(res.data.telemetry || null);
       setBreakdowns(Array.isArray(res.data.breakdowns) ? res.data.breakdowns : []);
     } catch (error) {
       console.error("Analytics Fetch Error:", error);
@@ -30,6 +68,7 @@ export const useAnalytics = (pluginId?: number) => {
       setRatingSummary(null);
       setReferrers([]);
       setMapData([]);
+      setTelemetry(null);
       setBreakdowns([]);
     } finally {
       setLoading(false);
@@ -88,6 +127,7 @@ export const useAnalytics = (pluginId?: number) => {
     ratingSummary,
     referrers,
     mapData, 
+    telemetry,
     breakdowns, 
     processedData, 
     totals, 

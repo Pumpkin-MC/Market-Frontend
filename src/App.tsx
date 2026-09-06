@@ -30,6 +30,7 @@ const DeveloperTermsPage = React.lazy(() => import('./pages/legal/DeveloperTerms
 const LegalNoticePage = React.lazy(() => import('./pages/legal/LegalNoticePage'));
 const AdminPanel = React.lazy(() => import('./pages/admin/AdminPanel'));
 
+
 const PageLoader = () => (
   <div style={{ minHeight: '50vh', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0.6, fontSize: '0.9rem' }}>
     Loading...
@@ -184,6 +185,7 @@ const App = () => (
           <Route path="settings" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         </Route>
 
+
         {/* Developer Studio layout (Developer Studio navbar replaces original navbar when in dev menu) */}
         <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
           <Route index element={<Navigate to="/dashboard/plugins" replace />} />
@@ -250,6 +252,7 @@ const DeveloperStudioNavbar = ({ user }: any) => {
             <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>
           )}
         </div>
+
 
         <div className="nav-actions" style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
           <Link
@@ -330,6 +333,7 @@ const Navbar = ({ user }: any) => {
           {user && <NavLink to={user.is_developer ? "/dashboard/plugins?create=true" : "/dashboard/plugins"} onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
           {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
         </div>
+
 
         {/* ── Center Search Bar with Suggestions ── */}
         <div className="nav-search-center">
@@ -427,6 +431,7 @@ const Footer = () => (
       <p style={{ fontSize: '12px', opacity: 0.4, margin: 0 }}>
         © 2026 PumpkinMC
       </p>
+
 
       <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
 

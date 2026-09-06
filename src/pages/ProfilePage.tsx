@@ -17,7 +17,7 @@ import {
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
   ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
-  Fingerprint, Plus, ShieldAlert, RefreshCw
+  Fingerprint, Plus, ShieldAlert, RefreshCw, Copy, Check, Terminal
 } from 'lucide-react';
 
 interface LibraryEntry {
@@ -31,11 +31,12 @@ interface LibraryEntry {
   is_preorder?: boolean;
 }
 
-type Tab = 'account' | 'security' | 'developer' | 'notifications' | 'library' | 'privacy' | 'danger';
+type Tab = 'account' | 'security' | 'api_keys' | 'developer' | 'notifications' | 'library' | 'privacy' | 'danger';
 
 const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger?: boolean }[] = [
   { key: 'account',       label: 'Account',             icon: User        },
   { key: 'security',      label: 'Security',            icon: Shield      },
+  { key: 'api_keys',      label: 'API Keys',            icon: Key         },
   { key: 'developer',     label: 'Developer Profile',   icon: Code        },
   { key: 'notifications', label: 'Notifications',       icon: Bell        },
   { key: 'library',       label: 'Library',             icon: BookOpen    },
@@ -324,11 +325,89 @@ const ProfilePage = () => {
   const [verify2faError, setVerify2faError] = useState('');
   const [verify2faLoading, setVerify2faLoading] = useState(false);
 
+  // API Keys / Personal Access Tokens
+  interface ApiKey {
+    id: number;
+    name: string;
+    keyPrefix: string;
+    scopes: string[];
+    lastUsedAt: string | null;
+    expiresAt: string | null;
+    createdAt: string;
+    isRevoked: boolean;
+  }
+
+  const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [newKeyName, setNewKeyName] = useState('');
+  const [newKeyExpiresIn, setNewKeyExpiresIn] = useState(90);
+  const [createdRawKey, setCreatedRawKey] = useState<string | null>(null);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [revokingKeyId, setRevokingKeyId] = useState<number | null>(null);
+  const [copiedKey, setCopiedKey] = useState(false);
+
+  const fetchApiKeys = async () => {
+    setApiKeysLoading(true);
+    try {
+      const res = await api.get('/user/api-keys');
+      setApiKeys(res.data);
+    } catch (err) {
+      console.error('Failed to load API keys:', err);
+    } finally {
+      setApiKeysLoading(false);
+    }
+  };
+
+  const handleCreateApiKey = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const res = await api.post('/user/api-keys', {
+        name: newKeyName.trim(),
+        expiresInDays: newKeyExpiresIn > 0 ? newKeyExpiresIn : null,
+        scopes: ['plugins:download'],
+      });
+      setCreatedRawKey(res.data.rawKey);
+      setNewKeyName('');
+      setNewKeyExpiresIn(90);
+      await fetchApiKeys();
+      showToast('API Key created successfully!');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to create API key', 'error');
+    } finally {
+      setCreatingKey(false);
+    }
+  };
+
+  const handleRevokeApiKey = async (id: number) => {
+    if (!window.confirm('Are you sure you want to revoke this API key? External tools and servers using it will immediately lose access.')) return;
+    setRevokingKeyId(id);
+    try {
+      await api.delete(`/user/api-keys/${id}`);
+      setApiKeys(prev => prev.filter(k => k.id !== id));
+      showToast('API Key revoked successfully.');
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to revoke API key', 'error');
+    } finally {
+      setRevokingKeyId(null);
+    }
+  };
+
+  const handleCopyRawKey = () => {
+    if (!createdRawKey) return;
+    navigator.clipboard.writeText(createdRawKey);
+    setCopiedKey(true);
+    setTimeout(() => setCopiedKey(false), 2500);
+  };
+
   useEffect(() => {
     if (activeTab === 'security') {
       fetchSessions();
       fetchPasskeys();
       fetchRecoveryStatus();
+    } else if (activeTab === 'api_keys') {
+      fetchApiKeys();
     }
   }, [activeTab]);
 
@@ -1238,6 +1317,200 @@ const ProfilePage = () => {
                     )}
                   </div>
                 )}
+              </SettingsCard>
+            </div>
+          )}
+
+          {/* ══ PERSONAL ACCESS TOKENS (API KEYS) ══════════════════════════ */}
+          {activeTab === 'api_keys' && (
+            <div className="profile-section">
+              <div className="settings-section-header">
+                <h2 className="section-title" style={{ marginBottom: 0 }}>
+                  <span>API Keys</span> & Automation Tokens
+                </h2>
+                <p className="settings-section-sub">
+                  Personal access tokens allow external tools, CI/CD pipelines, and Minecraft servers to securely call the Pumpkin Market REST API without exposing your account password.
+                </p>
+              </div>
+
+              {/* Newly Generated Raw Key Modal / Highlight Box */}
+              {createdRawKey && (
+                <div
+                  style={{
+                    background: 'rgba(34, 197, 94, 0.1)',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    borderRadius: 12,
+                    padding: '1.25rem',
+                    marginBottom: '1.5rem',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80', fontWeight: 600, marginBottom: '6px' }}>
+                    <CheckCircle size={18} />
+                    <span>Personal Access Token Created Successfully!</span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '0 0 12px 0' }}>
+                    <strong>Make sure to copy your token now.</strong> For your security, you will not be able to view this token again after leaving this page.
+                  </p>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      padding: '10px 14px',
+                      borderRadius: 8,
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                    }}
+                  >
+                    <code style={{ fontFamily: 'monospace', color: '#f1f5f9', fontSize: '0.9rem', wordBreak: 'break-all', flex: 1 }}>
+                      {createdRawKey}
+                    </code>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-primary"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+                      onClick={handleCopyRawKey}
+                    >
+                      {copiedKey ? <Check size={14} /> : <Copy size={14} />}
+                      <span>{copiedKey ? 'Copied!' : 'Copy Token'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="settings-btn settings-btn-secondary"
+                      onClick={() => setCreatedRawKey(null)}
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Generate New API Key Card */}
+              <SettingsCard
+                title="Generate New API Key"
+                icon={Key}
+                description="Create a dedicated token for automated plugin downloads, server setup scripts, or backup bots."
+              >
+                <form onSubmit={handleCreateApiKey}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                    <Field label="Key Name / Purpose" hint="e.g., 'SMP Server 1', 'Pterodactyl Daemon', 'CI Automation'">
+                      <input
+                        type="text"
+                        className="settings-input"
+                        placeholder="My Production Server"
+                        value={newKeyName}
+                        onChange={e => setNewKeyName(e.target.value)}
+                        maxLength={64}
+                        required
+                      />
+                    </Field>
+
+                    <Field label="Expiration" hint="Tokens will automatically stop working after expiry">
+                      <select
+                        className="settings-input"
+                        value={newKeyExpiresIn}
+                        onChange={e => setNewKeyExpiresIn(Number(e.target.value))}
+                      >
+                        <option value={30}>30 Days</option>
+                        <option value={90}>90 Days (Recommended)</option>
+                        <option value={180}>180 Days</option>
+                        <option value={365}>1 Year</option>
+                        <option value={0}>No Expiration</option>
+                      </select>
+                    </Field>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="settings-btn settings-btn-primary"
+                    disabled={creatingKey || !newKeyName.trim()}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <Plus size={16} />
+                    {creatingKey ? 'Generating…' : 'Generate Token'}
+                  </button>
+                </form>
+              </SettingsCard>
+
+              {/* Active API Keys List */}
+              <SettingsCard
+                title="Active Tokens"
+                icon={Key}
+                description="Tokens currently authorized to authenticate as your account."
+              >
+                {apiKeysLoading ? (
+                  <p className="settings-hint" style={{ textAlign: 'center', padding: '1.5rem 0' }}>Loading your API keys…</p>
+                ) : apiKeys.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
+                    <Key size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
+                    <p style={{ margin: 0, fontWeight: 500 }}>No API keys generated yet.</p>
+                    <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '4px' }}>
+                      Generate your first token above to start automating plugin downloads with curl or scripts.
+                    </p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    {apiKeys.map(k => (
+                      <div
+                        key={k.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '1rem',
+                          padding: '1rem 1.15rem',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          border: '1px solid var(--mp-border, rgba(255, 255, 255, 0.08))',
+                          borderRadius: 10,
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                            <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
+                              {k.name}
+                            </span>
+                            <code style={{ fontSize: '0.78rem', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4, color: '#38bdf8' }}>
+                              {k.keyPrefix}
+                            </code>
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                            <span>Created: {new Date(k.createdAt).toLocaleDateString()}</span>
+                            <span>Expires: {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Never'}</span>
+                            <span>Last used: {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : 'Never'}</span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="settings-btn settings-btn-danger-outline"
+                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                          onClick={() => handleRevokeApiKey(k.id)}
+                          disabled={revokingKeyId === k.id}
+                        >
+                          <Trash2 size={13} />
+                          {revokingKeyId === k.id ? 'Revoking…' : 'Revoke'}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </SettingsCard>
+
+              {/* Usage Guide Box */}
+              <SettingsCard
+                title="How to Use Your Token"
+                icon={Terminal}
+                description="Using your token with cURL or automation scripts."
+              >
+                <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 10px 0' }}>
+                  Pass your token in the <code>Authorization: Bearer</code> header to authenticate directly with the REST API:
+                </p>
+                <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <code style={{ fontSize: '0.82rem', color: '#f1f5f9', display: 'block', lineHeight: 1.6 }}>
+                    curl -H "Authorization: Bearer pmk_your_token_here" \<br />
+                    &nbsp;&nbsp;https://market.pumpkinmc.org/api/v1/rest/plugins/1/download -o my_plugin.wasm
+                  </code>
+                </div>
               </SettingsCard>
             </div>
           )}
