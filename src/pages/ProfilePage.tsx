@@ -337,14 +337,229 @@ const ProfilePage = () => {
     isRevoked: boolean;
   }
 
+  const API_KEY_SCOPES = {
+    // Plugins
+    PLUGINS_READ: 'plugins:read',
+    PLUGINS_DOWNLOAD: 'plugins:download',
+    PLUGINS_CREATE: 'plugins:create',
+    PLUGINS_UPDATE: 'plugins:update',
+    PLUGINS_VERSIONS_UPLOAD: 'plugins:versions:upload',
+    PLUGINS_MEDIA_UPLOAD: 'plugins:media:upload',
+    PLUGINS_PUBLISH: 'plugins:publish',
+    PLUGINS_DELETE: 'plugins:delete',
+
+    // Licenses
+    LICENSES_READ: 'licenses:read',
+    LICENSES_CREATE: 'licenses:create',
+    LICENSES_REVOKE: 'licenses:revoke',
+    LICENSES_DELETE: 'licenses:delete',
+
+    // Coupons
+    COUPONS_READ: 'coupons:read',
+    COUPONS_WRITE: 'coupons:write',
+
+    // Reviews
+    REVIEWS_READ: 'reviews:read',
+    REVIEWS_REPLY: 'reviews:reply',
+
+    // Analytics & Telemetry
+    ANALYTICS_READ: 'analytics:read',
+    TELEMETRY_READ: 'telemetry:read',
+  } as const;
+
+  type ApiKeyScope = (typeof API_KEY_SCOPES)[keyof typeof API_KEY_SCOPES];
+
+  interface ScopeItem {
+    key: ApiKeyScope;
+    name: string;
+    description: string;
+    devOnly?: boolean;
+  }
+
+  interface ScopeCategory {
+    id: string;
+    name: string;
+    description: string;
+    scopes: ScopeItem[];
+  }
+
+  const SCOPE_CATEGORIES: ScopeCategory[] = [
+    {
+      id: 'plugins',
+      name: 'Plugins',
+      description: 'Permissions for reading, downloading, creating, updating, and publishing plugins',
+      scopes: [
+        {
+          key: API_KEY_SCOPES.PLUGINS_READ,
+          name: 'Read Plugins',
+          description: 'View plugin metadata, draft status, and version history',
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_DOWNLOAD,
+          name: 'Download Plugins',
+          description: 'Download free and owned plugin WebAssembly binaries and release artifacts',
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_CREATE,
+          name: 'Create Plugins',
+          description: 'Register and create new plugin listings on the marketplace',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_UPDATE,
+          name: 'Update Details',
+          description: 'Edit plugin descriptions, categories, links, icons, and pricing',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_VERSIONS_UPLOAD,
+          name: 'Upload Versions',
+          description: 'Upload new WebAssembly release binaries and version archives',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_MEDIA_UPLOAD,
+          name: 'Upload Media',
+          description: 'Upload screenshots, promotional images, and media gallery assets',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_PUBLISH,
+          name: 'Publish & Unpublish',
+          description: 'Publish draft plugins or toggle release visibility status',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.PLUGINS_DELETE,
+          name: 'Delete Plugins',
+          description: 'Permanently remove owned plugins and associated artifacts',
+          devOnly: true,
+        },
+      ],
+    },
+    {
+      id: 'licenses',
+      name: 'Licenses',
+      description: 'Permissions for customer licenses on paid/premium plugins',
+      scopes: [
+        {
+          key: API_KEY_SCOPES.LICENSES_READ,
+          name: 'View Licenses',
+          description: 'List issued customer licenses and inspect activation status',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.LICENSES_CREATE,
+          name: 'Issue Licenses',
+          description: 'Generate and issue new customer license keys',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.LICENSES_REVOKE,
+          name: 'Revoke Licenses',
+          description: 'Toggle revocation status for issued customer licenses',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.LICENSES_DELETE,
+          name: 'Delete Licenses',
+          description: 'Permanently remove license records from the database',
+          devOnly: true,
+        },
+      ],
+    },
+    {
+      id: 'coupons',
+      name: 'Coupons',
+      description: 'Permissions for promotional discount codes',
+      scopes: [
+        {
+          key: API_KEY_SCOPES.COUPONS_READ,
+          name: 'View Coupons',
+          description: 'List active, scheduled, and expired promotional discount codes',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.COUPONS_WRITE,
+          name: 'Manage Coupons',
+          description: 'Create, update, and delete promotional discount codes',
+          devOnly: true,
+        },
+      ],
+    },
+    {
+      id: 'reviews',
+      name: 'Reviews',
+      description: 'Permissions for reading and replying to community reviews',
+      scopes: [
+        {
+          key: API_KEY_SCOPES.REVIEWS_READ,
+          name: 'View Reviews',
+          description: 'Read plugin user ratings and feedback reviews',
+        },
+        {
+          key: API_KEY_SCOPES.REVIEWS_REPLY,
+          name: 'Reply to Reviews',
+          description: 'Post official developer replies to customer reviews',
+          devOnly: true,
+        },
+      ],
+    },
+    {
+      id: 'analytics',
+      name: 'Analytics & Telemetry',
+      description: 'Permissions for developer statistics, revenue metrics, and runtime telemetry',
+      scopes: [
+        {
+          key: API_KEY_SCOPES.ANALYTICS_READ,
+          name: 'Read Analytics',
+          description: 'Query developer download charts, visitor statistics, and revenue telemetry',
+          devOnly: true,
+        },
+        {
+          key: API_KEY_SCOPES.TELEMETRY_READ,
+          name: 'Read Telemetry',
+          description: 'Query runtime heartbeat metrics, active player counts, and server distributions',
+          devOnly: true,
+        },
+      ],
+    },
+  ];
+
   const [apiKeys, setApiKeys] = useState<ApiKey[]>([]);
   const [apiKeysLoading, setApiKeysLoading] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyExpiresIn, setNewKeyExpiresIn] = useState(90);
+  const [selectedScopes, setSelectedScopes] = useState<ApiKeyScope[]>([API_KEY_SCOPES.PLUGINS_DOWNLOAD]);
   const [createdRawKey, setCreatedRawKey] = useState<string | null>(null);
   const [creatingKey, setCreatingKey] = useState(false);
   const [revokingKeyId, setRevokingKeyId] = useState<number | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
+
+  const toggleCategory = (cat: ScopeCategory) => {
+    const keys = cat.scopes.map(s => s.key);
+    const allSelected = keys.every(k => selectedScopes.includes(k));
+    if (allSelected) {
+      setSelectedScopes(prev => prev.filter(k => !keys.includes(k)));
+    } else {
+      setSelectedScopes(prev => Array.from(new Set([...prev, ...keys])));
+    }
+  };
+
+  const toggleScope = (key: ApiKeyScope) => {
+    setSelectedScopes(prev =>
+      prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+    );
+  };
+
+  const selectAllScopes = () => {
+    const allKeys = SCOPE_CATEGORIES.flatMap(c => c.scopes.map(s => s.key));
+    setSelectedScopes(allKeys);
+  };
+
+  const deselectAllScopes = () => {
+    setSelectedScopes([]);
+  };
 
   const fetchApiKeys = async () => {
     setApiKeysLoading(true);
@@ -361,16 +576,21 @@ const ProfilePage = () => {
   const handleCreateApiKey = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newKeyName.trim()) return;
+    if (selectedScopes.length === 0) {
+      showToast('Please select at least one permission scope for this key.', 'error');
+      return;
+    }
     setCreatingKey(true);
     try {
       const res = await api.post('/user/api-keys', {
         name: newKeyName.trim(),
         expiresInDays: newKeyExpiresIn > 0 ? newKeyExpiresIn : null,
-        scopes: ['plugins:download'],
+        scopes: selectedScopes,
       });
       setCreatedRawKey(res.data.rawKey);
       setNewKeyName('');
       setNewKeyExpiresIn(90);
+      setSelectedScopes([API_KEY_SCOPES.PLUGINS_DOWNLOAD]);
       await fetchApiKeys();
       showToast('API Key created successfully!');
     } catch (err: any) {
@@ -1420,10 +1640,158 @@ const ProfilePage = () => {
                     </Field>
                   </div>
 
+                  {/* Scopes & Permissions Selection */}
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '8px' }}>
+                      <div>
+                        <label style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--mp-text, #fff)', display: 'block' }}>
+                          Permission Scopes
+                        </label>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)' }}>
+                          Configure permissions granted to this token. External tools will only be able to perform authorized actions.
+                        </span>
+                      </div>
+                      <div style={{ display: 'flex', gap: '6px' }}>
+                        <button
+                          type="button"
+                          onClick={selectAllScopes}
+                          className="settings-btn settings-btn-secondary"
+                          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
+                        >
+                          Select All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={deselectAllScopes}
+                          className="settings-btn settings-btn-secondary"
+                          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
+                        >
+                          Deselect All
+                        </button>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+                      {SCOPE_CATEGORIES.map(cat => {
+                        const catScopeKeys = cat.scopes.map(s => s.key);
+                        const selectedCount = catScopeKeys.filter(k => selectedScopes.includes(k)).length;
+                        const allSelected = selectedCount === catScopeKeys.length;
+                        const someSelected = selectedCount > 0 && !allSelected;
+
+                        return (
+                          <div
+                            key={cat.id}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.02)',
+                              border: '1px solid var(--mp-border, rgba(255, 255, 255, 0.08))',
+                              borderRadius: 10,
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {/* Category Header with Master Toggle */}
+                            <div
+                              onClick={() => toggleCategory(cat)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                padding: '0.75rem 1rem',
+                                background: selectedCount > 0 ? 'rgba(249, 115, 22, 0.06)' : 'rgba(255, 255, 255, 0.01)',
+                                borderBottom: '1px solid var(--mp-border, rgba(255, 255, 255, 0.06))',
+                                cursor: 'pointer',
+                                userSelect: 'none',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={allSelected}
+                                  ref={el => {
+                                    if (el) el.indeterminate = someSelected;
+                                  }}
+                                  onChange={() => toggleCategory(cat)}
+                                  onClick={e => e.stopPropagation()}
+                                  style={{ cursor: 'pointer', accentColor: '#f97316', width: 16, height: 16 }}
+                                />
+                                <div>
+                                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--mp-text, #fff)' }}>
+                                    {cat.name}
+                                  </span>
+                                  <span style={{ fontSize: '0.75rem', color: 'var(--mp-muted, #94a3b8)', marginLeft: '8px' }}>
+                                    {cat.description}
+                                  </span>
+                                </div>
+                              </div>
+                              <span
+                                style={{
+                                  fontSize: '0.74rem',
+                                  padding: '2px 8px',
+                                  borderRadius: 12,
+                                  background: selectedCount > 0 ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                  color: selectedCount > 0 ? '#f97316' : '#64748b',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {selectedCount} / {catScopeKeys.length} selected
+                              </span>
+                            </div>
+
+                            {/* Individual Scopes */}
+                            <div style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                              {cat.scopes.map(scope => {
+                                const isChecked = selectedScopes.includes(scope.key);
+                                return (
+                                  <label
+                                    key={scope.key}
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'flex-start',
+                                      gap: '10px',
+                                      padding: '0.45rem 0.5rem',
+                                      borderRadius: 6,
+                                      background: isChecked ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
+                                      cursor: 'pointer',
+                                      userSelect: 'none',
+                                    }}
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={isChecked}
+                                      onChange={() => toggleScope(scope.key)}
+                                      style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#f97316', width: 15, height: 15 }}
+                                    />
+                                    <div style={{ flex: 1 }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                        <code style={{ fontSize: '0.76rem', background: isChecked ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255, 255, 255, 0.05)', color: isChecked ? '#38bdf8' : '#94a3b8', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace' }}>
+                                          {scope.key}
+                                        </code>
+                                        <span style={{ fontSize: '0.84rem', fontWeight: 500, color: isChecked ? 'var(--mp-text, #fff)' : '#94a3b8' }}>
+                                          {scope.name}
+                                        </span>
+                                        {scope.devOnly && (
+                                          <span style={{ fontSize: '0.68rem', background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.25)', padding: '0 5px', borderRadius: 4 }}>
+                                            Developer
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
+                                        {scope.description}
+                                      </p>
+                                    </div>
+                                  </label>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
                     className="settings-btn settings-btn-primary"
-                    disabled={creatingKey || !newKeyName.trim()}
+                    disabled={creatingKey || !newKeyName.trim() || selectedScopes.length === 0}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                   >
                     <Plus size={16} />
@@ -1478,6 +1846,26 @@ const ProfilePage = () => {
                             <span>Expires: {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Never'}</span>
                             <span>Last used: {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : 'Never'}</span>
                           </div>
+                          {k.scopes && k.scopes.length > 0 && (
+                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                              {k.scopes.map(s => (
+                                <span
+                                  key={s}
+                                  style={{
+                                    fontSize: '0.72rem',
+                                    background: 'rgba(56, 189, 248, 0.08)',
+                                    color: '#7dd3fc',
+                                    border: '1px solid rgba(56, 189, 248, 0.2)',
+                                    padding: '1px 7px',
+                                    borderRadius: 12,
+                                    fontFamily: 'monospace',
+                                  }}
+                                >
+                                  {s}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
 
                         <button
