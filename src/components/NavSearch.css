@@ -183,6 +183,14 @@
   background: rgba(249, 115, 22, 0.1);
 }
 
+.nav-search-recent-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 6px 10px 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  margin-top: 4px;
+}
+
 /* ── Generic Item ── */
 .nav-search-item {
   display: flex;

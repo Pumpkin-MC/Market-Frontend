@@ -192,10 +192,16 @@ h3 {
 }
 
 .nav-search-center {
-  flex: 1;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   justify-content: center;
-  margin: 0 1.5rem;
+  width: 100%;
+  max-width: 440px;
+  z-index: 100;
+  pointer-events: auto;
 }
 
 .nav-search-input-wrap {
@@ -313,8 +319,8 @@ h3 {
     margin: 0 0.5rem;
   }
 
-  .nav-search {
-    margin: 0 1rem;
+  .nav-search-center {
+    max-width: 320px;
   }
 }
 
@@ -361,9 +367,13 @@ h3 {
     font-size: 1.1rem;
   }
 
-  .nav-search {
+  .nav-search-center {
+    position: static;
+    transform: none;
+    left: auto;
+    top: auto;
     margin: 0 0 2rem 0;
-    max-width: none;
+    max-width: 100%;
     width: 100%;
   }
 

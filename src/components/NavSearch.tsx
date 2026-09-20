@@ -408,20 +408,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
           {/* ── 1. Recent Searches View (Empty query) ── */}
           {showRecentDropdown && (
             <div className="nav-search-section">
-              <div className="nav-search-section-header">
-                <span className="nav-search-section-title">
-                  <Clock size={13} />
-                  {t('search.recent_title')}
-                </span>
-                <button
-                  type="button"
-                  className="nav-search-clear-recent-btn"
-                  onClick={handleClearAllRecent}
-                >
-                  {t('search.clear_recent')}
-                </button>
-              </div>
-
               <div className="nav-search-recent-list">
                 {recentSearches.map((term, index) => {
                   const isSelected = selectedIndex === index;
@@ -448,6 +434,15 @@ export const NavSearch: React.FC<NavSearchProps> = ({
                     </div>
                   );
                 })}
+              </div>
+              <div className="nav-search-recent-footer">
+                <button
+                  type="button"
+                  className="nav-search-clear-recent-btn"
+                  onClick={handleClearAllRecent}
+                >
+                  {t('search.clear_recent')}
+                </button>
               </div>
             </div>
           )}

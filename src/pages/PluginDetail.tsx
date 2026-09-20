@@ -628,9 +628,10 @@ const PluginDetail = () => {
   // ── Download / purchase handler ──────────────────────────────────────────
   const handleDownload = async () => {
     if (!plugin) return;
-    if (!user) return navigate('/login', { state: { from: `/plugins/${id}` } });
 
     if (plugin.type === 'paid') {
+      if (!user) return navigate('/login', { state: { from: `/plugins/${id}` } });
+
       // Already owns it — download directly, no checkout
       if (ownsPlugin) {
         if (plugin.is_preorder) {
