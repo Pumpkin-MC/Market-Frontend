@@ -495,7 +495,8 @@ h3 {
 }
 
 @media (max-width: 480px) {
-  .plugin-grid {
+  .plugin-grid,
+  .home-plugin-grid {
     grid-template-columns: 1fr;
   }
 
@@ -806,8 +807,37 @@ h3 {
 .plugin-grid,
 .home-plugin-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 1.25rem;
+}
+
+.infinite-scroll-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 0 1rem;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.infinite-scroll-loader .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: var(--primary, #f97316);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.infinite-scroll-end {
+  text-align: center;
+  padding: 2.5rem 0 1rem;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+  margin-top: 2rem;
 }
 
 .plugin-card-link {
@@ -1224,6 +1254,7 @@ h3 {
   cursor: pointer;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   height: 100%;
+  min-height: 260px;
   display: flex;
   flex-direction: column;
 }
@@ -1236,7 +1267,7 @@ h3 {
 .pcv2-preview {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10.5;
   overflow: hidden;
   background: #0d0f12;
 }
@@ -1340,6 +1371,9 @@ h3 {
 .pcv2-info {
   padding: 0.75rem 0.85rem 0.85rem;
   flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .pcv2-name {
@@ -1464,7 +1498,7 @@ h3 {
   left: 50%;
   width: 100%;
   height: 100%;
-  transform: translate(-50%, -50%) scale(1.02);
+  transform: translate(-50%, -50%) scale(1.18);
   border: none;
   pointer-events: none;
 }

@@ -17,8 +17,10 @@ import {
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
   ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
-  Fingerprint, Plus, ShieldAlert, RefreshCw, Copy, Check, Terminal
+  Fingerprint, Plus, ShieldAlert, RefreshCw, Copy, Check, Terminal,
+  Cloud, Pencil, X
 } from 'lucide-react';
+import { getDevicePasskeyName } from '../utils/deviceInfo';
 
 interface LibraryEntry {
   plugin_id:    number;
@@ -313,6 +315,9 @@ const ProfilePage = () => {
   const [showAddPasskeyModal, setShowAddPasskeyModal] = useState(false);
   const [newPasskeyName, setNewPasskeyName] = useState('');
   const [passkeyRegistering, setPasskeyRegistering] = useState(false);
+  const [editingPasskeyId, setEditingPasskeyId] = useState<number | null>(null);
+  const [editingPasskeyName, setEditingPasskeyName] = useState('');
+  const [passkeyRenaming, setPasskeyRenaming] = useState(false);
 
   const [recoveryStatus, setRecoveryStatus] = useState<{ remaining: number; total: number; hasCodes: boolean } | null>(null);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
@@ -681,7 +686,7 @@ const ProfilePage = () => {
       const options = startRes.data?.publicKey || startRes.data;
       const credential = await startRegistration({ optionsJSON: options });
       const finishRes = await api.post('/user/passkey/register/finish', {
-        name: newPasskeyName.trim() || 'My Passkey',
+        name: newPasskeyName.trim() || getDevicePasskeyName(),
         credential,
       });
       if (finishRes.data.token) login(finishRes.data.token);
@@ -696,6 +701,27 @@ const ProfilePage = () => {
       }
     } finally {
       setPasskeyRegistering(false);
+    }
+  };
+
+  const handleStartRenamePasskey = (pk: any) => {
+    setEditingPasskeyId(pk.id);
+    setEditingPasskeyName(pk.name);
+  };
+
+  const handleSaveRenamePasskey = async (id: number) => {
+    const trimmed = editingPasskeyName.trim();
+    if (!trimmed) return;
+    setPasskeyRenaming(true);
+    try {
+      await api.patch(`/user/passkeys/${id}`, { name: trimmed });
+      showToast('Passkey renamed.');
+      setEditingPasskeyId(null);
+      fetchPasskeys();
+    } catch (err: any) {
+      showToast(err.response?.data?.error || 'Failed to rename passkey.', 'error');
+    } finally {
+      setPasskeyRenaming(false);
     }
   };
 
@@ -1119,7 +1145,10 @@ const ProfilePage = () => {
                   <button
                     type="button"
                     className="settings-btn settings-btn-primary"
-                    onClick={() => setShowAddPasskeyModal(true)}
+                    onClick={() => {
+                      setNewPasskeyName(getDevicePasskeyName());
+                      setShowAddPasskeyModal(true);
+                    }}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
                   >
                     <Plus size={15} /> Add Passkey
@@ -1141,7 +1170,7 @@ const ProfilePage = () => {
                       <input
                         type="text"
                         className="settings-input"
-                        placeholder="e.g. MacBook Pro Touch ID"
+                        placeholder={getDevicePasskeyName()}
                         value={newPasskeyName}
                         onChange={e => setNewPasskeyName(e.target.value)}
                         autoFocus
@@ -1187,9 +1216,10 @@ const ProfilePage = () => {
                           background: 'rgba(255,255,255,0.02)',
                           border: '1px solid var(--mp-border, rgba(255,255,255,0.08))',
                           borderRadius: 10,
+                          gap: '0.75rem',
                         }}
                       >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
                           <div style={{
                             width: 36,
                             height: 36,
@@ -1199,13 +1229,91 @@ const ProfilePage = () => {
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
+                            flexShrink: 0,
                           }}>
                             <Fingerprint size={20} />
                           </div>
-                          <div>
-                            <div style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
-                              {pk.name}
-                            </div>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            {editingPasskeyId === pk.id ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                                <input
+                                  type="text"
+                                  className="settings-input"
+                                  value={editingPasskeyName}
+                                  onChange={e => setEditingPasskeyName(e.target.value)}
+                                  disabled={passkeyRenaming}
+                                  autoFocus
+                                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.88rem', height: 28, maxWidth: 220 }}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') handleSaveRenamePasskey(pk.id);
+                                    if (e.key === 'Escape') setEditingPasskeyId(null);
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleSaveRenamePasskey(pk.id)}
+                                  disabled={passkeyRenaming}
+                                  style={{ background: 'none', border: 'none', color: '#4ade80', cursor: 'pointer', padding: 4 }}
+                                  title="Save Name"
+                                >
+                                  <Check size={16} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingPasskeyId(null)}
+                                  disabled={passkeyRenaming}
+                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4 }}
+                                  title="Cancel"
+                                >
+                                  <X size={16} />
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.15rem' }}>
+                                <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
+                                  {pk.name}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleStartRenamePasskey(pk)}
+                                  style={{ background: 'none', border: 'none', color: 'var(--mp-muted, #94a3b8)', cursor: 'pointer', padding: 2, display: 'inline-flex' }}
+                                  title="Rename Passkey"
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                                {pk.synced !== false ? (
+                                  <span style={{
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    background: 'rgba(56, 189, 248, 0.1)',
+                                    color: '#38bdf8',
+                                    padding: '1px 5px',
+                                    borderRadius: 4,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    border: '1px solid rgba(56, 189, 248, 0.2)'
+                                  }}>
+                                    <Cloud size={10} /> Synced
+                                  </span>
+                                ) : (
+                                  <span style={{
+                                    fontSize: '0.68rem',
+                                    fontWeight: 600,
+                                    background: 'rgba(168, 85, 247, 0.1)',
+                                    color: '#c084fc',
+                                    padding: '1px 5px',
+                                    borderRadius: 4,
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 3,
+                                    border: '1px solid rgba(168, 85, 247, 0.2)'
+                                  }}>
+                                    <Key size={10} /> Hardware Key
+                                  </span>
+                                )}
+                              </div>
+                            )}
                             <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)' }}>
                               Added {pk.createdAt ? new Date(pk.createdAt).toLocaleDateString() : 'recently'}
                               {pk.lastUsedAt && ` • Last used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
@@ -1224,6 +1332,7 @@ const ProfilePage = () => {
                             borderRadius: 6,
                             display: 'flex',
                             alignItems: 'center',
+                            flexShrink: 0,
                           }}
                           title="Delete Passkey"
                         >

@@ -4,7 +4,7 @@ import { getCodeList } from 'country-list';
 import {
   Globe, Mail, CheckCircle2, ChevronRight,
   AlertCircle, CreditCard, Code2, ShieldCheck, MapPin,
-  Gift,
+  Gift, User, Building2,
 } from 'lucide-react';
 import api from '../api';
 import { useAuth } from '../App';
@@ -175,9 +175,6 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       )}
 
         <div className="dev-modal-header">
-          <div className="dev-modal-badge">
-            {t('developer.onboarding.badge')}
-          </div>
           <h2>{t('developer.onboarding.title')}</h2>
           <p>
             {isSellingPaid
@@ -186,17 +183,31 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </p>
         </div>
 
-        {/* Step Indicator */}
-        <div className="dev-steps-nav">
-          <div className={`dev-step-pill ${step >= 1 ? 'active' : ''}`}>1. {t('developer.onboarding.step_account_type')}</div>
-          <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 2 ? 'active' : ''}`}>2. {t('developer.onboarding.step_name')}</div>
-          <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 3 ? 'active' : ''}`}>3. {t('developer.onboarding.step_monetization')}</div>
-          <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 4 ? 'active' : ''}`}>4. {t('developer.onboarding.step_links')}</div>
-          <div className="dev-step-line" />
-          <div className={`dev-step-pill ${step >= 5 ? 'active' : ''}`}>5. {t('developer.onboarding.step_finish')}</div>
+        {/* Sleek Step Indicator */}
+        <div className="dev-stepper">
+          {[
+            { num: 1, label: t('developer.onboarding.step_account_type') },
+            { num: 2, label: t('developer.onboarding.step_name') },
+            { num: 3, label: t('developer.onboarding.step_monetization') },
+            { num: 4, label: t('developer.onboarding.step_links') },
+            { num: 5, label: t('developer.onboarding.step_finish') },
+          ].map((s, idx) => (
+            <React.Fragment key={s.num}>
+              {idx > 0 && <div className={`dev-stepper-line ${step > s.num - 1 ? 'completed' : ''}`} />}
+              <div
+                className={`dev-stepper-step ${step === s.num ? 'active' : ''} ${step > s.num ? 'completed' : ''}`}
+                onClick={() => {
+                  if (step > s.num) setStep(s.num);
+                }}
+                style={{ cursor: step > s.num ? 'pointer' : 'default' }}
+              >
+                <div className="dev-stepper-circle">
+                  {step > s.num ? <CheckCircle2 size={13} /> : s.num}
+                </div>
+                <span className="dev-stepper-label">{s.label}</span>
+              </div>
+            </React.Fragment>
+          ))}
         </div>
 
         {error && (
@@ -210,9 +221,45 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {step === 1 && (
           <div className="dev-step-content">
             <div className="dev-account-types-container">
-              {/* An organization */}
-              <div className={`dev-account-card ${entityType === 'organization' ? 'selected' : ''}`}>
+              {/* Yourself (Individual Creator) */}
+              <div
+                className={`dev-account-card ${entityType === 'individual' ? 'selected' : ''}`}
+                onClick={() => setEntityType('individual')}
+              >
                 <div className="dev-account-card-header">
+                  <div className="dev-account-card-icon-badge">
+                    <User size={18} />
+                  </div>
+                  <h3 className="dev-account-card-title">{t('developer.onboarding.individual_title')}</h3>
+                  <p className="dev-account-card-desc">
+                    {t('developer.onboarding.individual_desc')}
+                  </p>
+                </div>
+
+                <div className="dev-account-card-actions">
+                  <button
+                    type="button"
+                    className="dev-account-get-started-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEntityType('individual');
+                      nextStep();
+                    }}
+                  >
+                    {t('developer.onboarding.btn_get_started')} <ChevronRight size={15} />
+                  </button>
+                </div>
+              </div>
+
+              {/* An organization */}
+              <div
+                className={`dev-account-card ${entityType === 'organization' ? 'selected' : ''}`}
+                onClick={() => setEntityType('organization')}
+              >
+                <div className="dev-account-card-header">
+                  <div className="dev-account-card-icon-badge">
+                    <Building2 size={18} />
+                  </div>
                   <h3 className="dev-account-card-title">{t('developer.onboarding.org_title')}</h3>
                   <p className="dev-account-card-desc">
                     {t('developer.onboarding.org_desc')}
@@ -225,6 +272,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     id="orgTypeSelect"
                     className="dev-input dev-select"
                     value={orgType}
+                    onClick={(e) => e.stopPropagation()}
                     onChange={e => {
                       setOrgType(e.target.value);
                       setEntityType('organization');
@@ -232,7 +280,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   >
                     <option value="">{t('developer.onboarding.org_type_placeholder')}</option>
                     <option value="company">Company / Studio</option>
-                    <option value="nonprofit">Non-profit / Open Source Organization</option>
+                    <option value="nonprofit">Non-profit / Open Source</option>
                     <option value="education">Educational Institution</option>
                     <option value="other">Other entity</option>
                   </select>
@@ -243,35 +291,13 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     type="button"
                     className="dev-account-get-started-btn"
                     disabled={!orgType}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setEntityType('organization');
                       nextStep();
                     }}
                   >
-                    {t('developer.onboarding.btn_get_started')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Yourself */}
-              <div className={`dev-account-card ${entityType === 'individual' ? 'selected' : ''}`}>
-                <div className="dev-account-card-header">
-                  <h3 className="dev-account-card-title">{t('developer.onboarding.individual_title')}</h3>
-                  <p className="dev-account-card-desc">
-                    {t('developer.onboarding.individual_desc')}
-                  </p>
-                </div>
-
-                <div className="dev-account-card-actions">
-                  <button
-                    type="button"
-                    className="dev-account-get-started-btn"
-                    onClick={() => {
-                      setEntityType('individual');
-                      nextStep();
-                    }}
-                  >
-                    {t('developer.onboarding.btn_get_started')}
+                    {t('developer.onboarding.btn_get_started')} <ChevronRight size={15} />
                   </button>
                 </div>
               </div>
@@ -336,106 +362,81 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {/* ── STEP 3: Monetization & Seller Details ── */}
         {step === 3 && (
           <div className="dev-step-content">
-            {/* Required Radio Question: Do you plan to publish Paid plugins? */}
-            <div className="dev-form-group">
-              <label className="dev-field-label" style={{ marginBottom: '0.6rem', display: 'block', fontWeight: 600 }}>
+            <div className="dev-form-group" style={{ marginBottom: '0.75rem' }}>
+              <label className="dev-field-label" style={{ marginBottom: '0.5rem', display: 'block', fontWeight: 600 }}>
                 {t('developer.onboarding.plan_paid_question')}
               </label>
 
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                <label style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.55rem',
-                  cursor: 'pointer',
-                  padding: '0.6rem 1.25rem',
-                  borderRadius: '8px',
-                  background: isSellingPaid === true ? 'rgba(249, 115, 22, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                  border: `1px solid ${isSellingPaid === true ? '#f97316' : 'rgba(255, 255, 255, 0.1)'}`,
-                  color: isSellingPaid === true ? '#fff' : '#cbd5e1',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease',
-                }}>
-                  <input
-                    type="radio"
-                    name="planPaidChoice"
-                    checked={isSellingPaid === true}
-                    onChange={() => setIsSellingPaid(true)}
-                    style={{ accentColor: '#f97316', width: 16, height: 16, cursor: 'pointer' }}
-                  />
-                  {t('developer.onboarding.option_yes')}
-                </label>
-
-                <label style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.55rem',
-                  cursor: 'pointer',
-                  padding: '0.6rem 1.25rem',
-                  borderRadius: '8px',
-                  background: isSellingPaid === false ? 'rgba(249, 115, 22, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                  border: `1px solid ${isSellingPaid === false ? '#f97316' : 'rgba(255, 255, 255, 0.1)'}`,
-                  color: isSellingPaid === false ? '#fff' : '#cbd5e1',
-                  fontWeight: 600,
-                  fontSize: '0.9rem',
-                  transition: 'all 0.2s ease',
-                }}>
+              <div className="dev-plan-choice-grid">
+                <label className={`dev-plan-card ${isSellingPaid === false ? 'selected' : ''}`}>
                   <input
                     type="radio"
                     name="planPaidChoice"
                     checked={isSellingPaid === false}
                     onChange={() => setIsSellingPaid(false)}
-                    style={{ accentColor: '#f97316', width: 16, height: 16, cursor: 'pointer' }}
+                    className="dev-radio-hidden"
                   />
-                  {t('developer.onboarding.option_no')}
+                  <div className="dev-plan-icon"><Gift size={18} /></div>
+                  <div className="dev-plan-text">
+                    <strong>{t('developer.onboarding.option_no')}</strong>
+                    <span>{t('developer.onboarding.intent_free_desc')}</span>
+                  </div>
+                </label>
+
+                <label className={`dev-plan-card ${isSellingPaid === true ? 'selected' : ''}`}>
+                  <input
+                    type="radio"
+                    name="planPaidChoice"
+                    checked={isSellingPaid === true}
+                    onChange={() => setIsSellingPaid(true)}
+                    className="dev-radio-hidden"
+                  />
+                  <div className="dev-plan-icon"><CreditCard size={18} /></div>
+                  <div className="dev-plan-text">
+                    <strong>{t('developer.onboarding.option_yes')}</strong>
+                    <span>{t('developer.onboarding.intent_paid_desc')}</span>
+                  </div>
                 </label>
               </div>
 
-              {/* If clicked yes, display all the new required seller fields below */}
+              {/* If clicked yes, display the seller fields in a neat 2-column grid */}
               {isSellingPaid === true && (
-                <div style={{
-                  marginTop: '1.25rem',
-                  padding: '1.25rem',
-                  background: 'rgba(249, 115, 22, 0.04)',
-                  border: '1px solid rgba(249, 115, 22, 0.25)',
-                  borderRadius: '10px',
-                }}>
-                  <div className="dev-form-group">
-                    <label className="dev-field-label" htmlFor="onboardingLegalName">
-                      <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
-                    </label>
-                    <input
-                      id="onboardingLegalName"
-                      name="legalName"
-                      type="text"
-                      className="dev-input"
-                      value={legalName}
-                      onChange={e => setLegalName(e.target.value)}
-                      placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
-                      autoComplete="name"
-                      required
-                    />
-                  </div>
+                <div className="dev-seller-fields-box">
+                  <div className="dev-fields-grid-2">
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingLegalName">
+                        <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
+                      </label>
+                      <input
+                        id="onboardingLegalName"
+                        name="legalName"
+                        type="text"
+                        className="dev-input"
+                        value={legalName}
+                        onChange={e => setLegalName(e.target.value)}
+                        placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                        autoComplete="name"
+                        required
+                      />
+                    </div>
 
-                  <div className="dev-form-group">
-                    <label className="dev-field-label" htmlFor="onboardingStreetAddress">
-                      <MapPin size={14} /> {t('developer.onboarding.street_label')}
-                    </label>
-                    <input
-                      id="onboardingStreetAddress"
-                      name="streetAddress"
-                      type="text"
-                      className="dev-input"
-                      value={streetAddress}
-                      onChange={e => setStreetAddress(e.target.value)}
-                      placeholder="123 Main St, Suite 400"
-                      autoComplete="street-address"
-                      required
-                    />
-                  </div>
+                    <div className="dev-form-group">
+                      <label className="dev-field-label" htmlFor="onboardingStreetAddress">
+                        <MapPin size={14} /> {t('developer.onboarding.street_label')}
+                      </label>
+                      <input
+                        id="onboardingStreetAddress"
+                        name="streetAddress"
+                        type="text"
+                        className="dev-input"
+                        value={streetAddress}
+                        onChange={e => setStreetAddress(e.target.value)}
+                        placeholder="123 Main St, Suite 400"
+                        autoComplete="street-address"
+                        required
+                      />
+                    </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     <div className="dev-form-group">
                       <label className="dev-field-label" htmlFor="onboardingCity">{t('developer.onboarding.city_label')}</label>
                       <input
@@ -450,6 +451,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                         required
                       />
                     </div>
+
                     <div className="dev-form-group">
                       <label className="dev-field-label" htmlFor="onboardingPostalCode">{t('developer.onboarding.postal_label')}</label>
                       <input
@@ -464,9 +466,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                         required
                       />
                     </div>
-                  </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     <div className="dev-form-group">
                       <label className="dev-field-label" htmlFor="onboardingCountry">
                         <Globe size={14} /> {t('developer.onboarding.country_label')}
@@ -505,7 +505,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
               )}
             </div>
 
-            <div className="dev-btn-row" style={{ marginTop: '1.25rem' }}>
+            <div className="dev-btn-row" style={{ marginTop: '1rem' }}>
               <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
                 {t('developer.onboarding.btn_back')}
               </button>
@@ -524,7 +524,9 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {step === 4 && (
           <div className="dev-step-content">
             <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingSupportEmail"><Mail size={14} /> {t('developer.onboarding.support_email_label')} *</label>
+              <label className="dev-field-label" htmlFor="onboardingSupportEmail">
+                <Mail size={14} /> {t('developer.onboarding.support_email_label')} *
+              </label>
               <input
                 id="onboardingSupportEmail"
                 name="supportEmail"
@@ -538,35 +540,41 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
               />
             </div>
 
-            <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingWebsiteUrl"><Globe size={14} /> {t('developer.onboarding.website_label')}</label>
-              <input
-                id="onboardingWebsiteUrl"
-                name="websiteUrl"
-                type="url"
-                className="dev-input"
-                value={websiteUrl}
-                onChange={e => setWebsiteUrl(e.target.value)}
-                placeholder="https://yourwebsite.com"
-                autoComplete="url"
-              />
+            <div className="dev-fields-grid-2">
+              <div className="dev-form-group">
+                <label className="dev-field-label" htmlFor="onboardingWebsiteUrl">
+                  <Globe size={14} /> {t('developer.onboarding.website_label')}
+                </label>
+                <input
+                  id="onboardingWebsiteUrl"
+                  name="websiteUrl"
+                  type="url"
+                  className="dev-input"
+                  value={websiteUrl}
+                  onChange={e => setWebsiteUrl(e.target.value)}
+                  placeholder="https://yourwebsite.com"
+                  autoComplete="url"
+                />
+              </div>
+
+              <div className="dev-form-group">
+                <label className="dev-field-label" htmlFor="onboardingGithubUrl">
+                  <Code2 size={14} /> {t('developer.onboarding.github_label')}
+                </label>
+                <input
+                  id="onboardingGithubUrl"
+                  name="githubUrl"
+                  type="text"
+                  className="dev-input"
+                  value={githubUrl}
+                  onChange={e => setGithubUrl(e.target.value)}
+                  placeholder="https://github.com/yourname"
+                  autoComplete="url"
+                />
+              </div>
             </div>
 
-            <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingGithubUrl"><Code2 size={14} /> {t('developer.onboarding.github_label')}</label>
-              <input
-                id="onboardingGithubUrl"
-                name="githubUrl"
-                type="text"
-                className="dev-input"
-                value={githubUrl}
-                onChange={e => setGithubUrl(e.target.value)}
-                placeholder="https://github.com/yourname"
-                autoComplete="url"
-              />
-            </div>
-
-            <div className="dev-btn-row" style={{ marginTop: '1.5rem' }}>
+            <div className="dev-btn-row" style={{ marginTop: '1.25rem' }}>
               <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
               <button
                 className="dev-btn dev-btn-primary"
@@ -582,7 +590,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         {/* ── STEP 5: Finish & Confirmation ── */}
         {step === 5 && (
           <div className="dev-step-content">
-            <div className="dev-monetization-box" style={{ marginBottom: '0.85rem' }}>
+            <div className="dev-monetization-box" style={{ marginBottom: '0.75rem' }}>
               <div className="dev-monetization-header">
                 {!isSellingPaid ? (
                   <Gift size={20} color="#10b981" />
@@ -616,7 +624,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             {/* ── Security Requirement for Developers ── */}
             {hasSecureAuth ? (
               <div style={{
-                padding: '0.65rem 0.85rem',
+                padding: '0.6rem 0.85rem',
                 background: 'rgba(34, 197, 94, 0.08)',
                 border: '1px solid rgba(34, 197, 94, 0.25)',
                 borderRadius: 8,
@@ -625,13 +633,13 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 gap: '0.55rem',
                 color: '#4ade80',
                 fontSize: '0.82rem',
-                marginBottom: '0.85rem',
+                marginBottom: '0.75rem',
               }}>
                 <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
                 <span><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</span>
               </div>
             ) : (
-              <div style={{ marginBottom: '0.85rem' }}>
+              <div style={{ marginBottom: '0.75rem' }}>
                 <SecuritySetupCards
                   compact={true}
                   title="Developer Security Requirement"
@@ -646,11 +654,11 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
             {/* ── Mandatory Legal Consent ── */}
             <div style={{
-              padding: '0.75rem 0.85rem',
+              padding: '0.65rem 0.85rem',
               background: 'rgba(255, 183, 77, 0.05)',
               border: '1px solid rgba(255, 183, 77, 0.2)',
               borderRadius: 8,
-              marginBottom: '1rem',
+              marginBottom: '0.85rem',
             }}>
               <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', cursor: 'pointer', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45 }}>
                 <input
@@ -666,39 +674,38 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             </div>
 
             {/* Actions */}
-            <div className="dev-btn-row-stacked">
-              {isSellingPaid ? (
-                <>
-                  <button
-                    className="dev-btn dev-btn-stripe"
-                    disabled={loading || !acceptedTerms || !hasSecureAuth}
-                    onClick={() => handleCompleteOnboarding(true)}
-                  >
-                    <CreditCard size={16} /> {loading ? 'Connecting Stripe...' : t('developer.onboarding.btn_connect_stripe')}
-                  </button>
-                  <button
-                    className="dev-btn dev-btn-secondary"
-                    disabled={loading || !acceptedTerms || !hasSecureAuth}
-                    onClick={() => handleCompleteOnboarding(false)}
-                  >
-                    {t('developer.onboarding.btn_complete')}
-                  </button>
-                </>
-              ) : (
-                <button
-                  className="dev-btn dev-btn-primary"
-                  disabled={loading || !acceptedTerms || !hasSecureAuth}
-                  onClick={() => handleCompleteOnboarding(false)}
-                >
-                  {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
-                </button>
-              )}
-            </div>
-
-            <div className="dev-btn-row" style={{ marginTop: '0.85rem' }}>
+            <div className="dev-btn-row" style={{ marginTop: '0.75rem', justifyContent: 'space-between', alignItems: 'center' }}>
               <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
                 {t('developer.onboarding.btn_back')}
               </button>
+              <div style={{ display: 'flex', gap: '0.65rem' }}>
+                {isSellingPaid ? (
+                  <>
+                    <button
+                      className="dev-btn dev-btn-secondary"
+                      disabled={loading || !acceptedTerms || !hasSecureAuth}
+                      onClick={() => handleCompleteOnboarding(false)}
+                    >
+                      {t('developer.onboarding.btn_complete')}
+                    </button>
+                    <button
+                      className="dev-btn dev-btn-stripe"
+                      disabled={loading || !acceptedTerms || !hasSecureAuth}
+                      onClick={() => handleCompleteOnboarding(true)}
+                    >
+                      <CreditCard size={15} /> {loading ? 'Connecting Stripe...' : t('developer.onboarding.btn_connect_stripe')}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className="dev-btn dev-btn-primary"
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
+                    onClick={() => handleCompleteOnboarding(false)}
+                  >
+                    {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         )}

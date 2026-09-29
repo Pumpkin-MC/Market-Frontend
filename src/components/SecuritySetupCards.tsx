@@ -4,6 +4,7 @@ import api from '../api';
 import { startRegistration } from '@simplewebauthn/browser';
 import { QRCodeSVG } from 'qrcode.react';
 import { RecoveryCodesModal } from './RecoveryCodesModal';
+import { getDevicePasskeyName } from '../utils/deviceInfo';
 import {
     Fingerprint,
     Smartphone,
@@ -46,7 +47,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
 
     // Passkey State
-    const [passkeyName, setPasskeyName] = useState('');
+    const [passkeyName, setPasskeyName] = useState(() => getDevicePasskeyName());
     const [passkeyLoading, setPasskeyLoading] = useState(false);
     const [passkeyError, setPasskeyError] = useState<string | null>(null);
     const [passkeySuccess, setPasskeySuccess] = useState(false);
@@ -137,7 +138,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
             const credential = await startRegistration({ optionsJSON: options });
 
             const finishRes = await api.post('/user/passkey/register/finish', {
-                name: passkeyName.trim() || 'My Passkey',
+                name: passkeyName.trim() || getDevicePasskeyName(),
                 credential,
             });
 

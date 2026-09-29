@@ -4,57 +4,80 @@ import { Link } from 'react-router-dom';
 import api from '../api';
 import SEO from '../components/SEO';
 import PluginCard from '../components/PluginCard';
+import { useAuth } from '../App';
 
 import { getPluginUrl } from '../utils/url';
+
+const PAGE_SIZE = 12;
 
 // Global cache to persist data across component unmounts (navigation)
 let homeCache: {
     popular: any[];
     newest: any[];
     all: any[];
+    nextCursor: string | null;
+    hasMore: boolean;
 } | null = null;
 
 const Home = () => {
     const { t, i18n } = useTranslation();
+    const { user } = useAuth();
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
     const [loading, setLoading] = useState(false);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [nextCursor, setNextCursor] = useState<string | null>(homeCache?.nextCursor ?? null);
+    const [hasMore, setHasMore] = useState<boolean>(homeCache?.hasMore ?? true);
     const [heroIndex, setHeroIndex] = useState(0);
     const [heroSubImageIndex, setHeroSubImageIndex] = useState(0);
 
     const popularRef = useRef<HTMLElement | null>(null);
     const newestRef = useRef<HTMLElement | null>(null);
+    const observerTarget = useRef<HTMLDivElement | null>(null);
     const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest, all: !!homeCache?.all });
-
-    const saveSection = (key: 'popular' | 'newest' | 'all', data: any[]) => {
-        if (key === 'popular') setPopular(data);
-        if (key === 'newest') setNewest(data);
-        if (key === 'all') setAllPlugins(data);
-
-        homeCache = {
-            popular: key === 'popular' ? data : homeCache?.popular || [],
-            newest: key === 'newest' ? data : homeCache?.newest || [],
-            all: key === 'all' ? data : homeCache?.all || []
-        };
-
-        fetched.current[key] = true;
-    };
+    const prevUserIdRef = useRef<number | undefined>(user?.id);
 
     useEffect(() => {
-        if (fetched.current.popular && fetched.current.newest && fetched.current.all) return;
+        const userChanged = prevUserIdRef.current !== user?.id;
+        prevUserIdRef.current = user?.id;
+
+        if (userChanged) {
+            homeCache = null;
+            fetched.current = { popular: false, newest: false, all: false };
+        } else if (fetched.current.popular && fetched.current.newest && fetched.current.all) {
+            return;
+        }
 
         const loadSections = async () => {
             setLoading(true);
             try {
                 const [popRes, newRes, allRes] = await Promise.all([
-                    api.get('/plugins', { params: { sort: 'downloads' } }),
-                    api.get('/plugins', { params: { sort: 'newest' } }),
-                    api.get('/plugins')
+                    api.get('/plugins', { params: { sort: 'downloads', limit: 10 } }),
+                    api.get('/plugins', { params: { sort: 'newest', limit: 10 } }),
+                    api.get('/plugins', { params: { limit: PAGE_SIZE, paginated: true } })
                 ]);
-                saveSection('popular', Array.isArray(popRes.data) ? popRes.data : []);
-                saveSection('newest', Array.isArray(newRes.data) ? newRes.data : []);
-                saveSection('all', Array.isArray(allRes.data) ? allRes.data : []);
+                const popData = Array.isArray(popRes.data) ? popRes.data : (popRes.data?.items || []);
+                const newData = Array.isArray(newRes.data) ? newRes.data : (newRes.data?.items || []);
+                const allData = allRes.data?.items || (Array.isArray(allRes.data) ? allRes.data : []);
+                const cursor = allRes.data?.next_cursor || allRes.headers?.['x-next-cursor'] || null;
+                const more = allRes.data?.has_more ?? (allRes.headers?.['x-has-more'] === 'true' || allData.length === PAGE_SIZE);
+
+                setPopular(popData);
+                setNewest(newData);
+                setAllPlugins(allData);
+                setNextCursor(cursor);
+                setHasMore(more);
+
+                homeCache = {
+                    popular: popData,
+                    newest: newData,
+                    all: allData,
+                    nextCursor: cursor,
+                    hasMore: more,
+                };
+
+                fetched.current = { popular: true, newest: true, all: true };
             } catch (err) {
                 console.error('Fetch error for home sections:', err);
             } finally {
@@ -64,6 +87,64 @@ const Home = () => {
 
         loadSections();
     }, []);
+
+    const loadMorePlugins = async () => {
+        if (loadingMore || !hasMore || loading) return;
+        setLoadingMore(true);
+        try {
+            const params: any = { limit: PAGE_SIZE, paginated: true };
+            if (nextCursor) {
+                params.cursor = nextCursor;
+            } else {
+                params.offset = allPlugins.length;
+            }
+
+            const res = await api.get('/plugins', { params });
+            const newItems = res.data?.items || (Array.isArray(res.data) ? res.data : []);
+            const cursor = res.data?.next_cursor || res.headers?.['x-next-cursor'] || null;
+            const more = res.data?.has_more ?? (res.headers?.['x-has-more'] === 'true' || newItems.length === PAGE_SIZE);
+
+            if (newItems.length === 0) {
+                setHasMore(false);
+                if (homeCache) homeCache.hasMore = false;
+            } else {
+                setAllPlugins(prev => {
+                    const existingIds = new Set(prev.map((p: any) => p.id));
+                    const uniqueNew = newItems.filter((p: any) => !existingIds.has(p.id));
+                    const updated = [...prev, ...uniqueNew];
+                    if (homeCache) {
+                        homeCache.all = updated;
+                        homeCache.nextCursor = cursor;
+                        homeCache.hasMore = more;
+                    }
+                    return updated;
+                });
+                setNextCursor(cursor);
+                setHasMore(more);
+            }
+        } catch (err) {
+            console.error('Failed to load more plugins:', err);
+        } finally {
+            setLoadingMore(false);
+        }
+    };
+
+    useEffect(() => {
+        const target = observerTarget.current;
+        if (!target) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                    loadMorePlugins();
+                }
+            },
+            { rootMargin: '300px' }
+        );
+
+        observer.observe(target);
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadingMore, allPlugins.length]);
 
     // Featured plugins for top Steam-like carousel
     const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
@@ -213,7 +294,6 @@ const Home = () => {
             )}
 
             <div className="container" id="browse">
-
                 <section className="home-section" ref={popularRef}>
                     <h2 className="section-title"><span>{t('home.trending')}</span></h2>
                     <div className="home-plugin-grid">
@@ -248,9 +328,25 @@ const Home = () => {
                                 <PluginCard key={plugin.id} plugin={plugin} />
                             ))
                         ) : (
-                            <p className="no-plugins">{t('home.no_plugins')}</p>
+                            !loading && <p className="no-plugins">{t('home.no_plugins')}</p>
                         )}
                     </div>
+
+                    {/* Sentinel target for infinite scrolling */}
+                    <div ref={observerTarget} style={{ height: '1px', width: '100%', pointerEvents: 'none' }} />
+
+                    {loadingMore && (
+                        <div className="infinite-scroll-loader">
+                            <div className="spinner"></div>
+                            <p>Loading more plugins...</p>
+                        </div>
+                    )}
+
+                    {!hasMore && allPlugins.length > 0 && (
+                        <div className="infinite-scroll-end">
+                            <p>You've reached the end of the plugins catalog.</p>
+                        </div>
+                    )}
                 </section>
 
                 {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (

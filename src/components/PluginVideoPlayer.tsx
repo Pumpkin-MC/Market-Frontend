@@ -6,6 +6,7 @@ interface PluginVideoPlayerProps {
   url?: string;
   videoId?: string;
   className?: string;
+  loop?: boolean;
 }
 
 declare global {
@@ -40,7 +41,7 @@ const formatTime = (seconds: number): string => {
   return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
 };
 
-export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, videoId: propVideoId, className }) => {
+export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, videoId: propVideoId, className, loop = false }) => {
   const autoId = useId().replace(/[:]/g, '_');
   const domId = `plugin-yt-${autoId}`;
 
@@ -86,21 +87,25 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
     let progressTimer: ReturnType<typeof setInterval>;
 
     try {
+      const playerVars: any = {
+        autoplay: 1,
+        mute: 1,
+        controls: 0,
+        loop: loop ? 1 : 0,
+        playsinline: 1,
+        rel: 0,
+        modestbranding: 1,
+        iv_load_policy: 3,
+        disablekb: 1,
+        origin: window.location.origin,
+      };
+      if (loop) {
+        playerVars.playlist = resolvedVideoId;
+      }
+
       playerRef.current = new window.YT.Player(domId, {
         videoId: resolvedVideoId,
-        playerVars: {
-          autoplay: 1,
-          mute: 1,
-          controls: 0,
-          loop: 1,
-          playlist: resolvedVideoId,
-          playsinline: 1,
-          rel: 0,
-          modestbranding: 1,
-          iv_load_policy: 3,
-          disablekb: 1,
-          origin: window.location.origin,
-        },
+        playerVars,
         events: {
           onReady: (e: any) => {
             try {
@@ -126,10 +131,15 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
               setIsPlaying(false);
               setShowControls(true);
             } else if (e.data === 0) {
-              // Loop smoothly
-              if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-                playerRef.current.seekTo(0, true);
-                playerRef.current.playVideo();
+              if (loop) {
+                // Loop smoothly
+                if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+                  playerRef.current.seekTo(0, true);
+                  playerRef.current.playVideo();
+                }
+              } else {
+                setIsPlaying(false);
+                setShowControls(true);
               }
             }
           },
@@ -172,6 +182,27 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
     };
     document.addEventListener('fullscreenchange', handleFsChange);
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  // ── 3.1 Pause Video When Scrolled Out of View ──────────────────────────────
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0].isIntersecting && playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+          try {
+            playerRef.current.pauseVideo();
+            setIsPlaying(false);
+          } catch {
+            // ignore
+          }
+        }
+      },
+      { threshold: 0.1 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
   }, []);
 
   // ── 4. Auto-Hide HUD On Inactivity ────────────────────────────────────────

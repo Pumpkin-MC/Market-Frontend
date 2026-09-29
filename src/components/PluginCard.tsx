@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getPluginUrl } from '../utils/url';
 import { extractYoutubeVideoId } from './PluginVideoPlayer';
@@ -61,6 +61,23 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
         return images;
     }, [plugin?.preview_path, plugin?.screenshots, videoId]);
 
+    const stopHover = useCallback(() => {
+        setIsHovering(false);
+        setCurrentIndex(0);
+        if (timerRef.current) clearTimeout(timerRef.current);
+        if (cycleRef.current) clearInterval(cycleRef.current);
+    }, []);
+
+    // Stop video playback and slideshow cycling immediately when scrolling down
+    useEffect(() => {
+        if (!isHovering) return;
+        const handleScroll = () => {
+            stopHover();
+        };
+        window.addEventListener('scroll', handleScroll, { passive: true });
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, [isHovering, stopHover]);
+
     if (!plugin) return null;
 
     const startHover = () => {
@@ -73,13 +90,6 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
         cycleRef.current = setInterval(next, 2000);
     };
 
-    const stopHover = () => {
-        setIsHovering(false);
-        setCurrentIndex(0);
-        if (timerRef.current) clearTimeout(timerRef.current);
-        if (cycleRef.current) clearInterval(cycleRef.current);
-    };
-
     return (
         <Link to={getPluginUrl(plugin)} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
             <div className="plugin-card-v2">
@@ -88,7 +98,7 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
                         <div className="pcv2-video-container">
                             <iframe
                                 className="pcv2-video-iframe"
-                                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&showinfo=0&iv_load_policy=3`}
+                                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&showinfo=0&iv_load_policy=3`}
                                 title={plugin.name}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                                 tabIndex={-1}
