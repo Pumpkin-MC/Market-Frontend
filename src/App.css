@@ -1838,6 +1838,30 @@ h3 {
   padding: 0;
 }
 
+.markdown-content img,
+.markdown-img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  display: block;
+  margin: 1.5rem auto;
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.markdown-content img:hover,
+.markdown-img:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.plugin-video-showcase {
+  margin-bottom: 2rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
 .divider {
   border: 0;
   border-top: 1px solid var(--border);

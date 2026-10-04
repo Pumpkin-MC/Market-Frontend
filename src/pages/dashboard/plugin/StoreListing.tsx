@@ -821,7 +821,13 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
             {/* ── Screenshots ── */}
             <div className="mp-card">
-                <div className="mp-card-title"><ImageIcon size={14} />Screenshots</div>
+                <div className="mp-card-title">
+                    <ImageIcon size={14} />Screenshots
+                    <span style={{ color: 'var(--mp-text-3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 4 }}>(optional)</span>
+                </div>
+                <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', margin: '-0.3rem 0 0.85rem 0' }}>
+                    Optional. You can also embed images and GIFs directly into your Markdown description.
+                </p>
                 <div className="mp-screenshots">
                     {screenshots.map(s => (
                         <div key={s.id} className="mp-screenshot-item">

@@ -1074,7 +1074,7 @@ const AddPlugin = () => {
                                         onClick={() => !compressingScreenshot && document.getElementById('ap-screenshots')?.click()}>
                                         <div className="mp-dropzone-icon"><ImageIcon size={20} /></div>
                                         <p>{compressingScreenshot ? <strong>Validating & compressing…</strong> : <><strong>Drag & drop screenshots</strong> or click to browse</>}</p>
-                                        <small>Multiple files · auto-sanitized & verified · first screenshot = cover</small>
+                                        <small>Multiple files · auto-sanitized & verified · You can also embed images directly in Markdown</small>
                                         <input id="ap-screenshots" type="file" accept="image/*" multiple
                                             onChange={e => e.target.files && addScreenshots(e.target.files)} />
                                     </div>

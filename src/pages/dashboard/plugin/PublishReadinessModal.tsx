@@ -210,23 +210,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                                 )}
                             </div>
 
-                            {/* 5. Screenshots */}
-                            <div className={`prm-check-row ${readiness.screenshotsReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.screenshotsReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Screenshots</div>
-                                    <div className="prm-check-desc">{readiness.screenshotsReady ? `${readiness.screenshotsCount} screenshot(s) uploaded` : 'At least 1 screenshot is required'}</div>
-                                </div>
-                                {!readiness.screenshotsReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('listing'); onClose(); }}>
-                                        Add Screenshots
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 6. Binary */}
+                            {/* 5. Binary */}
                             <div className={`prm-check-row ${readiness.binaryReady ? 'ready' : 'missing'}`}>
                                 <div className="prm-check-status">
                                     {readiness.binaryReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}

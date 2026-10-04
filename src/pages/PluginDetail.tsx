@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../api';
@@ -64,6 +64,22 @@ const safeMarkdownComponents = {
       >
         {children}
       </a>
+    );
+  },
+  img: ({ src, alt, ...props }: any) => {
+    const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
+    if (!isSafe) {
+      return null;
+    }
+    return (
+      <img
+        src={src}
+        alt={alt || 'Plugin illustration'}
+        loading="lazy"
+        decoding="async"
+        className="markdown-img"
+        {...props}
+      />
     );
   },
 };
@@ -568,6 +584,40 @@ const PluginDetail = () => {
     setLightboxImage(screenshots[index]?.path ?? null);
   };
 
+  const openLightboxWithSrc = useCallback((src: string) => {
+    const idx = screenshots.findIndex((s: any) => s.path === src);
+    if (idx >= 0) {
+      setLightboxIndex(idx);
+    }
+    setLightboxImage(src);
+  }, [screenshots]);
+
+  const isScreenshotInGallery = useMemo(() => {
+    return screenshots.length > 1 && screenshots.some((s: any) => s.path === lightboxImage);
+  }, [screenshots, lightboxImage]);
+
+  const markdownComponents = useMemo(() => ({
+    ...safeMarkdownComponents,
+    img: ({ src, alt, ...props }: any) => {
+      const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
+      if (!isSafe) {
+        return null;
+      }
+      return (
+        <img
+          src={src}
+          alt={alt || 'Plugin illustration'}
+          loading="lazy"
+          decoding="async"
+          className="markdown-img"
+          style={{ cursor: 'zoom-in' }}
+          onClick={() => openLightboxWithSrc(src)}
+          {...props}
+        />
+      );
+    },
+  }), [openLightboxWithSrc]);
+
   const lightboxPrev = () => {
     if (!screenshots.length) return;
     const newIndex = (lightboxIndex - 1 + screenshots.length) % screenshots.length;
@@ -588,13 +638,13 @@ const PluginDetail = () => {
   useEffect(() => {
     if (!lightboxImage) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') lightboxPrev();
-      else if (e.key === 'ArrowRight') lightboxNext();
+      if (e.key === 'ArrowLeft' && isScreenshotInGallery) lightboxPrev();
+      else if (e.key === 'ArrowRight' && isScreenshotInGallery) lightboxNext();
       else if (e.key === 'Escape') closeLightbox();
     };
       window.addEventListener('keydown', handleKey);
       return () => window.removeEventListener('keydown', handleKey);
-  }, [lightboxImage, lightboxIndex, screenshots]);
+  }, [lightboxImage, lightboxIndex, screenshots, isScreenshotInGallery]);
 
   const hasReviewed = useMemo(() => {
     if (!user || !plugin?.reviews || !Array.isArray(plugin.reviews)) return false;
@@ -994,8 +1044,8 @@ const PluginDetail = () => {
     <div className="plugin-detail-layout">
     <div className="plugin-main-content">
 
-    {/* SCREENSHOTS / MEDIA GALLERY */}
-    {((screenshots.length > 0) || plugin.youtube_video_url) && (
+    {/* OPTIONAL MEDIA SHOWCASE (only if creator explicitly uploaded screenshots or video) */}
+    {screenshots.length > 0 ? (
       <div className="screenshot-gallery">
         {mainScreenshot === 'video' ? (
           <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
@@ -1045,7 +1095,11 @@ const PluginDetail = () => {
           ))}
         </div>
       </div>
-    )}
+    ) : plugin.youtube_video_url ? (
+      <div className="plugin-video-showcase" style={{ marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden' }}>
+        <PluginVideoPlayer url={plugin.youtube_video_url} />
+      </div>
+    ) : null}
 
     {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (() => {
       const latest = plugin.versions[0];
@@ -1080,7 +1134,7 @@ const PluginDetail = () => {
           </div>
           <div className={`plugin-recent-update-body markdown-content ${isLong ? 'is-clamped' : ''}`}>
             {latest.release_notes ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>
+              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
                 {latest.release_notes}
               </ReactMarkdown>
             ) : (
@@ -1105,7 +1159,7 @@ const PluginDetail = () => {
 
     {/* DESCRIPTION */}
     <div className="markdown-content">
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{currentDescription}</ReactMarkdown>
+    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
     </div>
 
     <hr className="divider" />
@@ -1609,8 +1663,8 @@ const PluginDetail = () => {
       &times;
       </button>
 
-      {/* Left arrow — only shown when multiple screenshots exist */}
-      {screenshots.length > 1 && (
+      {/* Left arrow — only shown when navigating multiple gallery screenshots */}
+      {isScreenshotInGallery && (
         <button
         className="lightbox-arrow lightbox-arrow-left"
         onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
@@ -1621,7 +1675,7 @@ const PluginDetail = () => {
       )}
 
       {/* Right arrow */}
-      {screenshots.length > 1 && (
+      {isScreenshotInGallery && (
         <button
         className="lightbox-arrow lightbox-arrow-right"
         onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
@@ -1632,7 +1686,7 @@ const PluginDetail = () => {
       )}
 
       {/* Dot indicators */}
-      {screenshots.length > 1 && (
+      {isScreenshotInGallery && (
         <div className="lightbox-dots">
         {screenshots.map((_: any, i: number) => (
           <button
@@ -1697,7 +1751,7 @@ const PluginDetail = () => {
                 </div>
                 <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
                   {v.release_notes ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{v.release_notes}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
                   ) : (
                     <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
                   )}

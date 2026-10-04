@@ -797,6 +797,14 @@ input:checked + .slider:before {
     margin: 0 0 16px 0;
 }
 .markdown-preview ul, .markdown-preview ol { padding-left: 2em; }
+.markdown-preview img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 6px;
+    display: block;
+    margin: 14px 0;
+    border: 1px solid var(--dash-border);
+}
 
 
 /* Icon Upload Preview */
