@@ -1,16 +1,16 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { SlidersHorizontal, ChevronDown, X, LayoutGrid, List } from 'lucide-react';
 import api from '../api';
 import SEO from '../components/SEO';
 import PluginCard from '../components/PluginCard';
 import { useAuth } from '../App';
-
 import { getPluginUrl } from '../utils/url';
 
 const PAGE_SIZE = 12;
+const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
 
-// Global cache to persist data across component unmounts (navigation)
 let homeCache: {
     popular: any[];
     newest: any[];
@@ -22,6 +22,7 @@ let homeCache: {
 const Home = () => {
     const { t, i18n } = useTranslation();
     const { user } = useAuth();
+
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
@@ -32,11 +33,26 @@ const Home = () => {
     const [heroIndex, setHeroIndex] = useState(0);
     const [heroSubImageIndex, setHeroSubImageIndex] = useState(0);
 
-    const popularRef = useRef<HTMLElement | null>(null);
-    const newestRef = useRef<HTMLElement | null>(null);
+    const [activeTab, setActiveTab] = useState<'trending' | 'latest' | 'all'>('trending');
+    const [selectedCategory, setSelectedCategory] = useState<string>('');
+    const [selectedType, setSelectedType] = useState<string>('');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
+
+    const filterDropdownRef = useRef<HTMLDivElement>(null);
     const observerTarget = useRef<HTMLDivElement | null>(null);
     const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest, all: !!homeCache?.all });
     const prevUserIdRef = useRef<number | undefined>(user?.id);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (filterDropdownRef.current && !filterDropdownRef.current.contains(e.target as Node)) {
+                setIsFilterOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         const userChanged = prevUserIdRef.current !== user?.id;
@@ -135,7 +151,7 @@ const Home = () => {
 
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore && activeTab === 'all' && !selectedCategory && !selectedType) {
                     loadMorePlugins();
                 }
             },
@@ -144,12 +160,15 @@ const Home = () => {
 
         observer.observe(target);
         return () => observer.disconnect();
-    }, [hasMore, loading, loadingMore, allPlugins.length]);
+    }, [hasMore, loading, loadingMore, allPlugins.length, activeTab, selectedCategory, selectedType]);
 
-    // Featured plugins for top showcase carousel
-    const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
+    const featuredPlugins = useMemo(() => {
+        const withScreenshots = popular.filter(
+            (p: any) => Array.isArray(p.screenshots) && p.screenshots.length > 0 && p.screenshots.some((s: string) => s && s.trim().length > 0)
+        );
+        return withScreenshots.slice(0, 5);
+    }, [popular]);
 
-    // Auto rotate hero slide every 6s
     useEffect(() => {
         if (featuredPlugins.length <= 1) return;
         const timer = setInterval(() => {
@@ -161,53 +180,125 @@ const Home = () => {
 
     const activeFeatured = featuredPlugins[heroIndex];
 
-    const featuredImages = useMemo(() => {
+    const featuredScreenshots = useMemo(() => {
         if (!activeFeatured) return [];
-        const imgs = [];
-        if (activeFeatured.preview_path) imgs.push(activeFeatured.preview_path);
         if (activeFeatured.screenshots && activeFeatured.screenshots.length > 0) {
-            imgs.push(...activeFeatured.screenshots);
+            return activeFeatured.screenshots;
         }
-        return imgs;
+        return [];
     }, [activeFeatured]);
 
-    const activeImage = featuredImages[heroSubImageIndex] || featuredImages[0];
+    const hasScreenshots = featuredScreenshots.length > 0;
+    const activeImage = hasScreenshots
+        ? (featuredScreenshots[heroSubImageIndex] || featuredScreenshots[0])
+        : activeFeatured?.preview_path;
 
     const getDesc = (translated?: Record<string, string> | string) => {
-        if (!translated) return 'Discover this high performance Minecraft plugin.';
+        if (!translated) return 'High performance Minecraft plugin.';
         try {
             const data = typeof translated === 'string' ? JSON.parse(translated) : translated;
             const currentLang = i18n.language.split('-')[0];
-            return data[currentLang] || data.en || Object.values(data)[0] || 'Discover this high performance Minecraft plugin.';
+            return data[currentLang] || data.en || Object.values(data)[0] || 'High performance Minecraft plugin.';
         } catch {
-            return typeof translated === 'string' ? translated : 'Discover this high performance Minecraft plugin.';
+            return typeof translated === 'string' ? translated : 'High performance Minecraft plugin.';
         }
     };
 
-    if (loading && popular.length === 0) {
-        return (
-            <div className="loading-state">
-                <div className="spinner"></div>
-                <p>Discovering best plugins...</p>
-            </div>
-        );
-    }
+    const currentList = useMemo(() => {
+        let baseList = popular;
+        if (activeTab === 'latest') {
+            baseList = newest;
+        } else if (activeTab === 'all') {
+            baseList = allPlugins;
+        }
+
+        return baseList.filter((plugin: any) => {
+            if (selectedCategory && plugin.category !== selectedCategory) {
+                return false;
+            }
+            if (selectedType && plugin.type !== selectedType) {
+                return false;
+            }
+            return true;
+        });
+    }, [activeTab, popular, newest, allPlugins, selectedCategory, selectedType]);
+
+    const activeFilterCount = (activeTab !== 'trending' ? 1 : 0) + (selectedCategory ? 1 : 0) + (selectedType ? 1 : 0);
 
     return (
         <>
-            <SEO 
-                title="Home" 
-                description="Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place." 
+            <SEO
+                title="Home"
+                description="Discover high-performance WebAssembly plugins for PumpkinMC at the official marketplace."
             />
 
-            {activeFeatured && (
+            <section className="home-hero-section">
+                <div className="home-hero-container">
+                    <div className="home-hero-main">
+                        <div className="home-hero-badge">PUMPKIN MARKETPLACE</div>
+                        <h1 className="home-hero-title">
+                            High-Performance Plugins for <span className="hero-hl">PumpkinMC</span>
+                        </h1>
+                        <p className="home-hero-subtitle">
+                            Discover, download, and publish WASM-powered Minecraft plugins with sub-millisecond execution and memory safety.
+                        </p>
+                        <div className="home-hero-actions">
+                            <a href="#browse" className="btn btn-hero-primary">
+                                Explore Plugins &rarr;
+                            </a>
+                            <Link to="/dashboard" className="btn btn-hero-secondary">
+                                Developer Studio
+                            </Link>
+                            <a
+                                href="https://docs.pumpkinmc.org/plugin-dev/introduction"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="hero-docs-link"
+                            >
+                                Plugin Dev Docs &rarr;
+                            </a>
+                        </div>
+                        <div className="home-hero-metrics">
+                            <div className="hero-metric-item">
+                                <span className="hero-metric-label">EXECUTION</span>
+                                <span className="hero-metric-value">WASM <small>native</small></span>
+                            </div>
+                            <div className="hero-metric-item">
+                                <span className="hero-metric-label">SANDBOX</span>
+                                <span className="hero-metric-value">100% <small>memory safe</small></span>
+                            </div>
+                            <div className="hero-metric-item">
+                                <span className="hero-metric-label">LANGUAGES</span>
+                                <span className="hero-metric-value">9+ <small>Rust, Py, TS</small></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div aria-hidden="true" className="home-hero-mascot-wrap">
+                        <img src="/icon.png" alt="" className="home-hero-mascot" />
+                    </div>
+                </div>
+            </section>
+
+            {loading && popular.length === 0 ? (
                 <section className="featured-showcase-container">
+                    <div className="skeleton-showcase shimmer" />
+                </section>
+            ) : activeFeatured && (
+                <section className="featured-showcase-container">
+                    <div className="featured-showcase-header">
+                        <h2 className="featured-showcase-heading">Spotlight <span className="hl-tag">showcase</span></h2>
+                    </div>
+
                     <div className="featured-showcase-main">
                         <Link to={getPluginUrl(activeFeatured)} className="featured-showcase-link">
-                            {/* Main visual display */}
                             <div className="featured-main-visual">
-                                {activeImage ? (
-                                    <img src={activeImage} alt={activeFeatured.name} className="featured-main-img" />
+                                {hasScreenshots && activeImage ? (
+                                    <img key={activeImage} src={activeImage} alt={activeFeatured.name} className="featured-main-img" />
+                                ) : activeFeatured.preview_path ? (
+                                    <div className="featured-icon-container">
+                                        <img src={activeFeatured.preview_path} alt={activeFeatured.name} className="featured-showcase-icon" />
+                                    </div>
                                 ) : (
                                     <div className="featured-visual-fallback">
                                         <span>{activeFeatured.name.charAt(0).toUpperCase()}</span>
@@ -215,7 +306,10 @@ const Home = () => {
                                 )}
 
                                 <div className="featured-badge-overlay">
-                                    <span className="featured-tag">Trending & Popular</span>
+                                    <span className="featured-tag">Trending</span>
+                                    {activeFeatured.category && (
+                                        <span className="featured-category-tag">{activeFeatured.category}</span>
+                                    )}
                                     {activeFeatured.type === 'free' ? (
                                         <span className="featured-price-tag free">Free</span>
                                     ) : activeFeatured.sale_active && activeFeatured.sale_discount_percent > 0 ? (
@@ -230,32 +324,40 @@ const Home = () => {
                                 </div>
                             </div>
 
-                            {/* Sidebar Info */}
                             <div className="featured-sidebar-info">
-                                <h2 className="featured-title">{activeFeatured.name}</h2>
-                                <p className="featured-dev">by <strong>{activeFeatured.dev_name}</strong></p>
-
-                                <div className="featured-screenshots-grid">
-                                    {featuredImages.slice(0, 4).map((src: string, idx: number) => (
-                                        <div 
-                                            key={src + idx} 
-                                            className={`featured-thumb ${idx === heroSubImageIndex ? 'active' : ''}`}
-                                            onMouseEnter={(e) => {
-                                                e.preventDefault();
-                                                setHeroSubImageIndex(idx);
-                                            }}
-                                        >
-                                            <img src={src} alt="thumbnail" />
-                                        </div>
-                                    ))}
+                                <div className="featured-header-row">
+                                    {activeFeatured.preview_path && (
+                                        <img src={activeFeatured.preview_path} alt="" className="featured-sidebar-icon" />
+                                    )}
+                                    <div className="featured-title-col">
+                                        <h2 className="featured-title">{activeFeatured.name}</h2>
+                                        <p className="featured-dev">by <strong>{activeFeatured.dev_name}</strong></p>
+                                    </div>
                                 </div>
+
+                                {hasScreenshots && featuredScreenshots.length > 1 && (
+                                    <div className="featured-screenshots-grid">
+                                        {featuredScreenshots.slice(0, 4).map((src: string, idx: number) => (
+                                            <div
+                                                key={src + idx}
+                                                className={`featured-thumb ${idx === heroSubImageIndex ? 'active' : ''}`}
+                                                onMouseEnter={(e) => {
+                                                    e.preventDefault();
+                                                    setHeroSubImageIndex(idx);
+                                                }}
+                                            >
+                                                <img src={src} alt="thumbnail" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
 
                                 <p className="featured-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
 
                                 <div className="featured-meta">
                                     <div className="featured-stat">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
                                         </svg>
                                         <span>{(activeFeatured.downloads || 0).toLocaleString()} Downloads</span>
                                     </div>
@@ -267,18 +369,18 @@ const Home = () => {
                                 <div className="featured-action-btn">
                                     <span>View Plugin</span>
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                                        <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
                                     </svg>
                                 </div>
                             </div>
                         </Link>
                     </div>
 
-                    {/* Navigation Dots / Controls */}
                     <div className="featured-nav-dots">
                         {featuredPlugins.map((item, idx) => (
                             <button
                                 key={item.id}
+                                type="button"
                                 className={`featured-dot-btn ${idx === heroIndex ? 'active' : ''}`}
                                 onClick={() => {
                                     setHeroIndex(idx);
@@ -294,67 +396,279 @@ const Home = () => {
             )}
 
             <div className="container" id="browse">
-                <section className="home-section" ref={popularRef}>
-                    <h2 className="section-title"><span>{t('home.trending')}</span></h2>
-                    <div className="home-plugin-grid">
-                        {popular.length > 0 ? (
-                            popular.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
-                        ) : (
-                            <p className="no-plugins">{t('home.no_plugins')}</p>
-                        )}
-                    </div>
-                </section>
-
-                <section className="home-section" ref={newestRef}>
-                    <h2 className="section-title"><span>{t('home.latest')}</span></h2>
-                    <div className="home-plugin-grid">
-                        {newest.length > 0 ? (
-                            newest.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
-                        ) : (
-                            <p className="no-plugins">{t('home.no_plugins')}</p>
-                        )}
-                    </div>
-                </section>
-
-                <section className="home-section">
-                    <h2 className="section-title"><span>{t('home.all_plugins')}</span></h2>
-                    <div className="home-plugin-grid">
-                        {allPlugins.length > 0 ? (
-                            allPlugins.map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
-                        ) : (
-                            !loading && <p className="no-plugins">{t('home.no_plugins')}</p>
-                        )}
+                <div className="catalog-header-bar">
+                    <div className="catalog-title-group">
+                        <h2 className="catalog-title">Explore <span className="hl-tag">plugins</span></h2>
+                        <span className="catalog-count-badge">
+                            {currentList.length} {currentList.length === 1 ? 'plugin' : 'plugins'}
+                        </span>
                     </div>
 
-                    {/* Sentinel target for infinite scrolling */}
-                    <div ref={observerTarget} style={{ height: '1px', width: '100%', pointerEvents: 'none' }} />
-
-                    {loadingMore && (
-                        <div className="infinite-scroll-loader">
-                            <div className="spinner"></div>
-                            <p>Loading more plugins...</p>
+                    <div className="catalog-controls-group">
+                        <div className="catalog-view-toggle">
+                            <button
+                                type="button"
+                                className={`catalog-view-btn ${viewMode === 'grid' ? 'active' : ''}`}
+                                onClick={() => setViewMode('grid')}
+                                aria-label="Grid view"
+                                title="Grid view"
+                            >
+                                <LayoutGrid size={15} />
+                            </button>
+                            <button
+                                type="button"
+                                className={`catalog-view-btn ${viewMode === 'list' ? 'active' : ''}`}
+                                onClick={() => setViewMode('list')}
+                                aria-label="List view"
+                                title="List view"
+                            >
+                                <List size={15} />
+                            </button>
                         </div>
-                    )}
 
-                    {!hasMore && allPlugins.length > 0 && (
-                        <div className="infinite-scroll-end">
-                            <p>You've reached the end of the plugins catalog.</p>
+                        <div className="catalog-filter-dropdown-container" ref={filterDropdownRef}>
+                            <button
+                                type="button"
+                                className={`catalog-filter-btn ${isFilterOpen || activeFilterCount > 0 ? 'active' : ''}`}
+                                onClick={() => setIsFilterOpen((prev) => !prev)}
+                                aria-expanded={isFilterOpen}
+                            >
+                                <SlidersHorizontal size={14} />
+                                <span>Filter &amp; Sort</span>
+                                {activeFilterCount > 0 && (
+                                    <span className="catalog-filter-count">
+                                        {activeFilterCount}
+                                    </span>
+                                )}
+                                <ChevronDown size={14} className={`catalog-filter-chevron ${isFilterOpen ? 'open' : ''}`} />
+                            </button>
+
+                            {isFilterOpen && (
+                                <>
+                                    <div className="catalog-filter-backdrop" onClick={() => setIsFilterOpen(false)} />
+                                    <div className="catalog-filter-menu">
+                                        <div className="catalog-filter-mobile-header">
+                                            <h3 className="catalog-filter-mobile-title">Filter &amp; Sort</h3>
+                                            <button
+                                                type="button"
+                                                className="catalog-filter-close-btn"
+                                                onClick={() => setIsFilterOpen(false)}
+                                                aria-label="Close filters"
+                                            >
+                                                <X size={18} />
+                                            </button>
+                                        </div>
+
+                                        <div className="catalog-filter-item">
+                                            <label className="catalog-filter-label">Sort Feed</label>
+                                            <div className="catalog-filter-toggle-group">
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${activeTab === 'trending' ? 'active' : ''}`}
+                                                    onClick={() => setActiveTab('trending')}
+                                                >
+                                                    {t('home.trending')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${activeTab === 'latest' ? 'active' : ''}`}
+                                                    onClick={() => setActiveTab('latest')}
+                                                >
+                                                    {t('home.latest')}
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${activeTab === 'all' ? 'active' : ''}`}
+                                                    onClick={() => setActiveTab('all')}
+                                                >
+                                                    {t('home.all_plugins')}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="catalog-filter-item">
+                                            <label className="catalog-filter-label">Category</label>
+                                            <select
+                                                className="catalog-filter-select"
+                                                value={selectedCategory}
+                                                onChange={(e) => setSelectedCategory(e.target.value)}
+                                            >
+                                                <option value="">{t('home.filter_all')}</option>
+                                                {PLUGIN_CATEGORIES.map((cat) => (
+                                                    <option key={cat} value={cat}>
+                                                        {cat}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        <div className="catalog-filter-item">
+                                            <label className="catalog-filter-label">Pricing</label>
+                                            <div className="catalog-filter-toggle-group">
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${selectedType === '' ? 'active' : ''}`}
+                                                    onClick={() => setSelectedType('')}
+                                                >
+                                                    All
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${selectedType === 'free' ? 'active' : ''}`}
+                                                    onClick={() => setSelectedType(selectedType === 'free' ? '' : 'free')}
+                                                >
+                                                    Free
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    className={`catalog-filter-opt ${selectedType === 'paid' ? 'active' : ''}`}
+                                                    onClick={() => setSelectedType(selectedType === 'paid' ? '' : 'paid')}
+                                                >
+                                                    Paid
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="catalog-filter-actions">
+                                            {activeFilterCount > 0 && (
+                                                <button
+                                                    type="button"
+                                                    className="catalog-filter-clear-all"
+                                                    onClick={() => {
+                                                        setActiveTab('trending');
+                                                        setSelectedCategory('');
+                                                        setSelectedType('');
+                                                    }}
+                                                >
+                                                    Clear All
+                                                </button>
+                                            )}
+                                            <button
+                                                type="button"
+                                                className="catalog-filter-apply-btn"
+                                                onClick={() => setIsFilterOpen(false)}
+                                            >
+                                                Apply Filters
+                                            </button>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
-                    )}
-                </section>
+                    </div>
+                </div>
 
-                {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (
+                {activeFilterCount > 0 && (
+                    <div className="catalog-active-filters-row">
+                        <span className="catalog-active-filter-label">Active Filters:</span>
+                        {activeTab !== 'trending' && (
+                            <span className="catalog-active-tag">
+                                {activeTab === 'latest' ? t('home.latest') : t('home.all_plugins')}
+                                <button type="button" onClick={() => setActiveTab('trending')}>x</button>
+                            </span>
+                        )}
+                        {selectedCategory && (
+                            <span className="catalog-active-tag">
+                                {selectedCategory}
+                                <button type="button" onClick={() => setSelectedCategory('')}>x</button>
+                            </span>
+                        )}
+                        {selectedType && (
+                            <span className="catalog-active-tag">
+                                {selectedType.toUpperCase()}
+                                <button type="button" onClick={() => setSelectedType('')}>x</button>
+                            </span>
+                        )}
+                        <button
+                            type="button"
+                            className="catalog-clear-filters-btn"
+                            onClick={() => {
+                                setActiveTab('trending');
+                                setSelectedCategory('');
+                                setSelectedType('');
+                            }}
+                        >
+                            Clear Filters
+                        </button>
+                    </div>
+                )}
+
+                <div className={viewMode === 'grid' ? 'home-plugin-grid' : 'home-plugin-list'}>
+                    {loading && currentList.length === 0 ? (
+                        Array.from({ length: 6 }).map((_, idx) => (
+                            <div key={idx} className={viewMode === 'grid' ? 'plugin-card-skeleton shimmer' : 'plugin-list-skeleton shimmer'}>
+                                <div className="skeleton-thumb" />
+                                <div className="skeleton-content">
+                                    <div className="skeleton-bar title" />
+                                    <div className="skeleton-bar subtitle" />
+                                    <div className="skeleton-bar text" />
+                                </div>
+                            </div>
+                        ))
+                    ) : currentList.length > 0 ? (
+                        currentList.map((plugin: any) => (
+                            <PluginCard key={plugin.id} plugin={plugin} viewMode={viewMode} />
+                        ))
+                    ) : (
+                        !loading && <p className="no-plugins">{t('home.no_plugins')}</p>
+                    )}
+                </div>
+
+                {activeTab === 'all' && !selectedCategory && !selectedType && (
+                    <>
+                        <div ref={observerTarget} style={{ height: '1px', width: '100%', pointerEvents: 'none' }} />
+                        {loadingMore && (
+                            <div className="infinite-scroll-loader">
+                                <div className="spinner"></div>
+                                <p>Loading more plugins...</p>
+                            </div>
+                        )}
+                        {!hasMore && allPlugins.length > 0 && (
+                            <div className="infinite-scroll-end">
+                                <p>End of plugins catalog.</p>
+                            </div>
+                        )}
+                    </>
+                )}
+
+                {fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0 && (
                     <div className="empty-state">
                         <p>No plugins found. Check back later!</p>
                     </div>
                 )}
             </div>
+
+            <section className="home-cta-section">
+                <div className="home-cta-card">
+                    <h2 className="home-cta-title">
+                        Build plugins for <span className="hl-tag">Pumpkin</span>
+                    </h2>
+                    <p className="home-cta-desc">
+                        Write plugins in Rust, Kotlin, Python, Go, C#, C++, D, Zig, or TypeScript. Compiled to WebAssembly for native performance, safety, and instant hot-reloading.
+                    </p>
+                    <div className="home-cta-actions">
+                        <Link to="/dashboard" className="btn btn-hero-primary">
+                            Publish a Plugin
+                        </Link>
+                        <a
+                            href="https://docs.pumpkinmc.org/plugin-dev/introduction"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-hero-secondary"
+                        >
+                            Developer Docs
+                        </a>
+                        <a
+                            href="https://github.com/Pumpkin-MC/pumpkin-plugin-examples"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn btn-hero-secondary"
+                        >
+                            Plugin Examples
+                        </a>
+                    </div>
+                </div>
+            </section>
         </>
     );
 };
