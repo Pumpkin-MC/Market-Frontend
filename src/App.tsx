@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, NavLink, Outlet, Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Store } from 'lucide-react';
+import { Store, Search, X, ExternalLink } from 'lucide-react';
 import { CookieBanner } from './components/CookieBanner';
 import { openCookiePreferencesModal } from './utils/consent';
 import { NavSearch } from './components/NavSearch';
@@ -303,54 +303,102 @@ const DashboardLayout = () => {
 const Navbar = ({ user }: any) => {
   const { t } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
-  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+  const toggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+    if (!isMenuOpen) {
+      setIsSearchOpen(false);
+    }
+  };
+
+  const toggleSearch = () => {
+    setIsSearchOpen((prev) => !prev);
+    if (!isSearchOpen) {
+      setIsMenuOpen(false);
+    }
+  };
+
+  const handleNavigate = () => {
+    setIsMenuOpen(false);
+    setIsSearchOpen(false);
+  };
 
   return (
     <nav className="navbar">
-      <div className="logo" style={{ display: 'flex', alignItems: 'center' }}>
-        <Link to="/" onClick={() => setIsMenuOpen(false)}>
-          <img src="/icon.png" alt="Market Logo" style={{ height: '50px', marginRight: '0px', verticalAlign: 'middle' }} />
-          <span>MARKET</span>
-        </Link>
-      </div>
-
-      <button className="mobile-menu-toggle" onClick={toggleMenu} aria-label="Toggle menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          {isMenuOpen ? (
-            <path d="M18 6L6 18M6 6l12 12" />
-          ) : (
-            <path d="M3 12h18M3 6h18M3 18h18" />
-          )}
-        </svg>
-      </button>
-
-      <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
-        <div className="nav-links">
-          {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
-            <NavLink to="/dashboard" onClick={() => setIsMenuOpen(false)}>{t('nav.dashboard')}</NavLink>
-          )}
-          {user && <NavLink to={user.is_developer ? "/dashboard/plugins?create=true" : "/dashboard/plugins"} onClick={() => setIsMenuOpen(false)}>Publish</NavLink>}
-          {user && (user.role === 'admin' || user.role === 'moderator') && <NavLink to="/staff" onClick={() => setIsMenuOpen(false)}>Staff</NavLink>}
+      <div className="navbar-container">
+        <div className="logo">
+          <Link to="/" onClick={handleNavigate}>
+            <img src="/icon.png" alt="Market Logo" className="logo-img" />
+            <span>MARKET</span>
+          </Link>
         </div>
 
-
-        {/* ── Center Search Bar with Suggestions ── */}
         <div className="nav-search-center">
-          <NavSearch onNavigate={() => setIsMenuOpen(false)} />
+          <NavSearch onNavigate={handleNavigate} />
         </div>
 
-        <div className="nav-actions">
-          {user ? (
-            <NavLink to="/settings" className="nav-user-link" onClick={() => setIsMenuOpen(false)}>{user.username}</NavLink>
-          ) : (
-            <>
-              <Link to="/login" className="btn btn-secondary" onClick={() => setIsMenuOpen(false)}>{t('nav.login')}</Link>
-              <Link to="/register" className="btn" onClick={() => setIsMenuOpen(false)}>{t('nav.register')}</Link>
-            </>
-          )}
+        <div className="mobile-header-actions">
+          <button
+            type="button"
+            className={`mobile-header-btn ${isSearchOpen ? 'active' : ''}`}
+            onClick={toggleSearch}
+            aria-label="Toggle search"
+          >
+            {isSearchOpen ? <X size={20} /> : <Search size={20} />}
+          </button>
+
+          <button
+            type="button"
+            className={`mobile-header-btn mobile-menu-toggle ${isMenuOpen ? 'active' : ''}`}
+            onClick={toggleMenu}
+            aria-label="Toggle menu"
+          >
+            {isMenuOpen ? <X size={20} /> : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        <div className={`nav-content ${isMenuOpen ? 'open' : ''}`}>
+          <div className="nav-links">
+            {user && (user.plugin_count > 0 || user.role === 'admin' || user.role === 'moderator') && (
+              <NavLink to="/dashboard" onClick={handleNavigate}>{t('nav.dashboard')}</NavLink>
+            )}
+            {user && (
+              <NavLink to={user.is_developer ? "/dashboard/plugins?create=true" : "/dashboard/plugins"} onClick={handleNavigate}>
+                Publish
+              </NavLink>
+            )}
+            {user && (user.role === 'admin' || user.role === 'moderator') && (
+              <NavLink to="/staff" onClick={handleNavigate}>Staff</NavLink>
+            )}
+          </div>
+
+          <div className="nav-actions">
+            {user ? (
+              <NavLink to="/settings" className="nav-user-link" onClick={handleNavigate}>{user.username}</NavLink>
+            ) : (
+              <>
+                <Link to="/login" className="btn btn-secondary" onClick={handleNavigate}>{t('nav.login')}</Link>
+                <Link to="/register" className="btn" onClick={handleNavigate}>{t('nav.register')}</Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
+
+      {isMenuOpen && (
+        <div className="mobile-nav-backdrop" onClick={handleNavigate} />
+      )}
+
+      {isSearchOpen && (
+        <div className="mobile-search-panel">
+          <NavSearch autoFocus onNavigate={handleNavigate} />
+        </div>
+      )}
     </nav>
   );
 };
@@ -413,98 +461,93 @@ const LanguageSelector = () => {
 };
 
 const Footer = () => (
-  <footer style={{ padding: '16px 24px' }}>
-    <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: '16px',
-      flexWrap: 'wrap',
-    }}>
-      {/* Logo inline */}
-      <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: '6px', textDecoration: 'none', opacity: 0.6 }}>
-        <img src="/icon.png" alt="Market Logo" style={{ height: '20px', verticalAlign: 'middle' }} />
-      </Link>
+  <footer className="site-footer">
+    <div className="footer-top">
+      <div className="footer-brand-col">
+        <Link to="/" className="footer-logo">
+          <img src="/icon.png" alt="Market Logo" className="footer-logo-img" />
+          <span className="footer-logo-text">PUMPKIN<span>MARKET</span></span>
+        </Link>
+        <p className="footer-tagline">
+          The official marketplace for high-performance, WebAssembly-powered Minecraft plugins built for the PumpkinMC server architecture.
+        </p>
+        <div className="footer-status-badge">
+          <span className="footer-status-indicator" />
+          <span className="footer-status-text">All Systems Operational</span>
+        </div>
+      </div>
 
-      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
+      <div className="footer-col">
+        <h4 className="footer-heading">Marketplace</h4>
+        <ul className="footer-links">
+          <li><Link to="/">Explore Plugins</Link></li>
+          <li><Link to="/#browse">Trending Feed</Link></li>
+          <li><Link to="/dashboard">Developer Studio</Link></li>
+          <li><Link to="/dashboard/plugins?create=true">Publish Plugin</Link></li>
+        </ul>
+      </div>
 
-      <p style={{ fontSize: '12px', opacity: 0.4, margin: 0 }}>
-        © 2026 PumpkinMC
-      </p>
+      <div className="footer-col">
+        <h4 className="footer-heading">Ecosystem</h4>
+        <ul className="footer-links">
+          <li>
+            <a href="https://pumpkinmc.org/" target="_blank" rel="noopener noreferrer">
+              PumpkinMC Core
+              <ExternalLink size={12} className="footer-ext-icon" />
+            </a>
+          </li>
+          <li>
+            <a href="https://github.com/Pumpkin-MC" target="_blank" rel="noopener noreferrer">
+              GitHub Organization
+              <ExternalLink size={12} className="footer-ext-icon" />
+            </a>
+          </li>
+          <li>
+            <a href="https://discord.gg/pumpkinmc" target="_blank" rel="noopener noreferrer">
+              Discord Community
+              <ExternalLink size={12} className="footer-ext-icon" />
+            </a>
+          </li>
+          <li><Link to="/guidelines">Community Guidelines</Link></li>
+        </ul>
+      </div>
 
+      <div className="footer-col">
+        <h4 className="footer-heading">Legal &amp; Trust</h4>
+        <ul className="footer-links">
+          <li><Link to="/terms">Terms of Service</Link></li>
+          <li><Link to="/privacy">Privacy Policy</Link></li>
+          <li><Link to="/developer-terms">Developer Terms</Link></li>
+          <li><Link to="/legal-notice">Legal Notice</Link></li>
+          <li>
+            <button
+              type="button"
+              className="footer-btn-link"
+              onClick={openCookiePreferencesModal}
+            >
+              Cookie Preferences
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
 
-      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
+    <div className="footer-bottom">
+      <div className="footer-bottom-left">
+        <p className="footer-copyright">
+          &copy; {new Date().getFullYear()} PumpkinMC Project. Released under open-source licenses.
+        </p>
+        <p className="footer-disclaimer">
+          Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.
+        </p>
+      </div>
 
-      <Link
-        to="/terms"
-        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Terms
-      </Link>
-
-      <Link
-        to="/privacy"
-        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Privacy
-      </Link>
-
-      <Link
-        to="/guidelines"
-        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Guidelines
-      </Link>
-
-      <Link
-        to="/developer-terms"
-        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Developer Terms
-      </Link>
-
-      <Link
-        to="/legal-notice"
-        style={{ fontSize: '12px', color: 'inherit', opacity: 0.4, textDecoration: 'none' }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Legal Notice
-      </Link>
-
-      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
-
-      <button
-        type="button"
-        onClick={openCookiePreferencesModal}
-        style={{
-          background: 'none',
-          border: 'none',
-          padding: 0,
-          cursor: 'pointer',
-          fontFamily: 'inherit',
-          fontSize: '12px',
-          color: 'inherit',
-          opacity: 0.4,
-          textDecoration: 'none'
-        }}
-        onMouseEnter={e => (e.currentTarget.style.opacity = '0.9')}
-        onMouseLeave={e => (e.currentTarget.style.opacity = '0.4')}
-      >
-        Cookie Preferences
-      </button>
-
-      <span style={{ opacity: 0.2, fontSize: '11px' }}>·</span>
-
-      <LanguageSelector />
+      <div className="footer-bottom-right">
+        <div className="footer-lang-wrap">
+          <span className="footer-lang-label">Language:</span>
+          <LanguageSelector />
+        </div>
+      </div>
     </div>
   </footer>
 );
