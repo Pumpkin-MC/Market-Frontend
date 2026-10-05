@@ -149,7 +149,7 @@ export const DeveloperTermsPage: React.FC = () => {
             <li><strong>You own your code:</strong> You retain ownership of your original Plugin source code and assets.</li>
             <li><strong>Distribution license:</strong> You grant Pumpkin Marketplace a worldwide license to host, cache, security-scan, sign, and distribute your binaries to buyers.</li>
             <li><strong>Full platform control:</strong> Pumpkin Marketplace maintains strict quality &amp; safety standards and reserves the right to delist or quarantine non-compliant, unsafe, or abandoned plugins.</li>
-            <li><strong>Revenue &amp; payouts:</strong> Paid plugins follow a standard 70/30 developer/platform split with automated Stripe Connect payouts.</li>
+            <li><strong>Revenue &amp; payouts:</strong> Paid plugins follow a standard 70/30 developer/platform split with automated payouts.</li>
             <li><strong>Security &amp; EULA:</strong> Code must be free of backdoors, spyware, or malicious payloads and comply with Mojang's Minecraft EULA.</li>
           </ul>
         </div>

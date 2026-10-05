@@ -128,7 +128,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         <div>
             <div className="mp-tab-header">
                 <h2>Publish Update</h2>
-                <p>Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes — like Google Play, but for your plugin marketplace.</p>
+                <p>Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes.</p>
             </div>
 
             {user && !user.totp_enabled && (

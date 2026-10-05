@@ -19,7 +19,7 @@ const PRICING_OPTIONS: { key: LicenseType; label: string; icon: React.ReactNode;
         key: 'paid',
         label: 'Paid',
         icon: <Lock size={18} />,
-        desc: 'One-time purchase via Stripe. Requires a connected Stripe account.',
+        desc: 'One-time purchase. Requires a connected payout account.',
     },
 ];
 
@@ -48,7 +48,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
     const salePriceDisplay  = (salePriceCents / 100).toFixed(2);
     const savingsDisplay    = ((priceCents - salePriceCents) / 100).toFixed(2);
 
-    // Stripe fee: 1.5% + €0.25, platform: 30%
+    // Payment processing fee: 1.5% + €0.25, platform: 30%
     const calcEarnings = (cents: number) => {
         const stripeCents   = Math.ceil(cents * 0.015 + 25);
         const platformCents = Math.round(cents * 0.30);
@@ -149,7 +149,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                 {licenseType === 'paid' && !stripeConnected && (
                     <div className="mp-banner warn">
                         <Lock size={16} style={{ flexShrink: 0 }} />
-                        <span>Connect your Stripe account before configuring paid pricing.</span>
+                        <span>Connect your payout account before configuring paid pricing.</span>
                     </div>
                 )}
 
@@ -193,7 +193,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                     <span style={{ color: 'var(--mp-red)' }}>-€{fmt(Math.round(priceCents * 0.30))}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--mp-border)' }}>
-                                    <span style={{ color: 'var(--mp-text-3)' }}>Stripe fee (1.5% + €0.25)</span>
+                                    <span style={{ color: 'var(--mp-text-3)' }}>Payment processing fee (1.5% + €0.25)</span>
                                     <span style={{ color: 'var(--mp-red)' }}>-€{fmt(Math.ceil(priceCents * 0.015 + 25))}</span>
                                 </div>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600 }}>

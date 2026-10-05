@@ -524,11 +524,12 @@ const PluginDetail = () => {
         setMainScreenshot(res.data.screenshots[0].path);
       }
 
-      // Canonical URL check & replace
+      // Canonical URL check & replace (App ID)
       if (res.data.name) {
         const expectedSlug = res.data.name.toLowerCase().trim().replace(/[\s_\.\-]+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
-        const targetPath = expectedSlug ? `/plugin/${res.data.id}-${expectedSlug}` : `/plugin/${res.data.id}`;
-        if (location.pathname !== targetPath || slug !== expectedSlug) {
+        const targetId = res.data.public_id || res.data.id;
+        const targetPath = expectedSlug ? `/plugin/${targetId}-${expectedSlug}` : `/plugin/${targetId}`;
+        if (location.pathname !== targetPath || slug !== expectedSlug || rawId !== targetId) {
           window.history.replaceState({}, '', targetPath + location.search);
         }
       }
@@ -924,7 +925,7 @@ const PluginDetail = () => {
             "@type": "ListItem",
             "position": 3,
             "name": plugin.name,
-            "item": `https://market.pumpkinmc.org/plugin/${plugin.id}`
+            "item": `https://market.pumpkinmc.org/plugin/${plugin.public_id || plugin.id}`
           }
         ]
       }

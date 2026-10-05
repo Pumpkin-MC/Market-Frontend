@@ -573,7 +573,7 @@ const DashboardPlugins = () => {
                                         onClick={() => setNewPluginType('paid')}
                                     >
                                         <h5>Paid / Premium</h5>
-                                        <p>Sell licenses with instant Stripe payouts.</p>
+                                        <p>Sell licenses with automated developer payouts.</p>
                                     </div>
                                 </div>
                             </div>

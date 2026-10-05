@@ -217,7 +217,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </div>
         )}
 
-        {/* ── STEP 1: Account Type (Google Play Style) ── */}
+        {/* ── STEP 1: Account Type ── */}
         {step === 1 && (
           <div className="dev-step-content">
             <div className="dev-account-types-container">
@@ -611,7 +611,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       color: !isSellingPaid ? '#34d399' : '#f97316',
                       border: `1px solid ${!isSellingPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(249, 115, 22, 0.3)'}`,
                     }}>
-                      {!isSellingPaid ? 'Free Uploads' : 'Paid + Stripe'}
+                      {!isSellingPaid ? 'Free Uploads' : 'Paid Plugins'}
                     </span>
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #94a3b8)' }}>
@@ -693,7 +693,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       disabled={loading || !acceptedTerms || !hasSecureAuth}
                       onClick={() => handleCompleteOnboarding(true)}
                     >
-                      <CreditCard size={15} /> {loading ? 'Connecting Stripe...' : t('developer.onboarding.btn_connect_stripe')}
+                      <CreditCard size={15} /> {loading ? 'Connecting Payouts...' : t('developer.onboarding.btn_connect_stripe')}
                     </button>
                   </>
                 ) : (

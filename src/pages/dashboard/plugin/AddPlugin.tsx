@@ -1146,7 +1146,7 @@ const AddPlugin = () => {
                                 <div className="mp-pricing-options">
                                     {([
                                         { key: 'free' as LicenseType, label: 'Free', icon: <Zap size={18} />,  desc: 'Anyone installs for free. Maximises reach.' },
-                                        { key: 'paid' as LicenseType, label: 'Paid', icon: <Lock size={18} />, desc: 'One-time purchase via Stripe.' },
+                                        { key: 'paid' as LicenseType, label: 'Paid', icon: <Lock size={18} />, desc: 'One-time purchase.' },
                                     ]).map(opt => {
                                         const isLocked = opt.key === 'paid' && !stripeConnected;
                                         return (
@@ -1211,7 +1211,7 @@ const AddPlugin = () => {
                                                         <span style={{ color: 'var(--mp-red)' }}>-€{fmt(platformCents)}</span>
                                                     </div>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.55rem', paddingBottom: '0.55rem', borderBottom: '1px solid var(--mp-border)' }}>
-                                                        <span style={{ color: 'var(--mp-text-3)' }}>Stripe fee (1.5% + €0.25)</span>
+                                                        <span style={{ color: 'var(--mp-text-3)' }}>Payment processing fee (1.5% + €0.25)</span>
                                                         <span style={{ color: 'var(--mp-red)' }}>-€{fmt(stripeCents)}</span>
                                                     </div>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600 }}>
@@ -1224,7 +1224,7 @@ const AddPlugin = () => {
                                             );
                                         })()}
                                         <p style={{ fontSize: '0.7rem', color: 'var(--mp-text-3)', marginTop: '0.5rem' }}>
-                                            Stripe fees are estimates. Payouts occur according to your Stripe schedule.
+                                            Processing fees are estimates. Payouts occur according to your payout schedule.
                                         </p>
 
                                         {/* Pre-Order Option */}

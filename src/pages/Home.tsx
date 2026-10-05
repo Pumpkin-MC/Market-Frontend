@@ -146,7 +146,7 @@ const Home = () => {
         return () => observer.disconnect();
     }, [hasMore, loading, loadingMore, allPlugins.length]);
 
-    // Featured plugins for top Steam-like carousel
+    // Featured plugins for top showcase carousel
     const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
 
     // Auto rotate hero slide every 6s

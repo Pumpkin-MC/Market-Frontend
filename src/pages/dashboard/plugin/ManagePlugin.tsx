@@ -149,7 +149,7 @@ const ManagePlugin = () => {
 
             {/* ── Main Content ──────────────────────────────────────── */}
             <main className="mp-main">
-                {/* Top Google/Apple/Steam style publishing & status bar */}
+                {/* Publishing & status bar */}
                 <div className="mp-top-bar">
                     <div className="mp-top-bar-left">
                         <div className={`mp-status-pill ${isLive ? 'published' : 'draft'}`}>

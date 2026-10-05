@@ -233,7 +233,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                                 </div>
                                 <div className="prm-check-info">
                                     <div className="prm-check-title">Pricing & Payouts</div>
-                                    <div className="prm-check-desc">{readiness.pricingReady ? 'Valid pricing configuration' : 'Paid plugin requires price > 0 and connected Stripe account'}</div>
+                                    <div className="prm-check-desc">{readiness.pricingReady ? 'Valid pricing configuration' : 'Paid plugin requires price > 0 and connected payout account'}</div>
                                 </div>
                                 {!readiness.pricingReady && (
                                     <button className="prm-fix-btn" onClick={() => { onNavigateTab('pricing'); onClose(); }}>

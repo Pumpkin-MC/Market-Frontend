@@ -11,7 +11,8 @@ export const slugify = (text: string): string => {
     .replace(/-+$/, '');             // Trim hyphens from end
 };
 
-export const getPluginUrl = (plugin: { id: number | string; name?: string }): string => {
+export const getPluginUrl = (plugin: { id?: number | string; public_id?: string; name?: string }): string => {
+  const identifier = plugin.public_id || plugin.id;
   const slug = plugin.name ? slugify(plugin.name) : '';
-  return slug ? `/plugin/${plugin.id}-${slug}` : `/plugin/${plugin.id}`;
+  return slug ? `/plugin/${identifier}-${slug}` : `/plugin/${identifier}`;
 };

@@ -42,6 +42,7 @@ export interface PluginReview {
 
 export interface Plugin {
   id: number;
+  public_id?: string;
   name: string;
   version?: string | null;
   file_size?: number;

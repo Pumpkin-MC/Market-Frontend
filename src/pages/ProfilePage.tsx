@@ -24,6 +24,7 @@ import { getDevicePasskeyName } from '../utils/deviceInfo';
 
 interface LibraryEntry {
   plugin_id:    number;
+  public_id?:   string;
   name:         string;
   category:     string | null;
   preview_path: string | null;
@@ -863,7 +864,7 @@ const ProfilePage = () => {
       const res = await api.post('/stripe/onboard');
       if (res.data.url) window.location.href = res.data.url;
     } catch (err: any) {
-      showToast(err.response?.data?.error || 'Failed to start Stripe onboarding.', 'error');
+      showToast(err.response?.data?.error || 'Failed to start payout onboarding.', 'error');
       setIsStripeLoading(false);
     }
   };
@@ -874,7 +875,7 @@ const ProfilePage = () => {
       const res = await api.get('/stripe/dashboard');
       if (res.data.url) window.location.href = res.data.url;
     } catch (err: any) {
-      showToast(err.response?.data?.error || 'Failed to open Stripe dashboard.', 'error');
+      showToast(err.response?.data?.error || 'Failed to open payout dashboard.', 'error');
       setIsStripeLoading(false);
     }
   };
@@ -2192,21 +2193,21 @@ const ProfilePage = () => {
                     </SettingsCard>
                   )}
 
-                  {/* Payouts / Stripe */}
-                  <SettingsCard title="Stripe Payouts (Paid Plugins)" icon={CreditCard}
-                    description="Connect your Stripe account to earn money from paid plugin sales. Optional for free plugins.">
+                  {/* Payouts */}
+                  <SettingsCard title="Developer Payouts (Paid Plugins)" icon={CreditCard}
+                    description="Connect your payout account to receive earnings from paid plugin sales. Optional for free plugins.">
                     <div className="settings-stripe-box">
                       {user?.stripe_ready ? (
                         <>
                           <div className="settings-status-row success" style={{ marginBottom: '1.5rem' }}>
                             <CheckCircle size={18} />
                             <div>
-                              <p style={{ fontWeight: 700, margin: 0 }}>Stripe account connected</p>
+                              <p style={{ fontWeight: 700, margin: 0 }}>Payout account connected</p>
                               <p style={{ fontSize: '0.82rem', margin: '0.2rem 0 0', opacity: 0.7 }}>Your payouts are active and ready to receive funds from paid plugin sales.</p>
                             </div>
                           </div>
                           <button className="settings-btn settings-btn-secondary" onClick={handleGoToStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Opening…</> : 'Go to Stripe Dashboard →'}
+                            {isStripeLoading ? <><span className="spinner-sm" />Opening…</> : 'Go to Payout Dashboard →'}
                           </button>
                         </>
                       ) : user?.stripe_account_id ? (
@@ -2214,22 +2215,22 @@ const ProfilePage = () => {
                           <div className="settings-status-row warn" style={{ marginBottom: '1.5rem' }}>
                             <AlertCircle size={18} />
                             <div>
-                              <p style={{ fontWeight: 700, margin: 0 }}>Stripe onboarding incomplete</p>
+                              <p style={{ fontWeight: 700, margin: 0 }}>Payout onboarding incomplete</p>
                               <p style={{ fontSize: '0.82rem', margin: '0.2rem 0 0', opacity: 0.7 }}>Your account was created but hasn't been fully activated yet.</p>
                             </div>
                           </div>
                           <button className="settings-btn settings-btn-warn" onClick={handleConnectStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Redirecting…</> : 'Continue Stripe Setup →'}
+                            {isStripeLoading ? <><span className="spinner-sm" />Redirecting…</> : 'Continue Payout Setup →'}
                           </button>
                         </>
                       ) : (
                         <>
                           <div className="settings-stripe-empty">
                             <CreditCard size={32} style={{ opacity: 0.3 }} />
-                            <p>No Stripe account linked yet. Free plugin uploads are fully enabled.</p>
+                            <p>No payout account linked yet. Free plugin uploads are fully enabled.</p>
                           </div>
                           <button className="settings-btn settings-btn-primary" onClick={handleConnectStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Connecting…</> : 'Connect Stripe Account for Paid Sales'}
+                            {isStripeLoading ? <><span className="spinner-sm" />Connecting…</> : 'Connect Payout Account for Paid Sales'}
                           </button>
                         </>
                       )}
@@ -2239,9 +2240,9 @@ const ProfilePage = () => {
                   <SettingsCard title="Payout FAQ" icon={Lock}>
                     <div className="settings-faq">
                       {[
-                        { q: 'Can I upload free plugins without Stripe?', a: 'Yes! Stripe Connect is only required if you want to sell paid plugins.' },
-                        { q: 'When do I get paid for sales?', a: 'Stripe transfers earnings automatically within 2–7 business days.' },
-                        { q: 'What platform fee applies?', a: 'PumpkinMarket takes a low platform commission per sale. Stripe processing fees apply.' },
+                        { q: 'Can I upload free plugins without a payout account?', a: 'Yes! A payout account is only required if you want to sell paid plugins.' },
+                        { q: 'When do I get paid for sales?', a: 'Earnings are transferred automatically within 2–7 business days according to your payout schedule.' },
+                        { q: 'What platform fee applies?', a: 'PumpkinMarket takes a platform commission per sale. Standard payment processing fees apply.' },
                       ].map(({ q, a }) => (
                         <div key={q} className="settings-faq-item">
                           <p className="settings-faq-q">{q}</p>
@@ -2352,7 +2353,7 @@ const ProfilePage = () => {
                   {library.map((entry, idx) => (
                     <Link
                       key={entry.plugin_id}
-                      to={getPluginUrl({ id: entry.plugin_id, name: entry.name })}
+                      to={getPluginUrl({ id: entry.plugin_id, public_id: entry.public_id, name: entry.name })}
                       className="library-card"
                       style={{ animationDelay: `${idx * 0.05}s` }}
                     >
