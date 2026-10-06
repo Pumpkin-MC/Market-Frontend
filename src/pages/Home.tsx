@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
-import { SlidersHorizontal, ChevronDown, X, LayoutGrid, List } from 'lucide-react';
+import { SlidersHorizontal, ChevronDown, X, LayoutGrid, List, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 import api from '../api';
 import SEO from '../components/SEO';
 import PluginCard from '../components/PluginCard';
@@ -31,7 +31,6 @@ const Home = () => {
     const [nextCursor, setNextCursor] = useState<string | null>(homeCache?.nextCursor ?? null);
     const [hasMore, setHasMore] = useState<boolean>(homeCache?.hasMore ?? true);
     const [heroIndex, setHeroIndex] = useState(0);
-    const [heroSubImageIndex, setHeroSubImageIndex] = useState(0);
 
     const [activeTab, setActiveTab] = useState<'trending' | 'latest' | 'all'>('trending');
     const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -173,7 +172,6 @@ const Home = () => {
         if (featuredPlugins.length <= 1) return;
         const timer = setInterval(() => {
             setHeroIndex((prev) => (prev + 1) % featuredPlugins.length);
-            setHeroSubImageIndex(0);
         }, 6000);
         return () => clearInterval(timer);
     }, [featuredPlugins.length]);
@@ -190,7 +188,7 @@ const Home = () => {
 
     const hasScreenshots = featuredScreenshots.length > 0;
     const activeImage = hasScreenshots
-        ? (featuredScreenshots[heroSubImageIndex] || featuredScreenshots[0])
+        ? featuredScreenshots[0]
         : activeFeatured?.preview_path;
 
     const getDesc = (translated?: Record<string, string> | string) => {
@@ -202,6 +200,16 @@ const Home = () => {
         } catch {
             return typeof translated === 'string' ? translated : 'High performance Minecraft plugin.';
         }
+    };
+
+    const handlePrevSpotlight = () => {
+        if (featuredPlugins.length === 0) return;
+        setHeroIndex((prev) => (prev - 1 + featuredPlugins.length) % featuredPlugins.length);
+    };
+
+    const handleNextSpotlight = () => {
+        if (featuredPlugins.length === 0) return;
+        setHeroIndex((prev) => (prev + 1) % featuredPlugins.length);
     };
 
     const currentList = useMemo(() => {
@@ -281,116 +289,115 @@ const Home = () => {
             </section>
 
             {loading && popular.length === 0 ? (
-                <section className="featured-showcase-container">
-                    <div className="skeleton-showcase shimmer" />
+                <section className="spotlight-section">
+                    <div className="spotlight-skeleton shimmer" />
                 </section>
             ) : activeFeatured && (
-                <section className="featured-showcase-container">
-                    <div className="featured-showcase-header">
-                        <h2 className="featured-showcase-heading">Spotlight <span className="hl-tag">showcase</span></h2>
+                <section className="spotlight-section">
+                    <div className="spotlight-header">
+                        <div className="spotlight-header-left">
+                            <span className="spotlight-tag-pill">HOT &amp; POPULAR</span>
+                            <h2 className="spotlight-heading">Spotlight <span className="hl-tag">showcase</span></h2>
+                        </div>
+
+                        {featuredPlugins.length > 1 && (
+                            <div className="spotlight-controls">
+                                <button
+                                    type="button"
+                                    className="spotlight-nav-btn"
+                                    onClick={handlePrevSpotlight}
+                                    aria-label="Previous spotlight"
+                                >
+                                    <ChevronLeft size={16} />
+                                </button>
+                                <div className="spotlight-indicators">
+                                    {featuredPlugins.map((item, idx) => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            className={`spotlight-dot ${idx === heroIndex ? 'active' : ''}`}
+                                            onClick={() => setHeroIndex(idx)}
+                                            aria-label={item.name}
+                                        />
+                                    ))}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="spotlight-nav-btn"
+                                    onClick={handleNextSpotlight}
+                                    aria-label="Next spotlight"
+                                >
+                                    <ChevronRight size={16} />
+                                </button>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="featured-showcase-main">
-                        <Link to={getPluginUrl(activeFeatured)} className="featured-showcase-link">
-                            <div className="featured-main-visual">
+                    <div className="spotlight-card">
+                        <Link to={getPluginUrl(activeFeatured)} className="spotlight-card-inner">
+                            <div className="spotlight-visual">
                                 {hasScreenshots && activeImage ? (
-                                    <img key={activeImage} src={activeImage} alt={activeFeatured.name} className="featured-main-img" />
+                                    <img key={activeImage} src={activeImage} alt={activeFeatured.name} className="spotlight-img" />
                                 ) : activeFeatured.preview_path ? (
-                                    <div className="featured-icon-container">
-                                        <img src={activeFeatured.preview_path} alt={activeFeatured.name} className="featured-showcase-icon" />
+                                    <div className="spotlight-icon-wrap">
+                                        <img src={activeFeatured.preview_path} alt={activeFeatured.name} className="spotlight-icon-lg" />
                                     </div>
                                 ) : (
-                                    <div className="featured-visual-fallback">
+                                    <div className="spotlight-fallback-letter">
                                         <span>{activeFeatured.name.charAt(0).toUpperCase()}</span>
                                     </div>
                                 )}
 
-                                <div className="featured-badge-overlay">
-                                    <span className="featured-tag">Trending</span>
+                                <div className="spotlight-badge-overlay">
                                     {activeFeatured.category && (
-                                        <span className="featured-category-tag">{activeFeatured.category}</span>
+                                        <span className="spotlight-badge-cat">{activeFeatured.category}</span>
                                     )}
                                     {activeFeatured.type === 'free' ? (
-                                        <span className="featured-price-tag free">Free</span>
+                                        <span className="spotlight-badge-price free">Free</span>
                                     ) : activeFeatured.sale_active && activeFeatured.sale_discount_percent > 0 ? (
-                                        <span className="featured-price-tag sale">
-                                            -{activeFeatured.sale_discount_percent}% OFF
+                                        <span className="spotlight-badge-price sale">
+                                            -{activeFeatured.sale_discount_percent}%
                                         </span>
                                     ) : (
-                                        <span className="featured-price-tag paid">
+                                        <span className="spotlight-badge-price paid">
                                             €{((activeFeatured.price_cents || 0) / 100).toFixed(2)}
                                         </span>
                                     )}
                                 </div>
                             </div>
 
-                            <div className="featured-sidebar-info">
-                                <div className="featured-header-row">
-                                    {activeFeatured.preview_path && (
-                                        <img src={activeFeatured.preview_path} alt="" className="featured-sidebar-icon" />
-                                    )}
-                                    <div className="featured-title-col">
-                                        <h2 className="featured-title">{activeFeatured.name}</h2>
-                                        <p className="featured-dev">by <strong>{activeFeatured.dev_name}</strong></p>
+                            <div className="spotlight-body">
+                                <div className="spotlight-body-top">
+                                    <div className="spotlight-brand-row">
+                                        {activeFeatured.preview_path && (
+                                            <img src={activeFeatured.preview_path} alt="" className="spotlight-brand-icon" />
+                                        )}
+                                        <div className="spotlight-title-group">
+                                            <h3 className="spotlight-title">{activeFeatured.name}</h3>
+                                            <span className="spotlight-dev">by <strong>{activeFeatured.dev_name}</strong></span>
+                                        </div>
                                     </div>
+
+                                    <p className="spotlight-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
                                 </div>
 
-                                {hasScreenshots && featuredScreenshots.length > 1 && (
-                                    <div className="featured-screenshots-grid">
-                                        {featuredScreenshots.slice(0, 4).map((src: string, idx: number) => (
-                                            <div
-                                                key={src + idx}
-                                                className={`featured-thumb ${idx === heroSubImageIndex ? 'active' : ''}`}
-                                                onMouseEnter={(e) => {
-                                                    e.preventDefault();
-                                                    setHeroSubImageIndex(idx);
-                                                }}
-                                            >
-                                                <img src={src} alt="thumbnail" />
-                                            </div>
-                                        ))}
+                                <div className="spotlight-body-bottom">
+                                    <div className="spotlight-meta">
+                                        <span className="spotlight-stat">
+                                            <Download size={13} />
+                                            {(activeFeatured.downloads || 0).toLocaleString()}
+                                        </span>
+                                        {activeFeatured.version && (
+                                            <span className="spotlight-version">v{activeFeatured.version}</span>
+                                        )}
                                     </div>
-                                )}
 
-                                <p className="featured-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
-
-                                <div className="featured-meta">
-                                    <div className="featured-stat">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-                                        </svg>
-                                        <span>{(activeFeatured.downloads || 0).toLocaleString()} Downloads</span>
-                                    </div>
-                                    {activeFeatured.version && (
-                                        <span className="featured-version">v{activeFeatured.version}</span>
-                                    )}
-                                </div>
-
-                                <div className="featured-action-btn">
-                                    <span>View Plugin</span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" />
-                                    </svg>
+                                    <span className="spotlight-cta">
+                                        View Plugin &rarr;
+                                    </span>
                                 </div>
                             </div>
                         </Link>
-                    </div>
-
-                    <div className="featured-nav-dots">
-                        {featuredPlugins.map((item, idx) => (
-                            <button
-                                key={item.id}
-                                type="button"
-                                className={`featured-dot-btn ${idx === heroIndex ? 'active' : ''}`}
-                                onClick={() => {
-                                    setHeroIndex(idx);
-                                    setHeroSubImageIndex(0);
-                                }}
-                            >
-                                <span className="dot-title">{item.name}</span>
-                                <div className="dot-bar" />
-                            </button>
-                        ))}
                     </div>
                 </section>
             )}
