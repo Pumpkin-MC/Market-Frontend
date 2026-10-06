@@ -296,7 +296,6 @@ const Home = () => {
                 <section className="spotlight-section">
                     <div className="spotlight-header">
                         <div className="spotlight-header-left">
-                            <span className="spotlight-tag-pill">HOT &amp; POPULAR</span>
                             <h2 className="spotlight-heading">Spotlight <span className="hl-tag">showcase</span></h2>
                         </div>
 
