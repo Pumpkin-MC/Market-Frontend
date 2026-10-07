@@ -206,13 +206,16 @@ const SearchResultsPage = () => {
           </button>
 
           <div className="search-sort-group">
-            <label htmlFor="search-sort-select">Sort by:</label>
+            <label htmlFor="search-sort-select" className="search-sort-label">
+              Sort by:
+            </label>
             <div className="search-select-wrapper">
               <select
                 id="search-sort-select"
                 value={sort}
                 onChange={(e) => updateFilters({ sort: e.target.value })}
                 className="search-sort-select"
+                aria-label="Sort by"
               >
                 {SORT_OPTIONS.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -328,6 +331,24 @@ const SearchResultsPage = () => {
                 <X size={18} />
               </button>
             )}
+          </div>
+
+          <div className="filter-group">
+            <label htmlFor="searchSidebarSortSelect">Sort by</label>
+            <div className="search-select-wrapper">
+              <select
+                id="searchSidebarSortSelect"
+                value={sort}
+                onChange={(e) => updateFilters({ sort: e.target.value })}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="search-select-chevron" />
+            </div>
           </div>
 
           <div className="filter-group">
