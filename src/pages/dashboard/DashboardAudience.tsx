@@ -147,7 +147,7 @@ const DashboardAudience = () => {
               <Geographies geography={GEO_URL}>
                 {({ geographies }) =>
                   geographies.map((geo) => {
-                    const countryCode = geo.properties.ISO_A2 || geo.properties.iso_a2 || geo.properties.IS_A2;
+                    const countryCode = geo.properties?.ISO_A2 || geo.properties?.iso_a2 || geo.properties?.IS_A2;
                     const d: any = mapData.find((s: any) => s.country === countryCode);
                     const val = d ? (d[mapFilter === 'free_downloads' ? 'freeDownloads' : mapFilter] || 0) : 0;
                     
@@ -160,7 +160,7 @@ const DashboardAudience = () => {
                         strokeWidth={0.5}
                         onMouseEnter={() => {
                           setHoveredInfo({
-                            name: d?.countryName || geo.properties.name || countryCode || 'Unknown',
+                            name: d?.countryName || geo.properties?.name || countryCode || 'Unknown',
                             servers: d?.servers || 0,
                             players: d?.players || 0,
                             visitors: d?.visitors || 0,
