@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../api';
-import { getPluginUrl } from '../utils/url';
 import { useAuth } from '../App';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -1548,11 +1547,8 @@ const PluginDetail = () => {
     </button>
 
     {(() => {
-      const origin = typeof window !== 'undefined' && window.location.origin
-        ? window.location.origin
-        : 'https://market.pumpkinmc.org';
-      const pluginUrl = `${origin}${getPluginUrl(plugin)}`;
-      const ppmCommand = `ppm install ${pluginUrl}`;
+      const pluginId = plugin.public_id || plugin.id;
+      const ppmCommand = `ppm install ${pluginId}`;
       return (
         <div className="ppm-install-box">
           <div className="ppm-install-header">
