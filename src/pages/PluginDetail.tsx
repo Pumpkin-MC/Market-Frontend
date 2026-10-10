@@ -1749,7 +1749,7 @@ const PluginDetail = () => {
 
     {/* CHANGELOG MODAL */}
     {changelogOpen && (
-      <div className="lightbox-overlay" onClick={() => setChangelogOpen(false)} style={{ zIndex: 2000 }}>
+      <div className="lightbox-overlay" onClick={() => setChangelogOpen(false)} style={{ zIndex: 2000, alignItems: 'stretch' }}>
         <div className="lightbox-content" onClick={(e) => e.stopPropagation()} style={{ 
           maxWidth: '800px', 
           width: '90%', 
