@@ -2,13 +2,14 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../api';
+import { getPluginUrl } from '../utils/url';
 import { useAuth } from '../App';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { PluginVideoPlayer } from '../components/PluginVideoPlayer';
-import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../types/plugin';
 
 const getYoutubeVideoId = (url: string) => {
@@ -478,6 +479,14 @@ const PluginDetail = () => {
   // Ownership
   const [ownsPlugin, setOwnsPlugin] = useState(false);
   const [ownershipChecked, setOwnershipChecked] = useState(false);
+
+  // PPM copy state
+  const [ppmCopied, setPpmCopied] = useState(false);
+  const handleCopyPpm = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setPpmCopied(true);
+    setTimeout(() => setPpmCopied(false), 2000);
+  };
 
   // Payment success banner
   const [showPaymentSuccess, setShowPaymentSuccess] = useState(false);
@@ -1537,6 +1546,45 @@ const PluginDetail = () => {
     >
     {downloadLabel}
     </button>
+
+    {(() => {
+      const origin = typeof window !== 'undefined' && window.location.origin
+        ? window.location.origin
+        : 'https://market.pumpkinmc.org';
+      const pluginUrl = `${origin}${getPluginUrl(plugin)}`;
+      const ppmCommand = `ppm install ${pluginUrl}`;
+      return (
+        <div className="ppm-install-box">
+          <div className="ppm-install-header">
+            <a
+              href="https://github.com/Pumpkin-MC/ppm"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ppm-install-link"
+              title="View ppm package manager on GitHub"
+            >
+              <Package size={14} />
+              <span>Install with ppm package manager</span>
+            </a>
+          </div>
+          <div className="ppm-command-row">
+            <code className="ppm-command-code" title={ppmCommand}>
+              {ppmCommand}
+            </code>
+            <button
+              type="button"
+              onClick={() => handleCopyPpm(ppmCommand)}
+              className={`ppm-copy-btn ${ppmCopied ? 'copied' : ''}`}
+              title="Copy command"
+              aria-label="Copy ppm install command"
+            >
+              {ppmCopied ? <Check size={12} color="var(--success, #4ade80)" /> : <Copy size={12} />}
+              <span>{ppmCopied ? 'Copied' : 'Copy'}</span>
+            </button>
+          </div>
+        </div>
+      );
+    })()}
 
     {plugin.source_link && (
       <a

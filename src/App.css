@@ -2615,6 +2615,92 @@ h3 {
 }
 
 
+.ppm-install-box {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ppm-install-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.ppm-install-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted, #888);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.ppm-install-link:hover {
+  color: var(--text-main, #ffffff);
+  text-decoration: underline;
+}
+
+.ppm-install-link svg {
+  opacity: 0.85;
+}
+
+.ppm-command-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.ppm-command-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--primary, #4ade80);
+  word-break: break-all;
+  user-select: all;
+  flex: 1;
+  line-height: 1.4;
+}
+
+.ppm-copy-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  color: var(--text-muted, #888);
+  cursor: pointer;
+  padding: 3px 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+}
+
+.ppm-copy-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-main, #ffffff);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.ppm-copy-btn.copied {
+  background: rgba(74, 222, 128, 0.15);
+  border-color: rgba(74, 222, 128, 0.4);
+  color: var(--success, #4ade80);
+}
+
 .github-link-secondary {
   display: flex;
   align-items: center;

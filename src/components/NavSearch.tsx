@@ -84,11 +84,27 @@ const clearRecentSearches = () => {
   }
 };
 
-const clientSuggestionCache = new Map<string, SearchSuggestionsResponse>();
+interface CacheEntry {
+  data: SearchSuggestionsResponse;
+  timestamp: number;
+}
+
+const clientSuggestionCache = new Map<string, CacheEntry>();
 const MAX_CLIENT_CACHE = 100;
+const CLIENT_CACHE_TTL_MS = 15_000; // 15 seconds TTL to prevent stale results
+
+export const clearSuggestionCache = () => {
+  clientSuggestionCache.clear();
+};
 
 const getCachedSuggestions = (term: string): SearchSuggestionsResponse | undefined => {
-  return clientSuggestionCache.get(term.toLowerCase());
+  const entry = clientSuggestionCache.get(term.toLowerCase());
+  if (!entry) return undefined;
+  if (Date.now() - entry.timestamp > CLIENT_CACHE_TTL_MS) {
+    clientSuggestionCache.delete(term.toLowerCase());
+    return undefined;
+  }
+  return entry.data;
 };
 
 const setCachedSuggestions = (term: string, data: SearchSuggestionsResponse) => {
@@ -96,7 +112,7 @@ const setCachedSuggestions = (term: string, data: SearchSuggestionsResponse) => 
     const firstKey = clientSuggestionCache.keys().next().value;
     if (firstKey) clientSuggestionCache.delete(firstKey);
   }
-  clientSuggestionCache.set(term.toLowerCase(), data);
+  clientSuggestionCache.set(term.toLowerCase(), { data, timestamp: Date.now() });
 };
 
 type FlattenedItem =
@@ -155,6 +171,17 @@ export const NavSearch: React.FC<NavSearchProps> = ({
   useEffect(() => {
     refreshRecentSearches();
   }, [refreshRecentSearches]);
+
+  // Purge search cache when tab/window is refocused
+  useEffect(() => {
+    const handleFocus = () => {
+      clearSuggestionCache();
+    };
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
