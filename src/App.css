@@ -335,16 +335,18 @@ h3 {
     display: block;
   }
 
+  /* Below the navbar, so the logo and the close button stay in the bar above it. */
   .nav-content {
-    position: fixed;
-    top: 0;
+    position: absolute;
+    top: 100%;
     right: -100%;
     width: 80%;
     max-width: 300px;
-    height: 100vh;
+    height: calc(100vh - 100%);
+    overflow-y: auto;
     background: var(--surface);
     flex-direction: column;
-    padding: 80px 2rem 2rem;
+    padding: 2rem;
     transition: right 0.3s ease;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
     z-index: 1000;
