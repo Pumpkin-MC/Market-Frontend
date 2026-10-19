@@ -8,8 +8,22 @@ import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { PluginVideoPlayer } from '../components/PluginVideoPlayer';
-import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp, Package, Download, Layers, Cpu, FileText } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../types/plugin';
+import {
+  getNormalizedPluginVersions,
+  getPluginCompatibilitySummary,
+  cleanReleaseNotes,
+  PUMPKIN_SERVER_PROFILES,
+  formatPumpkinVersionBadge,
+  getSavedServerProfileId,
+  setSavedServerProfileId,
+  isVersionCompatibleWithServer,
+  findRecommendedVersionForServer,
+  cachePluginVersions,
+  type NormalizedPluginVersion,
+} from '../utils/compatibility';
+import { extractWasmPluginApiVersions } from '../utils/fileValidation';
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -497,6 +511,22 @@ const PluginDetail = () => {
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'versions' | 'reviews'>(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('tab') === 'versions' || location.hash === '#versions') return 'versions';
+    if (params.get('tab') === 'reviews' || location.hash === '#reviews') return 'reviews';
+    return 'overview';
+  });
+  const [versionTrackFilter, setVersionTrackFilter] = useState<string>('all');
+  const [pumpkinFilter, setPumpkinFilter] = useState<string>(() => getSavedServerProfileId() || 'all');
+  const [apiFilter, setApiFilter] = useState<string>('all');
+  const [downloadingVersion, setDownloadingVersion] = useState<string | null>(null);
+
+  const handleSelectServerFilter = (serverId: string) => {
+    const normalized = serverId || 'all';
+    setPumpkinFilter(normalized);
+    setSavedServerProfileId(normalized === 'all' ? '' : normalized);
+  };
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
@@ -526,6 +556,7 @@ const PluginDetail = () => {
     setError(null);
     api.get(`/plugins/${id}`).then(res => {
       setPlugin(res.data);
+      cachePluginVersions(res.data);
       if (res.data.youtube_video_url) {
         setMainScreenshot('video');
       } else if (res.data.screenshots?.length > 0) {
@@ -672,16 +703,116 @@ const PluginDetail = () => {
     return { avg: (sum / total).toFixed(1), total, distribution };
   }, [plugin?.reviews]);
 
+  const [probedApiVersions, setProbedApiVersions] = useState<string[]>([]);
+
+  useEffect(() => {
+    setProbedApiVersions([]);
+    if (!plugin || !id || plugin.type !== 'free') return;
+
+    let cancelled = false;
+    api
+      .get(`/plugins/${id}/download`, { responseType: 'arraybuffer' })
+      .then((res) => {
+        if (cancelled || !res.data) return;
+        const detected = extractWasmPluginApiVersions(new Uint8Array(res.data));
+        if (detected.length > 0) {
+          setProbedApiVersions(detected);
+        }
+      })
+      .catch(() => {
+        // Ignore background probe errors
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [plugin?.id, id]);
+
+  const normalizedVersions = useMemo(() => {
+    if (!plugin) return [];
+    return getNormalizedPluginVersions(plugin, probedApiVersions);
+  }, [plugin, probedApiVersions]);
+
+  const compatibilitySummary = useMemo(() => {
+    if (!plugin) {
+      return {
+        latestPumpkinVersions: [],
+        latestApiVersions: [],
+        allPumpkinVersions: [],
+        allApiVersions: [],
+      };
+    }
+    return getPluginCompatibilitySummary(plugin, probedApiVersions);
+  }, [plugin, probedApiVersions]);
+
+  const recommendedForSelectedServer = useMemo(() => {
+    if (!pumpkinFilter || pumpkinFilter === 'all') return undefined;
+    return findRecommendedVersionForServer(normalizedVersions, pumpkinFilter);
+  }, [normalizedVersions, pumpkinFilter]);
+
+  const filteredVersions = useMemo(() => {
+    return normalizedVersions.filter((v) => {
+      if (versionTrackFilter !== 'all' && (v.track || 'stable') !== versionTrackFilter) {
+        return false;
+      }
+      if (pumpkinFilter !== 'all' && !isVersionCompatibleWithServer(v, pumpkinFilter)) {
+        return false;
+      }
+      if (apiFilter !== 'all' && !v.apiVersions.includes(apiFilter)) {
+        return false;
+      }
+      return true;
+    });
+  }, [normalizedVersions, versionTrackFilter, pumpkinFilter, apiFilter]);
+
   // ── Trigger a blob download ──────────────────────────────────────────────
-  const triggerDownload = async (endpoint: string) => {
+  const triggerDownload = async (endpoint: string, versionTag?: string | null) => {
     if (!plugin) return;
     const res = await api.get(endpoint, { responseType: 'blob' });
     const url = URL.createObjectURL(res.data);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${plugin.name.replace(/\s+/g, '_')}.wasm`;
+    const baseName = plugin.name.replace(/\s+/g, '_');
+    const cleanVer = versionTag ? versionTag.replace(/^v(?=\d)/i, '') : '';
+    a.download = cleanVer ? `${baseName}-v${cleanVer}.wasm` : `${baseName}.wasm`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  // ── Download a specific version from version history ─────────────────────
+  const handleVersionDownload = async (versionItem: NormalizedPluginVersion) => {
+    if (!plugin) return;
+
+    if (plugin.type === 'paid' && !ownsPlugin) {
+      return handleDownload();
+    }
+
+    if (plugin.type === 'paid' && plugin.is_preorder) {
+      alert('You have successfully pre-ordered this plugin! You will receive an automated email notification the moment the developer releases the downloadable version.');
+      return;
+    }
+
+    if (plugin.type === 'adwall' && !adShown) {
+      alert('Wait 5 seconds to support the developer...');
+      setTimeout(() => setAdShown(true), 5000);
+      return;
+    }
+
+    const versionParam = encodeURIComponent(versionItem.version);
+    const endpoint = versionItem.download_url
+      ? versionItem.download_url
+      : plugin.type === 'paid'
+        ? `/plugins/${id}/download/premium?version=${versionParam}`
+        : `/plugins/${id}/download?version=${versionParam}`;
+
+    setDownloadingVersion(versionItem.version);
+    try {
+      await triggerDownload(endpoint, versionItem.version);
+    } catch {
+      alert('Download failed. Please try again.');
+    } finally {
+      setDownloadingVersion(null);
+    }
   };
 
   // ── Download / purchase handler ──────────────────────────────────────────
@@ -698,7 +829,7 @@ const PluginDetail = () => {
           return;
         }
         try {
-          await triggerDownload(`/plugins/${id}/download/premium`);
+          await triggerDownload(`/plugins/${id}/download/premium`, plugin.version);
         } catch {
           alert('Download failed. Please try again.');
         }
@@ -718,7 +849,7 @@ const PluginDetail = () => {
             alert('You have pre-ordered this plugin! You will receive an email as soon as it releases.');
           } else {
             alert('You already own this plugin — downloading now.');
-            await triggerDownload(`/plugins/${id}/download/premium`);
+            await triggerDownload(`/plugins/${id}/download/premium`, plugin.version);
           }
         } else {
           alert('Checkout failed. Please try again.');
@@ -737,7 +868,7 @@ const PluginDetail = () => {
 
     // Free / adwall (after ad)
     try {
-      await triggerDownload(`/plugins/${id}/download`);
+      await triggerDownload(`/plugins/${id}/download`, plugin.version);
     } catch {
       alert('Download failed. Please try again.');
     }
@@ -1053,127 +1184,485 @@ const PluginDetail = () => {
     <div className="plugin-detail-layout">
     <div className="plugin-main-content">
 
-    {/* OPTIONAL MEDIA SHOWCASE (only if creator explicitly uploaded screenshots or video) */}
-    {screenshots.length > 0 ? (
-      <div className="screenshot-gallery">
-        {mainScreenshot === 'video' ? (
-          <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
-        ) : (
-          <img
-            src={mainScreenshot || screenshots[0]?.path}
-            alt="Main"
-            className="main-screenshot"
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              const idx = screenshots.findIndex((s: any) => s.path === (mainScreenshot || screenshots[0]?.path));
-              openLightbox(idx >= 0 ? idx : 0);
-            }}
-          />
-        )}
-        <div className="thumbnail-strip">
-          {plugin.youtube_video_url && (
-            <div 
-              className={`thumbnail ${mainScreenshot === 'video' ? 'active' : ''}`}
-              onClick={() => setMainScreenshot('video')}
-              style={{ position: 'relative', overflow: 'hidden' }}
-            >
-              {getYoutubeVideoId(plugin.youtube_video_url) ? (
-                <img 
-                  src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} 
-                  alt="Video Thumbnail"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}>Video</div>
-              )}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary, #ff6b00)">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-            </div>
-          )}
-          {screenshots.map((shot: any) => (
-            <img
-              key={shot.id}
-              src={shot.path}
-              alt="Thumbnail"
-              className={`thumbnail ${mainScreenshot === shot.path ? 'active' : ''}`}
-              onClick={() => setMainScreenshot(shot.path)}
-            />
-          ))}
-        </div>
-      </div>
-    ) : plugin.youtube_video_url ? (
-      <div className="plugin-video-showcase" style={{ marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden' }}>
-        <PluginVideoPlayer url={plugin.youtube_video_url} />
-      </div>
-    ) : null}
+    {/* CONTENT TABS */}
+    <div className="plugin-detail-tabs" role="tablist" aria-label="Plugin sections">
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'overview'}
+        className={`plugin-detail-tab ${activeTab === 'overview' ? 'active' : ''}`}
+        onClick={() => setActiveTab('overview')}
+      >
+        <FileText size={15} />
+        <span>{t('plugin.tabs.overview', 'Overview')}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'versions'}
+        className={`plugin-detail-tab ${activeTab === 'versions' ? 'active' : ''}`}
+        onClick={() => setActiveTab('versions')}
+      >
+        <History size={15} />
+        <span>{t('plugin.tabs.versions', 'Versions')}</span>
+        <span className="plugin-detail-tab-badge">{normalizedVersions.length}</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={activeTab === 'reviews'}
+        className={`plugin-detail-tab ${activeTab === 'reviews' ? 'active' : ''}`}
+        onClick={() => setActiveTab('reviews')}
+      >
+        <MessageSquare size={15} />
+        <span>{t('plugin.tabs.reviews', 'Reviews')}</span>
+        <span className="plugin-detail-tab-badge">{Array.isArray(plugin.reviews) ? plugin.reviews.length : 0}</span>
+      </button>
+    </div>
 
-    {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (() => {
-      const latest = plugin.versions[0];
-      const isLong = Boolean(latest.release_notes && (latest.release_notes.length > 200 || latest.release_notes.split('\n').length > 4));
-      return (
-        <div className="plugin-recent-update">
-          <div className="plugin-recent-update-header">
-            <div className="plugin-recent-update-title-group">
-              <h3 className="plugin-recent-update-title">
-                <Sparkles size={16} color="var(--primary)" />
-                What's New
-              </h3>
-              <span className="plugin-recent-update-badge">
-                v{latest.version}
-              </span>
-              {latest.created_at && (
-                <span className="plugin-recent-update-date">
-                  {formatDate(latest.created_at)}
-                </span>
+    {activeTab === 'overview' && (
+      <>
+        {/* OPTIONAL MEDIA SHOWCASE (only if creator explicitly uploaded screenshots or video) */}
+        {screenshots.length > 0 ? (
+          <div className="screenshot-gallery">
+            {mainScreenshot === 'video' ? (
+              <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
+            ) : (
+              <img
+                src={mainScreenshot || screenshots[0]?.path}
+                alt="Main"
+                className="main-screenshot"
+                style={{ cursor: 'pointer' }}
+                onClick={() => {
+                  const idx = screenshots.findIndex((s: any) => s.path === (mainScreenshot || screenshots[0]?.path));
+                  openLightbox(idx >= 0 ? idx : 0);
+                }}
+              />
+            )}
+            <div className="thumbnail-strip">
+              {plugin.youtube_video_url && (
+                <div 
+                  className={`thumbnail ${mainScreenshot === 'video' ? 'active' : ''}`}
+                  onClick={() => setMainScreenshot('video')}
+                  style={{ position: 'relative', overflow: 'hidden' }}
+                >
+                  {getYoutubeVideoId(plugin.youtube_video_url) ? (
+                    <img 
+                      src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} 
+                      alt="Video Thumbnail"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  ) : (
+                    <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}>Video</div>
+                  )}
+                  <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+                    <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary, #ff6b00)">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </div>
+                </div>
+              )}
+              {screenshots.map((shot: any) => (
+                <img
+                  key={shot.id}
+                  src={shot.path}
+                  alt="Thumbnail"
+                  className={`thumbnail ${mainScreenshot === shot.path ? 'active' : ''}`}
+                  onClick={() => setMainScreenshot(shot.path)}
+                />
+              ))}
+            </div>
+          </div>
+        ) : plugin.youtube_video_url ? (
+          <div className="plugin-video-showcase" style={{ marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden' }}>
+            <PluginVideoPlayer url={plugin.youtube_video_url} />
+          </div>
+        ) : null}
+
+        {normalizedVersions.length > 0 && (() => {
+          const latest = normalizedVersions[0];
+          const latestNotes = cleanReleaseNotes(latest.release_notes);
+          const isLong = Boolean(latestNotes && (latestNotes.length > 200 || latestNotes.split('\n').length > 4));
+          return (
+            <div className="plugin-recent-update">
+              <div className="plugin-recent-update-header">
+                <div className="plugin-recent-update-title-group">
+                  <h3 className="plugin-recent-update-title">
+                    <Sparkles size={16} color="var(--primary)" />
+                    What's New
+                  </h3>
+                  <span className="plugin-recent-update-badge">
+                    {latest.displayVersion}
+                  </span>
+                  <span className="version-latest-badge">
+                    <Check size={11} /> Latest
+                  </span>
+                  {latest.track && (
+                    <span className={`version-track-badge ${latest.track}`}>
+                      {latest.track}
+                    </span>
+                  )}
+                  {latest.created_at && (
+                    <span className="plugin-recent-update-date">
+                      {formatDate(latest.created_at)}
+                    </span>
+                  )}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="plugin-recent-update-history-btn"
+                    onClick={() => setActiveTab('versions')}
+                  >
+                    <History size={13} />
+                    <span>All Versions ({normalizedVersions.length})</span>
+                  </button>
+                </div>
+              </div>
+
+              {(latest.pumpkinVersions.length > 0 || latest.apiVersions.length > 0) && (
+                <div className="version-compat-grid" style={{ marginBottom: '0.85rem' }}>
+                  {latest.pumpkinVersions.length > 0 && (
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Layers size={12} color="var(--primary)" /> Pumpkin Server:
+                      </span>
+                      {latest.pumpkinVersions.map(pv => {
+                        const fmt = formatPumpkinVersionBadge(pv);
+                        return (
+                          <span key={pv} className="compat-badge pumpkin" title={`Build tag: ${fmt.rawTag}`}>
+                            {fmt.title}{fmt.mcVersion ? ` · ${fmt.mcVersion}` : ''}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {latest.apiVersions.length > 0 && (
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Cpu size={12} color="#38bdf8" /> WASM API:
+                      </span>
+                      {latest.apiVersions.map(av => (
+                        <span key={av} className="compat-badge api" title={`WIT pumpkin:plugin@${av}`}>
+                          v{av}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className={`plugin-recent-update-body markdown-content ${isLong ? 'is-clamped' : ''}`}>
+                {latestNotes ? (
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                    {latestNotes}
+                  </ReactMarkdown>
+                ) : (
+                  <p className="plugin-recent-update-empty">
+                    Bug fixes and performance improvements.
+                  </p>
+                )}
+              </div>
+              {isLong && (
+                <button
+                  type="button"
+                  className="plugin-recent-update-more-btn"
+                  onClick={() => setChangelogOpen(true)}
+                >
+                  <span>View More</span>
+                  <ChevronRight size={14} />
+                </button>
               )}
             </div>
-            {plugin.versions.length > 1 && (
+          );
+        })()}
+
+        {/* DESCRIPTION */}
+        <div className="markdown-content">
+          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
+        </div>
+
+        <hr className="divider" />
+      </>
+    )}
+
+    {/* VERSIONS TAB */}
+    {activeTab === 'versions' && (
+      <section className="version-history-section" aria-label="Plugin version history">
+        {/* Interactive Server Compatibility Selector */}
+        <div className="server-compat-picker-bar" style={{ marginBottom: '1rem' }}>
+          <div className="server-compat-picker-info">
+            <div className="server-compat-picker-title">
+              <Layers size={16} color="var(--primary)" />
+              <span>Which Pumpkin server version are you running?</span>
+            </div>
+            <p className="server-compat-picker-sub">
+              Pick your server version to filter compatible releases and highlight the recommended download.
+            </p>
+          </div>
+          <div className="server-compat-picker-pills">
+            <button
+              type="button"
+              className={`server-compat-pill ${pumpkinFilter === 'all' ? 'active' : ''}`}
+              onClick={() => handleSelectServerFilter('all')}
+            >
+              All Releases
+            </button>
+            {PUMPKIN_SERVER_PROFILES.map((profile) => {
+              const active = pumpkinFilter === profile.id;
+              return (
+                <button
+                  key={profile.id}
+                  type="button"
+                  className={`server-compat-pill ${active ? 'active' : ''}`}
+                  onClick={() => handleSelectServerFilter(active ? 'all' : profile.id)}
+                  title={profile.description}
+                >
+                  {active && <CheckCircle2 size={13} />}
+                  <span>{profile.shortLabel}</span>
+                  {profile.isLatest && <span className="server-compat-pill-tag">Latest</span>}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {pumpkinFilter !== 'all' && recommendedForSelectedServer && (
+          <div
+            style={{
+              marginBottom: '1.1rem',
+              padding: '0.85rem 1.15rem',
+              borderRadius: '10px',
+              background: 'rgba(34, 197, 94, 0.1)',
+              border: '1px solid rgba(34, 197, 94, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1rem',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.86rem' }}>
+              <CheckCircle2 size={18} color="#4ade80" />
+              <span>
+                Recommended release for{' '}
+                <strong>
+                  {PUMPKIN_SERVER_PROFILES.find((p) => p.id === pumpkinFilter)?.shortLabel || `Pumpkin ${pumpkinFilter}`}
+                </strong>
+                : <strong style={{ fontFamily: 'var(--font-mono)', color: '#4ade80' }}>{recommendedForSelectedServer.displayVersion}</strong>
+                {!recommendedForSelectedServer.isLatest && (
+                  <span style={{ color: 'var(--text-muted)', marginLeft: 6 }}>
+                    (newer releases target a newer Pumpkin version)
+                  </span>
+                )}
+              </span>
+            </div>
+            <button
+              type="button"
+              className="version-download-btn"
+              onClick={() => handleVersionDownload(recommendedForSelectedServer)}
+              disabled={downloadingVersion === recommendedForSelectedServer.version}
+            >
+              <Download size={14} />
+              <span>Download {recommendedForSelectedServer.displayVersion}</span>
+            </button>
+          </div>
+        )}
+
+        <div className="version-filter-bar">
+          <div>
+            <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <History size={18} color="var(--primary)" />
+              Release History &amp; Compatibility
+            </h2>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              All published releases ordered newest first. Older versions remain available for download.
+            </p>
+          </div>
+
+          <div className="version-filter-controls">
+            <select
+              aria-label="Filter by release track"
+              className="version-filter-select"
+              value={versionTrackFilter}
+              onChange={e => setVersionTrackFilter(e.target.value)}
+            >
+              <option value="all">All Tracks</option>
+              <option value="stable">Stable</option>
+              <option value="beta">Beta</option>
+              <option value="alpha">Alpha</option>
+            </select>
+
+            {compatibilitySummary.allApiVersions.length > 0 && (
+              <select
+                aria-label="Filter by Plugin API version"
+                className="version-filter-select"
+                value={apiFilter}
+                onChange={e => setApiFilter(e.target.value)}
+              >
+                <option value="all">All WASM API Versions</option>
+                {compatibilitySummary.allApiVersions.map(av => (
+                  <option key={av} value={av}>WASM API v{av}</option>
+                ))}
+              </select>
+            )}
+
+            {(versionTrackFilter !== 'all' || pumpkinFilter !== 'all' || apiFilter !== 'all') && (
               <button
                 type="button"
-                className="plugin-recent-update-history-btn"
-                onClick={() => setChangelogOpen(true)}
+                className="btn btn-secondary"
+                style={{ padding: '0.4rem 0.75rem', fontSize: '0.76rem', height: 'auto' }}
+                onClick={() => {
+                  setVersionTrackFilter('all');
+                  handleSelectServerFilter('all');
+                  setApiFilter('all');
+                }}
               >
-                <History size={13} />
-                <span>Version History ({plugin.versions.length})</span>
+                Reset
               </button>
             )}
           </div>
-          <div className={`plugin-recent-update-body markdown-content ${isLong ? 'is-clamped' : ''}`}>
-            {latest.release_notes ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {latest.release_notes}
-              </ReactMarkdown>
-            ) : (
-              <p className="plugin-recent-update-empty">
-                Bug fixes and performance improvements.
-              </p>
-            )}
-          </div>
-          {isLong && (
+        </div>
+
+        {filteredVersions.length === 0 ? (
+          <div className="empty-reviews-prompt" style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
+            <p style={{ margin: '0 0 0.75rem' }}>No releases match the selected server or compatibility filter.</p>
             <button
               type="button"
-              className="plugin-recent-update-more-btn"
-              onClick={() => setChangelogOpen(true)}
+              className="btn btn-secondary"
+              onClick={() => {
+                setVersionTrackFilter('all');
+                handleSelectServerFilter('all');
+                setApiFilter('all');
+              }}
             >
-              <span>View More</span>
-              <ChevronRight size={14} />
+              Show All Releases ({normalizedVersions.length})
             </button>
-          )}
-        </div>
-      );
-    })()}
+          </div>
+        ) : (
+          <div className="version-list">
+            {filteredVersions.map((v) => {
+              const notes = cleanReleaseNotes(v.release_notes);
+              const isDownloadingThis = downloadingVersion === v.version;
+              const sizeBytes = v.file_size ?? (v.isLatest ? plugin.file_size : undefined);
+              const isRecommendedForServer =
+                pumpkinFilter !== 'all' && recommendedForSelectedServer?.version === v.version;
 
-    {/* DESCRIPTION */}
-    <div className="markdown-content">
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
-    </div>
+              return (
+                <div
+                  key={v.id || v.version}
+                  className={`version-card ${v.isLatest || isRecommendedForServer ? 'is-latest' : ''}`}
+                >
+                  <div className="version-card-header">
+                    <div className="version-card-title-group">
+                      <span className="version-tag">{v.displayVersion}</span>
+                      {v.isLatest && (
+                        <span className="version-latest-badge">
+                          <Check size={11} /> Latest Release
+                        </span>
+                      )}
+                      {isRecommendedForServer && !v.isLatest && (
+                        <span className="version-latest-badge">
+                          <Check size={11} /> Recommended for Your Server
+                        </span>
+                      )}
+                      <span className={`version-track-badge ${v.track || 'stable'}`}>
+                        {v.track || 'stable'}
+                      </span>
+                      {v.created_at && (
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Released {formatDate(v.created_at)}
+                        </span>
+                      )}
+                      {sizeBytes ? (
+                        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontFamily: 'var(--font-mono)' }}>
+                          {formatSize(sizeBytes)}
+                        </span>
+                      ) : null}
+                    </div>
 
-    <hr className="divider" />
+                    <button
+                      type="button"
+                      className="version-download-btn"
+                      onClick={() => handleVersionDownload(v)}
+                      disabled={isDownloadingThis || (plugin.type === 'paid' && !ownershipChecked)}
+                    >
+                      <Download size={14} />
+                      <span>
+                        {isDownloadingThis
+                          ? 'Downloading…'
+                          : plugin.type === 'paid' && !ownsPlugin
+                            ? (plugin.is_preorder ? 'Pre-Order' : 'Purchase to Download')
+                            : `Download ${v.displayVersion}`}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Supported Pumpkin Releases & Supported Plugin API Versions */}
+                  <div className="version-compat-grid">
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Layers size={13} color="var(--primary)" /> Supported Pumpkin Server:
+                      </span>
+                      {v.pumpkinVersions.length > 0 ? (
+                        v.pumpkinVersions.map(pv => {
+                          const fmt = formatPumpkinVersionBadge(pv);
+                          return (
+                            <span
+                              key={pv}
+                              className="compat-badge pumpkin"
+                              title={`Full Pumpkin build tag: ${fmt.rawTag}`}
+                            >
+                              {fmt.title}{fmt.mcVersion ? ` (${fmt.mcVersion})` : ''}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="compat-badge unspecified">Not specified</span>
+                      )}
+                    </div>
+
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Cpu size={13} color="#38bdf8" /> WASM Plugin API:
+                      </span>
+                      {v.apiVersions.length > 0 ? (
+                        v.apiVersions.map(av => (
+                          <span
+                            key={av}
+                            className="compat-badge api"
+                            title={`WIT interface package: pumpkin:plugin@${av}`}
+                          >
+                            WIT API v{av}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="compat-badge unspecified">Not specified</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="markdown-content" style={{ fontSize: '0.92rem', lineHeight: 1.6 }}>
+                    {notes ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {notes}
+                      </ReactMarkdown>
+                    ) : (
+                      <p style={{ margin: 0, fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                        No specific release notes provided for this version.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    )}
 
     {/* REVIEWS */}
+    {(activeTab === 'overview' || activeTab === 'reviews') && (
     <section className="reviews-section">
     <span className="reviews-section-label">Ratings &amp; Reviews</span>
 
@@ -1413,6 +1902,7 @@ const PluginDetail = () => {
       </div>
     )}
     </section>
+    )}
     </div>
 
     {/* SIDEBAR */}
@@ -1611,27 +2101,86 @@ const PluginDetail = () => {
       <div className="stat-item">Released: <strong>{formatDate(plugin.created_at)}</strong></div>
     )}
     <div className="stat-item">Category: <strong>{plugin.category}</strong></div>
-    {plugin.version && (
-      <div className="stat-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Version: <strong>{plugin.version}</strong></span>
-        {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (
-          <button 
-            onClick={() => setChangelogOpen(true)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'var(--text)',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              fontSize: '0.7rem',
-              cursor: 'pointer',
-              fontWeight: 600,
-              marginLeft: '8px'
-            }}
-          >
-            Update History
-          </button>
+    {(normalizedVersions[0]?.version || plugin.version) && (
+      <div className="stat-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px' }}>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          Version: <strong style={{ fontFamily: 'var(--font-mono)' }}>{normalizedVersions[0]?.displayVersion || `v${plugin.version}`}</strong>
+          <span className="version-latest-badge" style={{ fontSize: '0.6rem', padding: '1px 6px' }}>Latest</span>
+        </span>
+        {normalizedVersions.length > 0 && (
+          <div style={{ display: 'inline-flex', gap: '4px' }}>
+            <button 
+              type="button"
+              onClick={() => setActiveTab('versions')}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--text)',
+                padding: '2px 8px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Versions ({normalizedVersions.length})
+            </button>
+            <button 
+              type="button"
+              onClick={() => setChangelogOpen(true)}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'var(--text-muted)',
+                padding: '2px 7px',
+                borderRadius: '4px',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+              title="Open Update History modal"
+            >
+              <History size={11} />
+            </button>
+          </div>
         )}
+      </div>
+    )}
+    {compatibilitySummary.latestPumpkinVersions.length > 0 && (
+      <div className="stat-item" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>Supported Pumpkin Server:</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+          {compatibilitySummary.latestPumpkinVersions.map(pv => {
+            const fmt = formatPumpkinVersionBadge(pv);
+            return (
+              <span
+                key={pv}
+                className="compat-badge pumpkin"
+                style={{ fontSize: '0.68rem', padding: '2px 7px' }}
+                title={`Full Pumpkin build tag: ${fmt.rawTag}`}
+              >
+                {fmt.title}{fmt.mcVersion ? ` (${fmt.mcVersion})` : ''}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+    )}
+    {compatibilitySummary.latestApiVersions.length > 0 && (
+      <div className="stat-item" style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+        <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)' }}>WASM Plugin API:</span>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+          {compatibilitySummary.latestApiVersions.map(av => (
+            <span
+              key={av}
+              className="compat-badge api"
+              style={{ fontSize: '0.68rem', padding: '2px 7px' }}
+              title={`WIT interface package: pumpkin:plugin@${av}`}
+            >
+              WIT API v{av}
+            </span>
+          ))}
+        </div>
       </div>
     )}
     </div>
@@ -1751,9 +2300,9 @@ const PluginDetail = () => {
     {changelogOpen && (
       <div className="lightbox-overlay" onClick={() => setChangelogOpen(false)} style={{ zIndex: 2000 }}>
         <div className="lightbox-content" onClick={(e) => e.stopPropagation()} style={{ 
-          maxWidth: '800px', 
-          width: '90%', 
-          maxHeight: '80vh', 
+          maxWidth: '840px', 
+          width: '92%', 
+          maxHeight: '82vh', 
           backgroundColor: 'var(--surface)', 
           borderRadius: '12px',
           display: 'flex',
@@ -1771,41 +2320,123 @@ const PluginDetail = () => {
             alignItems: 'center',
             background: 'linear-gradient(to right, rgba(255, 117, 24, 0.05), transparent)'
           }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', fontWeight: 800 }}>Update History</h2>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', fontWeight: 800 }}>
+                Update History &amp; Compatibility
+              </h2>
+              <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                All published releases ordered newest first ({normalizedVersions.length} total)
+              </p>
+            </div>
           </div>
           
           <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
-            {(plugin.versions ?? []).map((v: any, idx: number, arr: any[]) => (
-              <div key={v.id} style={{ 
-                marginBottom: idx === arr.length - 1 ? 0 : '32px',
-                paddingBottom: idx === arr.length - 1 ? 0 : '32px',
-                borderBottom: idx === arr.length - 1 ? 'none' : '1px solid var(--border)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <span style={{ 
-                    color: 'var(--primary)', 
-                    fontSize: '1.1rem', 
-                    fontWeight: 800,
-                    fontFamily: 'var(--font-mono)'
-                  }}>
-                    v{v.version}
-                  </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    Released {formatDate(v.created_at)}
-                  </span>
+            {normalizedVersions.map((v, idx, arr) => {
+              const notes = cleanReleaseNotes(v.release_notes);
+              const isDownloadingThis = downloadingVersion === v.version;
+              return (
+                <div key={v.id || v.version} style={{ 
+                  marginBottom: idx === arr.length - 1 ? 0 : '28px',
+                  paddingBottom: idx === arr.length - 1 ? 0 : '28px',
+                  borderBottom: idx === arr.length - 1 ? 'none' : '1px solid var(--border)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '12px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <span style={{ 
+                        color: 'var(--primary)', 
+                        fontSize: '1.1rem', 
+                        fontWeight: 800,
+                        fontFamily: 'var(--font-mono)'
+                      }}>
+                        {v.displayVersion}
+                      </span>
+                      {v.isLatest && (
+                        <span className="version-latest-badge">
+                          <Check size={11} /> Latest
+                        </span>
+                      )}
+                      <span className={`version-track-badge ${v.track || 'stable'}`}>
+                        {v.track || 'stable'}
+                      </span>
+                      {v.created_at && (
+                        <span style={{ color: 'var(--text-muted)', fontSize: '0.83rem' }}>
+                          Released {formatDate(v.created_at)}
+                        </span>
+                      )}
+                    </div>
+
+                    <button
+                      type="button"
+                      className="version-download-btn"
+                      onClick={() => handleVersionDownload(v)}
+                      disabled={isDownloadingThis || (plugin.type === 'paid' && !ownershipChecked)}
+                    >
+                      <Download size={13} />
+                      <span>
+                        {isDownloadingThis
+                          ? 'Downloading…'
+                          : plugin.type === 'paid' && !ownsPlugin
+                            ? (plugin.is_preorder ? 'Pre-Order' : 'Purchase to Download')
+                            : `Download ${v.displayVersion}`}
+                      </span>
+                    </button>
+                  </div>
+
+                  <div className="version-compat-grid" style={{ marginBottom: '12px' }}>
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Layers size={12} color="var(--primary)" /> Supported Pumpkin Releases:
+                      </span>
+                      {v.pumpkinVersions.length > 0 ? (
+                        v.pumpkinVersions.map(pv => (
+                          <span key={pv} className="compat-badge pumpkin">
+                            Pumpkin {pv}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="compat-badge unspecified">Not specified</span>
+                      )}
+                    </div>
+                    <div className="compat-group">
+                      <span className="compat-label">
+                        <Cpu size={12} color="#38bdf8" /> Supported Plugin API:
+                      </span>
+                      {v.apiVersions.length > 0 ? (
+                        v.apiVersions.map(av => (
+                          <span key={av} className="compat-badge api">
+                            API v{av}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="compat-badge unspecified">Not specified</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
+                    {notes ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{notes}</ReactMarkdown>
+                    ) : (
+                      <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
+                    )}
+                  </div>
                 </div>
-                <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-                  {v.release_notes ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
-                  ) : (
-                    <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
           
-          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)', textAlign: 'right' }}>
+          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              style={{ padding: '8px 16px', fontSize: '0.82rem' }}
+              onClick={() => {
+                setChangelogOpen(false);
+                setActiveTab('versions');
+              }}
+            >
+              Open Full Versions Tab
+            </button>
             <button 
               onClick={() => setChangelogOpen(false)}
               className="btn btn-secondary"

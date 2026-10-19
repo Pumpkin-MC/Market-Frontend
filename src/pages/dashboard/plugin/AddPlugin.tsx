@@ -4,13 +4,18 @@ import {
     Globe, ImageIcon, Plus, Search, X, Upload, FileCode,
     DollarSign, CheckCircle, ChevronRight, ChevronLeft,
     Zap, Lock, AlertTriangle, Tag, Store, User,
-    ShieldCheck, Terminal, Trash2,
+    ShieldCheck, Terminal, Trash2, Cpu, Layers,
 } from 'lucide-react';
 import api from '../../../api';
 import { useAuth } from '../../../App';
 import { DeveloperOnboardingModal } from '../../../components/DeveloperOnboardingModal';
 import { SecuritySetupCards } from '../../../components/SecuritySetupCards';
 import { validateWasmFile, validateAndSanitizeImage } from '../../../utils/fileValidation';
+import {
+    KNOWN_PUMPKIN_RELEASES,
+    KNOWN_PLUGIN_API_VERSIONS,
+    appendCompatibilityToReleaseNotes,
+} from '../../../utils/compatibility';
 import './AddPlugin.css';
 
 // ── Locale helpers ────────────────────────────────────────────────────────────
@@ -280,9 +285,42 @@ const AddPlugin = () => {
         setCommands(prev => prev.filter((_, i) => i !== index));
     };
 
-    // ── Step 2: Binary ──
+    // ── Step 2: Binary & Initial Release Compatibility ──
     const [wasmFile, setWasmFile]       = useState<File | null>(null);
     const [wasmDragOver, setWasmDragOver] = useState(false);
+    const [initialVersion, setInitialVersion] = useState('0.1.0');
+    const [initialReleaseNotes, setInitialReleaseNotes] = useState('');
+    const [pumpkinVersions, setPumpkinVersions] = useState<string[]>([]);
+    const [customPumpkinInput, setCustomPumpkinInput] = useState('');
+    const [apiVersions, setApiVersions] = useState<string[]>([]);
+    const [customApiInput, setCustomApiInput] = useState('');
+    const [detectedWasmApi, setDetectedWasmApi] = useState<string[]>([]);
+
+    const toggleVersionItem = (_list: string[], setList: React.Dispatch<React.SetStateAction<string[]>>, item: string) => {
+        const cleaned = item.trim().replace(/^v(?=\d)/i, '');
+        if (!cleaned) return;
+        setList(prev => prev.includes(cleaned) ? prev.filter(v => v !== cleaned) : [...prev, cleaned]);
+    };
+
+    const addCustomVersionItem = (
+        input: string,
+        setInput: React.Dispatch<React.SetStateAction<string>>,
+        setList: React.Dispatch<React.SetStateAction<string[]>>
+    ) => {
+        const tokens = input
+            .split(/[,;]+/)
+            .map(s => s.trim().replace(/^v(?=\d)/i, ''))
+            .filter(Boolean);
+        if (tokens.length === 0) return;
+        setList(prev => {
+            const next = [...prev];
+            for (const tok of tokens) {
+                if (!next.includes(tok)) next.push(tok);
+            }
+            return next;
+        });
+        setInput('');
+    };
 
     // ── Computed sizes ──
     const totalImageBytes    = (previewImage?.size ?? 0) + screenshots.reduce((s, f) => s + f.size, 0);
@@ -415,6 +453,7 @@ const AddPlugin = () => {
         if (!file) {
             setWasmFile(null);
             setWasmValidationErr(null);
+            setDetectedWasmApi([]);
             return;
         }
         setValidatingWasm(true);
@@ -425,15 +464,28 @@ const AddPlugin = () => {
                 setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
                 setWasmFile(null);
                 setWasmFormatInfo(null);
+                setDetectedWasmApi([]);
                 return;
             }
             setWasmFile(file);
             setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
+            const detected = res.details?.detectedApiVersions ?? [];
+            setDetectedWasmApi(detected);
+            if (detected.length > 0) {
+                setApiVersions(prev => {
+                    const merged = [...prev];
+                    for (const ver of detected) {
+                        if (!merged.includes(ver)) merged.push(ver);
+                    }
+                    return merged;
+                });
+            }
             setWasmValidationErr(null);
         } catch (err: any) {
             setWasmValidationErr(err.message || 'Failed to inspect WebAssembly binary.');
             setWasmFile(null);
             setWasmFormatInfo(null);
+            setDetectedWasmApi([]);
         } finally {
             setValidatingWasm(false);
         }
@@ -477,6 +529,12 @@ const AddPlugin = () => {
                     };
                 });
 
+            const enrichedReleaseNotes = appendCompatibilityToReleaseNotes(
+                initialReleaseNotes || 'Initial release.',
+                pumpkinVersions,
+                apiVersions
+            );
+
             const metadata = {
                 name,
                 category,
@@ -490,6 +548,12 @@ const AddPlugin = () => {
                 isPreorder,
                 preorderReleaseDate: isPreorder && preorderReleaseDate ? new Date(preorderReleaseDate).toISOString() : undefined,
                 commands: validCommands,
+                version: initialVersion.trim().replace(/^v(?=\d)/i, '') || '0.1.0',
+                releaseNotes: enrichedReleaseNotes || undefined,
+                pumpkinVersions: pumpkinVersions.length > 0 ? pumpkinVersions : undefined,
+                apiVersions: apiVersions.length > 0 ? apiVersions : undefined,
+                pumpkin_versions: pumpkinVersions.length > 0 ? pumpkinVersions : undefined,
+                api_versions: apiVersions.length > 0 ? apiVersions : undefined,
             };
 
             const fd = new FormData();
@@ -519,6 +583,11 @@ const AddPlugin = () => {
         setScreenshots([]); setScreenshotPreviews([]);
         setLicenseType('free'); setPrice(4.99); setIsEarlyAccess(false);
         setWasmFile(null);
+        setInitialVersion('0.1.0');
+        setInitialReleaseNotes('');
+        setPumpkinVersions([]);
+        setApiVersions([]);
+        setDetectedWasmApi([]);
     };
 
     // ── Success screen ────────────────────────────────────────────────────────
@@ -1279,8 +1348,8 @@ const AddPlugin = () => {
                     {step === 2 && (
                         <div>
                             <div className="mp-tab-header">
-                                <h2>Plugin Binary</h2>
-                                <p>Upload your compiled <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--mp-surface-2)', padding: '0.1em 0.4em', borderRadius: 4 }}>.wasm</code> file. This is the actual code users will run.</p>
+                                <h2>Plugin Binary &amp; Compatibility</h2>
+                                <p>Upload your compiled <code style={{ fontFamily: 'var(--font-mono)', fontSize: '0.85em', background: 'var(--mp-surface-2)', padding: '0.1em 0.4em', borderRadius: 4 }}>.wasm</code> file and specify supported Pumpkin releases and Plugin API versions.</p>
                             </div>
                             <div className="mp-card">
                                 <div className="mp-card-title">
@@ -1311,7 +1380,7 @@ const AddPlugin = () => {
                                             <><strong>Drag & drop your .wasm file</strong> or click to browse</>
                                         )}
                                     </p>
-                                    <small>.wasm only · max 5 MB · validated instantly on drop</small>
+                                    <small>.wasm only · max 5 MB · validated &amp; inspected for Plugin API version on drop</small>
                                     <input id="ap-wasm" type="file" accept=".wasm"
                                         onChange={e => handleWasmFile(e.target.files?.[0] ?? null)} />
                                 </div>
@@ -1325,16 +1394,21 @@ const AddPlugin = () => {
 
                                 {wasmFile && !wasmValidationErr && (
                                     <>
-                                        <div className="mp-file-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
+                                        <div className="mp-file-badge" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
                                             <CheckCircle size={15} color="#10b981" />
                                             <span style={{ fontWeight: 600, color: 'var(--mp-text-1)' }}>{wasmFile.name}</span>
                                             <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 6px', borderRadius: 4 }}>
                                                 Verified {wasmFormatInfo || '.wasm'}
                                             </span>
+                                            {detectedWasmApi.length > 0 && (
+                                                <span style={{ fontSize: '0.68rem', color: '#38bdf8', background: 'rgba(56,189,248,0.15)', border: '1px solid rgba(56,189,248,0.35)', padding: '2px 6px', borderRadius: 4, fontFamily: 'var(--font-mono)' }}>
+                                                    Detected Plugin API {detectedWasmApi.map(v => `v${v}`).join(', ')}
+                                                </span>
+                                            )}
                                             <span style={{ marginLeft: 'auto', color: wasmTooLarge ? 'var(--mp-error)' : 'var(--mp-text-3)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
                                                 {fmtBytes(wasmFile.size)}
                                             </span>
-                                            <button type="button" onClick={() => { setWasmFile(null); setWasmValidationErr(null); setWasmFormatInfo(null); }}
+                                            <button type="button" onClick={() => { setWasmFile(null); setWasmValidationErr(null); setWasmFormatInfo(null); setDetectedWasmApi([]); }}
                                                 style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mp-text-3)', display: 'flex', padding: 0 }}
                                                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--mp-error)')}
                                                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--mp-text-3)')}>
@@ -1344,6 +1418,227 @@ const AddPlugin = () => {
                                         <SizeBudget usedBytes={wasmFile.size} maxBytes={MAX_WASM_BYTES} label="Plugin binary size" />
                                     </>
                                 )}
+                            </div>
+
+                            {/* Initial Version & Compatibility */}
+                            <div className="mp-card">
+                                <div className="mp-card-title">
+                                    <Layers size={14} />Release &amp; Compatibility
+                                </div>
+                                <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', marginBottom: '1rem', lineHeight: 1.5 }}>
+                                    Configure the initial release version, supported Pumpkin server releases, and supported Plugin API versions. Plugin API versions can be specified independently of tagged Pumpkin releases.
+                                </p>
+
+                                <div className="mp-form-row">
+                                    <div className="mp-form-group">
+                                        <label className="mp-label" htmlFor="apInitialVersion">
+                                            Initial Version <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(e.g. 0.1.0, 1.0.0)</span>
+                                        </label>
+                                        <input
+                                            id="apInitialVersion"
+                                            className="mp-input"
+                                            type="text"
+                                            value={initialVersion}
+                                            onChange={e => setInitialVersion(e.target.value)}
+                                            placeholder="0.1.0"
+                                            style={{ fontFamily: 'var(--font-mono)' }}
+                                        />
+                                    </div>
+                                    <div className="mp-form-group">
+                                        <label className="mp-label" htmlFor="apInitialNotes">
+                                            Initial Release Notes <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
+                                        </label>
+                                        <input
+                                            id="apInitialNotes"
+                                            className="mp-input"
+                                            type="text"
+                                            value={initialReleaseNotes}
+                                            onChange={e => setInitialReleaseNotes(e.target.value)}
+                                            placeholder="Initial release."
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Supported Pumpkin Releases */}
+                                <div className="mp-form-group">
+                                    <label className="mp-label">
+                                        Supported Pumpkin Releases{' '}
+                                        <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(select presets or add custom tag)</span>
+                                    </label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                                        {KNOWN_PUMPKIN_RELEASES.map(rel => {
+                                            const active = pumpkinVersions.includes(rel);
+                                            return (
+                                                <button
+                                                    key={rel}
+                                                    type="button"
+                                                    onClick={() => toggleVersionItem(pumpkinVersions, setPumpkinVersions, rel)}
+                                                    style={{
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: '0.73rem',
+                                                        padding: '0.28rem 0.6rem',
+                                                        borderRadius: 6,
+                                                        cursor: 'pointer',
+                                                        border: active ? '1px solid rgba(255, 117, 24, 0.55)' : '1px solid var(--mp-border)',
+                                                        background: active ? 'rgba(255, 117, 24, 0.14)' : 'var(--mp-surface-2)',
+                                                        color: active ? '#ff7518' : 'var(--mp-text-2)',
+                                                        fontWeight: active ? 600 : 400,
+                                                    }}
+                                                >
+                                                    {active ? '✓ ' : '+ '}{rel}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            className="mp-input"
+                                            placeholder="Add custom Pumpkin version or tag (e.g. 0.2.1, 0.3.0-rc1)"
+                                            value={customPumpkinInput}
+                                            onChange={e => setCustomPumpkinInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addCustomVersionItem(customPumpkinInput, setCustomPumpkinInput, setPumpkinVersions);
+                                                }
+                                            }}
+                                            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="mp-btn mp-btn-outline"
+                                            onClick={() => addCustomVersionItem(customPumpkinInput, setCustomPumpkinInput, setPumpkinVersions)}
+                                            disabled={!customPumpkinInput.trim()}
+                                            style={{ padding: '0.45rem 0.85rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            <Plus size={13} /> Add
+                                        </button>
+                                    </div>
+                                    {pumpkinVersions.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
+                                            {pumpkinVersions.map(ver => (
+                                                <span
+                                                    key={ver}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.35rem',
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 600,
+                                                        background: 'rgba(255, 117, 24, 0.12)',
+                                                        border: '1px solid rgba(255, 117, 24, 0.35)',
+                                                        color: '#ff7518',
+                                                        padding: '0.2rem 0.5rem',
+                                                        borderRadius: 5,
+                                                    }}
+                                                >
+                                                    Pumpkin {ver}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleVersionItem(pumpkinVersions, setPumpkinVersions, ver)}
+                                                        style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, display: 'inline-flex' }}
+                                                    >
+                                                        <X size={11} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Supported Plugin API Versions */}
+                                <div className="mp-form-group" style={{ marginBottom: 0 }}>
+                                    <label className="mp-label">
+                                        Supported Plugin API Versions{' '}
+                                        <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(auto-detected from .wasm WIT metadata or custom semver)</span>
+                                    </label>
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '0.6rem' }}>
+                                        {KNOWN_PLUGIN_API_VERSIONS.map(apiVer => {
+                                            const active = apiVersions.includes(apiVer);
+                                            return (
+                                                <button
+                                                    key={apiVer}
+                                                    type="button"
+                                                    onClick={() => toggleVersionItem(apiVersions, setApiVersions, apiVer)}
+                                                    style={{
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: '0.73rem',
+                                                        padding: '0.28rem 0.6rem',
+                                                        borderRadius: 6,
+                                                        cursor: 'pointer',
+                                                        border: active ? '1px solid rgba(56, 189, 248, 0.55)' : '1px solid var(--mp-border)',
+                                                        background: active ? 'rgba(56, 189, 248, 0.14)' : 'var(--mp-surface-2)',
+                                                        color: active ? '#38bdf8' : 'var(--mp-text-2)',
+                                                        fontWeight: active ? 600 : 400,
+                                                    }}
+                                                >
+                                                    {active ? '✓ ' : '+ '}API {apiVer}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            type="text"
+                                            className="mp-input"
+                                            placeholder="Add Plugin API version (e.g. 0.2.1-dev, 0.3.0)"
+                                            value={customApiInput}
+                                            onChange={e => setCustomApiInput(e.target.value)}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') {
+                                                    e.preventDefault();
+                                                    addCustomVersionItem(customApiInput, setCustomApiInput, setApiVersions);
+                                                }
+                                            }}
+                                            style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', flex: 1 }}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="mp-btn mp-btn-outline"
+                                            onClick={() => addCustomVersionItem(customApiInput, setCustomApiInput, setApiVersions)}
+                                            disabled={!customApiInput.trim()}
+                                            style={{ padding: '0.45rem 0.85rem', fontSize: '0.78rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}
+                                        >
+                                            <Plus size={13} /> Add
+                                        </button>
+                                    </div>
+                                    {apiVersions.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
+                                            {apiVersions.map(ver => (
+                                                <span
+                                                    key={ver}
+                                                    style={{
+                                                        display: 'inline-flex',
+                                                        alignItems: 'center',
+                                                        gap: '0.35rem',
+                                                        fontFamily: 'var(--font-mono)',
+                                                        fontSize: '0.72rem',
+                                                        fontWeight: 600,
+                                                        background: 'rgba(56, 189, 248, 0.12)',
+                                                        border: '1px solid rgba(56, 189, 248, 0.35)',
+                                                        color: '#38bdf8',
+                                                        padding: '0.2rem 0.5rem',
+                                                        borderRadius: 5,
+                                                    }}
+                                                >
+                                                    <Cpu size={11} /> API {ver}
+                                                    {detectedWasmApi.includes(ver) && (
+                                                        <span style={{ fontSize: '0.62rem', opacity: 0.85 }}>(auto-detected)</span>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleVersionItem(apiVersions, setApiVersions, ver)}
+                                                        style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, display: 'inline-flex' }}
+                                                    >
+                                                        <X size={11} />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -1433,7 +1728,7 @@ const AddPlugin = () => {
 
                                         {/* Binary card */}
                                         <div className="mp-card ap-review-card" onClick={() => setStep(2)} style={{ gridColumn: '1 / -1' }}>
-                                            <div className="ap-review-section-label"><FileCode size={13} />Binary</div>
+                                            <div className="ap-review-section-label"><FileCode size={13} />Binary &amp; Compatibility</div>
                                             {wasmFile ? (
                                                 <>
                                                     <div className="ap-review-field">
@@ -1445,6 +1740,28 @@ const AddPlugin = () => {
                                                             </span>
                                                         </strong>
                                                     </div>
+                                                    <div className="ap-review-field">
+                                                        <span>Initial Version</span>
+                                                        <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '0.78rem' }}>
+                                                            v{initialVersion.trim().replace(/^v(?=\d)/i, '') || '0.1.0'}
+                                                        </strong>
+                                                    </div>
+                                                    {pumpkinVersions.length > 0 && (
+                                                        <div className="ap-review-field">
+                                                            <span>Supported Pumpkin Releases</span>
+                                                            <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#ff7518' }}>
+                                                                {pumpkinVersions.join(', ')}
+                                                            </strong>
+                                                        </div>
+                                                    )}
+                                                    {apiVersions.length > 0 && (
+                                                        <div className="ap-review-field">
+                                                            <span>Supported Plugin API</span>
+                                                            <strong style={{ fontFamily: 'var(--font-mono)', fontSize: '0.75rem', color: '#38bdf8' }}>
+                                                                {apiVersions.join(', ')}
+                                                            </strong>
+                                                        </div>
+                                                    )}
                                                     <SizeBudget usedBytes={wasmFile.size} maxBytes={MAX_WASM_BYTES} label="Plugin binary size" />
                                                 </>
                                             ) : isPreorder ? (
@@ -1511,7 +1828,9 @@ const AddPlugin = () => {
                                                     </svg>
                                                     0
                                                 </span>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.28rem', fontSize: '0.66rem', color: 'var(--mp-text-3)', marginLeft: 'auto', fontFamily: 'var(--font-mono, monospace)' }}>v1.0.0</span>
+                                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.28rem', fontSize: '0.66rem', color: 'var(--mp-text-3)', marginLeft: 'auto', fontFamily: 'var(--font-mono, monospace)' }}>
+                                                    v{initialVersion.trim().replace(/^v(?=\d)/i, '') || '0.1.0'}
+                                                </span>
                                             </div>
                                         </div>
                                         <div style={{ height: 2, background: 'linear-gradient(90deg, var(--mp-accent), transparent)' }} />

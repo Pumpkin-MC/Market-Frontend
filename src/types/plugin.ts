@@ -24,9 +24,22 @@ export interface PluginVersion {
   id: number;
   plugin_id: number;
   version: string;
-  release_notes?: string;
+  release_notes?: string | null;
   track: ReleaseTrack;
   created_at: string;
+  file_size?: number;
+  downloads?: number;
+  download_url?: string | null;
+  wasm_path?: string | null;
+  pumpkin_versions?: string[] | string | null;
+  supported_pumpkin_versions?: string[] | string | null;
+  pumpkin_version?: string | null;
+  api_versions?: string[] | string | null;
+  supported_api_versions?: string[] | string | null;
+  plugin_api_versions?: string[] | string | null;
+  api_version?: string | null;
+  plugin_api_version?: string | null;
+  is_latest?: boolean;
 }
 
 export interface PluginReview {
@@ -54,6 +67,7 @@ export interface Plugin {
   source_link?: string | null;
   keywords?: string | null;
   translated_descriptions?: Record<string, string> | string | null;
+  short_description?: string | null;
   description?: string | null;
   downloads?: number;
   views?: number;
@@ -67,6 +81,14 @@ export interface Plugin {
   youtube_video_url?: string | null;
   status?: PluginStatus | string | null;
   deleted_at?: string | null;
+  pumpkin_versions?: string[] | string | null;
+  supported_pumpkin_versions?: string[] | string | null;
+  pumpkin_version?: string | null;
+  api_versions?: string[] | string | null;
+  supported_api_versions?: string[] | string | null;
+  plugin_api_versions?: string[] | string | null;
+  api_version?: string | null;
+  plugin_api_version?: string | null;
   commands?: PluginCommand[];
   screenshots?: PluginScreenshot[];
   versions?: PluginVersion[];

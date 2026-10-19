@@ -2,6 +2,12 @@ import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { getPluginUrl } from '../utils/url';
 import { extractYoutubeVideoId } from './PluginVideoPlayer';
+import {
+    evaluatePluginForServer,
+    formatPumpkinVersionBadge,
+    getSavedServerProfileId,
+} from '../utils/compatibility';
+import { CheckCircle2, Layers } from 'lucide-react';
 
 const getAccentColor = (name: string) => {
     const colors = [
@@ -31,11 +37,42 @@ const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; ori
     };
 };
 
-const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
+const PluginCard = ({
+    plugin,
+    selectedServer,
+}: {
+    plugin: any;
+    hideDescription?: boolean;
+    selectedServer?: string;
+}) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
+    const [savedServer, setSavedServer] = useState<string>(() => getSavedServerProfileId());
     const timerRef = useRef<any>(null);
     const cycleRef = useRef<any>(null);
+
+    useEffect(() => {
+        const onServerChange = (e: Event) => {
+            const detail = (e as CustomEvent<string>).detail;
+            setSavedServer(detail || '');
+        };
+        window.addEventListener('pumpkin-server-filter-change', onServerChange);
+        return () => window.removeEventListener('pumpkin-server-filter-change', onServerChange);
+    }, []);
+
+    const activeServerFilter = selectedServer !== undefined ? selectedServer : savedServer;
+
+    const compatMatch = useMemo(() => {
+        if (!plugin) return null;
+        return evaluatePluginForServer(plugin, activeServerFilter);
+    }, [plugin, activeServerFilter]);
+
+    const primaryBadge = useMemo(() => {
+        const targetVer = compatMatch?.recommendedVersion || compatMatch?.latestVersion;
+        const firstPv = targetVer?.pumpkinVersions?.[0];
+        if (!firstPv) return null;
+        return formatPumpkinVersionBadge(firstPv);
+    }, [compatMatch]);
 
     const accent = useMemo(() => getAccentColor(plugin?.name || ''), [plugin?.name]);
     
@@ -90,8 +127,12 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
         cycleRef.current = setInterval(next, 2000);
     };
 
+    const targetUrl = compatMatch?.requiresOlderVersion
+        ? `${getPluginUrl(plugin)}?tab=versions`
+        : getPluginUrl(plugin);
+
     return (
-        <Link to={getPluginUrl(plugin)} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
+        <Link to={targetUrl} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
             <div className="plugin-card-v2">
                 <div className="pcv2-preview">
                     {isHovering && videoId ? (
@@ -159,6 +200,52 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
                     </p>
                     <p className="pcv2-dev">by {plugin.dev_name}</p>
 
+                    {primaryBadge && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '0.35rem', marginBottom: '0.2rem' }}>
+                            {activeServerFilter && activeServerFilter !== 'all' && compatMatch?.compatible ? (
+                                <span
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        fontSize: '0.66rem',
+                                        fontWeight: 700,
+                                        padding: '2px 7px',
+                                        borderRadius: 999,
+                                        background: 'rgba(34, 197, 94, 0.14)',
+                                        color: '#4ade80',
+                                        border: '1px solid rgba(34, 197, 94, 0.3)',
+                                    }}
+                                    title={`Compatible with ${primaryBadge.rawTag}`}
+                                >
+                                    <CheckCircle2 size={10} />
+                                    {compatMatch.requiresOlderVersion && compatMatch.recommendedVersion
+                                        ? `Use ${compatMatch.recommendedVersion.displayVersion} for ${primaryBadge.mcVersion || primaryBadge.title}`
+                                        : `${primaryBadge.title}${primaryBadge.mcVersion ? ` · ${primaryBadge.mcVersion}` : ''}`}
+                                </span>
+                            ) : (
+                                <span
+                                    style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 4,
+                                        fontSize: '0.66rem',
+                                        fontWeight: 600,
+                                        padding: '2px 7px',
+                                        borderRadius: 999,
+                                        background: 'rgba(255, 107, 0, 0.1)',
+                                        color: 'var(--primary, #ff6b00)',
+                                        border: '1px solid rgba(255, 107, 0, 0.25)',
+                                    }}
+                                    title={`Target release: ${primaryBadge.rawTag}`}
+                                >
+                                    <Layers size={10} />
+                                    {primaryBadge.title}{primaryBadge.mcVersion ? ` · ${primaryBadge.mcVersion}` : ''}
+                                </span>
+                            )}
+                        </div>
+                    )}
+
                     <div className="pcv2-footer">
                         <span className="pcv2-stat">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -174,9 +261,9 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
                                 {Number(plugin.rating).toFixed(1)}
                             </span>
                         )}
-                        {plugin.version && (
+                        {(compatMatch?.recommendedVersion?.displayVersion || plugin.version) && (
                             <span className="pcv2-stat" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono, monospace)', fontSize: '0.65rem' }}>
-                                v{plugin.version}
+                                {compatMatch?.recommendedVersion?.displayVersion || `v${plugin.version.replace(/^v/i, '')}`}
                             </span>
                         )}
                     </div>

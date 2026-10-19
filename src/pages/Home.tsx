@@ -7,6 +7,14 @@ import PluginCard from '../components/PluginCard';
 import { useAuth } from '../App';
 
 import { getPluginUrl } from '../utils/url';
+import {
+    PUMPKIN_SERVER_PROFILES,
+    evaluatePluginForServer,
+    getSavedServerProfileId,
+    setSavedServerProfileId,
+    hydratePluginsVersionHistory,
+} from '../utils/compatibility';
+import { Layers, CheckCircle2 } from 'lucide-react';
 
 const PAGE_SIZE = 12;
 
@@ -31,6 +39,15 @@ const Home = () => {
     const [hasMore, setHasMore] = useState<boolean>(homeCache?.hasMore ?? true);
     const [heroIndex, setHeroIndex] = useState(0);
     const [heroSubImageIndex, setHeroSubImageIndex] = useState(0);
+    const [selectedServer, setSelectedServer] = useState<string>(() => getSavedServerProfileId());
+    const [compatRevision, setCompatRevision] = useState(0);
+    const [hydratingCompat, setHydratingCompat] = useState(false);
+
+    const handleSelectServer = (profileId: string) => {
+        const nextVal = selectedServer === profileId ? '' : profileId;
+        setSelectedServer(nextVal);
+        setSavedServerProfileId(nextVal);
+    };
 
     const popularRef = useRef<HTMLElement | null>(null);
     const newestRef = useRef<HTMLElement | null>(null);
@@ -87,6 +104,45 @@ const Home = () => {
 
         loadSections();
     }, []);
+
+    // Hydrate version history when a server filter is active so older compatible versions are included
+    useEffect(() => {
+        if (!selectedServer) return;
+        const combined = [...popular, ...newest, ...allPlugins];
+        if (combined.length === 0) return;
+
+        let cancelled = false;
+        setHydratingCompat(true);
+        hydratePluginsVersionHistory(combined, async (idOrPublicId) => {
+            const res = await api.get(`/plugins/${idOrPublicId}`);
+            return res.data;
+        })
+            .then(() => {
+                if (!cancelled) setCompatRevision((r) => r + 1);
+            })
+            .finally(() => {
+                if (!cancelled) setHydratingCompat(false);
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [selectedServer, popular, newest, allPlugins]);
+
+    const filteredPopular = useMemo(() => {
+        if (!selectedServer) return popular;
+        return popular.filter((p) => evaluatePluginForServer(p, selectedServer).compatible);
+    }, [popular, selectedServer, compatRevision]);
+
+    const filteredNewest = useMemo(() => {
+        if (!selectedServer) return newest;
+        return newest.filter((p) => evaluatePluginForServer(p, selectedServer).compatible);
+    }, [newest, selectedServer, compatRevision]);
+
+    const filteredAll = useMemo(() => {
+        if (!selectedServer) return allPlugins;
+        return allPlugins.filter((p) => evaluatePluginForServer(p, selectedServer).compatible);
+    }, [allPlugins, selectedServer, compatRevision]);
 
     const loadMorePlugins = async () => {
         if (loadingMore || !hasMore || loading) return;
@@ -294,12 +350,84 @@ const Home = () => {
             )}
 
             <div className="container" id="browse">
+                {/* Server Version Compatibility Selector Bar */}
+                <div className="server-compat-picker-bar">
+                    <div className="server-compat-picker-info">
+                        <div className="server-compat-picker-title">
+                            <Layers size={16} color="var(--primary)" />
+                            <span>Filter by Your Pumpkin Server</span>
+                        </div>
+                        <p className="server-compat-picker-sub">
+                            Select the Pumpkin / Minecraft version you run to see all compatible plugins and recommended releases.
+                        </p>
+                    </div>
+
+                    <div className="server-compat-picker-pills">
+                        <button
+                            type="button"
+                            className={`server-compat-pill ${!selectedServer ? 'active' : ''}`}
+                            onClick={() => handleSelectServer('')}
+                        >
+                            All Versions
+                        </button>
+                        {PUMPKIN_SERVER_PROFILES.map((profile) => {
+                            const active = selectedServer === profile.id;
+                            return (
+                                <button
+                                    key={profile.id}
+                                    type="button"
+                                    className={`server-compat-pill ${active ? 'active' : ''}`}
+                                    onClick={() => handleSelectServer(profile.id)}
+                                    title={profile.description}
+                                >
+                                    {active && <CheckCircle2 size={13} />}
+                                    <span>{profile.shortLabel}</span>
+                                    {profile.isLatest && (
+                                        <span className="server-compat-pill-tag">Latest</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {selectedServer && (
+                    <div style={{
+                        marginBottom: '1.5rem',
+                        padding: '0.65rem 1rem',
+                        borderRadius: '10px',
+                        background: 'rgba(34, 197, 94, 0.08)',
+                        border: '1px solid rgba(34, 197, 94, 0.25)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        gap: '0.75rem',
+                        flexWrap: 'wrap',
+                        fontSize: '0.82rem',
+                        color: 'var(--text)',
+                    }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <CheckCircle2 size={15} color="#4ade80" />
+                            Showing plugins compatible with <strong>{PUMPKIN_SERVER_PROFILES.find(p => p.id === selectedServer)?.label}</strong>
+                            {hydratingCompat && <span style={{ color: 'var(--text-muted)' }}>(checking older releases…)</span>}
+                        </span>
+                        <button
+                            type="button"
+                            className="btn-text-only"
+                            style={{ fontSize: '0.78rem' }}
+                            onClick={() => handleSelectServer('')}
+                        >
+                            Show All Plugins
+                        </button>
+                    </div>
+                )}
+
                 <section className="home-section" ref={popularRef}>
                     <h2 className="section-title"><span>{t('home.trending')}</span></h2>
                     <div className="home-plugin-grid">
-                        {popular.length > 0 ? (
-                            popular.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
+                        {filteredPopular.length > 0 ? (
+                            filteredPopular.slice(0, 10).map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} selectedServer={selectedServer} />
                             ))
                         ) : (
                             <p className="no-plugins">{t('home.no_plugins')}</p>
@@ -310,9 +438,9 @@ const Home = () => {
                 <section className="home-section" ref={newestRef}>
                     <h2 className="section-title"><span>{t('home.latest')}</span></h2>
                     <div className="home-plugin-grid">
-                        {newest.length > 0 ? (
-                            newest.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
+                        {filteredNewest.length > 0 ? (
+                            filteredNewest.slice(0, 10).map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} selectedServer={selectedServer} />
                             ))
                         ) : (
                             <p className="no-plugins">{t('home.no_plugins')}</p>
@@ -323,9 +451,9 @@ const Home = () => {
                 <section className="home-section">
                     <h2 className="section-title"><span>{t('home.all_plugins')}</span></h2>
                     <div className="home-plugin-grid">
-                        {allPlugins.length > 0 ? (
-                            allPlugins.map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
+                        {filteredAll.length > 0 ? (
+                            filteredAll.map((plugin: any) => (
+                                <PluginCard key={plugin.id} plugin={plugin} selectedServer={selectedServer} />
                             ))
                         ) : (
                             !loading && <p className="no-plugins">{t('home.no_plugins')}</p>
@@ -342,7 +470,7 @@ const Home = () => {
                         </div>
                     )}
 
-                    {!hasMore && allPlugins.length > 0 && (
+                    {!hasMore && filteredAll.length > 0 && (
                         <div className="infinite-scroll-end">
                             <p>You've reached the end of the plugins catalog.</p>
                         </div>
