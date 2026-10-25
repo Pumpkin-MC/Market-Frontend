@@ -21,7 +21,6 @@ const Coupons = ({ plugin }: Props) => {
     const [coupons, setCoupons] = useState<Coupon[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Form state
     const [code, setCode] = useState('');
     const [discountPercent, setDiscountPercent] = useState<number>(20);
     const [maxRedemptions, setMaxRedemptions] = useState<string>('');
@@ -58,7 +57,6 @@ const Coupons = ({ plugin }: Props) => {
         try {
             const res = await api.post(`/plugins/${plugin.id}/coupons`, payload);
             setCoupons(prev => [res.data, ...prev]);
-            // Reset form
             setCode('');
             setDiscountPercent(20);
             setMaxRedemptions('');
@@ -82,63 +80,63 @@ const Coupons = ({ plugin }: Props) => {
     };
 
     return (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <div className="mp-section-header">
-                <h2 className="mp-title">Coupons &amp; Promo Codes</h2>
-                <p>Create discount codes that customers can enter on the plugin store listing page.</p>
-            </div>
+        <div className="st-tab">
+            <header className="st-tab-head">
+                <h2 className="h1">Coupons &amp; Promo Codes</h2>
+                <p className="small">Create discount codes that customers can enter on the plugin store listing page.</p>
+            </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
-                {/* Create Coupon Card */}
-                <div className="mp-card">
-                    <div className="mp-card-title">
-                        <Plus size={14} /> Create Coupon
-                    </div>
-                    <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="couponCode">Promo Code</label>
-                            <input
-                                id="couponCode"
-                                name="code"
-                                className="mp-input"
-                                type="text"
-                                value={code}
-                                onChange={e => setCode(e.target.value.toUpperCase())}
-                                placeholder="E.g., SAVE50"
-                                autoComplete="off"
-                                autoCapitalize="characters"
-                                spellCheck={false}
-                                required
-                                style={{ textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}
-                            />
-                        </div>
-
-                        <div className="mp-form-row">
-                            <div className="mp-form-group">
-                                <label className="mp-label" htmlFor="couponDiscount">Discount %</label>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                    <input
-                                        id="couponDiscount"
-                                        name="discountPercent"
-                                        className="mp-input"
-                                        type="number"
-                                        inputMode="numeric"
-                                        autoComplete="off"
-                                        min={1}
-                                        max={99}
-                                        value={discountPercent}
-                                        onChange={e => setDiscountPercent(Math.min(99, Math.max(1, parseInt(e.target.value, 10) || 0)))}
-                                        required
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="mp-form-group">
-                                <label className="mp-label" htmlFor="couponMaxUses">Max Uses (Optional)</label>
+            <form className="panel" onSubmit={handleCreate}>
+                <div className="panel-head">
+                    <Plus size={16} className="pumpkin" />
+                    <h3 className="h3">Create Coupon</h3>
+                </div>
+                <div className="panel-body">
+                    <div className="fields st-cols-2">
+                        <label className="field st-span">
+                            <span className="field-label">Promo Code</span>
+                            <span className="control">
+                                <input
+                                    id="couponCode"
+                                    name="code"
+                                    className="input mono st-upper"
+                                    type="text"
+                                    value={code}
+                                    onChange={e => setCode(e.target.value.toUpperCase())}
+                                    placeholder="E.g., SAVE50"
+                                    autoComplete="off"
+                                    autoCapitalize="characters"
+                                    spellCheck={false}
+                                    required
+                                />
+                            </span>
+                        </label>
+                        <label className="field">
+                            <span className="field-label">Discount %</span>
+                            <span className="control">
+                                <input
+                                    id="couponDiscount"
+                                    name="discountPercent"
+                                    className="input num"
+                                    type="number"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    min={1}
+                                    max={99}
+                                    value={discountPercent}
+                                    onChange={e => setDiscountPercent(Math.min(99, Math.max(1, parseInt(e.target.value, 10) || 0)))}
+                                    required
+                                />
+                                <span className="affix">%</span>
+                            </span>
+                        </label>
+                        <label className="field">
+                            <span className="field-label">Max Uses <em>(Optional)</em></span>
+                            <span className="control">
                                 <input
                                     id="couponMaxUses"
                                     name="maxRedemptions"
-                                    className="mp-input"
+                                    className="input num"
                                     type="number"
                                     inputMode="numeric"
                                     autoComplete="off"
@@ -147,106 +145,79 @@ const Coupons = ({ plugin }: Props) => {
                                     onChange={e => setMaxRedemptions(e.target.value)}
                                     placeholder="Unlimited"
                                 />
-                            </div>
-                        </div>
-
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="couponExpiresAt">Expiration Date (Optional)</label>
-                            <input
-                                id="couponExpiresAt"
-                                name="expiresAt"
-                                className="mp-input"
-                                type="datetime-local"
-                                autoComplete="off"
-                                value={expiresAt}
-                                onChange={e => setExpiresAt(e.target.value)}
-                            />
-                        </div>
-
-                        <button type="submit" className="mp-btn mp-btn-primary" disabled={submitting || !code.trim()} style={{ marginTop: '0.5rem' }}>
-                            <Plus size={14} /> {submitting ? 'Creating…' : 'Create Promo Code'}
-                        </button>
-                    </form>
-                </div>
-
-                {/* Active Coupons List */}
-                <div className="mp-card" style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div className="mp-card-title">
-                        <Tag size={14} /> Active Promo Codes
+                            </span>
+                        </label>
+                        <label className="field st-span">
+                            <span className="field-label">Expiration Date <em>(Optional)</em></span>
+                            <span className="control">
+                                <input
+                                    id="couponExpiresAt"
+                                    name="expiresAt"
+                                    className="input"
+                                    type="datetime-local"
+                                    autoComplete="off"
+                                    value={expiresAt}
+                                    onChange={e => setExpiresAt(e.target.value)}
+                                />
+                            </span>
+                        </label>
                     </div>
-                    {loading ? (
-                        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--mp-text-3)' }}>Loading coupons…</div>
-                    ) : coupons.length === 0 ? (
-                        <div style={{ padding: '3rem 2rem', textAlign: 'center', color: 'var(--mp-text-3)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                            <Tag size={28} style={{ opacity: 0.3 }} />
-                            <span>No active coupon codes for this plugin.</span>
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', overflowY: 'auto', maxHeight: '420px', paddingRight: '4px' }}>
-                            {coupons.map(c => {
-                                const isExpired = c.expires_at ? new Date() > new Date(c.expires_at) : false;
-                                const isMaxed = c.max_redemptions !== null && c.used_redemptions >= c.max_redemptions;
-                                const isValid = !isExpired && !isMaxed && c.active;
-
-                                return (
-                                    <div
-                                        key={c.id}
-                                        style={{
-                                            padding: '1rem',
-                                            borderRadius: '8px',
-                                            backgroundColor: 'rgba(255,255,255,0.02)',
-                                            border: '1px solid var(--border)',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'space-between',
-                                            gap: '1rem',
-                                            opacity: isValid ? 1 : 0.6
-                                        }}
-                                    >
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--primary)', fontSize: '1.05rem' }}>
-                                                    {c.code}
-                                                </span>
-                                                <span
-                                                    style={{
-                                                        fontSize: '0.72rem',
-                                                        padding: '2px 6px',
-                                                        borderRadius: '4px',
-                                                        fontWeight: 700,
-                                                        backgroundColor: isValid ? 'rgba(74,222,128,0.1)' : 'rgba(239,68,68,0.1)',
-                                                        color: isValid ? '#4ade80' : '#ef4444'
-                                                    }}
-                                                >
-                                                    {isValid ? `${c.discount_percent}% OFF` : 'INACTIVE'}
-                                                </span>
-                                            </div>
-                                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', fontSize: '0.78rem', color: 'var(--mp-text-3)', marginTop: '0.25rem' }}>
-                                                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                                    <Users size={12} /> {c.used_redemptions} {c.max_redemptions !== null ? `/ ${c.max_redemptions} uses` : 'uses'}
-                                                </span>
-                                                {c.expires_at && (
-                                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: isExpired ? '#ef4444' : undefined }}>
-                                                        <Clock size={12} /> Exp: {new Date(c.expires_at).toLocaleDateString()}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
-                                        <button
-                                            className="mp-btn mp-btn-danger mp-btn-outline"
-                                            onClick={() => handleDelete(c.id)}
-                                            style={{ padding: '6px', borderRadius: '6px' }}
-                                            title="Delete Coupon"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
                 </div>
-            </div>
+                <div className="panel-foot">
+                    <button type="submit" className="button button-primary" disabled={submitting || !code.trim()} aria-busy={submitting}>
+                        <Plus /> {submitting ? 'Creating…' : 'Create Promo Code'}
+                    </button>
+                </div>
+            </form>
+
+            <section className="stack">
+                <h3 className="h2">Active Promo Codes</h3>
+                {loading ? (
+                    <span className="row small"><span className="loading" />Loading coupons…</span>
+                ) : coupons.length === 0 ? (
+                    <div className="blank">
+                        <Tag size={28} className="pumpkin" />
+                        <p className="small">No active coupon codes for this plugin.</p>
+                    </div>
+                ) : (
+                    <div className="st-list">
+                        {coupons.map(c => {
+                            const isExpired = c.expires_at ? new Date() > new Date(c.expires_at) : false;
+                            const isMaxed = c.max_redemptions !== null && c.used_redemptions >= c.max_redemptions;
+                            const isValid = !isExpired && !isMaxed && c.active;
+
+                            return (
+                                <div key={c.id} className={`st-list-row${isValid ? '' : ' st-dim'}`}>
+                                    <div className="stack st-tight">
+                                        <span className="row st-tight">
+                                            <span className="mono st-code">{c.code}</span>
+                                            {isValid
+                                                ? <span className="sticker sticker-sm">{c.discount_percent}% OFF</span>
+                                                : <span className="tag tag-danger">INACTIVE</span>}
+                                        </span>
+                                        <span className="row small">
+                                            <span className="row st-tight"><Users size={12} /> {c.used_redemptions} {c.max_redemptions !== null ? `/ ${c.max_redemptions} uses` : 'uses'}</span>
+                                            {c.expires_at && (
+                                                <span className={`row st-tight${isExpired ? ' st-neg' : ''}`}>
+                                                    <Clock size={12} /> Exp: {new Date(c.expires_at).toLocaleDateString()}
+                                                </span>
+                                            )}
+                                        </span>
+                                    </div>
+                                    <button
+                                        className="button button-danger button-sm button-icon"
+                                        onClick={() => handleDelete(c.id)}
+                                        title="Delete Coupon"
+                                        aria-label="Delete Coupon"
+                                    >
+                                        <Trash2 />
+                                    </button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+            </section>
         </div>
     );
 };

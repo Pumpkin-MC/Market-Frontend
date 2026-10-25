@@ -1,145 +1,80 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { ComposableMap, Geographies, Geography } from "@vnedyalk0v/react19-simple-maps";
-import { scaleLinear } from "d3-scale";
 import { Server, Users, Globe, Activity } from 'lucide-react';
 import { useAnalytics } from './useAnalytics';
+import '../../styles/studio.css';
 
 const GEO_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
 
+const SCALE_MAX = { servers: 20, players: 100, visitors: 50, free_downloads: 50 };
+
+const shade = (val: number, max: number) =>
+  `color-mix(in srgb, var(--pumpkin) ${Math.round(20 + Math.min(val / max, 1) * 80)}%, var(--surface))`;
+
 const AudiencePage = () => {
-  const { mapData, telemetry, loading } = useAnalytics(); 
+  const { mapData, telemetry, loading } = useAnalytics();
   const [mapFilter, setMapFilter] = useState<'servers' | 'players' | 'visitors' | 'free_downloads'>('servers');
   const [hoveredInfo, setHoveredInfo] = useState<{ name: string; servers: number; players: number; visitors: number } | null>(null);
 
-  // Memoize scales to prevent recalculation on every render
-  const colorScales = useMemo(() => ({
-    servers: scaleLinear<string>().domain([0, 20]).range(["#1a1a2e", "#10b981"]),
-    players: scaleLinear<string>().domain([0, 100]).range(["#1a1a2e", "#06b6d4"]),
-    visitors: scaleLinear<string>().domain([0, 50]).range(["#1a1a2e", "#8884d8"]),
-    free_downloads: scaleLinear<string>().domain([0, 50]).range(["#1a1a2e", "#82ca9d"]),
-    buyers: scaleLinear<string>().domain([0, 50]).range(["#1a1a2e", "#FF7518"]),
-  }), []);
-
   if (loading || !mapData) {
     return (
-      <div className="loader-container" style={{ padding: '4rem', textAlign: 'center' }}>
-        <div className="pumpkin-spinner"></div>
-        <p>Analyzing Global Telemetry & Distribution...</p>
+      <div className="page-loader">
+        <span className="status"><span className="loading" />Analyzing Global Telemetry & Distribution...</span>
       </div>
     );
   }
 
   return (
-    <div className="analytics-container">
-      {/* ── Top Telemetry Audience KPIs ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
-        <div style={{ background: 'var(--dash-surface, #13131f)', border: '1px solid var(--dash-border, rgba(255,255,255,0.08))', borderRadius: '10px', padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#10b981', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>
-            <Server size={14} />
-            Live Game Servers (24h)
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text, #fff)', marginTop: '4px' }}>
-            {telemetry?.activeServers24h?.toLocaleString() ?? 0}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
-            {telemetry?.activeServers7d ?? 0} active past 7 days
-          </div>
+    <div className="page page-wide st-page">
+      <header className="st-head">
+        <div className="st-head-text">
+          <span className="sticker sticker-success">Real-Time Heartbeats</span>
+          <h1 className="display-2">Plugin <span className="mark">Audience</span> & Server Geography</h1>
+          <p className="lede">Visualizing active Minecraft servers and player reach reported via telemetry</p>
         </div>
+      </header>
 
-        <div style={{ background: 'var(--dash-surface, #13131f)', border: '1px solid var(--dash-border, rgba(255,255,255,0.08))', borderRadius: '10px', padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#06b6d4', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>
-            <Users size={14} />
-            Online Player Reach
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text, #fff)', marginTop: '4px' }}>
-            {telemetry?.totalPlayersOnline?.toLocaleString() ?? 0}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
-            Concurrent players on servers running your plugins
-          </div>
+      <div className="stats">
+        <div className="stat">
+          <span className="label st-an-label"><Server />Live Game Servers (24h)</span>
+          <span className="stat-value st-an-value">{telemetry?.activeServers24h?.toLocaleString() ?? 0}</span>
+          <span className="small">{telemetry?.activeServers7d ?? 0} active past 7 days</span>
         </div>
-
-        <div style={{ background: 'var(--dash-surface, #13131f)', border: '1px solid var(--dash-border, rgba(255,255,255,0.08))', borderRadius: '10px', padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f59e0b', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>
-            <Activity size={14} />
-            Peak 24h Players
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text, #fff)', marginTop: '4px' }}>
-            {telemetry?.peakPlayers24h?.toLocaleString() ?? 0}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
-            Max player concurrency
-          </div>
+        <div className="stat">
+          <span className="label st-an-label"><Users />Online Player Reach</span>
+          <span className="stat-value st-an-value">{telemetry?.totalPlayersOnline?.toLocaleString() ?? 0}</span>
+          <span className="small">Concurrent players on servers running your plugins</span>
         </div>
-
-        <div style={{ background: 'var(--dash-surface, #13131f)', border: '1px solid var(--dash-border, rgba(255,255,255,0.08))', borderRadius: '10px', padding: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#a855f7', fontSize: '0.78rem', fontWeight: 600, textTransform: 'uppercase' }}>
-            <Globe size={14} />
-            Server Locations
-          </div>
-          <div style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text, #fff)', marginTop: '4px' }}>
-            {telemetry?.countries?.length ?? mapData.length}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted, #94a3b8)', marginTop: '2px' }}>
-            Countries with deployed servers
-          </div>
+        <div className="stat">
+          <span className="label st-an-label"><Activity />Peak 24h Players</span>
+          <span className="stat-value st-an-value">{telemetry?.peakPlayers24h?.toLocaleString() ?? 0}</span>
+          <span className="small">Max player concurrency</span>
+        </div>
+        <div className="stat">
+          <span className="label st-an-label"><Globe />Server Locations</span>
+          <span className="stat-value st-an-value pumpkin">{telemetry?.countries?.length ?? mapData.length}</span>
+          <span className="small">Countries with deployed servers</span>
         </div>
       </div>
 
-      {/* ── Global Interactive Map ── */}
-      <div className="charts-grid">
-        <div className="chart-card" style={{ gridColumn: '1 / -1' }}>
-          <div className="card-header-flex" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <div>
-              <h3 className="section-title" style={{ margin: 0 }}>Plugin <span>Audience & Server Geography</span></h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
-                Visualizing active Minecraft servers and player reach reported via telemetry
-              </p>
-            </div>
-            <div className="map-filters" style={{ display: 'flex', gap: '8px' }}>
-              {(['servers', 'players', 'visitors', 'free_downloads'] as const).map(type => (
-                <button 
-                   key={type}
-                   className={`btn-sm ${mapFilter === type ? 'active' : ''}`} 
-                   onClick={() => setMapFilter(type)}
-                   style={{
-                     padding: '6px 12px',
-                     borderRadius: '6px',
-                     border: '1px solid var(--dash-border, rgba(255,255,255,0.1))',
-                     background: mapFilter === type ? 'var(--primary, #f97316)' : 'rgba(255,255,255,0.04)',
-                     color: mapFilter === type ? '#fff' : 'var(--text-muted, #94a3b8)',
-                     fontWeight: 600,
-                     fontSize: '0.78rem',
-                     cursor: 'pointer',
-                     textTransform: 'capitalize'
-                   }}
-                >
-                  {type === 'servers' ? 'Live Servers' : type === 'players' ? 'Online Players' : type.replace('_', ' ')}
-                </button>
-              ))}
-            </div>
+      <section className="panel">
+        <div className="panel-head st-an-head">
+          <div className="segmented" role="group" aria-label="Map layer">
+            {(['servers', 'players', 'visitors', 'free_downloads'] as const).map(type => (
+              <button key={type} type="button" className="st-an-cap" aria-pressed={mapFilter === type} onClick={() => setMapFilter(type)}>
+                {type === 'servers' ? 'Live Servers' : type === 'players' ? 'Online Players' : type.replace('_', ' ')}
+              </button>
+            ))}
           </div>
-          
-          <div className="map-wrapper" style={{ background: '#0f0f1a', borderRadius: '12px', padding: '20px', border: '1px solid var(--border)', position: 'relative' }}>
+        </div>
+        <div className="panel-body stack">
+          <div className="st-an-map">
             {hoveredInfo && (
-              <div style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                background: 'rgba(20, 20, 35, 0.95)',
-                border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '0.82rem',
-                color: '#fff',
-                pointerEvents: 'none',
-                zIndex: 10,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
-              }}>
-                <div style={{ fontWeight: 700, marginBottom: '4px' }}>{hoveredInfo.name}</div>
-                <div style={{ color: '#10b981' }}>🖥️ {hoveredInfo.servers} active servers</div>
-                <div style={{ color: '#06b6d4' }}>👥 {hoveredInfo.players} online players</div>
-                <div style={{ color: '#94a3b8', fontSize: '0.75rem' }}>🌐 {hoveredInfo.visitors} web views</div>
+              <div className="st-tip st-an-map-tip">
+                <span className="label label-fg">{hoveredInfo.name}</span>
+                <span className="st-tip-row"><span className="dot dot-pumpkin" />{hoveredInfo.servers} active servers</span>
+                <span className="st-tip-row"><span className="dot st-an-dot-fg" />{hoveredInfo.players} online players</span>
+                <span className="st-tip-row muted"><span className="dot" />{hoveredInfo.visitors} web views</span>
               </div>
             )}
 
@@ -150,13 +85,12 @@ const AudiencePage = () => {
                     const countryCode = geo.properties?.ISO_A2 || geo.properties?.iso_a2 || geo.properties?.IS_A2;
                     const d: any = mapData.find((s: any) => s.country === countryCode);
                     const val = d ? (d[mapFilter === 'free_downloads' ? 'freeDownloads' : mapFilter] || 0) : 0;
-                    
+
                     return (
                       <Geography
                         key={geo.rsmKey}
                         geography={geo}
-                        fill={val > 0 ? colorScales[mapFilter](val) : "#1a1a2e"}
-                        stroke="#2a2a40"
+                        stroke="var(--line)"
                         strokeWidth={0.5}
                         onMouseEnter={() => {
                           setHoveredInfo({
@@ -168,9 +102,9 @@ const AudiencePage = () => {
                         }}
                         onMouseLeave={() => setHoveredInfo(null)}
                         style={{
-                          default: { outline: "none" },
-                          hover: { fill: "#f97316", outline: "none", cursor: 'pointer' },
-                          pressed: { outline: "none" }
+                          default: { fill: val > 0 ? shade(val, SCALE_MAX[mapFilter]) : 'var(--surface)', outline: 'none' },
+                          hover: { fill: 'var(--fg)', outline: 'none', cursor: 'pointer' },
+                          pressed: { outline: 'none' }
                         }}
                       />
                     );
@@ -178,56 +112,43 @@ const AudiencePage = () => {
                 }
               </Geographies>
             </ComposableMap>
-            
+
             {mapData.length === 0 && (
-              <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                No server telemetry or geographic data captured yet.
-              </div>
+              <p className="small st-an-empty">No server telemetry or geographic data captured yet.</p>
             )}
           </div>
 
-          {/* Table of Top Geographic Locations */}
           {mapData.length > 0 && (
-            <div style={{ marginTop: '1.5rem', overflowX: 'auto' }}>
-              <h4 style={{ margin: '0 0 10px 0', fontSize: '0.92rem', color: 'var(--text, #fff)' }}>
-                Country Telemetry Breakdown
-              </h4>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem', textAlign: 'left' }}>
-                <thead>
-                  <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'var(--text-muted, #94a3b8)' }}>
-                    <th style={{ padding: '8px 12px' }}>Country</th>
-                    <th style={{ padding: '8px 12px' }}>Game Servers</th>
-                    <th style={{ padding: '8px 12px' }}>Online Players</th>
-                    <th style={{ padding: '8px 12px' }}>Web Visitors</th>
-                    <th style={{ padding: '8px 12px' }}>Downloads</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mapData.slice(0, 10).map((row, idx) => (
-                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <td style={{ padding: '8px 12px', fontWeight: 600, color: 'var(--text, #fff)' }}>
-                        {row.countryName} ({row.country})
-                      </td>
-                      <td style={{ padding: '8px 12px', color: '#10b981', fontWeight: 700 }}>
-                        {row.servers}
-                      </td>
-                      <td style={{ padding: '8px 12px', color: '#06b6d4' }}>
-                        {row.players}
-                      </td>
-                      <td style={{ padding: '8px 12px', color: 'var(--text-muted, #94a3b8)' }}>
-                        {row.visitors}
-                      </td>
-                      <td style={{ padding: '8px 12px', color: 'var(--text-muted, #94a3b8)' }}>
-                        {row.freeDownloads}
-                      </td>
+            <>
+              <h4 className="h3">Country Telemetry Breakdown</h4>
+              <div className="scroll-x">
+                <table className="ledger">
+                  <thead>
+                    <tr>
+                      <th>Country</th>
+                      <th className="end">Game Servers</th>
+                      <th className="end">Online Players</th>
+                      <th className="end">Web Visitors</th>
+                      <th className="end">Downloads</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {mapData.slice(0, 10).map((row, idx) => (
+                      <tr key={idx}>
+                        <td><strong>{row.countryName}</strong> <span className="muted mono">({row.country})</span></td>
+                        <td className="end"><strong className="pumpkin">{row.servers}</strong></td>
+                        <td className="end">{row.players}</td>
+                        <td className="end muted">{row.visitors}</td>
+                        <td className="end muted">{row.freeDownloads}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

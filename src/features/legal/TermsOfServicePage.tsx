@@ -1,5 +1,5 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import LegalDoc from './LegalDoc';
 
 const sections = [
   {
@@ -159,348 +159,33 @@ We aim to respond to all inquiries within 3 business days.`
   }
 ];
 
-const TermsOfServicePage = () => {
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-
-  return (
-    <>
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-          font-family: 'Nunito', sans-serif;
-          -webkit-font-smoothing: antialiased;
-          background: #0f1117;
-        }
-
-        .tos-page {
-          min-height: 100vh;
-          background-color: #0f1117;
-          background-image: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255, 107, 0, 0.12) 0%, transparent 65%);
-          color: #c8cdd8;
-        }
-
-        /* ── Nav ── */
-        .tos-nav {
-          position: sticky;
-          top: 0;
-          z-index: 50;
-          background: rgba(15, 17, 23, 0.85);
-          backdrop-filter: blur(12px);
-          border-bottom: 1px solid rgba(255, 107, 0, 0.1);
-          padding: 0 32px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-
-        .nav-brand {
-          display: flex;
-          align-items: center;
-          gap: 9px;
-          text-decoration: none;
-        }
-
-        .nav-brand-icon { font-size: 24px; filter: drop-shadow(0 0 8px rgba(255,107,0,0.5)); }
-
-        .nav-brand-text {
-          font-size: 17px;
-          font-weight: 800;
-          letter-spacing: -0.3px;
-          background: linear-gradient(135deg, #ff8c00, #ff6b00);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .nav-back {
-          font-size: 13px;
-          font-weight: 600;
-          color: #4a5568;
-          text-decoration: none;
-          display: flex;
-          align-items: center;
-          gap: 5px;
-          transition: color 0.15s;
-        }
-
-        .nav-back:hover { color: #ff6b00; }
-
-        /* ── Hero ── */
-        .tos-hero {
-          text-align: center;
-          padding: 64px 24px 48px;
-          border-bottom: 1px solid #1a2030;
-        }
-
-        .tos-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(255, 107, 0, 0.1);
-          border: 1px solid rgba(255, 107, 0, 0.2);
-          border-radius: 100px;
-          padding: 5px 14px;
-          font-size: 12px;
-          font-weight: 700;
-          color: #ff8c00;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          margin-bottom: 20px;
-        }
-
-        .tos-title {
-          font-size: clamp(28px, 5vw, 42px);
-          font-weight: 800;
-          color: #f0f2f5;
-          letter-spacing: -0.5px;
-          line-height: 1.2;
-          margin-bottom: 14px;
-        }
-
-        .tos-title span {
-          background: linear-gradient(135deg, #ff8c00, #ff6b00);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .tos-subtitle {
-          font-size: 15px;
-          color: #4a5568;
-          font-weight: 600;
-          max-width: 500px;
-          margin: 0 auto;
-          line-height: 1.6;
-        }
-
-        .tos-date {
-          margin-top: 16px;
-          font-size: 12.5px;
-          color: #3d4a5e;
-          font-weight: 600;
-        }
-
-        /* ── Layout ── */
-        .tos-layout {
-          display: grid;
-          grid-template-columns: 240px 1fr;
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 40px 24px 80px;
-          gap: 40px;
-          align-items: start;
-        }
-
-        @media (max-width: 768px) {
-          .tos-layout { grid-template-columns: 1fr; }
-          .tos-sidebar { display: none; }
-        }
-
-        /* ── Sidebar ── */
-        .tos-sidebar {
-          position: sticky;
-          top: 100px;
-        }
-
-        .sidebar-label {
-          font-size: 11px;
-          font-weight: 700;
-          color: #3d4a5e;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          margin-bottom: 10px;
-          padding-left: 10px;
-        }
-
-        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
-
-        .sidebar-link {
-          font-size: 13px;
-          font-weight: 600;
-          color: #3d4a5e;
-          text-decoration: none;
-          padding: 7px 10px;
-          border-radius: 6px;
-          transition: all 0.15s;
-          border-left: 2px solid transparent;
-          line-height: 1.4;
-        }
-
-        .sidebar-link:hover {
-          color: #c8cdd8;
-          background: rgba(255, 107, 0, 0.06);
-          border-left-color: rgba(255, 107, 0, 0.3);
-        }
-
-        .sidebar-link.active {
-          color: #ff8c00;
-          background: rgba(255, 107, 0, 0.08);
-          border-left-color: #ff6b00;
-        }
-
-        /* ── Content ── */
-        .tos-content { min-width: 0; }
-
-        .tos-section {
-          background: #161b26;
-          border: 1px solid #1e2535;
-          border-radius: 12px;
-          padding: 28px 32px;
-          margin-bottom: 16px;
-          transition: border-color 0.2s;
-          scroll-margin-top: 100px;
-          cursor: default;
-        }
-        .tos-section:hover { border-color: rgba(255, 107, 0, 0.2); }
-
-        .tos-section.active { border-color: rgba(255, 107, 0, 0.35); }
-
-        .section-title {
-          font-size: 16px;
-          font-weight: 800;
-          color: #e8eaf0;
-          margin-bottom: 14px;
-          letter-spacing: -0.2px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .section-title::before {
-          content: '';
-          display: inline-block;
-          width: 3px;
-          height: 18px;
-          background: linear-gradient(180deg, #ff8c00, #ff6b00);
-          border-radius: 2px;
-          flex-shrink: 0;
-        }
-
-        .section-body {
-          font-size: 14px;
-          line-height: 1.8;
-          color: #6b7a94;
-          font-weight: 500;
-          white-space: pre-line;
-        }
-
-        .section-body strong { color: #c8cdd8; font-weight: 700; }
-
-        /* ── Footer ── */
-        .tos-footer {
-          border-top: 1px solid #1a2030;
-          padding: 32px 24px;
-          text-align: center;
-        }
-
-        .tos-footer-text {
-          font-size: 13px;
-          color: #3d4a5e;
-          font-weight: 600;
-          line-height: 1.7;
-        }
-
-        .tos-footer-text a {
-          color: #ff6b00;
-          text-decoration: none;
-          font-weight: 700;
-        }
-
-        .tos-footer-text a:hover { text-decoration: underline; text-underline-offset: 2px; }
-
-        .accept-btn {
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          margin-top: 20px;
-          padding: 12px 28px;
-          background: linear-gradient(135deg, #ff6b00, #e85d00);
-          color: white;
-          border: none;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 700;
-          font-family: inherit;
-          cursor: pointer;
-          text-decoration: none;
-          box-shadow: 0 2px 12px rgba(255, 107, 0, 0.3);
-          transition: all 0.15s;
-        }
-
-        .accept-btn:hover {
-          background: linear-gradient(135deg, #ff7a1a, #f06000);
-          box-shadow: 0 4px 20px rgba(255, 107, 0, 0.4);
-          transform: translateY(-1px);
-        }
-      `}</style>
-
-      <div className="tos-page">
-
-        {/* Hero */}
-        <div className="tos-hero">
-          <div className="tos-badge">Legal</div>
-          <h1 className="tos-title">
-            Plugin Marketplace<br /><span>Terms of Service</span>
-          </h1>
-          <p className="tos-subtitle">
-            Please read these terms carefully before buying or selling plugins on PumpkinMC.
-          </p>
-          <p className="tos-date">Last updated: March 3, 2026 · Effective immediately</p>
-        </div>
-
-        {/* Layout */}
-        <div className="tos-layout">
-
-          {/* Sidebar */}
-          <aside className="tos-sidebar">
-            <p className="sidebar-label">On this page</p>
-            <nav className="sidebar-nav">
-              {sections.map(s => (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className={`sidebar-link${activeSection === s.id ? ' active' : ''}`}
-                  onClick={() => setActiveSection(s.id)}
-                >
-                  {s.title}
-                </a>
-              ))}
-            </nav>
-          </aside>
-
-          {/* Sections */}
-          <main className="tos-content">
-            {sections.map(s => (
-              <section
-                key={s.id}
-                id={s.id}
-                className={`tos-section${activeSection === s.id ? ' active' : ''}`}
-                onClick={() => setActiveSection(s.id)}
-              >
-                <h2 className="section-title">{s.title}</h2>
-                <div className="section-body">{s.content}</div>
-              </section>
-            ))}
-          </main>
-        </div>
-
-        {/* Footer */}
-        <footer className="tos-footer">
-          <p className="tos-footer-text">
-            Questions about these terms? Reach us at{' '}
-            <a href="mailto:support@pumpkinmc.org">support@pumpkinmc.org</a>{' '}
-            or join our <a href="https://discord.gg/pumpkinmc">Discord server</a>.
-          </p>
-          <Link to="/register" className="accept-btn">
-            Create an account
-          </Link>
-        </footer>
-
-      </div>
-    </>
-  );
-};
+const TermsOfServicePage = () => (
+  <LegalDoc
+    kicker="Legal"
+    title={<>Plugin Marketplace<br /><span className="mark">Terms of Service</span></>}
+    lede="Please read these terms carefully before buying or selling plugins on PumpkinMC."
+    updated="Last updated: March 3, 2026 · Effective immediately"
+    toc={sections}
+    footer={
+      <>
+        <p>
+          Questions about these terms? Reach us at{' '}
+          <a className="link link-pumpkin" href="mailto:support@pumpkinmc.org">support@pumpkinmc.org</a>{' '}
+          or join our <a className="link link-pumpkin" href="https://discord.gg/pumpkinmc">Discord server</a>.
+        </p>
+        <Link to="/register" className="button button-primary">
+          Create an account
+        </Link>
+      </>
+    }
+  >
+    {sections.map(s => (
+      <section key={s.id} id={s.id} className="lg-section">
+        <h2>{s.title}</h2>
+        <div className="lg-body">{s.content}</div>
+      </section>
+    ))}
+  </LegalDoc>
+);
 
 export default TermsOfServicePage;

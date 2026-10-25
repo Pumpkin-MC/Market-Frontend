@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { DollarSign, ExternalLink, Save, Zap, Lock, Percent, Tag, AlertTriangle, CheckCircle, ShieldCheck } from 'lucide-react';
 import api from '../../../lib/api';
 import type { PluginData } from './ManagePluginPage';
-import { useAuth } from '../../../app/App';
+import { useAuth } from '../../../app/auth';
 
 type LicenseType = 'free' | 'paid';
 type Props = { plugin: PluginData; onSaved: () => void };
@@ -42,13 +42,11 @@ const Pricing = ({ plugin, onSaved }: Props) => {
 
     const stripeConnected = user.stripe_ready;
 
-    // Derived — all math in integer cents to avoid float errors
     const priceCents        = Math.round(price * 100);
     const salePriceCents    = Math.round(priceCents * (1 - discountPercent / 100));
     const salePriceDisplay  = (salePriceCents / 100).toFixed(2);
     const savingsDisplay    = ((priceCents - salePriceCents) / 100).toFixed(2);
 
-    // Payment processing fee: 1.5% + €0.25, platform: 30%
     const calcEarnings = (cents: number) => {
         const stripeCents   = Math.ceil(cents * 0.015 + 25);
         const platformCents = Math.round(cents * 0.30);
@@ -97,276 +95,245 @@ const Pricing = ({ plugin, onSaved }: Props) => {
         }
     };
 
+    const twoFaError = pricingError ? (pricingError.toLowerCase().includes('2fa') || pricingError.toLowerCase().includes('two-factor')) : false;
+
     return (
-        <div>
-            <div className="mp-tab-header">
-                <h2>Pricing</h2>
-                <p>Manage your plugin's price and run manual sales.</p>
-            </div>
+        <div className="st-tab">
+            <header className="st-tab-head">
+                <h2 className="h1">Pricing</h2>
+                <p className="small">Manage your plugin's price and run manual sales.</p>
+            </header>
 
-            <form onSubmit={handleSave}>
-                {/* ── Model selector ── */}
-                <div className="mp-card">
-                    <div className="mp-card-title">
-                        <DollarSign size={14} />Pricing Model
+            <form className="stack st-pr" onSubmit={handleSave}>
+                <section className="panel">
+                    <div className="panel-head">
+                        <DollarSign size={16} className="pumpkin" />
+                        <h3 className="h3">Pricing Model</h3>
                     </div>
-                    <div className="mp-pricing-options">
-                        {PRICING_OPTIONS.map(opt => {
-                            const isLocked = opt.key === 'paid' && !stripeConnected;
-                            return (
-                                <div key={opt.key} style={{ position: 'relative' }}>
-                                    <button
-                                        type="button"
-                                        className={`mp-pricing-card ${licenseType === opt.key ? 'selected' : ''}`}
-                                        onClick={() => !isLocked && setLicenseType(opt.key)}
-                                        style={{ width: '100%', height: '100%', opacity: isLocked ? 0.6 : 1, cursor: isLocked ? 'default' : 'pointer' }}
-                                    >
-                                        <div style={{ color: licenseType === opt.key ? 'var(--mp-accent)' : 'var(--mp-text-2)', marginBottom: '0.5rem' }}>
+                    <div className="panel-body stack">
+                        <div className="st-pick">
+                            {PRICING_OPTIONS.map(opt => {
+                                const isLocked = opt.key === 'paid' && !stripeConnected;
+                                return (
+                                    <div key={opt.key} className="st-pr-option">
+                                        <button
+                                            type="button"
+                                            className="st-option"
+                                            aria-pressed={licenseType === opt.key}
+                                            aria-disabled={isLocked || undefined}
+                                            onClick={() => !isLocked && setLicenseType(opt.key)}
+                                        >
                                             {opt.icon}
-                                        </div>
-                                        <div className="mp-pricing-card-name">{opt.label}</div>
-                                        <div className="mp-pricing-card-desc">{opt.desc}</div>
-                                    </button>
-
-                                    {isLocked && (
-                                        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,15,18,0.1)', backdropFilter: 'blur(1px)', borderRadius: 'var(--mp-radius)' }}>
+                                            <strong>{opt.label}</strong>
+                                            <span className="small">{opt.desc}</span>
+                                        </button>
+                                        {isLocked && (
                                             <button
                                                 type="button"
-                                                className="mp-btn mp-btn-primary"
-                                                style={{ fontSize: '0.75rem', padding: '0.4rem 0.8rem' }}
-                                                onClick={() => navigate('/settings?tab=payouts')}
+                                                className="button button-primary button-sm st-pr-unlock"
+                                                onClick={() => navigate('/settings?tab=developer')}
                                             >
-                                                <ExternalLink size={12} /> Unlock
+                                                <ExternalLink /> Unlock
                                             </button>
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
 
-                {licenseType === 'paid' && !stripeConnected && (
-                    <div className="mp-banner warn">
-                        <Lock size={16} style={{ flexShrink: 0 }} />
-                        <span>Connect your payout account before configuring paid pricing.</span>
+                        {licenseType === 'paid' && !stripeConnected && (
+                            <p className="status small">
+                                <span className="mark-box mark-box-warning"><Lock /></span>
+                                Connect your payout account before configuring paid pricing.
+                            </p>
+                        )}
                     </div>
-                )}
+                </section>
 
                 {licenseType === 'paid' && stripeConnected && (
                     <>
-                        {/* ── Base Price ── */}
-                        <div className="mp-card">
-                            <div className="mp-card-title"><DollarSign size={14} />Base Price</div>
+                        <section className="panel">
+                            <div className="panel-head">
+                                <DollarSign size={16} className="pumpkin" />
+                                <h3 className="h3">Base Price</h3>
+                            </div>
+                            <div className="panel-body st-grid-2">
+                                <label className="field">
+                                    <span className="field-label">Price (EUR)</span>
+                                    <span className="control st-narrow">
+                                        <span className="affix">€</span>
+                                        <input
+                                            id="pluginPriceInput"
+                                            name="price"
+                                            className="input num"
+                                            type="number"
+                                            step="0.01"
+                                            min="0.99"
+                                            inputMode="decimal"
+                                            autoComplete="off"
+                                            value={price}
+                                            aria-invalid={priceTooLow || undefined}
+                                            onChange={e => handlePriceChange(e.target.value)}
+                                        />
+                                    </span>
+                                    {priceTooLow && (
+                                        <span className="field-error"><AlertTriangle size={14} />Minimum price is €0.99.</span>
+                                    )}
+                                </label>
 
-                            {priceTooLow && (
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.75rem', padding: '0.45rem 0.65rem', background: 'rgba(255,77,79,0.1)', border: '1px solid rgba(255,77,79,0.35)', borderRadius: 6, fontSize: '0.75rem', color: 'var(--mp-error, #ff4d4f)' }}>
-                                    <AlertTriangle size={13} style={{ flexShrink: 0 }} />
-                                    Minimum price is €0.99.
-                                </div>
-                            )}
+                                <dl className="specs">
+                                    <dt>Platform fee (30%)</dt>
+                                    <dd className="st-neg">-€{fmt(Math.round(priceCents * 0.30))}</dd>
+                                    <dt>Payment processing fee (1.5% + €0.25)</dt>
+                                    <dd className="st-neg">-€{fmt(Math.ceil(priceCents * 0.015 + 25))}</dd>
+                                    <dt className="label-fg">Your earnings</dt>
+                                    <dd className={`st-pr-total ${baseEarnings > 0 ? 'st-pos' : 'st-neg'}`}>+€{fmt(baseEarnings)}</dd>
+                                </dl>
+                            </div>
+                        </section>
 
-                            <div className="mp-form-group" style={{ marginBottom: 0 }}>
-                                <label className="mp-label" htmlFor="pluginPriceInput">Price (EUR)</label>
-                                <div style={{ position: 'relative', maxWidth: 180 }}>
-                                    <span style={{ position: 'absolute', left: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: priceTooLow ? 'var(--mp-error, #ff4d4f)' : 'var(--mp-text-3)', fontSize: '0.85rem' }}>€</span>
-                                    <input
-                                        id="pluginPriceInput"
-                                        name="price"
-                                        className="mp-input"
-                                        type="number"
-                                        step="0.01"
-                                        min="0.99"
-                                        inputMode="decimal"
-                                        autoComplete="off"
-                                        value={price}
-                                        onChange={e => handlePriceChange(e.target.value)}
-                                        style={{ paddingLeft: '1.6rem', borderColor: priceTooLow ? 'var(--mp-error, #ff4d4f)' : undefined }}
-                                    />
+                        <section className={`panel${isSaleActive ? ' panel-pumpkin' : ''}`}>
+                            <div className="panel-head">
+                                <Tag size={16} className="pumpkin" />
+                                <h3 className="h3">Sale</h3>
+                                <span className="spacer" />
+                                {isSaleActive && <span className="sticker sticker-sm">Sale is live — {discountPercent}% off</span>}
+                            </div>
+                            <div className="panel-body st-grid-2">
+                                <label className="field">
+                                    <span className="field-label">Discount</span>
+                                    <span className="control st-narrow">
+                                        <input
+                                            id="pluginDiscountPercent"
+                                            name="discountPercent"
+                                            className="input num"
+                                            type="number"
+                                            min="1"
+                                            max="99"
+                                            inputMode="numeric"
+                                            autoComplete="off"
+                                            value={discountPercent}
+                                            onChange={e => setDiscountPercent(Math.min(99, Math.max(1, parseInt(e.target.value) || 0)))}
+                                        />
+                                        <span className="affix">%</span>
+                                    </span>
+                                </label>
+
+                                <div className="stack st-tight">
+                                    <span className="row st-tight">
+                                        <span className="cost cost-sale cost-lg"><s>€{price.toFixed(2)}</s>€{salePriceDisplay}</span>
+                                        <span className="sticker sticker-sm">-{discountPercent}%</span>
+                                    </span>
+                                    <span className="small">Save €{savingsDisplay}</span>
+                                    <dl className="specs">
+                                        <dt>Your earnings at sale price</dt>
+                                        <dd className={saleEarnings > 0 ? 'st-pos' : 'st-neg'}>+€{fmt(saleEarnings)}</dd>
+                                    </dl>
                                 </div>
                             </div>
-
-                            {/* Earnings breakdown */}
-                            <div style={{ marginTop: '0.85rem', padding: '0.75rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.3rem' }}>
-                                    <span style={{ color: 'var(--mp-text-3)' }}>Platform fee (30%)</span>
-                                    <span style={{ color: 'var(--mp-red)' }}>-€{fmt(Math.round(priceCents * 0.30))}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.5rem', paddingBottom: '0.5rem', borderBottom: '1px solid var(--mp-border)' }}>
-                                    <span style={{ color: 'var(--mp-text-3)' }}>Payment processing fee (1.5% + €0.25)</span>
-                                    <span style={{ color: 'var(--mp-red)' }}>-€{fmt(Math.ceil(priceCents * 0.015 + 25))}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', fontWeight: 600 }}>
-                                    <span style={{ color: 'var(--mp-text-1)' }}>Your earnings</span>
-                                    <span style={{ color: baseEarnings > 0 ? 'var(--mp-green)' : 'var(--mp-error)' }}>+€{fmt(baseEarnings)}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* ── Sale ── */}
-                        <div className="mp-card">
-                            <div className="mp-card-title"><Tag size={14} />Sale</div>
-
-                            {/* Discount % — always visible when paid */}
-                            <div className="mp-form-group">
-                                <label className="mp-label" htmlFor="pluginDiscountPercent">Discount</label>
-                                <div style={{ position: 'relative', maxWidth: 180 }}>
-                                    <input
-                                        id="pluginDiscountPercent"
-                                        name="discountPercent"
-                                        className="mp-input"
-                                        type="number"
-                                        min="1"
-                                        max="99"
-                                        inputMode="numeric"
-                                        autoComplete="off"
-                                        value={discountPercent}
-                                        onChange={e => setDiscountPercent(Math.min(99, Math.max(1, parseInt(e.target.value) || 0)))}
-                                        style={{ paddingRight: '2.2rem' }}
-                                    />
-                                    <span style={{ position: 'absolute', right: '0.85rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--mp-text-3)', fontSize: '0.85rem' }}>%</span>
-                                </div>
-                            </div>
-
-                            {/* Sale price preview — always shown */}
-                            <div style={{
-                                padding: '0.85rem 1rem',
-                                background: isSaleActive ? 'rgba(255,107,107,0.06)' : 'rgba(79,126,255,0.06)',
-                                border: `1px solid ${isSaleActive ? 'rgba(255,107,107,0.25)' : 'rgba(79,126,255,0.2)'}`,
-                                borderRadius: 8,
-                                marginBottom: '1rem',
-                                transition: 'background 0.2s, border-color 0.2s',
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                        <span style={{ fontSize: '0.75rem', color: 'var(--mp-text-3)', textDecoration: 'line-through', fontFamily: 'var(--font-mono)' }}>€{price.toFixed(2)}</span>
-                                        <span style={{ fontSize: '1.1rem', fontWeight: 700, color: isSaleActive ? '#ff6b6b' : 'var(--mp-accent)', fontFamily: 'var(--font-mono)' }}>€{salePriceDisplay}</span>
-                                        <span style={{ fontSize: '0.65rem', fontWeight: 700, background: isSaleActive ? 'rgba(255,107,107,0.15)' : 'rgba(79,126,255,0.15)', color: isSaleActive ? '#ff6b6b' : 'var(--mp-accent)', border: `1px solid ${isSaleActive ? 'rgba(255,107,107,0.3)' : 'rgba(79,126,255,0.3)'}`, borderRadius: 4, padding: '1px 6px' }}>
-                                            -{discountPercent}%
-                                        </span>
-                                    </div>
-                                    <span style={{ fontSize: '0.72rem', color: 'var(--mp-text-3)' }}>Save €{savingsDisplay}</span>
-                                </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', paddingTop: '0.5rem', borderTop: '1px solid var(--mp-border)' }}>
-                                    <span style={{ color: 'var(--mp-text-3)' }}>Your earnings at sale price</span>
-                                    <span style={{ color: saleEarnings > 0 ? 'var(--mp-green)' : 'var(--mp-error)', fontWeight: 600 }}>+€{fmt(saleEarnings)}</span>
-                                </div>
-                            </div>
-
-                            {/* Activate / End toggle */}
-                            {!isSaleActive ? (
-                                <button
-                                    type="button"
-                                    className="mp-btn mp-btn-outline"
-                                    onClick={() => setIsSaleActive(true)}
-                                    style={{ borderStyle: 'dashed', width: '100%', justifyContent: 'center', padding: '1rem', gap: '0.5rem' }}
-                                >
-                                    <Percent size={15} />
-                                    Start Sale at -{discountPercent}%
-                                </button>
-                            ) : (
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(255,107,107,0.08)', border: '1px solid rgba(255,107,107,0.25)', borderRadius: 8 }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.82rem', fontWeight: 700, color: '#ff6b6b' }}>
-                                        Sale is live — {discountPercent}% off
-                                    </div>
+                            <div className="panel-foot">
+                                {!isSaleActive ? (
+                                    <button
+                                        type="button"
+                                        className="button button-primary"
+                                        onClick={() => setIsSaleActive(true)}
+                                    >
+                                        <Percent />
+                                        Start Sale at -{discountPercent}%
+                                    </button>
+                                ) : (
                                     <button
                                         type="button"
                                         onClick={() => setIsSaleActive(false)}
-                                        className="mp-btn mp-btn-outline"
-                                        style={{ fontSize: '0.72rem', color: 'var(--mp-error, #ff4d4f)', borderColor: 'rgba(255,77,79,0.3)', padding: '0.3rem 0.75rem' }}
+                                        className="button button-danger"
                                     >
                                         End Sale
                                     </button>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* ── Pre-Order Settings ── */}
-                        <div className="mp-card" style={{ marginTop: '1.5rem' }}>
-                            <div className="mp-card-title">
-                                <Tag size={14} />Pre-Order Mode
+                                )}
                             </div>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                                <div>
-                                    <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--mp-text-1)' }}>
+                        </section>
+
+                        <section className="panel">
+                            <div className="panel-head">
+                                <Tag size={16} className="pumpkin" />
+                                <h3 className="h3">Pre-Order Mode</h3>
+                            </div>
+                            <div className="panel-body stack">
+                                <label className="st-switch">
+                                    <span>
                                         Accept Pre-Orders
-                                    </div>
-                                    <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)', marginTop: '0.2rem' }}>
-                                        Mark this plugin as available for pre-order. When you publish the first release or disable pre-order, all pre-order buyers will be emailed automatically.
-                                    </div>
-                                </div>
-                                <label className="mp-toggle" style={{ marginLeft: '1rem', flexShrink: 0 }}>
+                                        <span className="small">
+                                            Mark this plugin as available for pre-order. When you publish the first release or disable pre-order, all pre-order buyers will be emailed automatically.
+                                        </span>
+                                    </span>
                                     <input
                                         id="pricingIsPreorder"
                                         name="isPreorder"
                                         type="checkbox"
+                                        role="switch"
+                                        className="toggle"
                                         checked={isPreorder}
                                         onChange={e => setIsPreorder(e.target.checked)}
                                     />
-                                    <span className="mp-toggle-slider" />
                                 </label>
-                            </div>
 
-                            {isPreorder && (
-                                <div style={{ marginTop: '1rem', padding: '0.85rem', background: 'var(--mp-bg-2)', borderRadius: 8, border: '1px solid var(--mp-border)' }}>
-                                    <label className="mp-label" htmlFor="pricingPreorderReleaseDate" style={{ fontSize: '0.78rem', marginBottom: '0.35rem' }}>Expected Release Date (Optional)</label>
-                                    <input
-                                        id="pricingPreorderReleaseDate"
-                                        name="preorderReleaseDate"
-                                        type="date"
-                                        className="mp-input"
-                                        autoComplete="off"
-                                        value={preorderReleaseDate}
-                                        onChange={e => setPreorderReleaseDate(e.target.value)}
-                                        style={{ maxWidth: 220 }}
-                                    />
-                                    <p style={{ fontSize: '0.72rem', color: 'var(--mp-text-3)', marginTop: '0.4rem' }}>
-                                        Displayed on the store page so buyers know when to expect the release.
-                                    </p>
-                                </div>
-                            )}
-                        </div>
+                                {isPreorder && (
+                                    <label className="field">
+                                        <span className="field-label">Expected Release Date <em>(Optional)</em></span>
+                                        <span className="control st-narrow">
+                                            <input
+                                                id="pricingPreorderReleaseDate"
+                                                name="preorderReleaseDate"
+                                                type="date"
+                                                className="input"
+                                                autoComplete="off"
+                                                value={preorderReleaseDate}
+                                                onChange={e => setPreorderReleaseDate(e.target.value)}
+                                            />
+                                        </span>
+                                        <span className="field-hint">Displayed on the store page so buyers know when to expect the release.</span>
+                                    </label>
+                                )}
+                            </div>
+                        </section>
                     </>
                 )}
 
                 {pricingError && (
-                    <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginTop: '1.5rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                            <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
-                            <div>
-                                <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
-                                    {pricingError.toLowerCase().includes('2fa') || pricingError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Pricing Error'}
-                                </strong>
-                                <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{pricingError}</span>
-                            </div>
-                        </div>
-                        {(pricingError.toLowerCase().includes('2fa') || pricingError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                    <div className="notice notice-danger">
+                        <span className="mark-box mark-box-danger"><Lock /></span>
+                        <p className="notice-text">
+                            <strong>{twoFaError ? 'Two-Factor Authentication Required' : 'Pricing Error'}</strong>
+                            <span className="ledger-sub">{pricingError}</span>
+                        </p>
+                        {(twoFaError || !user?.totp_enabled) && (
                             <button
                                 type="button"
-                                className="mp-btn mp-btn-primary"
-                                style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                className="button button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck size={16} /> Enable 2FA →
+                                <ShieldCheck /> Enable 2FA →
                             </button>
                         )}
                     </div>
                 )}
 
                 {pricingSuccess && (
-                    <div className="mp-banner success" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', marginTop: '1.5rem', marginBottom: '1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px' }}>
-                        <CheckCircle size={20} color="#10b981" />
-                        <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>Pricing settings saved successfully!</span>
+                    <div className="notice notice-success">
+                        <span className="mark-box mark-box-success"><CheckCircle /></span>
+                        <p className="notice-text"><strong>Pricing settings saved successfully!</strong></p>
                     </div>
                 )}
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                <div className="row">
+                    <span className="spacer" />
                     <button
                         type="submit"
-                        className="mp-btn mp-btn-primary"
+                        className="button button-primary"
                         disabled={saving || (licenseType === 'paid' && !stripeConnected) || priceTooLow}
+                        aria-busy={saving}
                     >
-                        <Save size={15} />
+                        <Save />
                         {saving ? 'Saving…' : 'Save Pricing'}
                     </button>
                 </div>

@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import {
-    CheckCircle2, XCircle, AlertTriangle, Rocket, X, RefreshCw
-} from 'lucide-react';
+import { Check, CircleAlert, Rocket, X } from 'lucide-react';
 import api from '../../../lib/api';
 import { useTranslation } from 'react-i18next';
-import './PublishReadinessModal.css';
+import '../../../styles/studio.css';
 
 export interface PublishReadiness {
     nameReady: boolean;
@@ -84,189 +82,94 @@ export const PublishReadinessModal: React.FC<Props> = ({
 
     if (!isOpen) return null;
 
-    return (
-        <div className="prm-overlay" onClick={onClose}>
-            <div className="prm-container" onClick={e => e.stopPropagation()}>
-                <button className="prm-close-btn" onClick={onClose} aria-label="Close">
-                    <X size={18} />
-                </button>
+    const checks = readiness ? [
+        { ready: readiness.nameReady, title: 'Plugin Name & Identity', ok: pluginName, missing: 'Plugin name is missing or empty', tab: 'listing', fix: 'Fix in Listing' },
+        { ready: readiness.categoryReady, title: 'Category', ok: 'Valid category selected', missing: 'No category selected', tab: 'listing', fix: 'Fix in Listing' },
+        { ready: readiness.descriptionReady, title: 'Store Description', ok: 'Description provided in at least 1 language', missing: 'Missing store description', tab: 'listing', fix: 'Fix in Listing' },
+        { ready: readiness.previewReady, title: 'Store Icon / Avatar', ok: 'Icon uploaded', missing: 'Store icon image is required', tab: 'listing', fix: 'Upload Icon' },
+        { ready: readiness.binaryReady, title: 'WebAssembly Binary (.wasm)', ok: `Valid binary uploaded (${readiness.binaryVersion ? `v${readiness.binaryVersion}` : 'Ready'})`, missing: 'No .wasm binary uploaded yet', tab: 'update', fix: 'Upload Binary' },
+        { ready: readiness.pricingReady, title: 'Pricing & Payouts', ok: 'Valid pricing configuration', missing: 'Paid plugin requires price > 0 and connected payout account', tab: 'pricing', fix: 'Configure Price' },
+        { ready: readiness.securityReady, title: 'Account Security', ok: '2FA or Passkey verified', missing: '2FA or Passkey required in user settings' },
+    ] : [];
 
-                {/* Header */}
-                <div className="prm-header">
-                    <div className="prm-header-icon">
-                        <Rocket size={22} color="#f97316" />
+    return (
+        <div className="overlay" onClick={onClose}>
+            <div className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="st-ready-title" onClick={e => e.stopPropagation()}>
+                <div className="sheet-head">
+                    <div className="stack st-ready-head">
+                        <span className="sticker sticker-sm">Publish</span>
+                        <h3 className="h1" id="st-ready-title">{t('developer.dashboard.publish_checklist_title', 'Publish to Marketplace')}</h3>
+                        <p className="small">{t('developer.dashboard.publish_checklist_desc', 'Review requirements before releasing your plugin to the Pumpkin Market.')}</p>
                     </div>
-                    <div>
-                        <h3 className="prm-title">{t('developer.dashboard.publish_checklist_title', 'Publish to Marketplace')}</h3>
-                        <p className="prm-subtitle">
-                            {t('developer.dashboard.publish_checklist_desc', 'Review requirements before releasing your plugin to the Pumpkin Market.')}
-                        </p>
-                    </div>
+                    <button className="button button-ghost button-icon" onClick={onClose} aria-label="Close"><X /></button>
                 </div>
 
-                {error && (
-                    <div className="prm-alert prm-alert-error">
-                        <AlertTriangle size={16} />
-                        <span>{error}</span>
-                    </div>
-                )}
-
-                {successMsg && (
-                    <div className="prm-alert prm-alert-success">
-                        <CheckCircle2 size={16} />
-                        <span>{successMsg}</span>
-                    </div>
-                )}
-
-                {loading ? (
-                    <div className="prm-loading">
-                        <RefreshCw size={24} className="prm-spin" />
-                        <span>Checking store requirements…</span>
-                    </div>
-                ) : readiness ? (
-                    <div className="prm-body">
-                        {/* Overall status banner */}
-                        {readiness.canPublish ? (
-                            <div className="prm-status-banner prm-status-banner-ready">
-                                <CheckCircle2 size={20} color="#10b981" />
-                                <div>
-                                    <h4>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Your plugin is ready to go live.')}</h4>
-                                    <p>Your store page, assets, and WebAssembly binary are all validated.</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <div className="prm-status-banner prm-status-banner-missing">
-                                <AlertTriangle size={20} color="#f59e0b" />
-                                <div>
-                                    <h4>{t('developer.dashboard.publish_missing_banner', 'Please complete the missing requirements before publishing.')}</h4>
-                                    <p>{readiness.missingRequirements.length} item(s) need attention before release.</p>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Checklist items */}
-                        <div className="prm-checklist">
-                            {/* 1. Name */}
-                            <div className={`prm-check-row ${readiness.nameReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.nameReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Plugin Name & Identity</div>
-                                    <div className="prm-check-desc">{readiness.nameReady ? pluginName : 'Plugin name is missing or empty'}</div>
-                                </div>
-                                {!readiness.nameReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('listing'); onClose(); }}>
-                                        Fix in Listing
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 2. Category */}
-                            <div className={`prm-check-row ${readiness.categoryReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.categoryReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Category</div>
-                                    <div className="prm-check-desc">{readiness.categoryReady ? 'Valid category selected' : 'No category selected'}</div>
-                                </div>
-                                {!readiness.categoryReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('listing'); onClose(); }}>
-                                        Fix in Listing
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 3. Description */}
-                            <div className={`prm-check-row ${readiness.descriptionReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.descriptionReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Store Description</div>
-                                    <div className="prm-check-desc">{readiness.descriptionReady ? 'Description provided in at least 1 language' : 'Missing store description'}</div>
-                                </div>
-                                {!readiness.descriptionReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('listing'); onClose(); }}>
-                                        Fix in Listing
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 4. Preview Icon */}
-                            <div className={`prm-check-row ${readiness.previewReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.previewReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Store Icon / Avatar</div>
-                                    <div className="prm-check-desc">{readiness.previewReady ? 'Icon uploaded' : 'Store icon image is required'}</div>
-                                </div>
-                                {!readiness.previewReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('listing'); onClose(); }}>
-                                        Upload Icon
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 5. Binary */}
-                            <div className={`prm-check-row ${readiness.binaryReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.binaryReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">WebAssembly Binary (.wasm)</div>
-                                    <div className="prm-check-desc">{readiness.binaryReady ? `Valid binary uploaded (${readiness.binaryVersion ? `v${readiness.binaryVersion}` : 'Ready'})` : 'No .wasm binary uploaded yet'}</div>
-                                </div>
-                                {!readiness.binaryReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('update'); onClose(); }}>
-                                        Upload Binary
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 7. Pricing */}
-                            <div className={`prm-check-row ${readiness.pricingReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.pricingReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Pricing & Payouts</div>
-                                    <div className="prm-check-desc">{readiness.pricingReady ? 'Valid pricing configuration' : 'Paid plugin requires price > 0 and connected payout account'}</div>
-                                </div>
-                                {!readiness.pricingReady && (
-                                    <button className="prm-fix-btn" onClick={() => { onNavigateTab('pricing'); onClose(); }}>
-                                        Configure Price
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* 8. Security */}
-                            <div className={`prm-check-row ${readiness.securityReady ? 'ready' : 'missing'}`}>
-                                <div className="prm-check-status">
-                                    {readiness.securityReady ? <CheckCircle2 size={16} color="#10b981" /> : <XCircle size={16} color="#ef4444" />}
-                                </div>
-                                <div className="prm-check-info">
-                                    <div className="prm-check-title">Account Security</div>
-                                    <div className="prm-check-desc">{readiness.securityReady ? '2FA or Passkey verified' : '2FA or Passkey required in user settings'}</div>
-                                </div>
-                            </div>
+                <div className="sheet-body">
+                    {error && (
+                        <div className="notice notice-danger">
+                            <span className="sticker sticker-sm sticker-danger">Error</span>
+                            <p className="notice-text">{error}</p>
                         </div>
-                    </div>
-                ) : null}
+                    )}
 
-                {/* Footer Actions */}
-                <div className="prm-footer">
-                    <button className="prm-btn prm-btn-secondary" onClick={onClose}>
-                        Close
-                    </button>
+                    {successMsg && (
+                        <div className="notice notice-success">
+                            <span className="sticker sticker-sm sticker-success">Live</span>
+                            <p className="notice-text"><strong>{successMsg}</strong></p>
+                        </div>
+                    )}
+
+                    {loading ? (
+                        <div className="row small"><span className="loading" />Checking store requirements…</div>
+                    ) : readiness ? (
+                        <>
+                            {readiness.canPublish ? (
+                                <div className="notice notice-success">
+                                    <span className="sticker sticker-sm sticker-success">Ready</span>
+                                    <p className="notice-text">
+                                        <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Your plugin is ready to go live.')}</strong>{' '}
+                                        Your store page, assets, and WebAssembly binary are all validated.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="notice notice-warning">
+                                    <span className="sticker sticker-sm sticker-warning">Missing</span>
+                                    <p className="notice-text">
+                                        <strong>{t('developer.dashboard.publish_missing_banner', 'Please complete the missing requirements before publishing.')}</strong>{' '}
+                                        {readiness.missingRequirements.length} item(s) need attention before release.
+                                    </p>
+                                </div>
+                            )}
+
+                            <ul className="st-ready-list">
+                                {checks.map(c => (
+                                    <li key={c.title}>
+                                        <span className={`mark-box ${c.ready ? 'mark-box-success' : 'mark-box-danger'}`}>{c.ready ? <Check /> : <X />}</span>
+                                        <span className="st-ready-info">
+                                            <strong>{c.title}</strong>
+                                            <span className="small">{c.ready ? c.ok : c.missing}</span>
+                                        </span>
+                                        {!c.ready && c.tab && (
+                                            <button className="button button-sm button-flat" onClick={() => { onNavigateTab(c.tab); onClose(); }}>
+                                                <CircleAlert />{c.fix}
+                                            </button>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    ) : null}
+                </div>
+
+                <div className="sheet-foot">
+                    <button className="button button-ghost" onClick={onClose}>Close</button>
                     <button
-                        className="prm-btn prm-btn-primary"
+                        className="button button-primary"
                         disabled={!readiness?.canPublish || publishing || Boolean(successMsg)}
+                        aria-busy={publishing}
                         onClick={handlePublish}
                     >
-                        <Rocket size={16} />
+                        <Rocket />
                         {publishing ? 'Publishing…' : t('developer.dashboard.btn_confirm_publish', 'Confirm & Release to Store')}
                     </button>
                 </div>

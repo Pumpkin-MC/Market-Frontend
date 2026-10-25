@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { AlertCircle, Check } from 'lucide-react';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
+import '../../styles/account.css';
+import { useAuth } from '../../app/auth';
 
 const ConfirmEmailChangePage = () => {
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
@@ -44,21 +46,30 @@ const ConfirmEmailChangePage = () => {
     }, [location, navigate, login]);
 
     return (
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-            {status === 'verifying' && <h1>Verifying your email change...</h1>}
-            {status === 'success' && (
-                <div>
-                    <h1>Email Updated Successfully!</h1>
-                    <p>Your new email is now active. Redirecting to your profile...</p>
-                </div>
-            )}
-            {status === 'error' && (
-                <div>
-                    <h1>Update Failed</h1>
-                    <p>{error}</p>
-                    <p>Please try updating your email again from your profile page.</p>
-                </div>
-            )}
+        <div className="ac-auth">
+            <div className="panel panel-fg ac-card" role="status">
+                {status === 'verifying' && (
+                    <div className="ac-card-head">
+                        <span className="loading" />
+                        <h1 className="h1">Verifying your email change...</h1>
+                    </div>
+                )}
+                {status === 'success' && (
+                    <div className="ac-card-head">
+                        <span className="ac-badge ac-badge-success"><Check /></span>
+                        <h1 className="h1">Email Updated <span className="mark">Successfully!</span></h1>
+                        <p className="small">Your new email is now active. Redirecting to your profile...</p>
+                    </div>
+                )}
+                {status === 'error' && (
+                    <div className="ac-card-head">
+                        <span className="ac-badge ac-badge-danger"><AlertCircle /></span>
+                        <h1 className="h1">Update <span className="mark ac-mark-danger">Failed</span></h1>
+                        <p className="body">{error}</p>
+                        <p className="small">Please try updating your email again from your profile page.</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

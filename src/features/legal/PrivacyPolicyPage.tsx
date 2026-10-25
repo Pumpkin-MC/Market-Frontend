@@ -1,7 +1,7 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { openCookiePreferencesModal } from '../../lib/consent';
 import { Shield, Sliders } from 'lucide-react';
+import LegalDoc from './LegalDoc';
 
 interface Section {
   id: string;
@@ -157,371 +157,48 @@ We respond to all privacy inquiries within 5 business days.`
   }
 ];
 
-const PrivacyPolicyPage = () => {
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-
-  return (
-    <>
-      <style>{`
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-          font-family: 'Nunito', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          -webkit-font-smoothing: antialiased;
-          background: #0f1117;
-        }
-
-        .pp-page {
-          min-height: 100vh;
-          background-color: #0f1117;
-          background-image: radial-gradient(ellipse 80% 40% at 50% 0%, rgba(255, 107, 0, 0.12) 0%, transparent 65%);
-          color: #c8cdd8;
-        }
-
-        /* ── Hero ── */
-        .pp-hero {
-          text-align: center;
-          padding: 64px 24px 48px;
-          border-bottom: 1px solid #1a2030;
-        }
-
-        .pp-badge {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: rgba(255, 107, 0, 0.1);
-          border: 1px solid rgba(255, 107, 0, 0.2);
-          border-radius: 100px;
-          padding: 5px 14px;
-          font-size: 12px;
-          font-weight: 700;
-          color: #ff8c00;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          margin-bottom: 20px;
-        }
-
-        .pp-title {
-          font-size: clamp(28px, 5vw, 42px);
-          font-weight: 800;
-          color: #f0f2f5;
-          letter-spacing: -0.5px;
-          line-height: 1.2;
-          margin-bottom: 14px;
-        }
-
-        .pp-title span {
-          background: linear-gradient(135deg, #ff8c00, #ff6b00);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-
-        .pp-subtitle {
-          font-size: 15px;
-          color: #8c9bb4;
-          font-weight: 600;
-          max-width: 540px;
-          margin: 0 auto;
-          line-height: 1.6;
-        }
-
-        .pp-date {
-          margin-top: 16px;
-          font-size: 12.5px;
-          color: #6b7a94;
-          font-weight: 600;
-        }
-
-        /* ── Layout ── */
-        .pp-layout {
-          display: grid;
-          grid-template-columns: 260px 1fr;
-          max-width: 1120px;
-          margin: 0 auto;
-          padding: 40px 24px 80px;
-          gap: 40px;
-          align-items: start;
-        }
-
-        @media (max-width: 768px) {
-          .pp-layout { grid-template-columns: 1fr; }
-          .pp-sidebar { display: none; }
-        }
-
-        /* ── Sidebar ── */
-        .pp-sidebar {
-          position: sticky;
-          top: 100px;
-        }
-
-        .sidebar-label {
-          font-size: 11px;
-          font-weight: 700;
-          color: #6b7a94;
-          letter-spacing: 0.12em;
-          text-transform: uppercase;
-          margin-bottom: 10px;
-          padding-left: 10px;
-        }
-
-        .sidebar-nav { display: flex; flex-direction: column; gap: 2px; }
-
-        .sidebar-link {
-          font-size: 13px;
-          font-weight: 600;
-          color: #8c9bb4;
-          text-decoration: none;
-          padding: 7px 10px;
-          border-radius: 6px;
-          transition: all 0.15s;
-          border-left: 2px solid transparent;
-          line-height: 1.4;
-        }
-
-        .sidebar-link:hover {
-          color: #ffffff;
-          background: rgba(255, 107, 0, 0.06);
-          border-left-color: rgba(255, 107, 0, 0.3);
-        }
-
-        .sidebar-link.active {
-          color: #ff8c00;
-          background: rgba(255, 107, 0, 0.08);
-          border-left-color: #ff6b00;
-        }
-
-        /* ── Content ── */
-        .pp-content { min-width: 0; }
-
-        .pp-section {
-          background: #161b26;
-          border: 1px solid #1e2535;
-          border-radius: 12px;
-          padding: 28px 32px;
-          margin-bottom: 16px;
-          transition: border-color 0.2s;
-          scroll-margin-top: 100px;
-        }
-
-        .pp-section:hover { border-color: rgba(255, 107, 0, 0.2); }
-        .pp-section.active { border-color: rgba(255, 107, 0, 0.35); }
-
-        .section-title {
-          font-size: 17px;
-          font-weight: 800;
-          color: #e8eaf0;
-          margin-bottom: 14px;
-          letter-spacing: -0.2px;
-          display: flex;
-          align-items: center;
-          gap: 10px;
-        }
-
-        .section-title::before {
-          content: '';
-          display: inline-block;
-          width: 3px;
-          height: 18px;
-          background: linear-gradient(180deg, #ff8c00, #ff6b00);
-          border-radius: 2px;
-          flex-shrink: 0;
-        }
-
-        .section-body {
-          font-size: 14px;
-          line-height: 1.8;
-          color: #9aa5b8;
-          font-weight: 500;
-          white-space: pre-line;
-        }
-
-        .section-body strong {
-          display: block;
-          color: #e2e8f0;
-          font-weight: 700;
-          margin-top: 14px;
-          margin-bottom: 2px;
-        }
-
-        .section-body strong:first-child { margin-top: 0; }
-
-        .cookie-trigger-btn {
-          margin-top: 16px;
-          padding: 10px 18px;
-          background: rgba(255, 107, 0, 0.12);
-          border: 1px solid rgba(255, 107, 0, 0.3);
-          color: #ff8c00;
-          border-radius: 8px;
-          font-size: 13.5px;
-          font-weight: 700;
-          cursor: pointer;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
-          transition: all 0.15s ease;
-        }
-
-        .cookie-trigger-btn:hover {
-          background: #ff6b00;
-          color: #ffffff;
-          transform: translateY(-1px);
-        }
-
-        /* ── Footer ── */
-        .pp-footer {
-          border-top: 1px solid #1a2030;
-          padding: 32px 24px;
-          text-align: center;
-        }
-
-        .pp-footer-text {
-          font-size: 13px;
-          color: #8c9bb4;
-          font-weight: 600;
-          line-height: 1.7;
-        }
-
-        .pp-footer-text a {
-          color: #ff6b00;
-          text-decoration: none;
-          font-weight: 700;
-        }
-
-        .pp-footer-text a:hover { text-decoration: underline; text-underline-offset: 2px; }
-
-        .pp-footer-links {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 20px;
-          margin-top: 20px;
-          flex-wrap: wrap;
-        }
-
-        .pp-footer-link {
-          font-size: 13px;
-          font-weight: 700;
-          color: #8c9bb4;
-          text-decoration: none;
-          transition: color 0.15s;
-        }
-
-        .pp-footer-link:hover { color: #ff6b00; }
-
-        .pp-footer-sep {
-          width: 3px;
-          height: 3px;
-          background: #2a3347;
-          border-radius: 50%;
-        }
-      `}</style>
-
-      <div className="pp-page">
-        {/* Hero */}
-        <div className="pp-hero">
-          <div className="pp-badge">
-            <Shield size={13} /> Privacy Policy
-          </div>
-          <h1 className="pp-title">
-            Your Privacy,<br /><span>Our Commitment</span>
-          </h1>
-          <p className="pp-subtitle">
-            Learn how we collect, use, and protect your personal information, and the choices you have regarding your data.
-          </p>
-          <p className="pp-date">Last updated: August 2026 · Effective immediately</p>
+const PrivacyPolicyPage = () => (
+  <LegalDoc
+    kicker={<><Shield /> Privacy Policy</>}
+    title={<>Your Privacy,<br /><span className="mark">Our Commitment</span></>}
+    lede="Learn how we collect, use, and protect your personal information, and the choices you have regarding your data."
+    updated="Last updated: August 2026 · Effective immediately"
+    toc={sections}
+    footer={
+      <>
+        <p>
+          Questions about your privacy or data? Reach us anytime at{' '}
+          <a className="link link-pumpkin" href="mailto:privacy@pumpkinmc.org">privacy@pumpkinmc.org</a>
+        </p>
+        <div className="lg-links">
+          <Link className="link" to="/terms">Terms of Service</Link>
+          <Link className="link" to="/">Marketplace</Link>
+          <button type="button" className="link" onClick={openCookiePreferencesModal}>Cookie Preferences</button>
+          <Link className="link" to="/register">Create Account</Link>
         </div>
-
-        {/* Layout */}
-        <div className="pp-layout">
-          {/* Sidebar */}
-          <aside className="pp-sidebar">
-            <p className="sidebar-label">On this page</p>
-            <nav className="sidebar-nav">
-              {sections.map(s => (
-                <a
-                  key={s.id}
-                  href={`#${s.id}`}
-                  className={`sidebar-link${activeSection === s.id ? ' active' : ''}`}
-                  onClick={() => setActiveSection(s.id)}
-                >
-                  {s.title}
-                </a>
-              ))}
-            </nav>
-          </aside>
-
-          {/* Sections */}
-          <main className="pp-content">
-            {sections.map(s => (
-              <section
-                key={s.id}
-                id={s.id}
-                className={`pp-section${activeSection === s.id ? ' active' : ''}`}
-                onClick={() => setActiveSection(s.id)}
-              >
-                <h2 className="section-title">{s.title}</h2>
-                <div className="section-body">
-                  {s.content.split('\n').map((line, i) => {
-                    const isSubheading = line.length > 0 && !line.startsWith('•') && !line.startsWith(' ') && i > 0 && s.content.split('\n')[i - 1] === '';
-                    return isSubheading
-                      ? <strong key={i}>{line}</strong>
-                      : <span key={i}>{line}{'\n'}</span>;
-                  })}
-                </div>
-
-                {s.hasCookieButton && (
-                  <button
-                    type="button"
-                    className="cookie-trigger-btn"
-                    onClick={openCookiePreferencesModal}
-                  >
-                    <Sliders size={15} />
-                    Manage Cookie Preferences
-                  </button>
-                )}
-              </section>
-            ))}
-          </main>
+      </>
+    }
+  >
+    {sections.map(s => (
+      <section key={s.id} id={s.id} className="lg-section">
+        <h2>{s.title}</h2>
+        <div className="lg-body">
+          {s.content.split('\n').map((line, i) => {
+            const isSubheading = line.length > 0 && !line.startsWith('•') && !line.startsWith(' ') && i > 0 && s.content.split('\n')[i - 1] === '';
+            return isSubheading
+              ? <strong key={i}>{line}</strong>
+              : <span key={i}>{line}{'\n'}</span>;
+          })}
         </div>
-
-        {/* Footer */}
-        <footer className="pp-footer">
-          <p className="pp-footer-text">
-            Questions about your privacy or data? Reach us anytime at{' '}
-            <a href="mailto:privacy@pumpkinmc.org">privacy@pumpkinmc.org</a>
-          </p>
-          <div className="pp-footer-links">
-            <Link to="/terms" className="pp-footer-link">Terms of Service</Link>
-            <span className="pp-footer-sep" />
-            <Link to="/" className="pp-footer-link">Marketplace</Link>
-            <span className="pp-footer-sep" />
-            <button
-              type="button"
-              onClick={openCookiePreferencesModal}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-                fontFamily: 'inherit',
-                fontSize: '13px',
-                fontWeight: 700,
-                color: '#8c9bb4',
-                transition: 'color 0.15s'
-              }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#ff6b00')}
-              onMouseLeave={e => (e.currentTarget.style.color = '#8c9bb4')}
-            >
-              Cookie Preferences
-            </button>
-            <span className="pp-footer-sep" />
-            <Link to="/register" className="pp-footer-link">Create Account</Link>
-          </div>
-        </footer>
-      </div>
-    </>
-  );
-};
+        {s.hasCookieButton && (
+          <button type="button" className="button button-sm" onClick={openCookiePreferencesModal}>
+            <Sliders />
+            Manage Cookie Preferences
+          </button>
+        )}
+      </section>
+    ))}
+  </LegalDoc>
+);
 
 export default PrivacyPolicyPage;

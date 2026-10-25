@@ -1,7 +1,7 @@
 import React from 'react';
+import LegalDoc from './LegalDoc';
 import { Link } from 'react-router-dom';
 import SEO from '../../components/SEO';
-import './LegalPages.css';
 
 const sections = [
   {
@@ -131,20 +131,26 @@ Contact: lilalexmed@proton.me / support@pumpkinmc.org`
 
 export const DeveloperTermsPage: React.FC = () => {
   return (
-    <div className="legal-container">
+    <>
       <SEO
         title="Developer Distribution Agreement"
         description="Legal terms and distribution agreement for developers publishing plugins on Pumpkin Marketplace."
       />
-      <div className="legal-content">
-        <header className="guidelines-header">
-          <h1>Developer <span>Distribution Agreement</span></h1>
-          <p className="subtitle">Terms, distribution rights, and platform governance for Pumpkin Marketplace creators.</p>
-          <div className="last-updated">Effective Date: June 2026 • Version 2026.1</div>
-        </header>
-
-        <div className="callout">
-          <h3>Summary for Creators</h3>
+      <LegalDoc
+        title={<>Developer <span className="mark">Distribution Agreement</span></>}
+        lede="Terms, distribution rights, and platform governance for Pumpkin Marketplace creators."
+        updated="Effective Date: June 2026 • Version 2026.1"
+        toc={sections}
+        footer={
+          <div className="lg-links">
+            <Link className="link" to="/terms">→ General Terms of Service</Link>
+            <Link className="link" to="/guidelines">→ Marketplace Review Guidelines</Link>
+            <Link className="link" to="/privacy">→ Privacy Policy</Link>
+          </div>
+        }
+      >
+        <aside className="lg-callout">
+          <h3 className="sticker">Summary for Creators</h3>
           <ul>
             <li><strong>You own your code:</strong> You retain ownership of your original Plugin source code and assets.</li>
             <li><strong>Distribution license:</strong> You grant Pumpkin Marketplace a worldwide license to host, cache, security-scan, sign, and distribute your binaries to buyers.</li>
@@ -152,26 +158,16 @@ export const DeveloperTermsPage: React.FC = () => {
             <li><strong>Revenue &amp; payouts:</strong> Paid plugins follow a standard 70/30 developer/platform split with automated payouts.</li>
             <li><strong>Security &amp; EULA:</strong> Code must be free of backdoors, spyware, or malicious payloads and comply with Mojang's Minecraft EULA.</li>
           </ul>
-        </div>
+        </aside>
 
         {sections.map(sec => (
-          <section key={sec.id} id={sec.id} className="guideline-section" style={{ marginTop: '2.5rem' }}>
-            <h2 style={{ fontSize: '1.4rem', color: '#ffb74d', borderBottom: '1px solid #333', paddingBottom: '0.4rem', marginBottom: '1rem' }}>
-              {sec.title}
-            </h2>
-            <div style={{ whiteSpace: 'pre-line', color: '#cbd5e1', fontSize: '0.95rem', lineHeight: '1.7' }}>
-              {sec.content}
-            </div>
+          <section key={sec.id} id={sec.id} className="lg-section">
+            <h2>{sec.title}</h2>
+            <div className="lg-body">{sec.content}</div>
           </section>
         ))}
-
-        <div style={{ marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #333', display: 'flex', gap: '1.5rem', flexWrap: 'wrap' }}>
-          <Link to="/terms" style={{ color: '#ffb74d', textDecoration: 'none', fontSize: '0.9rem' }}>→ General Terms of Service</Link>
-          <Link to="/guidelines" style={{ color: '#ffb74d', textDecoration: 'none', fontSize: '0.9rem' }}>→ Marketplace Review Guidelines</Link>
-          <Link to="/privacy" style={{ color: '#ffb74d', textDecoration: 'none', fontSize: '0.9rem' }}>→ Privacy Policy</Link>
-        </div>
-      </div>
-    </div>
+      </LegalDoc>
+    </>
   );
 };
 

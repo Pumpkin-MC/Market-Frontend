@@ -1,17 +1,9 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { Download, Star } from 'lucide-react';
 import { getPluginUrl } from '../lib/url';
-import { extractYoutubeVideoId } from '../features/plugin/PluginVideoPlayer';
-
-const getAccentColor = (name: string) => {
-    const colors = [
-        '#4f7eff', '#ff6b6b', '#ffd166', '#06d6a0',
-        '#a855f7', '#f97316', '#06b6d4', '#ec4899',
-    ];
-    let hash = 0;
-    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    return colors[Math.abs(hash) % colors.length];
-};
+import { extractYoutubeVideoId } from '../lib/youtube';
+import '../styles/store.css';
 
 const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; originalDisplay: string } => {
     const base = plugin.price_cents ?? 0;
@@ -37,8 +29,6 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
     const timerRef = useRef<any>(null);
     const cycleRef = useRef<any>(null);
 
-    const accent = useMemo(() => getAccentColor(plugin?.name || ''), [plugin?.name]);
-    
     const priceInfo = useMemo(() => (plugin ? getEffectivePrice(plugin) : { display: '€0.00', isSale: false, originalDisplay: '' }), [plugin]);
     const isSale = plugin?.type === 'paid' && priceInfo.isSale;
     const initial = (plugin?.name || '?').charAt(0).toUpperCase();
@@ -68,7 +58,6 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
         if (cycleRef.current) clearInterval(cycleRef.current);
     }, []);
 
-    // Stop video playback and slideshow cycling immediately when scrolling down
     useEffect(() => {
         if (!isHovering) return;
         const handleScroll = () => {
@@ -91,102 +80,69 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
     };
 
     return (
-        <Link to={getPluginUrl(plugin)} className="plugin-card-link" onMouseEnter={startHover} onMouseLeave={stopHover}>
-            <div className="plugin-card-v2">
-                <div className="pcv2-preview">
-                    {isHovering && videoId ? (
-                        <div className="pcv2-video-container">
-                            <iframe
-                                className="pcv2-video-iframe"
-                                src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&showinfo=0&iv_load_policy=3`}
-                                title={plugin.name}
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                tabIndex={-1}
+        <Link to={getPluginUrl(plugin)} className="entry sf-entry" onMouseEnter={startHover} onMouseLeave={stopHover}>
+            <div className="entry-cover">
+                {isHovering && videoId ? (
+                    <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=0&playsinline=1&rel=0&modestbranding=1&disablekb=1&fs=0&showinfo=0&iv_load_policy=3`}
+                        title={plugin.name}
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        tabIndex={-1}
+                    />
+                ) : slideshowImages.length > 0 ? (
+                    <>
+                        {slideshowImages.map((src: string, i: number) => (
+                            <img
+                                key={src}
+                                src={src}
+                                className="sf-slide"
+                                data-active={i === currentIndex || undefined}
+                                alt={plugin.name}
+                                loading="lazy"
                             />
-                        </div>
-                    ) : slideshowImages.length > 0 ? (
-                        <div className="pcv2-slideshow">
-                            {slideshowImages.map((src: string, i: number) => (
-                                <img 
-                                    key={src} 
-                                    src={src} 
-                                    className={`pcv2-slideshow-img ${i === currentIndex ? 'active' : ''}`} 
-                                    alt={plugin.name}
-                                    loading="lazy"
-                                />
-                            ))}
-                            
-                            {isHovering && slideshowImages.length > 1 && !videoId && (
-                                <div className="pcv2-slideshow-progress">
-                                    {slideshowImages.map((_: any, i: number) => (
-                                        <div key={i} className={`pcv2-progress-dot ${i === currentIndex ? 'active' : ''}`} />
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="pcv2-preview-fallback" style={{ background: `linear-gradient(135deg, ${accent}22 0%, #0d0f12 100%)` }}>
-                            <span style={{ color: accent }}>{initial}</span>
-                        </div>
-                    )}
-
-                    {plugin.type === 'free' ? (
-                        <span className="pcv2-price-badge free">Free</span>
-                    ) : plugin.is_preorder ? (
-                        <span className="pcv2-price-badge paid" style={{ background: '#f97316', color: '#fff' }}>
-                            Pre-Order • {priceInfo.display}
-                        </span>
-                    ) : isSale ? (
-                        <span className="pcv2-price-badge sale">
-                            <span className="pcv2-price-original">{priceInfo.originalDisplay}</span>
-                            {priceInfo.display}
-                            <span className="pcv2-sale-pct">-{plugin.sale_discount_percent}%</span>
-                        </span>
-                    ) : (
-                        <span className="pcv2-price-badge paid">{priceInfo.display}</span>
-                    )}
-                </div>
-
-                <div className="pcv2-info">
-                    <p className="pcv2-name">
-                        {plugin.name}
-                        {plugin.is_preorder && (
-                            <span style={{ marginLeft: 6, fontSize: '0.62rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)', verticalAlign: 'middle' }}>
-                                Pre-Order
-                            </span>
+                        ))}
+                        {isHovering && slideshowImages.length > 1 && (
+                            <div className="sf-pips">
+                                {slideshowImages.map((_: any, i: number) => (
+                                    <span key={i} data-active={i === currentIndex || undefined} />
+                                ))}
+                            </div>
                         )}
-                        {plugin.is_early_access && <span className="pcv2-badge-ea">Early Access</span>}
-                    </p>
-                    <p className="pcv2-dev">by {plugin.dev_name}</p>
-
-                    <div className="pcv2-footer">
-                        <span className="pcv2-stat">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                            </svg>
-                            {(plugin.downloads ?? 0).toLocaleString()}
-                        </span>
-                        {plugin.rating != null && (
-                            <span className="pcv2-stat">
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
-                                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" opacity="0.7"/>
-                                </svg>
-                                {Number(plugin.rating).toFixed(1)}
-                            </span>
-                        )}
-                        {plugin.version && (
-                            <span className="pcv2-stat" style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono, monospace)', fontSize: '0.65rem' }}>
-                                v{plugin.version}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                {isSale && (
-                    <div className="pcv2-sale-strip">
-                        Sale — {plugin.sale_discount_percent}% off
+                    </>
+                ) : (
+                    <div className="placeholder">
+                        <span className="avatar">{initial}</span>
                     </div>
                 )}
+
+                <div className="entry-flags">
+                    {isSale && <span className="sticker sticker-sm">-{plugin.sale_discount_percent}%</span>}
+                    {plugin.is_preorder && <span className="sticker sticker-sm sticker-fg">Pre-Order</span>}
+                    {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
+                </div>
+            </div>
+
+            <div className="entry-body">
+                <div className="entry-meta">
+                    <span className="label">{plugin.category}</span>
+                    {plugin.version && <span className="label mono">v{plugin.version}</span>}
+                </div>
+                <h3 className="entry-name">{plugin.name}</h3>
+                <p className="entry-by">by <strong>{plugin.dev_name}</strong></p>
+
+                <div className="entry-foot">
+                    <span className="entry-stat"><Download />{(plugin.downloads ?? 0).toLocaleString()}</span>
+                    {plugin.rating != null && (
+                        <span className="entry-stat"><Star />{Number(plugin.rating).toFixed(1)}</span>
+                    )}
+                    {plugin.type === 'free' ? (
+                        <span className="cost cost-free">Free</span>
+                    ) : isSale ? (
+                        <span className="cost cost-sale"><s>{priceInfo.originalDisplay}</s>{priceInfo.display}</span>
+                    ) : (
+                        <span className="cost">{priceInfo.display}</span>
+                    )}
+                </div>
             </div>
         </Link>
     );

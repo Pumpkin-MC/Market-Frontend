@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import api from '../../../lib/api';
-import { useAuth } from '../../../app/App';
+import { useAuth } from '../../../app/auth';
 import { useTranslation } from 'react-i18next';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    Circle, BarChart3, Key, Star, ArrowRightLeft,
-    Rocket, Eye, PowerOff
+    BarChart3, Key, Star, ArrowRightLeft,
+    Rocket, Eye, PowerOff, Check
 } from 'lucide-react';
 
 import StoreListing from './StoreListing';
@@ -20,7 +20,7 @@ import DangerZone from './DangerZone';
 import Analytics from './Analytics';
 import PublishReadinessModal from './PublishReadinessModal';
 import { getPluginUrl } from '../../../lib/url';
-import './ManagePluginPage.css';
+import '../../../styles/studio.css';
 
 import type { Plugin, PluginCommand } from '../../../types/plugin';
 
@@ -44,7 +44,11 @@ const ManagePluginPage = () => {
     const { id } = useParams<{ id: string }>();
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState('listing');
+    const [searchParams] = useSearchParams();
+    const [activeTab, setActiveTab] = useState(() => {
+        const tab = searchParams.get('tab');
+        return NAV_ITEMS.some(item => item.key === tab) ? tab! : 'listing';
+    });
     const [loading, setLoading] = useState(true);
     const [plugin, setPlugin] = useState<PluginData | null>(null);
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
@@ -94,9 +98,8 @@ const ManagePluginPage = () => {
 
     if (loading) {
         return (
-            <div className="mp-loading">
-                <div className="mp-loading-spinner" />
-                <span>Loading plugin…</span>
+            <div className="page-loader">
+                <span className="row"><span className="loading" />Loading plugin…</span>
             </div>
         );
     }
@@ -104,137 +107,132 @@ const ManagePluginPage = () => {
     if (!plugin) return null;
 
     const isLive = plugin.status === 'published';
+    const statusLabel = isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
     return (
-        <div className="mp-root">
-            {/* ── Sidebar ───────────────────────────────────────────── */}
-            <aside className="mp-sidebar">
-                <div className="mp-plugin-identity">
-                    <div className="mp-plugin-avatar" style={plugin.preview_path ? { backgroundImage: `url(${plugin.preview_path})`, backgroundSize: 'cover', backgroundPosition: 'center', color: 'transparent' } : {}}>
-                        {!plugin.preview_path && plugin.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <p className="mp-plugin-name">{plugin.name}</p>
-                        <div className="mp-plugin-status">
-                            <Circle size={7} fill={isLive ? 'var(--mp-success)' : 'var(--mp-muted)'} color={isLive ? 'var(--mp-success)' : 'var(--mp-muted)'} />
-                            <span style={{ color: isLive ? 'var(--mp-success)' : 'var(--mp-muted)' }}>
-                                {isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)')}
-                            </span>
-                        </div>
+        <div className="page page-wide st-page">
+            <header className="st-head">
+                <div className="st-mp-id">
+                    <span className="avatar st-mp-avatar">
+                        {plugin.preview_path ? <img src={plugin.preview_path} alt="" /> : plugin.name.charAt(0).toUpperCase()}
+                    </span>
+                    <div className="st-head-text">
+                        <span className="label mono st-case">ID: {id}{plugin.version && ` · v${plugin.version}`}</span>
+                        <h1 className="display-2 st-mp-name">{plugin.name}</h1>
+                        <span className="status">
+                            {isLive ? <span className="mark-box mark-box-success"><Check /></span> : <span className="dot" />}
+                            {statusLabel}
+                        </span>
                     </div>
                 </div>
+            </header>
 
-                <nav className="mp-nav">
+            <div className={`notice ${isLive ? 'notice-success' : 'notice-plain'}`}>
+                <span className={`sticker ${isLive ? 'sticker-success' : 'sticker-fg'}`}>{statusLabel}</span>
+                <p className="notice-text">
+                    {isLive
+                        ? 'This plugin is public. You can publish updates or manage store details.'
+                        : 'Draft changes are private. Complete your store listing & binary build, then publish.'}
+                </p>
+                <div className="row">
+                    {!isLive ? (
+                        <>
+                            <button
+                                className="button button-sm"
+                                onClick={() => setIsPublishModalOpen(true)}
+                                title="Check what requirements remain before publishing"
+                            >
+                                Check Readiness
+                            </button>
+                            <button
+                                className="button button-primary button-sm"
+                                onClick={() => setIsPublishModalOpen(true)}
+                            >
+                                <Rocket />
+                                {t('developer.dashboard.btn_publish_store', 'Publish to Store')}
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <Link
+                                to={getPluginUrl(plugin)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="button button-sm"
+                            >
+                                <Eye />
+                                View on Store
+                            </Link>
+                            <button
+                                className="button button-danger button-sm"
+                                disabled={unpublishing}
+                                aria-busy={unpublishing}
+                                onClick={handleUnpublish}
+                            >
+                                <PowerOff />
+                                {unpublishing ? 'Unpublishing…' : t('developer.dashboard.btn_unpublish_store', 'Take Offline')}
+                            </button>
+                        </>
+                    )}
+                </div>
+            </div>
+
+            <div className="tabs st-mp-tabs" role="tablist">
+                {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+                    <button key={key} role="tab" aria-selected={activeTab === key} onClick={() => setActiveTab(key)}>
+                        <Icon size={16} />
+                        {label}
+                    </button>
+                ))}
+            </div>
+
+            <div className="st-mp">
+                <nav className="sidenav st-mp-nav" aria-label={plugin.name}>
+                    <span className="sidenav-group label">{plugin.name}</span>
                     {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
                         <button
                             key={key}
-                            className={`mp-nav-item ${activeTab === key ? 'active' : ''} ${key === 'danger' ? 'danger' : ''}`}
+                            className={key === 'danger' ? 'st-mp-danger' : undefined}
+                            aria-current={activeTab === key ? 'page' : undefined}
                             onClick={() => setActiveTab(key)}
                         >
-                            <Icon size={16} />
+                            <Icon />
                             {label}
                         </button>
                     ))}
                 </nav>
 
-                <div className="mp-sidebar-meta">
-                    <span className="mp-meta-row"><Tag size={12} /> ID: {id}</span>
-                    {plugin.version && (
-                        <span className="mp-meta-row">
-                            <Upload size={12} /> v{plugin.version}
-                        </span>
+                <div className="st-mp-main">
+                    {activeTab === 'listing' && (
+                        <StoreListing plugin={plugin} onSaved={refreshPlugin} />
+                    )}
+                    {activeTab === 'update' && (
+                        <PublishUpdate plugin={plugin} onSaved={refreshPlugin} />
+                    )}
+                    {activeTab === 'analytics' && (
+                        <Analytics pluginId={plugin.id} pluginName={plugin.name} />
+                    )}
+                    {activeTab === 'reviews' && (
+                        <Reviews plugin={plugin} />
+                    )}
+                    {activeTab === 'pricing' && (
+                        <Pricing plugin={plugin} onSaved={refreshPlugin} />
+                    )}
+                    {activeTab === 'licenses' && (
+                        <Licenses plugin={plugin} />
+                    )}
+                    {activeTab === 'coupons' && (
+                        <Coupons plugin={plugin} />
+                    )}
+                    {activeTab === 'transfer' && (
+                        <TransferOwnership plugin={plugin} />
+                    )}
+                    {activeTab === 'danger' && (
+                        <DangerZone plugin={plugin} />
                     )}
                 </div>
-            </aside>
+            </div>
 
-            {/* ── Main Content ──────────────────────────────────────── */}
-            <main className="mp-main">
-                {/* Publishing & status bar */}
-                <div className="mp-top-bar">
-                    <div className="mp-top-bar-left">
-                        <div className={`mp-status-pill ${isLive ? 'published' : 'draft'}`}>
-                            <span className="mp-status-dot-pulse" />
-                            <span>{isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)')}</span>
-                        </div>
-                        <span className="mp-top-bar-desc">
-                            {isLive
-                                ? 'This plugin is public. You can publish updates or manage store details.'
-                                : 'Draft changes are private. Complete your store listing & binary build, then publish.'}
-                        </span>
-                    </div>
-
-                    <div className="mp-top-bar-actions">
-                        {!isLive ? (
-                            <>
-                                <button
-                                    className="mp-action-btn mp-action-btn-secondary"
-                                    onClick={() => setIsPublishModalOpen(true)}
-                                    title="Check what requirements remain before publishing"
-                                >
-                                    Check Readiness
-                                </button>
-                                <button
-                                    className="mp-action-btn mp-action-btn-primary"
-                                    onClick={() => setIsPublishModalOpen(true)}
-                                >
-                                    <Rocket size={15} />
-                                    {t('developer.dashboard.btn_publish_store', 'Publish to Store')}
-                                </button>
-                            </>
-                        ) : (
-                            <>
-                                <Link
-                                    to={getPluginUrl(plugin)}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mp-action-btn mp-action-btn-secondary"
-                                >
-                                    <Eye size={15} />
-                                    View on Store
-                                </Link>
-                                <button
-                                    className="mp-action-btn mp-action-btn-danger"
-                                    disabled={unpublishing}
-                                    onClick={handleUnpublish}
-                                >
-                                    <PowerOff size={15} />
-                                    {unpublishing ? 'Unpublishing…' : t('developer.dashboard.btn_unpublish_store', 'Take Offline')}
-                                </button>
-                            </>
-                        )}
-                    </div>
-                </div>
-
-                {activeTab === 'listing' && (
-                    <StoreListing plugin={plugin} onSaved={refreshPlugin} />
-                )}
-                {activeTab === 'update' && (
-                    <PublishUpdate plugin={plugin} onSaved={refreshPlugin} />
-                )}
-                {activeTab === 'analytics' && (
-                    <Analytics pluginId={plugin.id} pluginName={plugin.name} />
-                )}
-                {activeTab === 'reviews' && (
-                    <Reviews plugin={plugin} />
-                )}
-                {activeTab === 'pricing' && (
-                    <Pricing plugin={plugin} onSaved={refreshPlugin} />
-                )}
-                {activeTab === 'licenses' && (
-                    <Licenses plugin={plugin} />
-                )}
-                {activeTab === 'coupons' && (
-                    <Coupons plugin={plugin} />
-                )}
-                {activeTab === 'transfer' && (
-                    <TransferOwnership plugin={plugin} />
-                )}
-                {activeTab === 'danger' && (
-                    <DangerZone plugin={plugin} />
-                )}
-            </main>
-
-            {/* Readiness & Publish Modal */}
             <PublishReadinessModal
                 isOpen={isPublishModalOpen}
                 pluginId={plugin.id}

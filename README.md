@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# Pumpkin Market Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+The web frontend for [Pumpkin Market](https://market.pumpkinmc.org), the plugin marketplace for [Pumpkin](https://pumpkinmc.org). React 19, TypeScript and Vite, managed with bun.
 
-Currently, two official plugins are available:
+## Development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+bun install
+bun run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+The app calls the API at `/api`. In development Vite proxies `/api` to the official backend at `https://market.pumpkinmc.org`, so every action you take (logging in, saving, publishing, deleting) is real.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Checks
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```sh
+bun run typecheck
+bun run check:i18n
+bun run build
 ```
+
+## Layout
+
+```
+src/
+  main.tsx          entry
+  app/              routes, auth context and route guards, page shell (header, footer, layouts)
+  features/         one folder per area, each owning its pages
+    store/          home, search, author pages, header search
+    plugin/         plugin page, video player
+    account/        sign in, sign up, email flows, settings
+    studio/         developer dashboard; manage/ holds the per-plugin tabs
+    staff/          moderation panel
+    legal/          legal documents
+  components/       UI shared across features
+  hooks/            shared React hooks
+  lib/              API client, i18n, consent, helpers
+  styles/           system.css is the design system; one stylesheet per feature
+  types/            shared types
+  locales/          translations; en.json is the reference
+```
+
+The design system lives in `src/styles/system.css`.
