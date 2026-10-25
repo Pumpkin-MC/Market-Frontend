@@ -105,7 +105,7 @@
   border-top: 1px solid var(--line);
 }
 
-.lg-section h2 {
+.lg-section > h2 {
   color: var(--fg);
   font-size: var(--t-28);
   font-weight: 800;
@@ -227,7 +227,7 @@
     -webkit-box-decoration-break: clone;
   }
 
-  .lg-section h2 {
+  .lg-section > h2 {
     font-size: var(--t-22);
   }
 

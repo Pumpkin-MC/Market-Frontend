@@ -24,7 +24,7 @@ const GuidelinesPage = () => {
                     the development process.
                 </p>
                 <aside className="lg-callout">
-                    <h3 className="sticker">Before You Submit</h3>
+                    <h2 className="sticker">Before You Submit</h2>
                     <ul>
                         <li>Ensure your plugin is complete and functional.</li>
                         <li>Test for crashes and server performance impact.</li>

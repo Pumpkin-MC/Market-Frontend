@@ -64,7 +64,7 @@ export const Select = ({ options, value, onChange, placeholder = 'Select', class
       keys[e.key]();
       return;
     }
-    if (e.key.length === 1) {
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const from = open ? active : selected;
       const order = [...items.slice(from + 1), ...items.slice(0, from + 1)];
       const match = order.find(o => o.label.toLowerCase().startsWith(e.key.toLowerCase()));

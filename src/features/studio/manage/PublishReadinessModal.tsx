@@ -3,6 +3,7 @@ import { Check, CircleAlert, Rocket, X } from 'lucide-react';
 import api from '../../../lib/api';
 import { useTranslation } from 'react-i18next';
 import '../../../styles/studio.css';
+import { useDialog } from '../../../hooks/useDialog';
 
 export interface PublishReadiness {
     nameReady: boolean;
@@ -43,6 +44,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
     const [publishing, setPublishing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [successMsg, setSuccessMsg] = useState<string | null>(null);
+    const dialog = useDialog<HTMLDivElement>(isOpen, onClose);
 
     useEffect(() => {
         if (isOpen) {
@@ -94,7 +96,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
 
     return (
         <div className="overlay" onClick={onClose}>
-            <div className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="st-ready-title" onClick={e => e.stopPropagation()}>
+            <div ref={dialog} tabIndex={-1} className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="st-ready-title" onClick={e => e.stopPropagation()}>
                 <div className="sheet-head">
                     <div className="stack st-ready-head">
                         <span className="sticker sticker-sm">Publish</span>

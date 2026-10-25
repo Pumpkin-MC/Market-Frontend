@@ -808,6 +808,8 @@ const PluginPage = () => {
     ...(commandCount > 0 ? [['commands', t('plugin.commands.title', 'Commands'), commandCount] as [typeof tab, string, number]] : []),
   ];
 
+  const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
+
   const reasonPicker = (
     reasons: string[],
     selected: string,
@@ -920,7 +922,7 @@ const PluginPage = () => {
           <div className="pd-body">
             <div className="tabs" role="tablist" id="pd-tabs">
               {tabList.map(([key, label, count]) => (
-                <button key={key} type="button" role="tab" aria-selected={tab === key} aria-controls="pd-panel" onClick={() => setTab(key)}>
+                <button key={key} type="button" role="tab" aria-selected={activeTab === key} aria-controls="pd-panel" onClick={() => setTab(key)}>
                   {label}
                   {count !== undefined && <span className="count">{count}</span>}
                 </button>
@@ -928,7 +930,7 @@ const PluginPage = () => {
             </div>
 
             <div className="pd-panel" id="pd-panel" role="tabpanel">
-              {tab === 'overview' && (
+              {activeTab === 'overview' && (
                 <>
                   {screenshots.length > 0 ? (
                     <div className="pd-media">
@@ -1015,7 +1017,7 @@ const PluginPage = () => {
                 </>
               )}
 
-              {tab === 'versions' && (
+              {activeTab === 'versions' && (
                 <ol className="pd-versions">
                   {versions.map((v: any) => (
                     <li key={v.id} className="pd-version">
@@ -1036,7 +1038,7 @@ const PluginPage = () => {
                 </ol>
               )}
 
-              {tab === 'reviews' && (
+              {activeTab === 'reviews' && (
                 <section className="pd-reviews" aria-label="Ratings & Reviews">
                   {stats ? (
                     <div className="pd-ratings">
@@ -1221,7 +1223,7 @@ const PluginPage = () => {
                 </section>
               )}
 
-              {tab === 'commands' && <PluginCommands commands={plugin.commands} />}
+              {activeTab === 'commands' && <PluginCommands commands={plugin.commands} />}
             </div>
           </div>
         </div>

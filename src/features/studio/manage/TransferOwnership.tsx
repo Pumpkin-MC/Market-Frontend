@@ -104,6 +104,14 @@ const TransferOwnership = ({ plugin }: Props) => {
                 <p className="small">Transfer this plugin to another developer on Pumpkin Market. The recipient must review and accept the request before ownership is transferred.</p>
             </header>
 
+            {error && (
+                <span className="field-error"><AlertTriangle size={14} />{error}</span>
+            )}
+
+            {success && (
+                <span className="status st-pos"><span className="mark-box mark-box-success"><CheckCircle /></span>{success}</span>
+            )}
+
             {loading ? (
                 <span className="row small"><span className="loading" />Loading transfer status…</span>
             ) : pendingTransfer ? (
@@ -205,13 +213,6 @@ const TransferOwnership = ({ plugin }: Props) => {
                             </span>
                         </label>
 
-                        {error && (
-                            <span className="field-error"><AlertTriangle size={14} />{error}</span>
-                        )}
-
-                        {success && (
-                            <span className="status st-pos"><span className="mark-box mark-box-success"><CheckCircle /></span>{success}</span>
-                        )}
                     </div>
                     <div className="panel-foot">
                         <button

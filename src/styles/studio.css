@@ -138,6 +138,7 @@
 }
 
 .st-drop {
+  position: relative;
   display: grid;
   justify-items: center;
   gap: var(--s-2);
@@ -164,7 +165,16 @@
 }
 
 .st-drop input[type="file"] {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.st-drop:focus-within {
+  outline: 3px solid var(--pumpkin);
+  outline-offset: 3px;
 }
 
 .st-sheet {

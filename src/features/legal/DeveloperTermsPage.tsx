@@ -150,7 +150,7 @@ export const DeveloperTermsPage: React.FC = () => {
         }
       >
         <aside className="lg-callout">
-          <h3 className="sticker">Summary for Creators</h3>
+          <h2 className="sticker">Summary for Creators</h2>
           <ul>
             <li><strong>You own your code:</strong> You retain ownership of your original Plugin source code and assets.</li>
             <li><strong>Distribution license:</strong> You grant Pumpkin Marketplace a worldwide license to host, cache, security-scan, sign, and distribute your binaries to buyers.</li>

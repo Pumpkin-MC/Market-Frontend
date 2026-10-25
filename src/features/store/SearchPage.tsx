@@ -59,6 +59,7 @@ const SearchPage = () => {
       setLoading(true);
       setError(null);
       setMoreFailed(false);
+      setLoadingMore(false);
       try {
         const page = readPage(await api.get('/plugins', { params: filters }));
         if (id !== request.current) return;

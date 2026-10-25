@@ -10,6 +10,7 @@ import { useAuth } from '../../app/auth';
 import { SecuritySetupCards } from '../../components/SecuritySetupCards';
 import { Select } from '../../components/Select';
 import '../../styles/studio.css';
+import { useDialog } from '../../hooks/useDialog';
 
 interface DeveloperOnboardingModalProps {
   isOpen?: boolean;
@@ -77,6 +78,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   }, [displayName, t]);
 
   const hasSecureAuth = Boolean(user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey);
+  const dialog = useDialog<HTMLDivElement>(!embedded && isOpen, embedded ? undefined : onClose);
 
   if (!embedded && !isOpen) return null;
 
@@ -186,7 +188,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
     <>
       <div className="sheet-head">
         <div className="st-head-text st-onb-title">
-          <h2 className="h2">{t('developer.onboarding.title')}</h2>
+          <h2 className="h2" id="st-onb-title">{t('developer.onboarding.title')}</h2>
           <p className="small">
             {isSellingPaid
               ? t('developer.onboarding.subtitle_paid')
@@ -640,7 +642,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
   return (
     <div className="overlay">
-      <div className="sheet st-sheet st-onb" role="dialog" aria-modal="true">
+      <div ref={dialog} tabIndex={-1} className="sheet st-sheet st-onb" role="dialog" aria-modal="true" aria-labelledby="st-onb-title">
         {content}
       </div>
     </div>

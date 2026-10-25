@@ -315,10 +315,10 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
           <button
             type="button"
             className="pd-video-btn"
-            aria-pressed={!isMuted}
+            aria-pressed={isMuted}
             onClick={toggleMute}
-            title={isMuted ? 'Unmute' : 'Mute'}
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
+            title="Mute"
+            aria-label="Mute"
           >
             {isMuted ? <VolumeX /> : <Volume2 />}
           </button>

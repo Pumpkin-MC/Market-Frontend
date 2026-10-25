@@ -927,7 +927,8 @@
   transition: opacity var(--slow) var(--ease), translate var(--slow) var(--ease);
 }
 
-.pd-video-hud.pd-on {
+.pd-video-hud.pd-on,
+.pd-video-hud:focus-within {
   opacity: 1;
   translate: 0 0;
   pointer-events: auto;
@@ -981,7 +982,7 @@
   color: var(--on-pumpkin);
 }
 
-.pd-video-btn[aria-pressed="false"] {
+.pd-video-btn[aria-pressed="true"] {
   border-color: var(--pumpkin);
   color: var(--pumpkin);
 }

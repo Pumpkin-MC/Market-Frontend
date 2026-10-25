@@ -9,6 +9,7 @@ import DeveloperOnboardingModal from './DeveloperOnboardingModal';
 import { getPluginUrl } from '../../lib/url';
 import { Select } from '../../components/Select';
 import '../../styles/studio.css';
+import { useDialog } from '../../hooks/useDialog';
 
 const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
 
@@ -163,6 +164,8 @@ const PluginsPage = () => {
         if (isNaN(date.getTime())) return 'N/A';
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
+
+    const createDialog = useDialog<HTMLDivElement>(isCreateModalOpen, () => setIsCreateModalOpen(false));
 
     if (!user?.is_developer) {
         return (
@@ -399,7 +402,7 @@ const PluginsPage = () => {
 
             {isCreateModalOpen && (
                 <div className="overlay" onClick={() => setIsCreateModalOpen(false)}>
-                    <div className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="createPluginTitle" onClick={e => e.stopPropagation()}>
+                    <div ref={createDialog} tabIndex={-1} className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="createPluginTitle" onClick={e => e.stopPropagation()}>
                         <form onSubmit={handleCreateDraft}>
                             <div className="sheet-head">
                                 <div className="stack st-sheet-title">
