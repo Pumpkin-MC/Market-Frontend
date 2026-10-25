@@ -763,3 +763,94 @@
     background: var(--mp-border-2);
     border-radius: 3px;
 }
+
+/* ── Narrow screens: the menu becomes a tab strip above the content ── */
+@media (max-width: 768px) {
+    .mp-root {
+        flex-direction: column;
+        min-width: 0;
+    }
+
+    /* The plugin name with its ID and version on the right, the tabs below. */
+    .mp-sidebar {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+            "identity meta"
+            "nav nav";
+        align-items: center;
+        width: 100%;
+        min-width: 0;
+        flex-shrink: 0;
+        overflow: visible;
+        border-right: none;
+        border-top: 1px solid var(--mp-border);
+        border-bottom: 1px solid var(--mp-border);
+    }
+
+    .mp-plugin-identity {
+        grid-area: identity;
+        min-width: 0;
+        border-top: none;
+        border-bottom: none;
+    }
+
+    .mp-sidebar-meta {
+        grid-area: meta;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.3rem;
+        margin-top: 0;
+        padding: 0 1.25rem 0 0;
+        border-top: none;
+    }
+
+    .mp-nav {
+        grid-area: nav;
+        flex-direction: row;
+        flex: none;
+        min-width: 0;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-top: 1px solid var(--mp-border);
+    }
+
+    .mp-nav-item {
+        flex-shrink: 0;
+        width: auto;
+        white-space: nowrap;
+    }
+
+    .mp-nav-item.danger {
+        margin-top: 0;
+    }
+
+    .mp-main {
+        min-width: 0;
+        min-height: 0;
+        padding: 1.25rem 1rem;
+    }
+
+    .mp-top-bar {
+        padding: 1rem;
+    }
+
+    .mp-top-bar-actions {
+        flex-wrap: wrap;
+    }
+
+    .mp-form-row,
+    .mp-tracks,
+    .mp-pricing-options {
+        grid-template-columns: 1fr;
+    }
+
+    /* Stacked, every field keeps the spacing the left column gave the row. */
+    .mp-form-row {
+        row-gap: 0;
+    }
+
+    .mp-form-row > .mp-form-group:last-child {
+        margin-bottom: 1.1rem;
+    }
+}
