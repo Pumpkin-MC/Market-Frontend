@@ -13,7 +13,7 @@ extend-exclude = [
   "src/locales/tr.json",
   "src/locales/zh.json",
   "dist/**",
-  "package-lock.json"
+  "bun.lock"
 ]
 
 [default.extend-words]

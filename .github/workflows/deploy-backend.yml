@@ -13,23 +13,20 @@ jobs:
       - name: Spellcheck (typos)
         uses: crate-ci/typos@v1
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'npm'
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
 
       - name: Install Dependencies
-        run: npm install --legacy-peer-deps
+        run: bun install --frozen-lockfile
 
       - name: Validate i18n Translations
-        run: npm run check:i18n
+        run: bun run check:i18n
 
       - name: Typecheck
-        run: npm run typecheck
+        run: bun run typecheck
 
       - name: Build Project
-        run: npm run build
+        run: bun run build
       - name: Deploy Static Files to VPS
         uses: appleboy/scp-action@v1.0.0
         with:

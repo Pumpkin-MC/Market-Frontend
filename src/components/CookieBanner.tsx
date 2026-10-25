@@ -7,7 +7,7 @@ import {
   saveConsent,
   applyConsent,
   type CookieConsent,
-} from '../utils/consent';
+} from '../lib/consent';
 import './CookieBanner.css';
 
 export const CookieBanner: React.FC = () => {

@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { getPluginUrl } from '../utils/url';
-import { extractYoutubeVideoId } from './PluginVideoPlayer';
+import { getPluginUrl } from '../lib/url';
+import { extractYoutubeVideoId } from '../features/plugin/PluginVideoPlayer';
 
 const getAccentColor = (name: string) => {
     const colors = [

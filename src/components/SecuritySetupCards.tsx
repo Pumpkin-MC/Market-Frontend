@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { useAuth } from '../App';
-import api from '../api';
+import { useAuth } from '../app/App';
+import api from '../lib/api';
 import { startRegistration } from '@simplewebauthn/browser';
 import { QRCodeSVG } from 'qrcode.react';
-import { RecoveryCodesModal } from './RecoveryCodesModal';
-import { getDevicePasskeyName } from '../utils/deviceInfo';
+import { RecoveryCodesModal } from '../features/account/RecoveryCodesModal';
+import { getDevicePasskeyName } from '../lib/deviceInfo';
 import {
     Fingerprint,
     Smartphone,
