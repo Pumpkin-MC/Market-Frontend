@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
+import { Check, CircleAlert, Search, X } from 'lucide-react';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
-import './StaffPage.css';
+import { useAuth } from '../../app/auth';
+import { Select } from '../../components/Select';
+import '../../styles/store.css';
 
 const StaffPage = () => {
     const { user: currentUser } = useAuth();
@@ -14,17 +16,15 @@ const StaffPage = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Search and Filter state
     const [searchQuery, setSearchQuery] = useState('');
     const [logFilterAction, setLogFilterAction] = useState('all');
     const [logFilterModerator, setLogFilterModerator] = useState('all');
 
-    // Details Modal state
     const [selectedItem, setSelectedItem] = useState<{type: 'user' | 'plugin' | 'log', data: any} | null>(null);
 
     useEffect(() => {
         fetchData();
-        setSearchQuery(''); // Reset search on tab change
+        setSearchQuery('');
     }, [activeTab]);
 
     const fetchData = async () => {
@@ -84,7 +84,6 @@ const StaffPage = () => {
         }
     };
 
-    // Filtering logic
     const filteredUsers = users.filter(u => 
         u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
         u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -111,72 +110,111 @@ const StaffPage = () => {
         return matchesSearch && matchesAction && matchesModerator;
     });
 
-    // Unique moderators for the filter dropdown
     const uniqueModerators = Array.from(new Set(logs.map(l => l.moderator_name)));
 
+    const status = (deletedAt?: string) => deletedAt
+        ? <span className="status"><span className="mark-box mark-box-danger"><X /></span>Deleted</span>
+        : <span className="status"><span className="mark-box mark-box-success"><Check /></span>Active</span>;
+
+    const roleTone: Record<string, string> = { admin: 'tag-pumpkin', moderator: 'tag-info', user: 'tag-fg' };
+    const typeTone: Record<string, string> = { free: 'tag-success', paid: 'tag-pumpkin', adwall: 'tag-info' };
+
+    const details: [string, any][] = !selectedItem ? [] : selectedItem.type === 'user' ? [
+        ['ID', selectedItem.data.id],
+        ['Username', selectedItem.data.username],
+        ['Email', selectedItem.data.email],
+        ['Role', selectedItem.data.role],
+        ['Stripe Ready', selectedItem.data.stripe_ready ? 'Yes' : 'No'],
+        ['2FA Enabled', selectedItem.data.totp_enabled ? 'Yes' : 'No'],
+        ['Created', new Date(selectedItem.data.created_at).toLocaleString()],
+        ['Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'],
+    ] : selectedItem.type === 'plugin' ? [
+        ['ID', selectedItem.data.id],
+        ['Name', selectedItem.data.name],
+        ['Developer', selectedItem.data.dev_name],
+        ['Type', selectedItem.data.type],
+        ['Category', selectedItem.data.category],
+        ['Price', `€${(selectedItem.data.price_cents / 100).toFixed(2)}`],
+        ['Downloads', selectedItem.data.downloads],
+        ['Views', selectedItem.data.views],
+        ['Created', new Date(selectedItem.data.created_at).toLocaleString()],
+        ['Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'],
+    ] : [
+        ['Date', new Date(selectedItem.data.created_at).toLocaleString()],
+        ['Moderator', selectedItem.data.moderator_name],
+        ['Action', selectedItem.data.action],
+        ['Target Type', selectedItem.data.target_type],
+        ['Target ID', selectedItem.data.target_id],
+        ['Reason', selectedItem.data.reason || 'No reason provided'],
+    ];
+
+    const tabs: [typeof activeTab, string][] = [['users', 'Users'], ['plugins', 'Plugins'], ['logs', 'Logs']];
+
     return (
-        <div className="admin-container">
-            <header className="admin-header">
-                <h1>Staff <span>Panel</span></h1>
-                <div className="admin-tabs">
-                    <button 
-                        className={activeTab === 'users' ? 'active' : ''} 
-                        onClick={() => setActiveTab('users')}
-                    >
-                        Users
-                    </button>
-                    <button 
-                        className={activeTab === 'plugins' ? 'active' : ''} 
-                        onClick={() => setActiveTab('plugins')}
-                    >
-                        Plugins
-                    </button>
-                    <button 
-                        className={activeTab === 'logs' ? 'active' : ''} 
-                        onClick={() => setActiveTab('logs')}
-                    >
-                        Logs
-                    </button>
+        <div className="page stack sf-pad sf-staff">
+            <header className="stack">
+                <h1 className="display-2">Staff <span className="mark">Panel</span></h1>
+                <div className="tabs" role="tablist">
+                    {tabs.map(([id, label]) => (
+                        <button key={id} role="tab" aria-selected={activeTab === id} onClick={() => setActiveTab(id)}>
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </header>
 
-            <div className="admin-controls">
-                <div className="admin-search">
-                    <input 
+            <div className="row sf-staff-controls">
+                <label className="search">
+                    <Search />
+                    <input
                         id="adminSearchInput"
                         name="adminSearch"
-                        type="search" 
-                        placeholder={`Search ${activeTab}...`} 
+                        className="input"
+                        type="search"
+                        placeholder={`Search ${activeTab}...`}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         autoComplete="off"
                         spellCheck={false}
                     />
-                </div>
+                </label>
                 {activeTab === 'logs' && (
-                    <div className="admin-filters">
-                        <select value={logFilterAction} onChange={(e) => setLogFilterAction(e.target.value)}>
-                            <option value="all">All Actions</option>
-                            <option value="soft_delete">Soft Delete</option>
-                            <option value="role_change">Role Change</option>
-                        </select>
-                        <select value={logFilterModerator} onChange={(e) => setLogFilterModerator(e.target.value)}>
-                            <option value="all">All Moderators</option>
-                            {uniqueModerators.map(m => (
-                                <option key={m} value={m}>{m}</option>
-                            ))}
-                        </select>
-                    </div>
+                    <>
+                        <Select
+                            options={[
+                                { value: 'all', label: 'All Actions' },
+                                { value: 'soft_delete', label: 'Soft Delete' },
+                                { value: 'role_change', label: 'Role Change' },
+                            ]}
+                            value={logFilterAction}
+                            onChange={setLogFilterAction}
+                            aria-label="All Actions"
+                        />
+                        <Select
+                            options={[{ value: 'all', label: 'All Moderators' }, ...uniqueModerators]}
+                            value={logFilterModerator}
+                            onChange={setLogFilterModerator}
+                            aria-label="All Moderators"
+                        />
+                    </>
                 )}
             </div>
 
-            {error && <div className="admin-error">{error}</div>}
+            {error && (
+                <div className="notice notice-danger">
+                    <span className="mark-box mark-box-danger"><CircleAlert /></span>
+                    <p className="notice-text">{error}</p>
+                </div>
+            )}
 
-            <main className="admin-content">
-                {loading ? (
-                    <div className="admin-loading">Loading...</div>
-                ) : activeTab === 'users' ? (
-                    <table className="admin-table">
+            {loading ? (
+                <div className="sf-loader">
+                    <span className="loading" />
+                    <p className="small">Loading...</p>
+                </div>
+            ) : activeTab === 'users' ? (
+                <div className="scroll-x">
+                    <table className="ledger">
                         <thead>
                             <tr>
                                 <th>ID</th>
@@ -184,146 +222,124 @@ const StaffPage = () => {
                                 <th>Email</th>
                                 <th>Role</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th className="end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredUsers.map(u => (
-                                <tr key={u.id} className={u.deleted_at ? 'row-deleted' : ''}>
-                                    <td data-label="ID">{u.id}</td>
-                                    <td data-label="Username">{u.username}</td>
-                                    <td data-label="Email">{u.email}</td>
-                                    <td data-label="Role">
-                                        {isAdmin ? (
-                                            <select 
-                                                className={`role-badge ${u.role}`} 
-                                                value={u.role} 
-                                                onChange={(e) => changeRole(u.id, e.target.value)}
-                                                disabled={!!u.deleted_at}
-                                            >
-                                                <option value="user">User</option>
-                                                <option value="moderator">Moderator</option>
-                                                <option value="admin">Admin</option>
-                                            </select>
+                                <tr key={u.id} className={u.deleted_at ? 'sf-row-off' : undefined}>
+                                    <td className="mono">{u.id}</td>
+                                    <td><strong>{u.username}</strong></td>
+                                    <td>{u.email}</td>
+                                    <td>
+                                        {isAdmin && !u.deleted_at ? (
+                                            <Select
+                                                options={[
+                                                    { value: 'user', label: 'User' },
+                                                    { value: 'moderator', label: 'Moderator' },
+                                                    { value: 'admin', label: 'Admin' },
+                                                ]}
+                                                value={u.role}
+                                                onChange={(role) => role !== u.role && changeRole(u.id, role)}
+                                                aria-label="Role"
+                                            />
                                         ) : (
-                                            <span className={`role-badge ${u.role}`}>{u.role}</span>
+                                            <span className={`tag ${roleTone[u.role] || ''}`}>{u.role}</span>
                                         )}
                                     </td>
-                                    <td data-label="Status">{u.deleted_at ? <span className="status-deleted">Deleted</span> : <span className="status-active">Active</span>}</td>
-                                    <td data-label="Actions">
-                                        <div className="action-buttons">
-                                            <button className="btn-view" onClick={() => setSelectedItem({type: 'user', data: u})}>View</button>
-                                            {!u.deleted_at && <button className="btn-delete" onClick={() => deleteUser(u.id)}>Delete</button>}
+                                    <td>{status(u.deleted_at)}</td>
+                                    <td>
+                                        <div className="row sf-actions">
+                                            <button className="button button-sm" onClick={() => setSelectedItem({type: 'user', data: u})}>View</button>
+                                            {!u.deleted_at && <button className="button button-danger button-sm" onClick={() => deleteUser(u.id)}>Delete</button>}
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                ) : activeTab === 'plugins' ? (
-                    <table className="admin-table">
+                </div>
+            ) : activeTab === 'plugins' ? (
+                <div className="scroll-x">
+                    <table className="ledger">
                         <thead>
                             <tr>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Type</th>
-                                <th>Price</th>
+                                <th className="end">Price</th>
                                 <th>Developer</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th className="end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredPlugins.map(p => (
-                                <tr key={p.id} className={p.deleted_at ? 'row-deleted' : ''}>
-                                    <td data-label="ID">{p.id}</td>
-                                    <td data-label="Name">{p.name}</td>
-                                    <td data-label="Type"><span className={`type-badge ${p.type}`}>{p.type}</span></td>
-                                    <td data-label="Price">€{(p.price_cents / 100).toFixed(2)}</td>
-                                    <td data-label="Developer">{p.dev_name}</td>
-                                    <td data-label="Status">{p.deleted_at ? <span className="status-deleted">Deleted</span> : <span className="status-active">Active</span>}</td>
-                                    <td data-label="Actions">
-                                        <div className="action-buttons">
-                                            <button className="btn-view" onClick={() => setSelectedItem({type: 'plugin', data: p})}>View</button>
-                                            {!p.deleted_at && <button className="btn-delete" onClick={() => deletePlugin(p.id)}>Delete</button>}
+                                <tr key={p.id} className={p.deleted_at ? 'sf-row-off' : undefined}>
+                                    <td className="mono">{p.id}</td>
+                                    <td><strong>{p.name}</strong></td>
+                                    <td><span className={`tag ${typeTone[p.type] || ''}`}>{p.type}</span></td>
+                                    <td className="end">€{(p.price_cents / 100).toFixed(2)}</td>
+                                    <td>{p.dev_name}</td>
+                                    <td>{status(p.deleted_at)}</td>
+                                    <td>
+                                        <div className="row sf-actions">
+                                            <button className="button button-sm" onClick={() => setSelectedItem({type: 'plugin', data: p})}>View</button>
+                                            {!p.deleted_at && <button className="button button-danger button-sm" onClick={() => deletePlugin(p.id)}>Delete</button>}
                                         </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                ) : (
-                    <table className="admin-table">
+                </div>
+            ) : (
+                <div className="scroll-x">
+                    <table className="ledger">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Moderator</th>
                                 <th>Action</th>
                                 <th>Target</th>
-                                <th>Actions</th>
+                                <th className="end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredLogs.map(l => (
                                 <tr key={l.id}>
-                                    <td data-label="Date">{new Date(l.created_at).toLocaleString()}</td>
-                                    <td data-label="Moderator">{l.moderator_name}</td>
-                                    <td data-label="Action"><strong>{l.action.toUpperCase()}</strong></td>
-                                    <td data-label="Target">{l.target_type} ({l.target_id})</td>
-                                    <td data-label="Actions">
-                                        <button className="btn-view" onClick={() => setSelectedItem({type: 'log', data: l})}>View</button>
+                                    <td className="muted">{new Date(l.created_at).toLocaleString()}</td>
+                                    <td><strong>{l.moderator_name}</strong></td>
+                                    <td><span className="tag tag-fg">{l.action.toUpperCase()}</span></td>
+                                    <td>{l.target_type} <span className="mono muted">({l.target_id})</span></td>
+                                    <td>
+                                        <div className="row sf-actions">
+                                            <button className="button button-sm" onClick={() => setSelectedItem({type: 'log', data: l})}>View</button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                )}
-            </main>
+                </div>
+            )}
 
             {selectedItem && (
-                <div className="admin-modal-overlay" onClick={() => setSelectedItem(null)}>
-                    <div className="admin-modal" onClick={e => e.stopPropagation()}>
-                        <header className="modal-header">
-                            <h2>{selectedItem.type.toUpperCase()} Details</h2>
-                            <button className="close-modal" onClick={() => setSelectedItem(null)}>&times;</button>
-                        </header>
-                        <div className="modal-body">
-                            {selectedItem.type === 'user' && (
-                                <div className="details-grid">
-                                    <div className="detail-item"><strong>ID:</strong> {selectedItem.data.id}</div>
-                                    <div className="detail-item"><strong>Username:</strong> {selectedItem.data.username}</div>
-                                    <div className="detail-item"><strong>Email:</strong> {selectedItem.data.email}</div>
-                                    <div className="detail-item"><strong>Role:</strong> {selectedItem.data.role}</div>
-                                    <div className="detail-item"><strong>Stripe Ready:</strong> {selectedItem.data.stripe_ready ? 'Yes' : 'No'}</div>
-                                    <div className="detail-item"><strong>2FA Enabled:</strong> {selectedItem.data.totp_enabled ? 'Yes' : 'No'}</div>
-                                    <div className="detail-item"><strong>Created:</strong> {new Date(selectedItem.data.created_at).toLocaleString()}</div>
-                                    <div className="detail-item"><strong>Status:</strong> {selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'}</div>
-                                </div>
-                            )}
-                            {selectedItem.type === 'plugin' && (
-                                <div className="details-grid">
-                                    <div className="detail-item"><strong>ID:</strong> {selectedItem.data.id}</div>
-                                    <div className="detail-item"><strong>Name:</strong> {selectedItem.data.name}</div>
-                                    <div className="detail-item"><strong>Developer:</strong> {selectedItem.data.dev_name}</div>
-                                    <div className="detail-item"><strong>Type:</strong> {selectedItem.data.type}</div>
-                                    <div className="detail-item"><strong>Category:</strong> {selectedItem.data.category}</div>
-                                    <div className="detail-item"><strong>Price:</strong> €{(selectedItem.data.price_cents / 100).toFixed(2)}</div>
-                                    <div className="detail-item"><strong>Downloads:</strong> {selectedItem.data.downloads}</div>
-                                    <div className="detail-item"><strong>Views:</strong> {selectedItem.data.views}</div>
-                                    <div className="detail-item"><strong>Created:</strong> {new Date(selectedItem.data.created_at).toLocaleString()}</div>
-                                    <div className="detail-item"><strong>Status:</strong> {selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'}</div>
-                                </div>
-                            )}
-                            {selectedItem.type === 'log' && (
-                                <div className="details-grid">
-                                    <div className="detail-item"><strong>Date:</strong> {new Date(selectedItem.data.created_at).toLocaleString()}</div>
-                                    <div className="detail-item"><strong>Moderator:</strong> {selectedItem.data.moderator_name}</div>
-                                    <div className="detail-item"><strong>Action:</strong> {selectedItem.data.action}</div>
-                                    <div className="detail-item"><strong>Target Type:</strong> {selectedItem.data.target_type}</div>
-                                    <div className="detail-item"><strong>Target ID:</strong> {selectedItem.data.target_id}</div>
-                                    <div className="detail-item full-width"><strong>Reason:</strong> {selectedItem.data.reason || 'No reason provided'}</div>
-                                </div>
-                            )}
+                <div className="overlay sf-modal" onClick={() => setSelectedItem(null)}>
+                    <div className="sheet" role="dialog" aria-modal="true" aria-labelledby="sf-staff-details" onClick={e => e.stopPropagation()}>
+                        <div className="sheet-head">
+                            <div className="stack">
+                                <span className="sticker sticker-sm">{selectedItem.type}</span>
+                                <h2 className="h1" id="sf-staff-details">{selectedItem.type.toUpperCase()} Details</h2>
+                            </div>
+                            <button className="button button-ghost button-icon" aria-label="Close" onClick={() => setSelectedItem(null)}><X /></button>
+                        </div>
+                        <div className="sheet-body">
+                            <dl className="specs">
+                                {details.map(([label, value]) => (
+                                    <Fragment key={label}><dt>{label}</dt><dd>{value}</dd></Fragment>
+                                ))}
+                            </dl>
                         </div>
                     </div>
                 </div>

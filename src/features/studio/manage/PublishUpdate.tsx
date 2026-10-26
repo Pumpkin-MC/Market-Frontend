@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock, ShieldAlert, ShieldCheck, Lock } from 'lucide-react';
 import api from '../../../lib/api';
-import { useAuth } from '../../../app/App';
+import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 import { validateWasmFile } from '../../../lib/fileValidation';
 
@@ -96,223 +96,200 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         }
     };
 
+    const twoFaError = publishError ? (publishError.toLowerCase().includes('2fa') || publishError.toLowerCase().includes('two-factor')) : false;
+
     if (published) {
         return (
-            <div>
-                <div className="mp-tab-header">
-                    <h2>Publish Update</h2>
-                </div>
-                <div className="mp-card" style={{
-                    display:'flex', flexDirection:'column', alignItems:'center',
-                    justifyContent:'center', gap:'1rem', padding:'3rem', textAlign:'center'
-                }}>
-                    <div style={{
-                        width: 56, height: 56, borderRadius: '50%',
-                        background: 'rgba(62,207,142,0.12)', border: '1px solid rgba(62,207,142,0.3)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center'
-                    }}>
-                        <CheckCircle size={26} color="var(--mp-success)" />
-                    </div>
-                    <div>
-                        <p style={{fontWeight:700, fontSize:'1rem', color:'var(--mp-text)'}}>Update Published!</p>
-                        <p style={{fontSize:'0.83rem', color:'var(--mp-text-2)', marginTop:'0.3rem'}}>
-                            Your new version has been published successfully to the <strong>{track}</strong> track.
-                        </p>
-                    </div>
+            <div className="st-tab">
+                <header className="st-tab-head">
+                    <h2 className="h1">Publish Update</h2>
+                </header>
+                <div className="blank">
+                    <span className="mark-box mark-box-success st-mark-lg"><CheckCircle /></span>
+                    <p className="h2">Update Published!</p>
+                    <p className="small">
+                        Your new version has been published successfully to the <strong>{track}</strong> track.
+                    </p>
                 </div>
             </div>
         );
     }
 
     return (
-        <div>
-            <div className="mp-tab-header">
-                <h2>Publish Update</h2>
-                <p>Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes.</p>
-            </div>
+        <div className="st-tab">
+            <header className="st-tab-head">
+                <h2 className="h1">Publish Update</h2>
+                <p className="small">Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes.</p>
+            </header>
 
             {user && !user.totp_enabled && (
-                <div className="mp-banner warn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1.5rem', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', borderRadius: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <ShieldAlert size={24} color="#f97316" style={{ flexShrink: 0 }} />
-                        <div>
-                            <strong style={{ color: '#f97316', display: 'block', fontSize: '0.95rem' }}>Two-Factor Authentication (2FA) Required</strong>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--mp-text-2)' }}>
-                                To protect servers and prevent unauthorized plugin uploads, 2FA is required before publishing updates.
-                            </span>
-                        </div>
-                    </div>
+                <div className="notice notice-warning">
+                    <span className="mark-box mark-box-warning"><ShieldAlert /></span>
+                    <p className="notice-text">
+                        <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
+                        To protect servers and prevent unauthorized plugin uploads, 2FA is required before publishing updates.
+                    </p>
                     <button
                         type="button"
-                        className="mp-btn mp-btn-primary"
-                        style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        className="button button-sm"
                         onClick={() => navigate('/settings?tab=security')}
                     >
-                        <ShieldCheck size={16} /> Enable 2FA →
+                        <ShieldCheck /> Enable 2FA →
                     </button>
                 </div>
             )}
 
-            {/* ── Release Track ── */}
-            <div className="mp-card">
-                <div className="mp-card-title">
-                    <Send size={14} />
-                    Release Track
+            <section className="panel">
+                <div className="panel-head">
+                    <Send size={16} className="pumpkin" />
+                    <h3 className="h3">Release Track</h3>
                 </div>
-                <div className="mp-tracks">
-                    {TRACKS.map(t => (
-                        <button
-                            key={t.key}
-                            type="button"
-                            className={`mp-track ${track === t.key ? 'active' : ''}`}
-                            onClick={() => setTrack(t.key)}
-                        >
-                            <div className="mp-track-label">
-                                {t.label}
-                                <span className={`mp-track-badge ${t.key}`}>{t.key}</span>
-                            </div>
-                            <div className="mp-track-desc">{t.desc}</div>
-                        </button>
-                    ))}
-                </div>
-
-                {track === 'stable' && (
-                    <div className="mp-banner warn" style={{ marginTop: '1rem' }}>
-                        <AlertTriangle size={16} style={{flexShrink:0, marginTop:1}} />
-                        <span>Production releases are immediately visible to all users. Make sure your build is tested.</span>
+                <div className="panel-body stack">
+                    <div className="st-pick">
+                        {TRACKS.map(t => (
+                            <button
+                                key={t.key}
+                                type="button"
+                                className="st-option"
+                                aria-pressed={track === t.key}
+                                onClick={() => setTrack(t.key)}
+                            >
+                                <span className="row st-tight">
+                                    <strong>{t.label}</strong>
+                                    <span className={`tag ${t.key === 'stable' ? 'tag-success' : t.key === 'beta' ? 'tag-warning' : 'tag-pumpkin'}`}>{t.key}</span>
+                                </span>
+                                <span className="small">{t.desc}</span>
+                            </button>
+                        ))}
                     </div>
-                )}
-                {track !== 'stable' && (
-                    <div className="mp-banner info" style={{ marginTop: '1rem' }}>
-                        <Clock size={16} style={{flexShrink:0, marginTop:1}} />
-                        <span>Pre-release ({track}) tracks allow community testing before promoting to production.</span>
-                    </div>
-                )}
-            </div>
 
-            {/* ── Version & Notes ── */}
-            <div className="mp-card">
-                <div className="mp-card-title">
-                    <FileCode size={14} />
-                    Version Details
+                    {track === 'stable' ? (
+                        <p className="status small">
+                            <span className="mark-box mark-box-warning"><AlertTriangle /></span>
+                            Production releases are immediately visible to all users. Make sure your build is tested.
+                        </p>
+                    ) : (
+                        <p className="status small">
+                            <span className="mark-box st-mark-info"><Clock /></span>
+                            Pre-release ({track}) tracks allow community testing before promoting to production.
+                        </p>
+                    )}
                 </div>
+            </section>
 
-                <div className="mp-form-group">
-                    <label className="mp-label" htmlFor="pluginVersionTag">
-                        Version Tag <span style={{color:'var(--mp-text-3)', fontWeight:400}}>(optional — e.g. 1.2.3)</span>
+            <section className="panel">
+                <div className="panel-head">
+                    <FileCode size={16} className="pumpkin" />
+                    <h3 className="h3">Version Details</h3>
+                </div>
+                <div className="panel-body fields">
+                    <label className="field">
+                        <span className="field-label">Version Tag <em>(optional — e.g. 1.2.3)</em></span>
+                        <span className="control st-narrow">
+                            <input
+                                id="pluginVersionTag"
+                                name="version"
+                                className="input mono"
+                                type="text"
+                                value={version}
+                                onChange={e => setVersion(e.target.value)}
+                                placeholder="1.0.0"
+                                autoComplete="off"
+                                spellCheck={false}
+                            />
+                        </span>
                     </label>
-                    <input
-                        id="pluginVersionTag"
-                        name="version"
-                        className="mp-input"
-                        type="text"
-                        value={version}
-                        onChange={e => setVersion(e.target.value)}
-                        placeholder="1.0.0"
-                        autoComplete="off"
-                        spellCheck={false}
-                        style={{fontFamily:'var(--font-mono)'}}
-                    />
-                </div>
-
-                <div className="mp-form-group">
-                    <label className="mp-label">Release Notes</label>
-                    <textarea
-                        className="mp-textarea"
-                        rows={5}
-                        value={releaseNotes}
-                        onChange={e => setReleaseNotes(e.target.value)}
-                        placeholder={`What's new in this release?\n\n- Fixed crash on startup\n- Added support for multi-world\n- Improved performance by 30%`}
-                    />
-                </div>
-            </div>
-
-            {/* ── WASM Upload ── */}
-            <div className="mp-card">
-                <div className="mp-card-title">
-                    <Upload size={14} />
-                    Plugin Binary
-                </div>
-
-                <div
-                    className={`mp-dropzone ${dragOver ? 'drag-over' : ''}`}
-                    style={{ opacity: validatingWasm ? 0.6 : 1, cursor: validatingWasm ? 'wait' : 'pointer' }}
-                    onDragOver={e => { e.preventDefault(); setDragOver(true); }}
-                    onDragLeave={() => setDragOver(false)}
-                    onDrop={handleDrop}
-                    onClick={() => !validatingWasm && document.getElementById('wasm-upload-input')?.click()}
-                >
-                    <div className="mp-dropzone-icon">
-                        <Upload size={20} />
-                    </div>
-                    <p>
-                        {validatingWasm ? (
-                            <strong>Validating WebAssembly binary structure…</strong>
-                        ) : (
-                            <><strong>Drag & drop your .wasm file</strong> or click to browse</>
-                        )}
-                    </p>
-                    <small>.wasm only · max 5 MB · validated on drop</small>
-                    <input
-                        id="wasm-upload-input"
-                        type="file"
-                        accept=".wasm"
-                        onChange={e => handleFileValidation(e.target.files?.[0] ?? null)}
-                    />
-                </div>
-
-                {wasmValidationErr && (
-                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{wasmValidationErr}</span>
-                    </div>
-                )}
-
-                {wasmFile && !wasmValidationErr && (
-                    <div className="mp-file-badge" style={{ borderColor: 'rgba(16,185,129,0.4)', background: 'rgba(16,185,129,0.06)' }}>
-                        <CheckCircle size={15} color="#10b981" />
-                        <span style={{ fontWeight: 600, color: 'var(--mp-text-1)' }}>{wasmFile.name}</span>
-                        <span style={{ fontSize: '0.68rem', color: '#10b981', background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)', padding: '2px 6px', borderRadius: 4, marginLeft: '0.5rem' }}>
-                            Verified {wasmFormatInfo || '.wasm'}
+                    <label className="field">
+                        <span className="field-label">Release Notes</span>
+                        <span className="control">
+                            <textarea
+                                className="input"
+                                rows={5}
+                                value={releaseNotes}
+                                onChange={e => setReleaseNotes(e.target.value)}
+                                placeholder={`What's new in this release?\n\n- Fixed crash on startup\n- Added support for multi-world\n- Improved performance by 30%`}
+                            />
                         </span>
-                        <span style={{ marginLeft: 'auto', color: 'var(--mp-text-3)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>
-                            {(wasmFile.size / 1024).toFixed(1)} KB
-                        </span>
+                    </label>
+                </div>
+            </section>
+
+            <section className="panel">
+                <div className="panel-head">
+                    <Upload size={16} className="pumpkin" />
+                    <h3 className="h3">Plugin Binary</h3>
+                </div>
+                <div className="panel-body stack">
+                    <div
+                        className="st-drop"
+                        data-active={dragOver || undefined}
+                        aria-busy={validatingWasm}
+                        onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+                        onDragLeave={() => setDragOver(false)}
+                        onDrop={handleDrop}
+                        onClick={() => !validatingWasm && document.getElementById('wasm-upload-input')?.click()}
+                    >
+                        {validatingWasm ? <span className="loading" /> : <Upload />}
+                        <p>
+                            {validatingWasm ? (
+                                <strong>Validating WebAssembly binary structure…</strong>
+                            ) : (
+                                <><strong>Drag & drop your .wasm file</strong> or click to browse</>
+                            )}
+                        </p>
+                        <span className="small">.wasm only · max 5 MB · validated on drop</span>
+                        <input
+                            id="wasm-upload-input"
+                            type="file"
+                            accept=".wasm"
+                            onChange={e => handleFileValidation(e.target.files?.[0] ?? null)}
+                        />
                     </div>
-                )}
-            </div>
+
+                    {wasmValidationErr && (
+                        <span className="field-error"><AlertTriangle size={14} />{wasmValidationErr}</span>
+                    )}
+
+                    {wasmFile && !wasmValidationErr && (
+                        <div className="st-file">
+                            <span className="mark-box mark-box-success"><CheckCircle /></span>
+                            <strong className="st-file-name">{wasmFile.name}</strong>
+                            <span className="tag tag-success">Verified {wasmFormatInfo || '.wasm'}</span>
+                            <span className="spacer" />
+                            <span className="mono small">{(wasmFile.size / 1024).toFixed(1)} KB</span>
+                        </div>
+                    )}
+                </div>
+            </section>
 
             {publishError && (
-                <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                        <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
-                        <div>
-                            <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
-                                {publishError.toLowerCase().includes('2fa') || publishError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Publish Failed'}
-                            </strong>
-                            <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{publishError}</span>
-                        </div>
-                    </div>
-                    {(publishError.toLowerCase().includes('2fa') || publishError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                <div className="notice notice-danger">
+                    <span className="mark-box mark-box-danger"><Lock /></span>
+                    <p className="notice-text">
+                        <strong>{twoFaError ? 'Two-Factor Authentication Required' : 'Publish Failed'}</strong>
+                        <span className="ledger-sub">{publishError}</span>
+                    </p>
+                    {(twoFaError || !user?.totp_enabled) && (
                         <button
                             type="button"
-                            className="mp-btn mp-btn-primary"
-                            style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            className="button button-sm"
                             onClick={() => navigate('/settings?tab=security')}
                         >
-                            <ShieldCheck size={16} /> Enable 2FA →
+                            <ShieldCheck /> Enable 2FA →
                         </button>
                     )}
                 </div>
             )}
 
-            <div style={{display:'flex', justifyContent:'flex-end', gap:'0.75rem'}}>
+            <div className="row">
+                <span className="spacer" />
                 <button
-                    className="mp-btn mp-btn-primary"
+                    className="button button-primary"
                     onClick={handlePublish}
                     disabled={!wasmFile || uploading || validatingWasm}
+                    aria-busy={uploading}
                 >
-                    <Send size={15} />
+                    <Send />
                     {uploading ? 'Publishing…' : 'Publish Update'}
                 </button>
             </div>

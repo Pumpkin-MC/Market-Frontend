@@ -1,16 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Globe, ImageIcon, Plus, Save, Search, X, AlertTriangle, CheckCircle, ShieldCheck, Lock, Terminal, Trash2 } from 'lucide-react';
+import { Check, CircleAlert, ImageIcon, Plus, Save, Search, X, ShieldCheck, Lock, Trash2 } from 'lucide-react';
 import api from '../../../lib/api';
-import { useAuth } from '../../../app/App';
+import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 import { validateAndSanitizeImage } from '../../../lib/fileValidation';
+import { Select } from '../../../components/Select';
+import '../../../styles/studio.css';
 
 const PLUGIN_CATEGORIES = [
     "Admin Tools","Economy","Fun","World Management","Utilities","Chat","Other"
 ];
 
-// ── Full locale list via Intl.DisplayNames (no npm package needed) ──────────
 const DISPLAY_NAMES = new Intl.DisplayNames(['en'], { type: 'language' });
 
 const ALL_LOCALES: { code: string; name: string }[] = [
@@ -42,7 +43,6 @@ const ALL_LOCALES: { code: string; name: string }[] = [
 
 const DEFAULT_LOCALE = 'en-US';
 
-// ── Language Picker Dropdown ─────────────────────────────────────────────────
 type PickerProps = {
     usedCodes: string[];
     onAdd: (code: string) => void;
@@ -70,64 +70,28 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
     );
 
     return (
-        <div ref={ref} style={{
-            position: 'absolute', top: 'calc(100% + 6px)', left: 0, zIndex: 100,
-            background: 'var(--mp-surface)', border: '1px solid var(--mp-border)',
-            borderRadius: 'var(--mp-radius)', width: 260,
-            boxShadow: '0 12px 40px rgba(0,0,0,0.5)',
-            overflow: 'hidden',
-        }}>
-            {/* Search */}
-            <div style={{
-                display: 'flex', alignItems: 'center', gap: '0.5rem',
-                padding: '0.6rem 0.75rem',
-                borderBottom: '1px solid var(--mp-border)',
-                background: 'var(--mp-surface-2)',
-            }}>
-                <Search size={13} color="var(--mp-text-3)" style={{flexShrink:0}} />
+        <div ref={ref} className="st-listing-picker">
+            <label className="search">
+                <Search />
                 <input
                     ref={inputRef}
+                    className="input"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Search language…"
-                    style={{
-                        background: 'none', border: 'none', outline: 'none',
-                        color: 'var(--mp-text)', fontFamily: 'var(--font-display)',
-                        fontSize: '0.82rem', width: '100%',
-                    }}
                 />
-            </div>
-
-            {/* List */}
-            <div style={{ maxHeight: 260, overflowY: 'auto' }}>
+            </label>
+            <div className="st-listing-picker-list">
                 {filtered.length === 0 ? (
-                    <div style={{
-                        padding: '1.5rem', textAlign: 'center',
-                        fontSize: '0.8rem', color: 'var(--mp-text-3)',
-                    }}>
-                        No languages found
-                    </div>
+                    <p className="small st-listing-picker-empty">No languages found</p>
                 ) : filtered.map(l => (
                     <button
                         key={l.code}
                         type="button"
                         onClick={() => { onAdd(l.code); onClose(); }}
-                        style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            width: '100%', background: 'none', border: 'none',
-                            padding: '0.5rem 0.85rem', cursor: 'pointer',
-                            color: 'var(--mp-text-2)', fontFamily: 'var(--font-display)',
-                            fontSize: '0.82rem', textAlign: 'left', gap: '0.5rem',
-                            transition: 'background 0.1s',
-                        }}
-                        onMouseEnter={e => (e.currentTarget.style.background = 'var(--mp-surface-2)')}
-                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                     >
                         <span>{l.name}</span>
-                        <span style={{
-                            fontFamily: 'var(--font-mono)', fontSize: '0.7rem',
-                            color: 'var(--mp-text-3)', flexShrink: 0,
-                        }}>{l.code}</span>
+                        <span className="mono muted">{l.code}</span>
                     </button>
                 ))}
             </div>
@@ -135,7 +99,6 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
     );
 };
 
-// ── Main Component ────────────────────────────────────────────────────────────
 type Props = { plugin: PluginData; onSaved: () => void };
 
 const StoreListing = ({ plugin, onSaved }: Props) => {
@@ -153,7 +116,6 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
             try { parsed = JSON.parse(plugin.translated_descriptions || '{}'); } catch { /* ignore */ }
         }
 
-        // Normalize: if a value is a nested object (old format), extract its 'description' string.
         const flat: Record<string, string> = {};
         for (const [k, v] of Object.entries(parsed)) {
             if (typeof v === 'string') {
@@ -163,7 +125,6 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
             }
         }
 
-        // Ensure the default locale always exists.
         if (!flat[DEFAULT_LOCALE]) {
             flat[DEFAULT_LOCALE] = flat['en-GB'] ?? flat['en'] ?? '';
         }
@@ -186,7 +147,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     };
 
     const removeLanguage = (code: string) => {
-        if (code === DEFAULT_LOCALE) return; // guard
+        if (code === DEFAULT_LOCALE) return;
         setDescriptions(prev => {
             const next = { ...prev };
             delete next[code];
@@ -406,466 +367,350 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
         }
     };
 
+    const needs2fa = (msg: string) => msg.toLowerCase().includes('2fa') || msg.toLowerCase().includes('two-factor');
+
     return (
-        <div>
-            <div className="mp-tab-header">
-                <h2>Store Listing</h2>
-                <p>Manage what users see on your plugin's store page — name, description, screenshots, and discoverability.</p>
-            </div>
+        <div className="st-tab">
+            <header className="st-tab-head">
+                <h2 className="h1">Store Listing</h2>
+                <p className="small">Manage what users see on your plugin's store page — name, description, screenshots, and discoverability.</p>
+            </header>
 
-            <form onSubmit={handleSave}>
-                {/* ── General Details ── */}
-                <div className="mp-card">
-                    <div className="mp-card-title"><Globe size={14} />General Details</div>
-
-                    <div className="mp-form-group">
-                        <label className="mp-label">Plugin Icon</label>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', marginTop: '0.25rem' }}>
-                            <div style={{
-                                width: '72px',
-                                height: '72px',
-                                borderRadius: '12px',
-                                border: '1px solid var(--mp-border)',
-                                background: iconPreview ? `url(${iconPreview}) center/cover no-repeat` : 'var(--mp-surface-2)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '1.5rem',
-                                fontWeight: 800,
-                                color: 'var(--mp-text-2)',
-                                flexShrink: 0
-                            }}>
-                                {!iconPreview && name.charAt(0).toUpperCase()}
+            <form className="st-tab" onSubmit={handleSave}>
+                <section className="panel">
+                    <div className="panel-head"><h3 className="h3">General Details</h3></div>
+                    <div className="panel-body stack">
+                        <div className="field">
+                            <span className="field-label">Plugin Icon</span>
+                            <div className="row">
+                                <span className="avatar avatar-ghost st-listing-icon">
+                                    {iconPreview ? <img src={iconPreview} alt="" /> : name.charAt(0).toUpperCase()}
+                                </span>
+                                <div className="stack st-listing-icon-meta">
+                                    <label className="button button-sm" aria-disabled={processingImage || undefined}>
+                                        <ImageIcon />
+                                        {processingImage ? 'Validating & Sanitizing…' : 'Change Icon'}
+                                        <input
+                                            id="icon-upload-input"
+                                            type="file"
+                                            accept="image/png,image/jpeg,image/webp"
+                                            onChange={handleIconChange}
+                                            hidden
+                                            disabled={processingImage}
+                                        />
+                                    </label>
+                                    <span className="field-hint">Square image recommended (PNG, JPEG, WebP). Max 2MB. Validated on selection.</span>
+                                </div>
                             </div>
-                            <div>
-                                <label htmlFor="icon-upload-input" className="mp-btn mp-btn-secondary" style={{ cursor: processingImage ? 'wait' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', fontSize: '0.82rem', opacity: processingImage ? 0.7 : 1 }}>
-                                    <ImageIcon size={14} />
-                                    {processingImage ? 'Validating & Sanitizing…' : 'Change Icon'}
-                                </label>
-                                <input
-                                    id="icon-upload-input"
-                                    type="file"
-                                    accept="image/png,image/jpeg,image/webp"
-                                    onChange={handleIconChange}
-                                    style={{ display: 'none' }}
-                                    disabled={processingImage}
-                                />
-                                <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.74rem', color: 'var(--mp-text-3)' }}>
-                                    Square image recommended (PNG, JPEG, WebP). Max 2MB. Validated on selection.
-                                </p>
-                            </div>
+                            {iconValidationErr && (
+                                <span className="field-error"><CircleAlert size={14} />{iconValidationErr}</span>
+                            )}
                         </div>
-                        {iconValidationErr && (
-                            <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
-                                <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{iconValidationErr}</span>
-                            </div>
-                        )}
-                    </div>
 
-                    <div className="mp-form-group">
-                        <label className="mp-label" htmlFor="listingPluginName">Plugin Name</label>
-                        <input
-                            id="listingPluginName"
-                            name="pluginName"
-                            className="mp-input"
-                            type="text"
-                            value={name}
-                            onChange={e => setName(e.target.value)}
-                            autoComplete="off"
-                            required
-                        />
-                    </div>
-
-                    <div className="mp-form-row">
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="listingPluginCategory">Category</label>
-                            <select id="listingPluginCategory" name="category" className="mp-select" value={category} onChange={e => setCategory(e.target.value)}>
-                                {PLUGIN_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                            </select>
-                        </div>
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="listingPluginSourceLink">Source Link</label>
-                            <input
-                                id="listingPluginSourceLink"
-                                name="sourceLink"
-                                className="mp-input"
-                                type="url"
-                                value={sourceLink}
-                                onChange={e => setSourceLink(e.target.value)}
-                                placeholder="https://github.com/you/plugin"
-                                autoComplete="url"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mp-form-row">
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="listingPluginKeywords">
-                                Keywords <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(comma-separated)</span>
+                        <div className="fields st-cols-2">
+                            <label className="field st-span">
+                                <span className="field-label">Plugin Name</span>
+                                <span className="control">
+                                    <input
+                                        id="listingPluginName"
+                                        name="pluginName"
+                                        className="input"
+                                        type="text"
+                                        value={name}
+                                        onChange={e => setName(e.target.value)}
+                                        autoComplete="off"
+                                        required
+                                    />
+                                </span>
                             </label>
-                            <input
-                                id="listingPluginKeywords"
-                                name="keywords"
-                                className="mp-input"
-                                type="text"
-                                value={keywords}
-                                onChange={e => setKeywords(e.target.value)}
-                                placeholder="economy, shop, currency"
-                                autoComplete="off"
-                            />
-                        </div>
-                        <div className="mp-form-group">
-                            <label className="mp-label" htmlFor="listingPluginYoutubeUrl">
-                                YouTube Video URL <span style={{color:'var(--mp-text-3)',fontWeight:400}}>(optional)</span>
-                            </label>
-                            <input
-                                id="listingPluginYoutubeUrl"
-                                name="youtubeVideoUrl"
-                                className="mp-input"
-                                type="url"
-                                value={youtubeVideoUrl}
-                                onChange={e => setYoutubeVideoUrl(e.target.value)}
-                                placeholder="https://www.youtube.com/watch?v=..."
-                                autoComplete="url"
-                            />
-                        </div>
-                    </div>
 
-                    <div className="mp-form-group">
-                        <label className="mp-checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', userSelect: 'none', marginTop: '0.5rem' }}>
+                            <div className="field">
+                                <span className="field-label" id="listingPluginCategory">Category</span>
+                                <Select options={PLUGIN_CATEGORIES} value={category} onChange={setCategory} aria-labelledby="listingPluginCategory" />
+                            </div>
+
+                            <label className="field">
+                                <span className="field-label">Source Link</span>
+                                <span className="control">
+                                    <input
+                                        id="listingPluginSourceLink"
+                                        name="sourceLink"
+                                        className="input"
+                                        type="url"
+                                        value={sourceLink}
+                                        onChange={e => setSourceLink(e.target.value)}
+                                        placeholder="https://github.com/you/plugin"
+                                        autoComplete="url"
+                                    />
+                                </span>
+                            </label>
+
+                            <label className="field">
+                                <span className="field-label">Keywords <em>(comma-separated)</em></span>
+                                <span className="control">
+                                    <input
+                                        id="listingPluginKeywords"
+                                        name="keywords"
+                                        className="input"
+                                        type="text"
+                                        value={keywords}
+                                        onChange={e => setKeywords(e.target.value)}
+                                        placeholder="economy, shop, currency"
+                                        autoComplete="off"
+                                    />
+                                </span>
+                            </label>
+
+                            <label className="field">
+                                <span className="field-label">YouTube Video URL <em>(optional)</em></span>
+                                <span className="control">
+                                    <input
+                                        id="listingPluginYoutubeUrl"
+                                        name="youtubeVideoUrl"
+                                        className="input"
+                                        type="url"
+                                        value={youtubeVideoUrl}
+                                        onChange={e => setYoutubeVideoUrl(e.target.value)}
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                        autoComplete="url"
+                                    />
+                                </span>
+                            </label>
+                        </div>
+
+                        <label className="choice">
                             <input
                                 id="listingPluginEarlyAccess"
                                 name="earlyAccess"
                                 type="checkbox"
+                                className="check"
                                 checked={isEarlyAccess}
                                 onChange={e => setIsEarlyAccess(e.target.checked)}
-                                style={{ width: '18px', height: '18px', cursor: 'pointer' }}
                             />
-                            <div>
-                                <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--mp-text)' }}>Early Access</div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--mp-text-3)', fontWeight: 400 }}>Flag this plugin as incomplete or in active development.</div>
-                            </div>
+                            <span>Early Access<span className="small">Flag this plugin as incomplete or in active development.</span></span>
                         </label>
                     </div>
-                </div>
+                </section>
 
-                {/* ── Descriptions ── */}
-                <div className="mp-card">
-                    <div className="mp-card-title"><Globe size={14} />Descriptions</div>
-
-                    {/* Tab bar */}
-                    <div style={{display:'flex', alignItems:'center', gap:'4px', flexWrap:'wrap', marginBottom:'0.75rem'}}>
-                        {usedCodes.map(code => (
-                            <div
-                                key={code}
-                                className={`mp-lang-tab ${activeLocale === code ? 'active' : ''}`}
-                                style={{display:'flex', alignItems:'center', gap:'0.3rem', paddingRight: code === DEFAULT_LOCALE ? undefined : '0.3rem'}}
-                            >
-                                <button
-                                    type="button"
-                                    style={{
-                                        background:'none', border:'none', cursor:'pointer',
-                                        color:'inherit', fontFamily:'var(--font-display)',
-                                        fontSize:'0.75rem', fontWeight:500, padding:0,
-                                        display:'flex', alignItems:'center', gap:'0.3rem',
-                                    }}
-                                    onClick={() => setActiveLocale(code)}
-                                >
-                                    {getLocaleName(code)}
-                                    {code === DEFAULT_LOCALE && (
-                                        <span style={{
-                                            fontSize:'0.6rem', fontWeight:700,
-                                            background:'rgba(79,126,255,0.2)',
-                                            color:'var(--mp-accent)',
-                                            padding:'0.05rem 0.3rem', borderRadius:3,
-                                            letterSpacing:'0.05em', textTransform:'uppercase',
-                                        }}>default</span>
-                                    )}
-                                </button>
-
-                                {/* Remove button — only for non-default locales */}
-                                {code !== DEFAULT_LOCALE && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeLanguage(code)}
-                                        title={`Remove ${getLocaleName(code)}`}
-                                        style={{
-                                            background:'none', border:'none', cursor:'pointer',
-                                            color:'var(--mp-text-3)', padding:0, lineHeight:1,
-                                            display:'flex', alignItems:'center',
-                                            transition:'color 0.15s',
-                                        }}
-                                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--mp-error)')}
-                                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--mp-text-3)')}
-                                    >
-                                        <X size={11} />
+                <section className="panel">
+                    <div className="panel-head"><h3 className="h3">Descriptions</h3></div>
+                    <div className="panel-body stack">
+                        <div className="st-listing-langs">
+                            {usedCodes.map(code => (
+                                <span key={code} className="st-listing-lang" data-active={activeLocale === code || undefined}>
+                                    <button type="button" onClick={() => setActiveLocale(code)}>
+                                        {getLocaleName(code)}
+                                        {code === DEFAULT_LOCALE && <span className="st-listing-default">default</span>}
                                     </button>
-                                )}
-                            </div>
-                        ))}
-
-                        {/* Add language button */}
-                        <div style={{position:'relative'}}>
-                            <button
-                                type="button"
-                                className="mp-lang-tab"
-                                onClick={() => setPickerOpen(v => !v)}
-                                style={{display:'flex', alignItems:'center', gap:'0.3rem'}}
-                            >
-                                <Plus size={11} />
-                                Add language
-                            </button>
-                            {pickerOpen && (
-                                <LangPicker
-                                    usedCodes={usedCodes}
-                                    onAdd={addLanguage}
-                                    onClose={() => setPickerOpen(false)}
-                                />
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Textarea for active locale */}
-                    <textarea
-                        className="mp-textarea"
-                        rows={8}
-                        value={descriptions[activeLocale] ?? ''}
-                        onChange={e => setDescriptions(prev => ({ ...prev, [activeLocale]: e.target.value }))}
-                        placeholder={`Write your plugin description in ${getLocaleName(activeLocale)}…`}
-                    />
-                    <p style={{marginTop:'0.5rem', fontSize:'0.74rem', color:'var(--mp-text-3)'}}>
-                        Editing: <span style={{fontFamily:'var(--font-mono)', color:'var(--mp-text-2)'}}>{activeLocale}</span>
-                        {activeLocale === DEFAULT_LOCALE && ' · This is the default language shown when no translation is available.'}
-                    </p>
-                </div>
-
-                {/* ── Commands ── */}
-                <div className="mp-card">
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-                        <div className="mp-card-title" style={{ margin: 0 }}>
-                            <Terminal size={14} />Commands
-                        </div>
-                        <button
-                            type="button"
-                            className="mp-btn mp-btn-secondary"
-                            onClick={addCommand}
-                            style={{ fontSize: '0.78rem', padding: '0.35rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                        >
-                            <Plus size={13} /> Add Command
-                        </button>
-                    </div>
-
-                    <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', marginBottom: '1rem', lineHeight: 1.4 }}>
-                        List commands registered by your plugin along with their permissions and descriptions. Descriptions are localized to the currently selected language tab (<span style={{ fontFamily: 'var(--font-mono)', color: 'var(--mp-text-2)' }}>{getLocaleName(activeLocale)}</span>).
-                    </p>
-
-                    {commands.length === 0 ? (
-                        <div style={{
-                            padding: '1.75rem 1rem',
-                            textAlign: 'center',
-                            background: 'var(--mp-surface-2)',
-                            borderRadius: 'var(--mp-radius-sm)',
-                            border: '1px dashed var(--mp-border)',
-                            color: 'var(--mp-text-3)',
-                            fontSize: '0.82rem'
-                        }}>
-                            No commands added yet. Click <strong>"Add Command"</strong> above to register commands.
-                        </div>
-                    ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                            {commands.map((cmd, idx) => (
-                                <div
-                                    key={idx}
-                                    style={{
-                                        background: 'var(--mp-surface-2)',
-                                        border: '1px solid var(--mp-border)',
-                                        borderRadius: 'var(--mp-radius-sm)',
-                                        padding: '0.85rem 1rem',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: '0.65rem'
-                                    }}
-                                >
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.75rem', alignItems: 'flex-start' }}>
-                                        <div>
-                                            <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
-                                                Command <span style={{ color: 'var(--mp-error)' }}>*</span>
-                                            </label>
-                                            <input
-                                                className="mp-input"
-                                                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                                placeholder="spawn [player]"
-                                                value={cmd.name}
-                                                maxLength={64}
-                                                onChange={e => updateCommandField(idx, 'name', e.target.value)}
-                                                required
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
-                                                Aliases <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional, comma-separated)</span>
-                                            </label>
-                                            <input
-                                                className="mp-input"
-                                                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                                placeholder="hub, lobby, s"
-                                                value={cmd.aliases}
-                                                maxLength={128}
-                                                onChange={e => updateCommandField(idx, 'aliases', e.target.value)}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="mp-label" style={{ fontSize: '0.72rem', marginBottom: '0.25rem' }}>
-                                                Permission Node <span style={{ color: 'var(--mp-text-3)', fontWeight: 400 }}>(optional)</span>
-                                            </label>
-                                            <input
-                                                className="mp-input"
-                                                style={{ fontFamily: 'var(--font-mono)', fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                                placeholder="pumpkin.command.spawn"
-                                                value={cmd.permission}
-                                                maxLength={128}
-                                                onChange={e => updateCommandField(idx, 'permission', e.target.value)}
-                                            />
-                                        </div>
+                                    {code !== DEFAULT_LOCALE && (
                                         <button
                                             type="button"
+                                            className="st-listing-lang-x"
+                                            onClick={() => removeLanguage(code)}
+                                            title={`Remove ${getLocaleName(code)}`}
+                                            aria-label={`Remove ${getLocaleName(code)}`}
+                                        >
+                                            <X />
+                                        </button>
+                                    )}
+                                </span>
+                            ))}
+
+                            <span className="st-listing-add">
+                                <button
+                                    type="button"
+                                    className="button button-flat button-sm"
+                                    onClick={() => setPickerOpen(v => !v)}
+                                >
+                                    <Plus />
+                                    Add language
+                                </button>
+                                {pickerOpen && (
+                                    <LangPicker
+                                        usedCodes={usedCodes}
+                                        onAdd={addLanguage}
+                                        onClose={() => setPickerOpen(false)}
+                                    />
+                                )}
+                            </span>
+                        </div>
+
+                        <div className="field">
+                            <span className="control">
+                                <textarea
+                                    className="input"
+                                    rows={8}
+                                    value={descriptions[activeLocale] ?? ''}
+                                    onChange={e => setDescriptions(prev => ({ ...prev, [activeLocale]: e.target.value }))}
+                                    placeholder={`Write your plugin description in ${getLocaleName(activeLocale)}…`}
+                                    aria-label={`Description (${getLocaleName(activeLocale)})`}
+                                />
+                            </span>
+                            <span className="field-hint">
+                                Editing: <span className="mono label-fg">{activeLocale}</span>
+                                {activeLocale === DEFAULT_LOCALE && ' · This is the default language shown when no translation is available.'}
+                            </span>
+                        </div>
+                    </div>
+                </section>
+
+                <section className="panel">
+                    <div className="panel-head">
+                        <h3 className="h3">Commands</h3>
+                        <span className="spacer" />
+                        <button type="button" className="button button-sm" onClick={addCommand}>
+                            <Plus />Add Command
+                        </button>
+                    </div>
+                    <div className="panel-body stack">
+                        <p className="small">
+                            List commands registered by your plugin along with their permissions and descriptions. Descriptions are localized to the currently selected language tab (<span className="mono label-fg">{getLocaleName(activeLocale)}</span>).
+                        </p>
+
+                        {commands.length === 0 ? (
+                            <div className="blank st-listing-blank">
+                                <p className="small">No commands added yet. Click <strong>"Add Command"</strong> above to register commands.</p>
+                            </div>
+                        ) : (
+                            commands.map((cmd, idx) => (
+                                <div key={idx} className="st-listing-cmd">
+                                    <div className="st-listing-cmd-grid">
+                                        <label className="field">
+                                            <span className="field-label">Command <em>*</em></span>
+                                            <span className="control">
+                                                <input
+                                                    className="input mono"
+                                                    placeholder="spawn [player]"
+                                                    value={cmd.name}
+                                                    maxLength={64}
+                                                    onChange={e => updateCommandField(idx, 'name', e.target.value)}
+                                                    required
+                                                />
+                                            </span>
+                                        </label>
+                                        <label className="field">
+                                            <span className="field-label">Aliases <em>(optional, comma-separated)</em></span>
+                                            <span className="control">
+                                                <input
+                                                    className="input mono"
+                                                    placeholder="hub, lobby, s"
+                                                    value={cmd.aliases}
+                                                    maxLength={128}
+                                                    onChange={e => updateCommandField(idx, 'aliases', e.target.value)}
+                                                />
+                                            </span>
+                                        </label>
+                                        <label className="field">
+                                            <span className="field-label">Permission Node <em>(optional)</em></span>
+                                            <span className="control">
+                                                <input
+                                                    className="input mono"
+                                                    placeholder="pumpkin.command.spawn"
+                                                    value={cmd.permission}
+                                                    maxLength={128}
+                                                    onChange={e => updateCommandField(idx, 'permission', e.target.value)}
+                                                />
+                                            </span>
+                                        </label>
+                                        <button
+                                            type="button"
+                                            className="button button-danger button-icon st-listing-cmd-del"
                                             onClick={() => removeCommand(idx)}
                                             title="Remove Command"
-                                            style={{
-                                                alignSelf: 'flex-end',
-                                                marginBottom: '2px',
-                                                background: 'rgba(242, 65, 90, 0.1)',
-                                                border: '1px solid rgba(242, 65, 90, 0.25)',
-                                                borderRadius: '6px',
-                                                color: 'var(--mp-error)',
-                                                padding: '0.48rem 0.6rem',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                transition: 'background 0.15s',
-                                            }}
-                                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.2)')}
-                                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(242, 65, 90, 0.1)')}
+                                            aria-label="Remove Command"
                                         >
-                                            <Trash2 size={15} />
+                                            <Trash2 />
                                         </button>
                                     </div>
 
-                                    <div>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
-                                            <label className="mp-label" style={{ fontSize: '0.72rem', margin: 0 }}>
-                                                Description ({getLocaleName(activeLocale)})
-                                            </label>
-                                            <span style={{ fontSize: '0.68rem', color: 'var(--mp-text-3)' }}>
-                                                {activeLocale !== DEFAULT_LOCALE && !cmd.descriptions[activeLocale] ? (
-                                                    <span>Falls back to: <em style={{ color: 'var(--mp-text-2)' }}>{cmd.descriptions[DEFAULT_LOCALE] || 'English default'}</em></span>
-                                                ) : null}
-                                            </span>
-                                        </div>
-                                        <input
-                                            className="mp-input"
-                                            style={{ fontSize: '0.82rem', padding: '0.45rem 0.65rem' }}
-                                            placeholder={`What does this command do? (${getLocaleName(activeLocale)})`}
-                                            value={cmd.descriptions[activeLocale] ?? ''}
-                                            onChange={e => updateCommandDescription(idx, activeLocale, e.target.value)}
-                                        />
-                                    </div>
+                                    <label className="field">
+                                        <span className="field-label">Description ({getLocaleName(activeLocale)})</span>
+                                        <span className="control">
+                                            <input
+                                                className="input"
+                                                placeholder={`What does this command do? (${getLocaleName(activeLocale)})`}
+                                                value={cmd.descriptions[activeLocale] ?? ''}
+                                                onChange={e => updateCommandDescription(idx, activeLocale, e.target.value)}
+                                            />
+                                        </span>
+                                        {activeLocale !== DEFAULT_LOCALE && !cmd.descriptions[activeLocale] && (
+                                            <span className="field-hint">Falls back to: <em>{cmd.descriptions[DEFAULT_LOCALE] || 'English default'}</em></span>
+                                        )}
+                                    </label>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                            ))
+                        )}
+                    </div>
+                </section>
 
                 {saveError && (
-                    <div className="mp-banner error" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginBottom: '1.25rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                            <Lock size={22} color="#ef4444" style={{ flexShrink: 0 }} />
-                            <div>
-                                <strong style={{ color: '#ef4444', display: 'block', fontSize: '0.92rem' }}>
-                                    {saveError.toLowerCase().includes('2fa') || saveError.toLowerCase().includes('two-factor') ? 'Two-Factor Authentication Required' : 'Save Error'}
-                                </strong>
-                                <span style={{ fontSize: '0.83rem', color: 'var(--mp-text-2)' }}>{saveError}</span>
-                            </div>
-                        </div>
-                        {(saveError.toLowerCase().includes('2fa') || saveError.toLowerCase().includes('two-factor') || !user?.totp_enabled) && (
+                    <div className="notice notice-danger">
+                        <span className="mark-box mark-box-danger"><Lock /></span>
+                        <p className="notice-text">
+                            <strong>{needs2fa(saveError) ? 'Two-Factor Authentication Required' : 'Save Error'}</strong> {saveError}
+                        </p>
+                        {(needs2fa(saveError) || !user?.totp_enabled) && (
                             <button
                                 type="button"
-                                className="mp-btn mp-btn-primary"
-                                style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                className="button button-primary button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck size={16} /> Enable 2FA →
+                                <ShieldCheck /> Enable 2FA →
                             </button>
                         )}
                     </div>
                 )}
 
                 {saveSuccess && (
-                    <div className="mp-banner success" style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '1rem', marginBottom: '1.25rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '10px' }}>
-                        <CheckCircle size={20} color="#10b981" />
-                        <span style={{ fontSize: '0.85rem', color: '#10b981', fontWeight: 600 }}>Listing details saved successfully!</span>
+                    <div className="notice notice-success">
+                        <span className="mark-box mark-box-success"><Check /></span>
+                        <p className="notice-text"><strong>Listing details saved successfully!</strong></p>
                     </div>
                 )}
 
-                <div style={{display:'flex', justifyContent:'flex-end'}}>
-                    <button type="submit" className="mp-btn mp-btn-primary" disabled={saving}>
-                        <Save size={15} />
+                <div className="row">
+                    <span className="spacer" />
+                    <button type="submit" className="button button-primary" disabled={saving}>
+                        <Save />
                         {saving ? 'Saving…' : 'Save Listing'}
                     </button>
                 </div>
             </form>
 
-            <div className="mp-divider" />
-
-            {/* ── Screenshots ── */}
-            <div className="mp-card">
-                <div className="mp-card-title">
-                    <ImageIcon size={14} />Screenshots
-                    <span style={{ color: 'var(--mp-text-3)', fontWeight: 400, textTransform: 'none', letterSpacing: 0, marginLeft: 4 }}>(optional)</span>
+            <section className="panel">
+                <div className="panel-head">
+                    <h3 className="h3">Screenshots</h3>
+                    <span className="small">(optional)</span>
                 </div>
-                <p style={{ fontSize: '0.78rem', color: 'var(--mp-text-3)', margin: '-0.3rem 0 0.85rem 0' }}>
-                    Optional. You can also embed images and GIFs directly into your Markdown description.
-                </p>
-                <div className="mp-screenshots">
-                    {screenshots.map(s => (
-                        <div key={s.id} className="mp-screenshot-item">
-                            <img src={s.path} alt="screenshot" />
-                            <button className="mp-screenshot-del" type="button"
-                                onClick={() => deleteScreenshot(s.id)}>×</button>
-                        </div>
-                    ))}
+                <div className="panel-body stack">
+                    <p className="small">Optional. You can also embed images and GIFs directly into your Markdown description.</p>
+                    <div className="st-listing-shots">
+                        {screenshots.map(s => (
+                            <div key={s.id} className="st-listing-shot">
+                                <img className="st-thumb" src={s.path} alt="screenshot" />
+                                <button
+                                    className="button button-danger button-sm button-icon"
+                                    type="button"
+                                    aria-label="Delete screenshot"
+                                    onClick={() => deleteScreenshot(s.id)}
+                                >
+                                    <X />
+                                </button>
+                            </div>
+                        ))}
 
-                    <label
-                        htmlFor="screenshot-upload"
-                        style={{
-                            aspectRatio:'16/9', border:'2px dashed var(--mp-border-2)',
-                            borderRadius:'var(--mp-radius-sm)', display:'flex',
-                            flexDirection:'column', alignItems:'center', justifyContent:'center',
-                            gap:'0.35rem', cursor:'pointer', color:'var(--mp-text-3)',
-                            fontSize:'0.75rem', transition:'border-color 0.15s, color 0.15s',
-                            background:'var(--mp-surface-2)',
-                        }}
-                        onMouseEnter={e => { e.currentTarget.style.borderColor='var(--mp-accent)'; e.currentTarget.style.color='var(--mp-accent)'; }}
-                        onMouseLeave={e => { e.currentTarget.style.borderColor='var(--mp-border-2)'; e.currentTarget.style.color='var(--mp-text-3)'; }}
-                    >
-                        <Plus size={18} />
-                        Add
-                    </label>
-                    <input id="screenshot-upload" type="file" accept="image/*" multiple
-                        style={{display:'none'}} onChange={handleScreenshotUpload} />
-                </div>
-                {screenshotValidationErr && (
-                    <div className="mp-banner error" style={{ marginTop: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <AlertTriangle size={15} color="var(--mp-error)" style={{ flexShrink: 0 }} />
-                        <span style={{ fontSize: '0.8rem', color: 'var(--mp-error)' }}>{screenshotValidationErr}</span>
+                        <label className="st-drop st-listing-shot-add">
+                            <Plus />
+                            <span className="label label-fg">Add</span>
+                            <input id="screenshot-upload" type="file" accept="image/*" multiple onChange={handleScreenshotUpload} />
+                        </label>
                     </div>
-                )}
-                <p style={{marginTop:'0.75rem', fontSize:'0.76rem', color:'var(--mp-text-3)'}}>
-                    Recommended: 16:9 aspect ratio, min 1280×720px. PNG, JPEG, or WebP. Validated on selection.
-                </p>
-            </div>
+                    {screenshotValidationErr && (
+                        <span className="field-error"><CircleAlert size={14} />{screenshotValidationErr}</span>
+                    )}
+                    <span className="field-hint">Recommended: 16:9 aspect ratio, min 1280×720px. PNG, JPEG, or WebP. Validated on selection.</span>
+                </div>
+            </section>
         </div>
     );
 };

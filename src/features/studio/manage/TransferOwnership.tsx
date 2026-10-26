@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightLeft, AlertTriangle, CheckCircle, Lock, ShieldAlert, ShieldCheck, Clock, XCircle, UserCheck } from 'lucide-react';
 import api from '../../../lib/api';
-import { useAuth } from '../../../app/App';
+import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 
 type Props = { plugin: PluginData };
@@ -98,167 +98,134 @@ const TransferOwnership = ({ plugin }: Props) => {
     };
 
     return (
-        <div>
-            <div className="mp-tab-header">
-                <h2>Transfer Ownership</h2>
-                <p>Transfer this plugin to another developer on Pumpkin Market. The recipient must review and accept the request before ownership is transferred.</p>
-            </div>
+        <div className="st-tab">
+            <header className="st-tab-head">
+                <h2 className="h1">Transfer Ownership</h2>
+                <p className="small">Transfer this plugin to another developer on Pumpkin Market. The recipient must review and accept the request before ownership is transferred.</p>
+            </header>
 
-            {/* Current Status Card */}
+            {error && (
+                <span className="field-error"><AlertTriangle size={14} />{error}</span>
+            )}
+
+            {success && (
+                <span className="status st-pos"><span className="mark-box mark-box-success"><CheckCircle /></span>{success}</span>
+            )}
+
             {loading ? (
-                <div className="mp-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--mp-text-3)' }}>
-                    Loading transfer status…
-                </div>
+                <span className="row small"><span className="loading" />Loading transfer status…</span>
             ) : pendingTransfer ? (
-                <div className="mp-card" style={{ borderColor: 'rgba(249, 115, 22, 0.3)', background: 'rgba(249, 115, 22, 0.04)' }}>
-                    <div className="mp-card-title" style={{ color: '#f97316' }}>
-                        <Clock size={16} /> Pending Ownership Transfer
+                <section className="panel panel-pumpkin">
+                    <div className="panel-head">
+                        <Clock size={16} className="pumpkin" />
+                        <h3 className="h3">Pending Ownership Transfer</h3>
                     </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem', padding: '1.25rem', background: 'var(--mp-surface-2)', borderRadius: '10px', border: '1px solid var(--mp-border)' }}>
-                        <div style={{
-                            width: 44, height: 44, borderRadius: '50%', background: 'rgba(249, 115, 22, 0.15)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f97316', flexShrink: 0
-                        }}>
-                            <ArrowRightLeft size={20} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                <span style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--mp-text)' }}>
-                                    Pending transfer to <span style={{ color: 'var(--mp-accent)' }}>@{pendingTransfer.recipient_name}</span>
-                                </span>
-                                <span className="dev-plugins-badge" style={{ background: 'rgba(249, 115, 22, 0.15)', color: '#f97316', border: '1px solid rgba(249, 115, 22, 0.3)', textTransform: 'capitalize' }}>
-                                    {pendingTransfer.status}
-                                </span>
-                            </div>
-                            <p style={{ margin: '0.35rem 0 0 0', fontSize: '0.82rem', color: 'var(--mp-text-2)', lineHeight: 1.5 }}>
+                    <div className="panel-body st-tr-pending">
+                        <span className="avatar"><ArrowRightLeft size={18} /></span>
+                        <div className="stack st-tight">
+                            <span className="row st-tight">
+                                <strong>Pending transfer to <span className="pumpkin">@{pendingTransfer.recipient_name}</span></strong>
+                                <span className="tag tag-pumpkin">{pendingTransfer.status}</span>
+                            </span>
+                            <p className="small">
                                 The recipient has been invited to take over <strong>{plugin.name}</strong>. Ownership and management permissions remain with you until they accept.
                             </p>
                         </div>
                     </div>
-
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
+                    <div className="panel-foot">
                         <button
                             type="button"
-                            className="mp-btn mp-btn-danger"
+                            className="button button-danger"
                             onClick={handleCancelTransfer}
                             disabled={cancelling}
-                            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                            aria-busy={cancelling}
                         >
-                            <XCircle size={15} />
+                            <XCircle />
                             {cancelling ? 'Cancelling…' : 'Cancel Transfer Request'}
                         </button>
                     </div>
+                </section>
+            ) : user && !user.totp_enabled ? (
+                <div className="notice notice-warning">
+                    <span className="mark-box mark-box-warning"><ShieldAlert /></span>
+                    <p className="notice-text">
+                        <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
+                        To protect against account takeovers, you must enable 2FA in your account settings before transferring plugins.
+                    </p>
+                    <button
+                        type="button"
+                        className="button button-sm"
+                        onClick={() => navigate('/settings?tab=security')}
+                    >
+                        <ShieldCheck /> Enable 2FA →
+                    </button>
                 </div>
             ) : (
-                /* Form Card to Initiate Transfer */
-                <div className="mp-card">
-                    <div className="mp-card-title">
-                        <ArrowRightLeft size={16} /> Initiate Plugin Transfer
+                <form className="panel" onSubmit={handleInitiateTransfer}>
+                    <div className="panel-head">
+                        <ArrowRightLeft size={16} className="pumpkin" />
+                        <h3 className="h3">Initiate Plugin Transfer</h3>
                     </div>
-
-                    {user && !user.totp_enabled ? (
-                        <div className="mp-banner warn" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', padding: '1.25rem', marginTop: '1rem', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', borderRadius: '10px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                                <ShieldAlert size={24} color="#f97316" style={{ flexShrink: 0 }} />
-                                <div>
-                                    <strong style={{ color: '#f97316', display: 'block', fontSize: '0.95rem' }}>Two-Factor Authentication (2FA) Required</strong>
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--mp-text-2)' }}>
-                                        To protect against account takeovers, you must enable 2FA in your account settings before transferring plugins.
-                                    </span>
-                                </div>
-                            </div>
-                            <button
-                                type="button"
-                                className="mp-btn mp-btn-primary"
-                                style={{ padding: '0.6rem 1.25rem', fontSize: '0.85rem', whiteSpace: 'nowrap', flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                onClick={() => navigate('/settings?tab=security')}
-                            >
-                                <ShieldCheck size={16} /> Enable 2FA →
-                            </button>
+                    <div className="panel-body stack">
+                        <div className="st-callout">
+                            <span className="row st-tight label label-fg"><UserCheck size={15} className="pumpkin" /> What happens during a transfer:</span>
+                            <ul className="st-bullets small">
+                                <li>All existing releases, store listings, reviews, and active customer licenses are transferred.</li>
+                                <li>Future sales and subscription revenues will route to the recipient's payout account.</li>
+                                <li><strong>The recipient must explicitly accept the request</strong> in their dashboard before ownership changes.</li>
+                            </ul>
                         </div>
-                    ) : (
-                        <form onSubmit={handleInitiateTransfer} style={{ marginTop: '1rem' }}>
-                            {/* Transfer Guidelines */}
-                            <div style={{ padding: '1rem', background: 'var(--mp-surface-2)', borderRadius: '8px', border: '1px solid var(--mp-border)', marginBottom: '1.5rem' }}>
-                                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--mp-text)', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                    <UserCheck size={15} color="var(--mp-accent)" /> What happens during a transfer:
-                                </div>
-                                <ul style={{ margin: 0, paddingLeft: '1.25rem', fontSize: '0.82rem', color: 'var(--mp-text-2)', lineHeight: 1.6 }}>
-                                    <li>All existing releases, store listings, reviews, and active customer licenses are transferred.</li>
-                                    <li>Future sales and subscription revenues will route to the recipient's payout account.</li>
-                                    <li><strong>The recipient must explicitly accept the request</strong> in their dashboard before ownership changes.</li>
-                                </ul>
-                            </div>
 
-                            <div className="mp-form-group">
-                                <label className="mp-label" htmlFor="transferRecipientInput">
-                                    Recipient Username or Email
-                                </label>
+                        <label className="field">
+                            <span className="field-label">Recipient Username or Email</span>
+                            <span className="control">
                                 <input
                                     id="transferRecipientInput"
                                     name="transferRecipient"
                                     type="text"
-                                    className="mp-input"
+                                    className="input"
                                     placeholder="e.g. notch or dev@example.com"
                                     value={recipient}
                                     onChange={e => setRecipient(e.target.value)}
                                     autoComplete="off"
                                     required
                                 />
-                            </div>
+                            </span>
+                        </label>
 
-                            <div className="mp-form-group">
-                                <label className="mp-label" htmlFor="transfer2faCodeInput">
-                                    Enter your 6-digit Two-Factor Authentication (2FA) Code
-                                </label>
-                                <div style={{ position: 'relative' }}>
-                                    <input
-                                        id="transfer2faCodeInput"
-                                        name="transfer2faCode"
-                                        type="text"
-                                        inputMode="numeric"
-                                        maxLength={6}
-                                        className="mp-input"
-                                        placeholder="123456"
-                                        value={twoFactorCode}
-                                        onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
-                                        autoComplete="one-time-code"
-                                        style={{ fontFamily: 'var(--font-mono)', letterSpacing: '0.2em', paddingLeft: '2.25rem', maxWidth: '240px' }}
-                                        required
-                                    />
-                                    <Lock size={15} color="var(--mp-text-3)" style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)' }} />
-                                </div>
-                            </div>
+                        <label className="field">
+                            <span className="field-label">Enter your 6-digit Two-Factor Authentication (2FA) Code</span>
+                            <span className="control st-narrow">
+                                <Lock size={15} className="muted" />
+                                <input
+                                    id="transfer2faCodeInput"
+                                    name="transfer2faCode"
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={6}
+                                    className="input mono st-otp"
+                                    placeholder="123456"
+                                    value={twoFactorCode}
+                                    onChange={e => setTwoFactorCode(e.target.value.replace(/\D/g, ''))}
+                                    autoComplete="one-time-code"
+                                    required
+                                />
+                            </span>
+                        </label>
 
-                            {error && (
-                                <div className="mp-banner error" style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <AlertTriangle size={16} color="var(--mp-error)" style={{ flexShrink: 0 }} />
-                                    <span style={{ fontSize: '0.85rem', color: 'var(--mp-error)' }}>{error}</span>
-                                </div>
-                            )}
-
-                            {success && (
-                                <div className="mp-banner success" style={{ marginTop: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <CheckCircle size={16} color="#10b981" style={{ flexShrink: 0 }} />
-                                    <span style={{ fontSize: '0.85rem', color: '#10b981' }}>{success}</span>
-                                </div>
-                            )}
-
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.5rem' }}>
-                                <button
-                                    type="submit"
-                                    className="mp-btn mp-btn-primary"
-                                    disabled={submitting || !recipient.trim() || twoFactorCode.trim().length !== 6}
-                                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                                >
-                                    <ArrowRightLeft size={15} />
-                                    {submitting ? 'Sending Request…' : 'Send Transfer Request'}
-                                </button>
-                            </div>
-                        </form>
-                    )}
-                </div>
+                    </div>
+                    <div className="panel-foot">
+                        <button
+                            type="submit"
+                            className="button button-primary"
+                            disabled={submitting || !recipient.trim() || twoFactorCode.trim().length !== 6}
+                            aria-busy={submitting}
+                        >
+                            <ArrowRightLeft />
+                            {submitting ? 'Sending Request…' : 'Send Transfer Request'}
+                        </button>
+                    </div>
+                </form>
             )}
         </div>
     );

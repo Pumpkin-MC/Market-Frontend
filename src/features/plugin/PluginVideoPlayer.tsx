@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback, useId } from 'react';
 import { Volume2, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
-import './PluginVideoPlayer.css';
+import '../../styles/plugin.css';
+import { extractYoutubeVideoId } from '../../lib/youtube';
 
 interface PluginVideoPlayerProps {
   url?: string;
@@ -15,24 +16,6 @@ declare global {
     onYouTubeIframeAPIReady: () => void;
   }
 }
-
-export const extractYoutubeVideoId = (url?: string): string | null => {
-  if (!url) return null;
-  try {
-    if (url.includes('youtu.be/')) {
-      return url.split('youtu.be/')[1].split(/[?#]/)[0];
-    } else if (url.includes('youtube.com/embed/')) {
-      return url.split('youtube.com/embed/')[1].split(/[?#]/)[0];
-    } else if (url.includes('youtube.com/shorts/')) {
-      return url.split('youtube.com/shorts/')[1].split(/[?#]/)[0];
-    } else if (url.includes('v=')) {
-      return url.split('v=')[1].split(/[&?#]/)[0];
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
 
 const formatTime = (seconds: number): string => {
   if (isNaN(seconds) || seconds < 0) return '0:00';
@@ -297,7 +280,7 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
     <div
       ref={containerRef}
       tabIndex={0}
-      className={`plugin-video-wrapper ${className || ''}`}
+      className={`pd-video${className ? ` ${className}` : ''}`}
       onMouseMove={triggerUserActivity}
       onMouseEnter={() => setShowControls(true)}
       onMouseLeave={() => isPlaying && setShowControls(false)}
@@ -306,64 +289,48 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
       role="region"
       aria-label="Video Player"
     >
-      {/* Background Frame for YT */}
-      <div className="plugin-video-frame-container">
+      <div className="pd-video-frame">
         <div id={domId} />
       </div>
 
-      {/* Transparent Click Surface */}
-      <div className="plugin-video-click-layer" />
+      <div className="pd-video-layer" />
 
-      {/* Center Action Indicator */}
-      <div className={`plugin-video-center-btn ${!isPlaying || showControls ? 'visible' : ''}`}>
-        {isPlaying ? (
-          <Pause size={24} fill="currentColor" />
-        ) : (
-          <Play size={24} fill="currentColor" style={{ marginLeft: '3px' }} />
-        )}
+      <div className={`pd-video-center${!isPlaying || showControls ? ' pd-on' : ''}`}>
+        {isPlaying ? <Pause /> : <Play />}
       </div>
 
-      {/* Custom Marketplace HUD Overlay */}
       <div
-        className={`plugin-video-hud ${showControls || !isPlaying ? 'visible' : ''}`}
+        className={`pd-video-hud${showControls || !isPlaying ? ' pd-on' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Seekable Orange Timeline */}
-        <div className="plugin-video-timeline" onClick={handleSeek} title="Seek">
-          <div className="plugin-video-timeline-bg">
-            <div className="plugin-video-timeline-fill" style={{ width: `${progressPercent}%` }}>
-              <div className="plugin-video-timeline-thumb" />
-            </div>
-          </div>
+        <div className="pd-video-track" onClick={handleSeek} title="Seek">
+          <div className="pd-video-fill" style={{ width: `${progressPercent}%` }} />
         </div>
 
-        {/* HUD Controls Row */}
-        <div className="plugin-video-hud-bar">
-          <div className="plugin-video-time">
-            {formatTime(currentTime)} <span className="time-divider">/</span> {formatTime(duration)}
-          </div>
-
-          <div className="plugin-video-actions">
-            <button
-              type="button"
-              className={`plugin-hud-btn ${isMuted ? 'muted' : ''}`}
-              onClick={toggleMute}
-              title={isMuted ? 'Unmute' : 'Mute'}
-              aria-label={isMuted ? 'Unmute' : 'Mute'}
-            >
-              {isMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-            </button>
-
-            <button
-              type="button"
-              className="plugin-hud-btn"
-              onClick={toggleFullscreen}
-              title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-              aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-            >
-              {isFullscreen ? <Minimize size={15} /> : <Maximize size={15} />}
-            </button>
-          </div>
+        <div className="pd-video-bar">
+          <span className="pd-video-time">
+            {formatTime(currentTime)} <span className="muted">/</span> {formatTime(duration)}
+          </span>
+          <span className="spacer" />
+          <button
+            type="button"
+            className="pd-video-btn"
+            aria-pressed={isMuted}
+            onClick={toggleMute}
+            title="Mute"
+            aria-label="Mute"
+          >
+            {isMuted ? <VolumeX /> : <Volume2 />}
+          </button>
+          <button
+            type="button"
+            className="pd-video-btn"
+            onClick={toggleFullscreen}
+            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+          >
+            {isFullscreen ? <Minimize /> : <Maximize />}
+          </button>
         </div>
       </div>
     </div>

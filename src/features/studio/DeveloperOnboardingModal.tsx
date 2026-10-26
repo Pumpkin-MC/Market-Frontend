@@ -2,14 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getCodeList } from 'country-list';
 import {
-  Globe, Mail, CheckCircle2, ChevronRight,
-  AlertCircle, CreditCard, Code2, ShieldCheck, MapPin,
-  Gift, User, Building2,
+  Check, CheckCircle2, ChevronRight,
+  AlertCircle, CreditCard, Gift, User, Building2, X,
 } from 'lucide-react';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../app/auth';
 import { SecuritySetupCards } from '../../components/SecuritySetupCards';
-import './DeveloperOnboardingModal.css';
+import { Select } from '../../components/Select';
+import '../../styles/studio.css';
+import { useDialog } from '../../hooks/useDialog';
 
 interface DeveloperOnboardingModalProps {
   isOpen?: boolean;
@@ -34,7 +35,6 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   const [nameError, setNameError] = useState<string | null>(null);
   const [isSellingPaid, setIsSellingPaid] = useState<boolean | null>(null);
 
-  // Legal / Address (for paid sellers)
   const [legalName, setLegalName] = useState('');
   const [streetAddress, setStreetAddress] = useState('');
   const [city, setCity] = useState('');
@@ -42,7 +42,6 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   const [vatId, setVatId] = useState('');
   const [country, setCountry] = useState(user?.country || '');
 
-  // Contact / Social
   const [supportEmail, setSupportEmail] = useState(user?.email || '');
   const [websiteUrl, setWebsiteUrl] = useState('');
   const [githubUrl, setGithubUrl] = useState('');
@@ -51,7 +50,6 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Debounced check for developer display name availability
   useEffect(() => {
     const trimmed = displayName.trim();
     if (!trimmed) {
@@ -80,6 +78,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   }, [displayName, t]);
 
   const hasSecureAuth = Boolean(user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey);
+  const dialog = useDialog<HTMLDivElement>(!embedded && isOpen, embedded ? undefined : onClose);
 
   if (!embedded && !isOpen) return null;
 
@@ -168,561 +167,484 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         country))
   );
 
-  const content = (
-    <div className="dev-modal-container">
-      {!embedded && onClose && (
-        <button className="dev-modal-close" onClick={onClose} aria-label="Close modal">&times;</button>
-      )}
+  const steps = [
+    { num: 1, label: t('developer.onboarding.step_account_type') },
+    { num: 2, label: t('developer.onboarding.step_name') },
+    { num: 3, label: t('developer.onboarding.step_monetization') },
+    { num: 4, label: t('developer.onboarding.step_links') },
+    { num: 5, label: t('developer.onboarding.step_finish') },
+  ];
 
-        <div className="dev-modal-header">
-          <h2>{t('developer.onboarding.title')}</h2>
-          <p>
+  const orgOptions = [
+    { value: 'company', label: 'Company / Studio' },
+    { value: 'nonprofit', label: 'Non-profit / Open Source' },
+    { value: 'education', label: 'Educational Institution' },
+    { value: 'other', label: 'Other entity' },
+  ];
+
+  const countryOptions = Object.entries(getCodeList()).map(([code, name]) => ({ value: code, label: name }));
+
+  const content = (
+    <>
+      <div className="sheet-head">
+        <div className="st-head-text st-onb-title">
+          <h2 className="h2" id="st-onb-title">{t('developer.onboarding.title')}</h2>
+          <p className="small">
             {isSellingPaid
               ? t('developer.onboarding.subtitle_paid')
               : t('developer.onboarding.subtitle_free')}
           </p>
         </div>
+        {!embedded && onClose && (
+          <button type="button" className="button button-ghost button-icon" onClick={onClose} aria-label="Close modal"><X /></button>
+        )}
+      </div>
 
-        {/* Sleek Step Indicator */}
-        <div className="dev-stepper">
-          {[
-            { num: 1, label: t('developer.onboarding.step_account_type') },
-            { num: 2, label: t('developer.onboarding.step_name') },
-            { num: 3, label: t('developer.onboarding.step_monetization') },
-            { num: 4, label: t('developer.onboarding.step_links') },
-            { num: 5, label: t('developer.onboarding.step_finish') },
-          ].map((s, idx) => (
-            <React.Fragment key={s.num}>
-              {idx > 0 && <div className={`dev-stepper-line ${step > s.num - 1 ? 'completed' : ''}`} />}
-              <div
-                className={`dev-stepper-step ${step === s.num ? 'active' : ''} ${step > s.num ? 'completed' : ''}`}
+      <div className="sheet-body">
+        <ol className="st-onb-steps">
+          {steps.map(s => (
+            <li key={s.num}>
+              <button
+                type="button"
+                className="st-onb-step"
+                aria-current={step === s.num ? 'step' : undefined}
+                data-done={step > s.num || undefined}
                 onClick={() => {
                   if (step > s.num) setStep(s.num);
                 }}
-                style={{ cursor: step > s.num ? 'pointer' : 'default' }}
               >
-                <div className="dev-stepper-circle">
-                  {step > s.num ? <CheckCircle2 size={13} /> : s.num}
-                </div>
-                <span className="dev-stepper-label">{s.label}</span>
-              </div>
-            </React.Fragment>
+                <span className="st-onb-num">{step > s.num ? <Check /> : s.num}</span>
+                <span className="st-onb-step-label">{s.label}</span>
+              </button>
+            </li>
           ))}
-        </div>
+        </ol>
 
         {error && (
-          <div className="dev-modal-error">
-            <AlertCircle size={16} />
-            <span>{error}</span>
+          <div className="notice notice-danger">
+            <span className="mark-box mark-box-danger"><AlertCircle /></span>
+            <p className="notice-text">{error}</p>
           </div>
         )}
 
-        {/* ── STEP 1: Account Type ── */}
         {step === 1 && (
-          <div className="dev-step-content">
-            <div className="dev-account-types-container">
-              {/* Yourself (Individual Creator) */}
-              <div
-                className={`dev-account-card ${entityType === 'individual' ? 'selected' : ''}`}
-                onClick={() => setEntityType('individual')}
-              >
-                <div className="dev-account-card-header">
-                  <div className="dev-account-card-icon-badge">
-                    <User size={18} />
-                  </div>
-                  <h3 className="dev-account-card-title">{t('developer.onboarding.individual_title')}</h3>
-                  <p className="dev-account-card-desc">
-                    {t('developer.onboarding.individual_desc')}
-                  </p>
-                </div>
-
-                <div className="dev-account-card-actions">
-                  <button
-                    type="button"
-                    className="dev-account-get-started-btn"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEntityType('individual');
-                      nextStep();
-                    }}
-                  >
-                    {t('developer.onboarding.btn_get_started')} <ChevronRight size={15} />
-                  </button>
-                </div>
-              </div>
-
-              {/* An organization */}
-              <div
-                className={`dev-account-card ${entityType === 'organization' ? 'selected' : ''}`}
-                onClick={() => setEntityType('organization')}
-              >
-                <div className="dev-account-card-header">
-                  <div className="dev-account-card-icon-badge">
-                    <Building2 size={18} />
-                  </div>
-                  <h3 className="dev-account-card-title">{t('developer.onboarding.org_title')}</h3>
-                  <p className="dev-account-card-desc">
-                    {t('developer.onboarding.org_desc')}
-                  </p>
-                </div>
-
-                <div className="dev-account-card-field">
-                  <label htmlFor="orgTypeSelect">{t('developer.onboarding.org_type_label')}</label>
-                  <select
-                    id="orgTypeSelect"
-                    className="dev-input dev-select"
-                    value={orgType}
-                    onClick={(e) => e.stopPropagation()}
-                    onChange={e => {
-                      setOrgType(e.target.value);
-                      setEntityType('organization');
-                    }}
-                  >
-                    <option value="">{t('developer.onboarding.org_type_placeholder')}</option>
-                    <option value="company">Company / Studio</option>
-                    <option value="nonprofit">Non-profit / Open Source</option>
-                    <option value="education">Educational Institution</option>
-                    <option value="other">Other entity</option>
-                  </select>
-                </div>
-
-                <div className="dev-account-card-actions">
-                  <button
-                    type="button"
-                    className="dev-account-get-started-btn"
-                    disabled={!orgType}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setEntityType('organization');
-                      nextStep();
-                    }}
-                  >
-                    {t('developer.onboarding.btn_get_started')} <ChevronRight size={15} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 2: Developer Public Name / Brand ── */}
-        {step === 2 && (
-          <div className="dev-step-content">
-            <div style={{ marginBottom: '1.25rem' }}>
-              <h3 style={{ fontSize: '1.1rem', fontWeight: 600, color: '#fff', marginBottom: '0.35rem' }}>
-                {t('developer.onboarding.dev_name_title')}
-              </h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', lineHeight: 1.5, margin: 0 }}>
-                {t('developer.onboarding.dev_name_desc')}
-              </p>
-            </div>
-
-            <div className="dev-form-group">
-              <label htmlFor="onboardingDisplayName">{t('developer.onboarding.display_name_label')}</label>
-              <input
-                id="onboardingDisplayName"
-                name="displayName"
-                type="text"
-                className={`dev-input ${nameError ? 'dev-input-error' : ''}`}
-                placeholder={entityType === 'organization' ? 'e.g. PixelCraft Studios' : t('developer.onboarding.display_name_placeholder')}
-                value={displayName}
-                onChange={e => {
-                  setDisplayName(e.target.value);
-                  setNameError(null);
+          <div className="st-pick">
+            <div
+              className="st-option st-onb-card"
+              data-selected={entityType === 'individual' || undefined}
+              onClick={() => setEntityType('individual')}
+            >
+              <User />
+              <strong>{t('developer.onboarding.individual_title')}</strong>
+              <span className="small">{t('developer.onboarding.individual_desc')}</span>
+              <button
+                type="button"
+                className="button button-primary button-sm st-onb-go"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEntityType('individual');
+                  nextStep();
                 }}
-                autoComplete="nickname"
-                maxLength={60}
-                autoFocus
-              />
-              {nameError ? (
-                <span className="dev-field-error">
-                  <AlertCircle size={14} />
-                  <span>{nameError}</span>
-                </span>
-              ) : (
-                <span className="dev-hint">{t('developer.onboarding.display_name_hint')}</span>
-              )}
-            </div>
-
-            <div className="dev-btn-row" style={{ marginTop: '1.5rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
-                {t('developer.onboarding.btn_back')}
-              </button>
-              <button
-                className="dev-btn dev-btn-primary"
-                disabled={!isStep2Valid}
-                onClick={handleStep2Next}
               >
-                {nameChecking ? 'Checking...' : t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
+                {t('developer.onboarding.btn_get_started')}<ChevronRight />
               </button>
             </div>
-          </div>
-        )}
 
-        {/* ── STEP 3: Monetization & Seller Details ── */}
-        {step === 3 && (
-          <div className="dev-step-content">
-            <div className="dev-form-group" style={{ marginBottom: '0.75rem' }}>
-              <label className="dev-field-label" style={{ marginBottom: '0.5rem', display: 'block', fontWeight: 600 }}>
-                {t('developer.onboarding.plan_paid_question')}
-              </label>
-
-              <div className="dev-plan-choice-grid">
-                <label className={`dev-plan-card ${isSellingPaid === false ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="planPaidChoice"
-                    checked={isSellingPaid === false}
-                    onChange={() => setIsSellingPaid(false)}
-                    className="dev-radio-hidden"
-                  />
-                  <div className="dev-plan-icon"><Gift size={18} /></div>
-                  <div className="dev-plan-text">
-                    <strong>{t('developer.onboarding.option_no')}</strong>
-                    <span>{t('developer.onboarding.intent_free_desc')}</span>
-                  </div>
-                </label>
-
-                <label className={`dev-plan-card ${isSellingPaid === true ? 'selected' : ''}`}>
-                  <input
-                    type="radio"
-                    name="planPaidChoice"
-                    checked={isSellingPaid === true}
-                    onChange={() => setIsSellingPaid(true)}
-                    className="dev-radio-hidden"
-                  />
-                  <div className="dev-plan-icon"><CreditCard size={18} /></div>
-                  <div className="dev-plan-text">
-                    <strong>{t('developer.onboarding.option_yes')}</strong>
-                    <span>{t('developer.onboarding.intent_paid_desc')}</span>
-                  </div>
-                </label>
-              </div>
-
-              {/* If clicked yes, display the seller fields in a neat 2-column grid */}
-              {isSellingPaid === true && (
-                <div className="dev-seller-fields-box">
-                  <div className="dev-fields-grid-2">
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingLegalName">
-                        <ShieldCheck size={14} /> {t('developer.onboarding.legal_name_label')}
-                      </label>
-                      <input
-                        id="onboardingLegalName"
-                        name="legalName"
-                        type="text"
-                        className="dev-input"
-                        value={legalName}
-                        onChange={e => setLegalName(e.target.value)}
-                        placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
-                        autoComplete="name"
-                        required
-                      />
-                    </div>
-
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingStreetAddress">
-                        <MapPin size={14} /> {t('developer.onboarding.street_label')}
-                      </label>
-                      <input
-                        id="onboardingStreetAddress"
-                        name="streetAddress"
-                        type="text"
-                        className="dev-input"
-                        value={streetAddress}
-                        onChange={e => setStreetAddress(e.target.value)}
-                        placeholder="123 Main St, Suite 400"
-                        autoComplete="street-address"
-                        required
-                      />
-                    </div>
-
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingCity">{t('developer.onboarding.city_label')}</label>
-                      <input
-                        id="onboardingCity"
-                        name="city"
-                        type="text"
-                        className="dev-input"
-                        value={city}
-                        onChange={e => setCity(e.target.value)}
-                        placeholder="City"
-                        autoComplete="address-level2"
-                        required
-                      />
-                    </div>
-
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingPostalCode">{t('developer.onboarding.postal_label')}</label>
-                      <input
-                        id="onboardingPostalCode"
-                        name="postalCode"
-                        type="text"
-                        className="dev-input"
-                        value={postalCode}
-                        onChange={e => setPostalCode(e.target.value)}
-                        placeholder="10001"
-                        autoComplete="postal-code"
-                        required
-                      />
-                    </div>
-
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingCountry">
-                        <Globe size={14} /> {t('developer.onboarding.country_label')}
-                      </label>
-                      <select
-                        id="onboardingCountry"
-                        name="country"
-                        className="dev-input dev-select"
-                        value={country}
-                        onChange={e => setCountry(e.target.value)}
-                        autoComplete="country"
-                        required
-                      >
-                        <option value="">Select country...</option>
-                        {Object.entries(getCodeList()).map(([code, name]) => (
-                          <option key={code} value={code}>{name}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="dev-form-group">
-                      <label className="dev-field-label" htmlFor="onboardingVatId">{t('developer.onboarding.vat_label')}</label>
-                      <input
-                        id="onboardingVatId"
-                        name="vatId"
-                        type="text"
-                        className="dev-input"
-                        value={vatId}
-                        onChange={e => setVatId(e.target.value)}
-                        placeholder="EU123456789 or Tax ID"
-                        autoComplete="off"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="dev-btn-row" style={{ marginTop: '1rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
-                {t('developer.onboarding.btn_back')}
-              </button>
-              <button
-                className="dev-btn dev-btn-primary"
-                disabled={!isStep3Valid}
-                onClick={nextStep}
-              >
-                {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 4: Support Contact & Portfolio Links ── */}
-        {step === 4 && (
-          <div className="dev-step-content">
-            <div className="dev-form-group">
-              <label className="dev-field-label" htmlFor="onboardingSupportEmail">
-                <Mail size={14} /> {t('developer.onboarding.support_email_label')} *
-              </label>
-              <input
-                id="onboardingSupportEmail"
-                name="supportEmail"
-                type="email"
-                className="dev-input"
-                value={supportEmail}
-                onChange={e => setSupportEmail(e.target.value)}
-                placeholder="support@yourdomain.com"
-                autoComplete="email"
-                required
-              />
-            </div>
-
-            <div className="dev-fields-grid-2">
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingWebsiteUrl">
-                  <Globe size={14} /> {t('developer.onboarding.website_label')}
-                </label>
-                <input
-                  id="onboardingWebsiteUrl"
-                  name="websiteUrl"
-                  type="url"
-                  className="dev-input"
-                  value={websiteUrl}
-                  onChange={e => setWebsiteUrl(e.target.value)}
-                  placeholder="https://yourwebsite.com"
-                  autoComplete="url"
-                />
-              </div>
-
-              <div className="dev-form-group">
-                <label className="dev-field-label" htmlFor="onboardingGithubUrl">
-                  <Code2 size={14} /> {t('developer.onboarding.github_label')}
-                </label>
-                <input
-                  id="onboardingGithubUrl"
-                  name="githubUrl"
-                  type="text"
-                  className="dev-input"
-                  value={githubUrl}
-                  onChange={e => setGithubUrl(e.target.value)}
-                  placeholder="https://github.com/yourname"
-                  autoComplete="url"
-                />
-              </div>
-            </div>
-
-            <div className="dev-btn-row" style={{ marginTop: '1.25rem' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
-              <button
-                className="dev-btn dev-btn-primary"
-                disabled={!supportEmail.trim()}
-                onClick={nextStep}
-              >
-                {t('developer.onboarding.btn_continue')} <ChevronRight size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP 5: Finish & Confirmation ── */}
-        {step === 5 && (
-          <div className="dev-step-content">
-            <div className="dev-monetization-box" style={{ marginBottom: '0.75rem' }}>
-              <div className="dev-monetization-header">
-                {!isSellingPaid ? (
-                  <Gift size={20} color="#10b981" />
-                ) : (
-                  <CreditCard size={20} color="#f97316" />
-                )}
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.4rem' }}>
-                    <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600, color: '#fff' }}>
-                      {!isSellingPaid ? 'Free Creator Profile' : 'Commercial Seller Profile'}
-                    </h4>
-                    <span style={{
-                      fontSize: '0.72rem',
-                      fontWeight: 600,
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: 999,
-                      background: !isSellingPaid ? 'rgba(16, 185, 129, 0.15)' : 'rgba(249, 115, 22, 0.15)',
-                      color: !isSellingPaid ? '#34d399' : '#f97316',
-                      border: `1px solid ${!isSellingPaid ? 'rgba(16, 185, 129, 0.3)' : 'rgba(249, 115, 22, 0.3)'}`,
-                    }}>
-                      {!isSellingPaid ? 'Free Uploads' : 'Paid Plugins'}
-                    </span>
-                  </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.78rem', color: 'var(--text-muted, #94a3b8)' }}>
-                    Display: <strong style={{ color: '#fff' }}>{displayName}</strong> • Email: <strong style={{ color: '#fff' }}>{supportEmail}</strong>
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Security Requirement for Developers ── */}
-            {hasSecureAuth ? (
-              <div style={{
-                padding: '0.6rem 0.85rem',
-                background: 'rgba(34, 197, 94, 0.08)',
-                border: '1px solid rgba(34, 197, 94, 0.25)',
-                borderRadius: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.55rem',
-                color: '#4ade80',
-                fontSize: '0.82rem',
-                marginBottom: '0.75rem',
-              }}>
-                <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
-                <span><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</span>
-              </div>
-            ) : (
-              <div style={{ marginBottom: '0.75rem' }}>
-                <SecuritySetupCards
-                  compact={true}
-                  title="Developer Security Requirement"
-                  description="To publish plugins, set up Passkey or 2FA Authenticator before finishing."
-                  isRequired={true}
-                  onComplete={async () => {
-                    if (refreshUser) await refreshUser();
+            <div
+              className="st-option st-onb-card"
+              data-selected={entityType === 'organization' || undefined}
+              onClick={() => setEntityType('organization')}
+            >
+              <Building2 />
+              <strong>{t('developer.onboarding.org_title')}</strong>
+              <span className="small">{t('developer.onboarding.org_desc')}</span>
+              <div className="field" onClick={(e) => e.stopPropagation()}>
+                <span className="field-label" id="orgTypeSelect">{t('developer.onboarding.org_type_label')}</span>
+                <Select
+                  options={orgOptions}
+                  value={orgType}
+                  placeholder={t('developer.onboarding.org_type_placeholder')}
+                  aria-labelledby="orgTypeSelect"
+                  onChange={v => {
+                    setOrgType(v);
+                    setEntityType('organization');
                   }}
                 />
               </div>
+              <button
+                type="button"
+                className="button button-primary button-sm st-onb-go"
+                disabled={!orgType}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setEntityType('organization');
+                  nextStep();
+                }}
+              >
+                {t('developer.onboarding.btn_get_started')}<ChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="stack">
+            <div className="st-tab-head">
+              <h3 className="h3">{t('developer.onboarding.dev_name_title')}</h3>
+              <p className="small">{t('developer.onboarding.dev_name_desc')}</p>
+            </div>
+
+            <label className="field">
+              <span className="field-label">{t('developer.onboarding.display_name_label')}</span>
+              <span className="control">
+                <input
+                  id="onboardingDisplayName"
+                  name="displayName"
+                  type="text"
+                  className="input"
+                  aria-invalid={nameError ? true : undefined}
+                  placeholder={entityType === 'organization' ? 'e.g. PixelCraft Studios' : t('developer.onboarding.display_name_placeholder')}
+                  value={displayName}
+                  onChange={e => {
+                    setDisplayName(e.target.value);
+                    setNameError(null);
+                  }}
+                  autoComplete="nickname"
+                  maxLength={60}
+                  autoFocus
+                />
+              </span>
+              {nameError ? (
+                <span className="field-error"><AlertCircle size={14} />{nameError}</span>
+              ) : (
+                <span className="field-hint">{t('developer.onboarding.display_name_hint')}</span>
+              )}
+            </label>
+
+            <div className="row st-onb-actions">
+              <button type="button" className="button button-ghost" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
+              <span className="spacer" />
+              <button
+                type="button"
+                className="button button-primary"
+                disabled={!isStep2Valid}
+                onClick={handleStep2Next}
+              >
+                {nameChecking ? 'Checking...' : t('developer.onboarding.btn_continue')}<ChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="stack">
+            <span className="field-label">{t('developer.onboarding.plan_paid_question')}</span>
+
+            <div className="st-pick">
+              <label className="st-option st-onb-card" data-selected={isSellingPaid === false || undefined}>
+                <input
+                  type="radio"
+                  name="planPaidChoice"
+                  checked={isSellingPaid === false}
+                  onChange={() => setIsSellingPaid(false)}
+                  className="st-onb-hidden"
+                />
+                <Gift />
+                <strong>{t('developer.onboarding.option_no')}</strong>
+                <span className="small">{t('developer.onboarding.intent_free_desc')}</span>
+              </label>
+
+              <label className="st-option st-onb-card" data-selected={isSellingPaid === true || undefined}>
+                <input
+                  type="radio"
+                  name="planPaidChoice"
+                  checked={isSellingPaid === true}
+                  onChange={() => setIsSellingPaid(true)}
+                  className="st-onb-hidden"
+                />
+                <CreditCard />
+                <strong>{t('developer.onboarding.option_yes')}</strong>
+                <span className="small">{t('developer.onboarding.intent_paid_desc')}</span>
+              </label>
+            </div>
+
+            {isSellingPaid === true && (
+              <div className="fields st-cols-2">
+                <label className="field">
+                  <span className="field-label">{t('developer.onboarding.legal_name_label')}</span>
+                  <span className="control">
+                    <input
+                      id="onboardingLegalName"
+                      name="legalName"
+                      type="text"
+                      className="input"
+                      value={legalName}
+                      onChange={e => setLegalName(e.target.value)}
+                      placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                      autoComplete="name"
+                      required
+                    />
+                  </span>
+                </label>
+
+                <label className="field">
+                  <span className="field-label">{t('developer.onboarding.street_label')}</span>
+                  <span className="control">
+                    <input
+                      id="onboardingStreetAddress"
+                      name="streetAddress"
+                      type="text"
+                      className="input"
+                      value={streetAddress}
+                      onChange={e => setStreetAddress(e.target.value)}
+                      placeholder="123 Main St, Suite 400"
+                      autoComplete="street-address"
+                      required
+                    />
+                  </span>
+                </label>
+
+                <label className="field">
+                  <span className="field-label">{t('developer.onboarding.city_label')}</span>
+                  <span className="control">
+                    <input
+                      id="onboardingCity"
+                      name="city"
+                      type="text"
+                      className="input"
+                      value={city}
+                      onChange={e => setCity(e.target.value)}
+                      placeholder="City"
+                      autoComplete="address-level2"
+                      required
+                    />
+                  </span>
+                </label>
+
+                <label className="field">
+                  <span className="field-label">{t('developer.onboarding.postal_label')}</span>
+                  <span className="control">
+                    <input
+                      id="onboardingPostalCode"
+                      name="postalCode"
+                      type="text"
+                      className="input"
+                      value={postalCode}
+                      onChange={e => setPostalCode(e.target.value)}
+                      placeholder="10001"
+                      autoComplete="postal-code"
+                      required
+                    />
+                  </span>
+                </label>
+
+                <div className="field">
+                  <span className="field-label" id="onboardingCountry">{t('developer.onboarding.country_label')}</span>
+                  <Select
+                    options={countryOptions}
+                    value={country}
+                    onChange={setCountry}
+                    placeholder="Select country..."
+                    aria-labelledby="onboardingCountry"
+                  />
+                </div>
+
+                <label className="field">
+                  <span className="field-label">{t('developer.onboarding.vat_label')}</span>
+                  <span className="control">
+                    <input
+                      id="onboardingVatId"
+                      name="vatId"
+                      type="text"
+                      className="input"
+                      value={vatId}
+                      onChange={e => setVatId(e.target.value)}
+                      placeholder="EU123456789 or Tax ID"
+                      autoComplete="off"
+                    />
+                  </span>
+                </label>
+              </div>
             )}
 
-            {/* ── Mandatory Legal Consent ── */}
-            <div style={{
-              padding: '0.65rem 0.85rem',
-              background: 'rgba(255, 183, 77, 0.05)',
-              border: '1px solid rgba(255, 183, 77, 0.2)',
-              borderRadius: 8,
-              marginBottom: '0.85rem',
-            }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.55rem', cursor: 'pointer', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.45 }}>
-                <input
-                  type="checkbox"
-                  checked={acceptedTerms}
-                  onChange={e => setAcceptedTerms(e.target.checked)}
-                  style={{ marginTop: '0.15rem', accentColor: '#f97316', width: 15, height: 15, flexShrink: 0, cursor: 'pointer' }}
-                />
-                <span>
-                  I agree to the <a href="/developer-terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline', fontWeight: 600 }}>Developer Distribution Agreement</a>, <a href="/terms" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Terms of Service</a>, and <a href="/guidelines" target="_blank" rel="noopener noreferrer" style={{ color: '#ffb74d', textDecoration: 'underline' }}>Review Guidelines</a>. I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.
+            <div className="row st-onb-actions">
+              <button type="button" className="button button-ghost" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
+              <span className="spacer" />
+              <button
+                type="button"
+                className="button button-primary"
+                disabled={!isStep3Valid}
+                onClick={nextStep}
+              >
+                {t('developer.onboarding.btn_continue')}<ChevronRight />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="stack">
+            <div className="fields st-cols-2">
+              <label className="field st-span">
+                <span className="field-label">{t('developer.onboarding.support_email_label')} *</span>
+                <span className="control">
+                  <input
+                    id="onboardingSupportEmail"
+                    name="supportEmail"
+                    type="email"
+                    className="input"
+                    value={supportEmail}
+                    onChange={e => setSupportEmail(e.target.value)}
+                    placeholder="support@yourdomain.com"
+                    autoComplete="email"
+                    required
+                  />
+                </span>
+              </label>
+
+              <label className="field">
+                <span className="field-label">{t('developer.onboarding.website_label')}</span>
+                <span className="control">
+                  <input
+                    id="onboardingWebsiteUrl"
+                    name="websiteUrl"
+                    type="url"
+                    className="input"
+                    value={websiteUrl}
+                    onChange={e => setWebsiteUrl(e.target.value)}
+                    placeholder="https://yourwebsite.com"
+                    autoComplete="url"
+                  />
+                </span>
+              </label>
+
+              <label className="field">
+                <span className="field-label">{t('developer.onboarding.github_label')}</span>
+                <span className="control">
+                  <input
+                    id="onboardingGithubUrl"
+                    name="githubUrl"
+                    type="text"
+                    className="input"
+                    value={githubUrl}
+                    onChange={e => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/yourname"
+                    autoComplete="url"
+                  />
                 </span>
               </label>
             </div>
 
-            {/* Actions */}
-            <div className="dev-btn-row" style={{ marginTop: '0.75rem', justifyContent: 'space-between', alignItems: 'center' }}>
-              <button className="dev-btn dev-btn-secondary" onClick={prevStep}>
-                {t('developer.onboarding.btn_back')}
+            <div className="row st-onb-actions">
+              <button type="button" className="button button-ghost" onClick={prevStep}>{t('developer.onboarding.btn_back')}</button>
+              <span className="spacer" />
+              <button
+                type="button"
+                className="button button-primary"
+                disabled={!supportEmail.trim()}
+                onClick={nextStep}
+              >
+                {t('developer.onboarding.btn_continue')}<ChevronRight />
               </button>
-              <div style={{ display: 'flex', gap: '0.65rem' }}>
-                {isSellingPaid ? (
-                  <>
-                    <button
-                      className="dev-btn dev-btn-secondary"
-                      disabled={loading || !acceptedTerms || !hasSecureAuth}
-                      onClick={() => handleCompleteOnboarding(false)}
-                    >
-                      {t('developer.onboarding.btn_complete')}
-                    </button>
-                    <button
-                      className="dev-btn dev-btn-stripe"
-                      disabled={loading || !acceptedTerms || !hasSecureAuth}
-                      onClick={() => handleCompleteOnboarding(true)}
-                    >
-                      <CreditCard size={15} /> {loading ? 'Connecting Payouts...' : t('developer.onboarding.btn_connect_stripe')}
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    className="dev-btn dev-btn-primary"
-                    disabled={loading || !acceptedTerms || !hasSecureAuth}
-                    onClick={() => handleCompleteOnboarding(false)}
-                  >
-                    {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
-                  </button>
-                )}
-              </div>
             </div>
           </div>
         )}
-    </div>
+
+        {step === 5 && (
+          <div className="stack">
+            <div className={`notice ${isSellingPaid ? 'notice-pumpkin' : 'notice-success'}`}>
+              <span className={`sticker sticker-sm ${isSellingPaid ? '' : 'sticker-success'}`}>
+                {!isSellingPaid ? 'Free Uploads' : 'Paid Plugins'}
+              </span>
+              <p className="notice-text">
+                <strong>{!isSellingPaid ? 'Free Creator Profile' : 'Commercial Seller Profile'}</strong>
+                <span className="st-onb-meta">Display: <strong>{displayName}</strong> • Email: <strong>{supportEmail}</strong></span>
+              </p>
+            </div>
+
+            {hasSecureAuth ? (
+              <div className="notice notice-plain">
+                <span className="mark-box mark-box-success"><CheckCircle2 /></span>
+                <p className="notice-text"><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</p>
+              </div>
+            ) : (
+              <SecuritySetupCards
+                compact={true}
+                title="Developer Security Requirement"
+                description="To publish plugins, set up Passkey or 2FA Authenticator before finishing."
+                isRequired={true}
+                onComplete={async () => {
+                  if (refreshUser) await refreshUser();
+                }}
+              />
+            )}
+
+            <label className="choice">
+              <input
+                type="checkbox"
+                className="check"
+                checked={acceptedTerms}
+                onChange={e => setAcceptedTerms(e.target.checked)}
+              />
+              <span className="small">
+                I agree to the <a className="link link-pumpkin" href="/developer-terms" target="_blank" rel="noopener noreferrer">Developer Distribution Agreement</a>, <a className="link link-pumpkin" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>, and <a className="link link-pumpkin" href="/guidelines" target="_blank" rel="noopener noreferrer">Review Guidelines</a>. I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.
+              </span>
+            </label>
+
+            <div className="row st-onb-actions">
+              <button type="button" className="button button-ghost" onClick={prevStep}>
+                {t('developer.onboarding.btn_back')}
+              </button>
+              <span className="spacer" />
+              {isSellingPaid ? (
+                <>
+                  <button
+                    type="button"
+                    className="button"
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
+                    onClick={() => handleCompleteOnboarding(false)}
+                  >
+                    {t('developer.onboarding.btn_complete')}
+                  </button>
+                  <button
+                    type="button"
+                    className="button button-primary"
+                    disabled={loading || !acceptedTerms || !hasSecureAuth}
+                    onClick={() => handleCompleteOnboarding(true)}
+                  >
+                    <CreditCard />{loading ? 'Connecting Payouts...' : t('developer.onboarding.btn_connect_stripe')}
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  className="button button-primary"
+                  disabled={loading || !acceptedTerms || !hasSecureAuth}
+                  onClick={() => handleCompleteOnboarding(false)}
+                >
+                  {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 
   if (embedded) {
-    return (
-      <div className="dev-onboarding-embedded">
-        {content}
-      </div>
-    );
+    return <div className="panel st-onb">{content}</div>;
   }
 
   return (
-    <div className="dev-modal-overlay">
-      {content}
+    <div className="overlay">
+      <div ref={dialog} tabIndex={-1} className="sheet st-sheet st-onb" role="dialog" aria-modal="true" aria-labelledby="st-onb-title">
+        {content}
+      </div>
     </div>
   );
 };

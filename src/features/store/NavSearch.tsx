@@ -8,11 +8,10 @@ import {
   Package,
   ArrowRight,
   CornerDownLeft,
-  Loader2,
 } from 'lucide-react';
 import api from '../../lib/api';
 import { getPluginUrl } from '../../lib/url';
-import './NavSearch.css';
+import '../../styles/store.css';
 
 export interface SearchSuggestionPlugin {
   id: number;
@@ -62,7 +61,6 @@ const saveRecentSearch = (term: string) => {
     );
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   } catch {
-    // Ignore localStorage errors
   }
 };
 
@@ -72,7 +70,6 @@ const removeRecentSearch = (term: string) => {
     const updated = existing.filter((s) => s.toLowerCase() !== term.toLowerCase());
     localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
   } catch {
-    // Ignore localStorage errors
   }
 };
 
@@ -80,7 +77,6 @@ const clearRecentSearches = () => {
   try {
     localStorage.removeItem(RECENT_SEARCHES_KEY);
   } catch {
-    // Ignore localStorage errors
   }
 };
 
@@ -91,8 +87,7 @@ interface CacheEntry {
 
 const clientSuggestionCache = new Map<string, CacheEntry>();
 const MAX_CLIENT_CACHE = 100;
-const CLIENT_CACHE_TTL_MS = 15_000; // 15 seconds TTL to prevent stale results
-
+const CLIENT_CACHE_TTL_MS = 15_000;
 export const clearSuggestionCache = () => {
   clientSuggestionCache.clear();
 };
@@ -155,7 +150,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  // Sync query with URL on /search page
   useEffect(() => {
     if (location.pathname === '/search') {
       const urlQ = new URLSearchParams(location.search).get('q') || '';
@@ -163,7 +157,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     }
   }, [location.pathname, location.search]);
 
-  // Load recent searches on mount / open
   const refreshRecentSearches = useCallback(() => {
     setRecentSearches(getRecentSearches());
   }, []);
@@ -172,7 +165,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     refreshRecentSearches();
   }, [refreshRecentSearches]);
 
-  // Purge search cache when tab/window is refocused
   useEffect(() => {
     const handleFocus = () => {
       clearSuggestionCache();
@@ -183,7 +175,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     };
   }, []);
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
@@ -197,7 +188,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     };
   }, []);
 
-  // Fetch suggestions with instant in-memory client cache & debounced fallback
   useEffect(() => {
     const trimmed = query.trim();
 
@@ -215,7 +205,6 @@ export const NavSearch: React.FC<NavSearchProps> = ({
       return;
     }
 
-    // 1. Check client memory cache (0ms instant response on backspace / repeat)
     const cached = getCachedSuggestions(trimmed);
     if (cached) {
       setSuggestions(cached);
@@ -252,13 +241,11 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     };
   }, [query]);
 
-  // Compute flattened navigable items
   const flattenedItems = useMemo<FlattenedItem[]>(() => {
     const items: FlattenedItem[] = [];
     const trimmed = query.trim();
 
     if (!trimmed) {
-      // Show recent searches
       recentSearches.forEach((s) => {
         items.push({ kind: 'recent', query: s });
       });
@@ -266,11 +253,9 @@ export const NavSearch: React.FC<NavSearchProps> = ({
     }
 
     if (suggestions) {
-      // Plugins
       suggestions.plugins.forEach((plugin) => {
         items.push({ kind: 'plugin', plugin });
       });
-      // View all results
       items.push({ kind: 'view_all', query: trimmed });
     }
 
@@ -379,11 +364,12 @@ export const NavSearch: React.FC<NavSearchProps> = ({
   const showSuggestionsDropdown = isOpen && query.trim().length > 0;
 
   return (
-    <div className={`nav-search-container ${className}`} ref={containerRef}>
-      <div className={`nav-search-input-wrap ${isOpen ? 'dropdown-active' : ''}`}>
-        <Search size={16} className="nav-search-icon" aria-hidden="true" />
+    <div className={`sf-nav-search ${className}`} ref={containerRef} data-open={isOpen || undefined}>
+      <label className="search">
+        <Search aria-hidden="true" />
         <input
           ref={inputRef}
+          className="input"
           type="search"
           name="q"
           placeholder={placeholder || t('nav.search_placeholder')}
@@ -406,207 +392,141 @@ export const NavSearch: React.FC<NavSearchProps> = ({
           aria-controls="nav-search-suggestions"
           role="combobox"
         />
+      </label>
 
-        <div className="nav-search-end-adornments">
-          {loading && (
-            <Loader2 size={15} className="nav-search-spinner" aria-label="Loading suggestions" />
-          )}
-
-          {query && (
-            <button
-              type="button"
-              className="nav-search-clear"
-              onClick={handleClear}
-              aria-label="Clear search input"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      <div className="sf-nav-search-end">
+        {loading && <span className="loading" aria-label="Loading suggestions" />}
+        {query && (
+          <button type="button" className="sf-icon-btn" onClick={handleClear} aria-label="Clear search input">
+            <X />
+          </button>
+        )}
       </div>
 
-      {/* Suggestions & Recent Searches Dropdown */}
       {(showRecentDropdown || showSuggestionsDropdown) && (
-        <div
-          id="nav-search-suggestions"
-          className="nav-search-dropdown animate-fade-in"
-          role="listbox"
-        >
-          {/* ── 1. Recent Searches View (Empty query) ── */}
+        <div id="nav-search-suggestions" className="dropdown-list sf-suggest" role="listbox">
           {showRecentDropdown && (
-            <div className="nav-search-section">
-              <div className="nav-search-recent-list">
-                {recentSearches.map((term, index) => {
-                  const isSelected = selectedIndex === index;
-                  return (
-                    <div
-                      key={`recent-${term}`}
-                      className={`nav-search-item nav-search-recent-item ${
-                        isSelected ? 'selected' : ''
-                      }`}
-                      onClick={() => handleSelectItem({ kind: 'recent', query: term })}
-                      role="option"
-                      aria-selected={isSelected}
+            <>
+              {recentSearches.map((term, index) => {
+                const isSelected = selectedIndex === index;
+                return (
+                  <div
+                    key={`recent-${term}`}
+                    onClick={() => handleSelectItem({ kind: 'recent', query: term })}
+                    role="option"
+                    aria-selected={isSelected}
+                    data-active={isSelected || undefined}
+                  >
+                    <Clock />
+                    <span className="sf-suggest-text">{term}</span>
+                    <button
+                      type="button"
+                      className="sf-icon-btn"
+                      onClick={(e) => handleRemoveRecent(e, term)}
+                      aria-label={`Remove ${term} from recent searches`}
                     >
-                      <Clock size={14} className="nav-search-item-icon muted" />
-                      <span className="nav-search-item-text">{term}</span>
-                      <button
-                        type="button"
-                        className="nav-search-item-remove-btn"
-                        onClick={(e) => handleRemoveRecent(e, term)}
-                        aria-label={`Remove ${term} from recent searches`}
-                      >
-                        <X size={12} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="nav-search-recent-footer">
-                <button
-                  type="button"
-                  className="nav-search-clear-recent-btn"
-                  onClick={handleClearAllRecent}
-                >
+                      <X />
+                    </button>
+                  </div>
+                );
+              })}
+              <div className="sf-suggest-foot">
+                <button type="button" className="button button-ghost button-sm" onClick={handleClearAllRecent}>
                   {t('search.clear_recent')}
                 </button>
               </div>
-            </div>
+            </>
           )}
 
-          {/* ── 2. Live Search Suggestions View ── */}
           {showSuggestionsDropdown && (
             <>
               {loading && !suggestions && (
-                <div className="nav-search-loading-state">
-                  <Loader2 size={18} className="nav-search-spinner" />
-                  <span>{t('common.loading')}</span>
+                <div className="sf-suggest-state">
+                  <span className="loading" />
+                  <span className="small">{t('common.loading')}</span>
                 </div>
               )}
 
               {suggestions && !hasSuggestions && (
-                <div className="nav-search-empty-state">
-                  <p className="nav-search-empty-title">{t('search.no_suggestions')}</p>
-                  <p className="nav-search-empty-hint">{t('search.press_enter')}</p>
+                <div className="sf-suggest-state">
+                  <span className="h3">{t('search.no_suggestions')}</span>
+                  <span className="small">{t('search.press_enter')}</span>
                 </div>
               )}
 
               {suggestions && hasSuggestions && (
-                <div className="nav-search-results-list">
-                  {/* Plugin matches */}
-                  <div className="nav-search-section">
-                    <div className="nav-search-section-header">
-                      <span className="nav-search-section-title">
-                        <Package size={13} />
-                        {t('search.plugins_title')}
-                      </span>
-                    </div>
-                    {suggestions.plugins.map((plugin) => {
-                      const itemIndex = flattenedItems.findIndex(
-                        (it) => it.kind === 'plugin' && it.plugin.id === plugin.id
-                      );
-                      const isSelected = selectedIndex === itemIndex;
-
-                      const isFree = plugin.type === 'free';
-                      const isSale = plugin.sale_active && plugin.sale_discount_percent > 0;
-                      const price = plugin.price_cents / 100;
-                      const discountedPrice = isSale
-                        ? (price * (1 - plugin.sale_discount_percent / 100)).toFixed(2)
-                        : price.toFixed(2);
-
-                      return (
-                        <div
-                          key={`plugin-${plugin.id}`}
-                          className={`nav-search-item nav-search-plugin-item ${
-                            isSelected ? 'selected' : ''
-                          }`}
-                          onClick={() => handleSelectItem({ kind: 'plugin', plugin })}
-                          role="option"
-                          aria-selected={isSelected}
-                        >
-                          <div className="nav-search-plugin-thumb">
-                            {plugin.preview_path ? (
-                              <img src={plugin.preview_path} alt={plugin.name} />
-                            ) : (
-                              <div className="nav-search-thumb-fallback">
-                                {plugin.name.charAt(0).toUpperCase()}
-                              </div>
-                            )}
-                          </div>
-
-                          <div className="nav-search-plugin-info">
-                            <div className="nav-search-plugin-title-row">
-                              <span className="nav-search-plugin-name">
-                                {plugin.name}
-                              </span>
-                              {plugin.is_preorder && (
-                                <span className="nav-search-pill preorder">
-                                  {t('plugin.pre_order')}
-                                </span>
-                              )}
-                            </div>
-                            <div className="nav-search-plugin-meta">
-                              <span className="nav-search-plugin-dev">
-                                by {plugin.dev_name}
-                              </span>
-                              {plugin.category && (
-                                <>
-                                  <span className="nav-search-meta-dot">·</span>
-                                  <span className="nav-search-plugin-cat">{plugin.category}</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="nav-search-plugin-pricing">
-                            {isFree ? (
-                              <span className="nav-search-price-badge free">
-                                {t('plugin.free')}
-                              </span>
-                            ) : isSale ? (
-                              <div className="nav-search-sale-wrap">
-                                <span className="nav-search-sale-discount">
-                                  -{plugin.sale_discount_percent}%
-                                </span>
-                                <span className="nav-search-price-badge paid">
-                                  €{discountedPrice}
-                                </span>
-                              </div>
-                            ) : (
-                              <span className="nav-search-price-badge paid">
-                                €{price.toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                <>
+                  <div className="sf-suggest-head label">
+                    <Package />
+                    {t('search.plugins_title')}
                   </div>
-                </div>
+                  {suggestions.plugins.map((plugin) => {
+                    const itemIndex = flattenedItems.findIndex(
+                      (it) => it.kind === 'plugin' && it.plugin.id === plugin.id
+                    );
+                    const isSelected = selectedIndex === itemIndex;
+
+                    const isFree = plugin.type === 'free';
+                    const isSale = plugin.sale_active && plugin.sale_discount_percent > 0;
+                    const price = plugin.price_cents / 100;
+                    const discountedPrice = isSale
+                      ? (price * (1 - plugin.sale_discount_percent / 100)).toFixed(2)
+                      : price.toFixed(2);
+
+                    return (
+                      <div
+                        key={`plugin-${plugin.id}`}
+                        onClick={() => handleSelectItem({ kind: 'plugin', plugin })}
+                        role="option"
+                        aria-selected={isSelected}
+                        data-active={isSelected || undefined}
+                      >
+                        <span className="sf-suggest-thumb">
+                          {plugin.preview_path ? (
+                            <img src={plugin.preview_path} alt={plugin.name} />
+                          ) : (
+                            <span className="avatar">{plugin.name.charAt(0).toUpperCase()}</span>
+                          )}
+                        </span>
+
+                        <span className="sf-suggest-main">
+                          <span>
+                            {plugin.name}
+                            {plugin.is_preorder && <> <span className="tag tag-info">{t('plugin.pre_order')}</span></>}
+                          </span>
+                          <span className="small">
+                            by {plugin.dev_name}
+                            {plugin.category && <> · {plugin.category}</>}
+                          </span>
+                        </span>
+
+                        {isFree ? (
+                          <span className="cost cost-free">{t('plugin.free')}</span>
+                        ) : isSale ? (
+                          <span className="cost cost-sale">
+                            <s>-{plugin.sale_discount_percent}%</s>€{discountedPrice}
+                          </span>
+                        ) : (
+                          <span className="cost">€{price.toFixed(2)}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </>
               )}
 
-              {/* View All Results Footer */}
               {query.trim() && (
                 <div
-                  className={`nav-search-view-all-footer ${
-                    selectedIndex === flattenedItems.length - 1 ? 'selected' : ''
-                  }`}
+                  className="sf-suggest-all"
                   onClick={() => handleSelectItem({ kind: 'view_all', query: query.trim() })}
                   role="option"
                   aria-selected={selectedIndex === flattenedItems.length - 1}
+                  data-active={selectedIndex === flattenedItems.length - 1 || undefined}
                 >
-                  <div className="nav-search-view-all-left">
-                    <Search size={14} className="nav-search-view-all-icon" />
-                    <span>
-                      {t('search.view_all_results', { query: query.trim() })}
-                    </span>
-                  </div>
-                  <div className="nav-search-view-all-right">
-                    <span className="nav-search-key-hint">
-                      <CornerDownLeft size={11} /> Enter
-                    </span>
-                    <ArrowRight size={14} className="nav-search-view-all-arrow" />
-                  </div>
+                  <Search />
+                  <span className="sf-suggest-text">{t('search.view_all_results', { query: query.trim() })}</span>
+                  <span className="kbd hide-sm"><CornerDownLeft size={11} /></span>
+                  <ArrowRight />
                 </div>
               )}
             </>

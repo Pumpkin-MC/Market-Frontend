@@ -2,14 +2,15 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../app/auth';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../../components/SEO';
 import { PluginVideoPlayer } from './PluginVideoPlayer';
-import { Sparkles, History, ChevronRight, Star, Check, CheckCircle2, Trash2, Flag, MessageSquare, Clock, Terminal, Copy, Key, ChevronDown, ChevronUp, Package } from 'lucide-react';
+import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../../types/plugin';
+import '../../styles/plugin.css';
 
 const getYoutubeVideoId = (url: string) => {
   if (!url) return null;
@@ -77,54 +78,35 @@ const safeMarkdownComponents = {
         alt={alt || 'Plugin illustration'}
         loading="lazy"
         decoding="async"
-        className="markdown-img"
+        className="pd-md-img"
         {...props}
       />
     );
   },
 };
 
-const StarRating = ({ rating, max = 5, onRate }: { rating: number; max?: number; onRate?: (n: number) => void }) => (
-  <div className="star-rating-container" style={{ display: 'flex', gap: 2 }}>
-  {[...Array(max)].map((_, i) => (
-    <span
-    key={i}
-    className={`star-icon ${i < rating ? 'filled' : 'empty'} ${onRate ? 'interactive' : ''}`}
-    onClick={() => onRate && onRate(i + 1)}
-    style={{ display: 'inline-flex', alignItems: 'center' }}
-    >
-    <Star size={16} fill={i < rating ? 'currentColor' : 'none'} />
-    </span>
-  ))}
-  </div>
+const Stars = ({ value, onRate }: { value: number; onRate?: (n: number) => void }) => (
+  <span className={`stars${onRate ? ' pd-rate' : ''}`} role={onRate ? 'radiogroup' : 'img'} aria-label={`${value} / 5`}>
+    {[1, 2, 3, 4, 5].map(n => onRate ? (
+      <button key={n} type="button" role="radio" aria-checked={n === value} aria-label={`${n} / 5`} onClick={() => onRate(n)}>
+        <Star className={n <= value ? '' : 'off'} />
+      </button>
+    ) : (
+      <Star key={n} className={n <= Math.round(value) ? '' : 'off'} />
+    ))}
+  </span>
 );
 
-const ExpandableText = ({ text, limit = 500, className, pStyle }: { text: string; limit?: number; className?: string; pStyle?: React.CSSProperties }) => {
+const ExpandableText = ({ text, limit = 500, className }: { text: string; limit?: number; className?: string }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldTruncate = text.length > limit;
   const displayText = isExpanded ? text : text.slice(0, limit) + (shouldTruncate ? '...' : '');
 
   return (
     <div className={className}>
-      <p style={{ margin: 0, whiteSpace: 'pre-wrap', overflowWrap: 'break-word', wordBreak: 'break-word', ...pStyle }}>
-        {displayText}
-      </p>
+      <p className="pd-pre">{displayText}</p>
       {shouldTruncate && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--primary)',
-            padding: 0,
-            marginTop: '8px',
-            cursor: 'pointer',
-            fontSize: '0.85rem',
-            fontWeight: 700,
-            textTransform: 'uppercase',
-            letterSpacing: '0.02em'
-          }}
-        >
+        <button type="button" className="pd-textbtn" onClick={() => setIsExpanded(!isExpanded)}>
           {isExpanded ? 'Show Less' : 'Expand'}
         </button>
       )}
@@ -132,22 +114,10 @@ const ExpandableText = ({ text, limit = 500, className, pStyle }: { text: string
   );
 };
 
-const PriceDisplay = ({ cents }: { cents: number }) => {
-  if (!cents && cents !== 0) return null;
-  const euros = Math.floor(cents / 100);
-  const remainder = (cents % 100).toString().padStart(2, '0');
-  return (
-    <div className="price-container">
-    <span className="currency-symbol">€</span>
-    <span className="price-dollars">{euros}</span>
-    <span className="price-decimal">.</span>
-    <span className="price-cents">{remainder}</span>
-    </div>
-  );
-};
+const euro = (cents: number) => `€${(cents / 100).toFixed(2)}`;
 
 const getAvatarClass = (username: string) => {
-  const classes = ['av-a', 'av-b', 'av-c', 'av-d', 'av-e'];
+  const classes = ['', 'avatar-fg', 'avatar-ghost'];
   let hash = 0;
   for (let i = 0; i < username.length; i++) {
     hash = username.charCodeAt(i) + ((hash << 5) - hash);
@@ -201,7 +171,7 @@ const getLocalizedCommandDescription = (
   return '';
 };
 
-const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] }) => {
+const PluginCommands = ({ commands }: { commands?: PluginCommand[] }) => {
   const { t, i18n } = useTranslation();
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
@@ -218,204 +188,83 @@ const PluginCommandsSidebarWidget = ({ commands }: { commands?: PluginCommand[] 
   const visibleCommands = expanded ? commands : commands.slice(0, 4);
 
   return (
-    <>
-      <div className="divider-sm" />
-      <div className="commands-widget-section">
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.85rem' }}>
-          <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.82rem' }}>
-            <Terminal size={14} color="var(--primary)" />
-            {t('plugin.commands.title', 'Commands')}
-          </h3>
-          <span style={{
-            fontSize: '0.7rem',
-            fontWeight: 700,
-            background: 'rgba(255, 255, 255, 0.07)',
-            padding: '2px 7px',
-            borderRadius: '999px',
-            color: 'var(--text-muted)'
-          }}>
-            {commands.length}
-          </span>
-        </div>
+    <div className="stack">
+      <ul className="pd-cmds">
+        {visibleCommands.map((cmd: any, index: number) => {
+          const desc = getLocalizedCommandDescription(cmd.description, activeLang);
+          const cmdCopyKey = `cmd-${cmd.id || index}`;
+          const permCopyKey = `perm-${cmd.id || index}`;
+          const formattedName = cmd.name?.startsWith('/') ? cmd.name : `/${cmd.name}`;
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {visibleCommands.map((cmd: any, index: number) => {
-            const desc = getLocalizedCommandDescription(cmd.description, activeLang);
-            const cmdCopyKey = `cmd-${cmd.id || index}`;
-            const permCopyKey = `perm-${cmd.id || index}`;
-            const formattedName = cmd.name?.startsWith('/') ? cmd.name : `/${cmd.name}`;
+          return (
+            <li key={cmd.id || index} className="pd-cmd">
+              <div className="pd-cmd-head">
+                <code className="pd-cmd-name">{formattedName}</code>
+                <button
+                  type="button"
+                  className="button button-flat button-sm"
+                  onClick={() => handleCopy(formattedName, cmdCopyKey)}
+                  title={t('plugin.commands.copy_command', 'Copy command')}
+                  aria-label={t('plugin.commands.copy_command', 'Copy command')}
+                >
+                  {copiedId === cmdCopyKey ? (
+                    <>
+                      <Check />
+                      <span>{t('plugin.commands.copied', 'Copied')}</span>
+                    </>
+                  ) : (
+                    <Copy />
+                  )}
+                </button>
+              </div>
 
-            return (
-              <div
-                key={cmd.id || index}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.25)',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
-                  padding: '0.75rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: '0.4rem',
-                }}
-              >
-                {/* Command row */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                  <code style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.82rem',
-                    fontWeight: 700,
-                    color: 'var(--primary, #4ade80)',
-                    wordBreak: 'break-all',
-                  }}>
-                    {formattedName}
-                  </code>
+              {cmd.aliases && Array.isArray(cmd.aliases) && cmd.aliases.length > 0 ? (
+                <div className="row pd-aliases">
+                  <span className="label">{t('plugin.commands.aliases', 'Aliases')}</span>
+                  {cmd.aliases.map((alias: string, aIdx: number) => (
+                    <code key={aIdx} className="pd-chip">{alias.startsWith('/') ? alias : `/${alias}`}</code>
+                  ))}
+                </div>
+              ) : null}
+
+              {cmd.permission ? (
+                <div className="pd-perm">
+                  <Key />
+                  <code>{cmd.permission}</code>
                   <button
                     type="button"
-                    onClick={() => handleCopy(formattedName, cmdCopyKey)}
-                    title={t('plugin.commands.copy_command', 'Copy command')}
-                    style={{
-                      background: copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-                      border: `1px solid ${copiedId === cmdCopyKey ? 'rgba(74, 222, 128, 0.4)' : 'rgba(255, 255, 255, 0.1)'}`,
-                      borderRadius: '4px',
-                      color: copiedId === cmdCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
-                      cursor: 'pointer',
-                      padding: '3px 6px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '3px',
-                      fontSize: '0.68rem',
-                      fontWeight: 600,
-                      transition: 'all 0.15s ease',
-                    }}
+                    className={`pd-iconbtn${copiedId === permCopyKey ? ' pd-ok' : ''}`}
+                    onClick={() => handleCopy(cmd.permission, permCopyKey)}
+                    title={t('plugin.commands.copy_permission', 'Copy permission')}
+                    aria-label={t('plugin.commands.copy_permission', 'Copy permission')}
                   >
-                    {copiedId === cmdCopyKey ? (
-                      <>
-                        <Check size={11} />
-                        <span>{t('plugin.commands.copied', 'Copied')}</span>
-                      </>
-                    ) : (
-                      <Copy size={11} />
-                    )}
+                    {copiedId === permCopyKey ? <Check /> : <Copy />}
                   </button>
                 </div>
+              ) : null}
 
-                {/* Aliases row */}
-                {cmd.aliases && Array.isArray(cmd.aliases) && cmd.aliases.length > 0 ? (
-                  <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.3rem', marginTop: '-0.1rem' }}>
-                    <span style={{ fontSize: '0.66rem', color: 'var(--text-muted)', fontWeight: 600 }}>
-                      {t('plugin.commands.aliases', 'Aliases')}:
-                    </span>
-                    {cmd.aliases.map((alias: string, aIdx: number) => {
-                      const formattedAlias = alias.startsWith('/') ? alias : `/${alias}`;
-                      return (
-                        <span
-                          key={aIdx}
-                          style={{
-                            fontFamily: 'var(--font-mono)',
-                            fontSize: '0.68rem',
-                            color: 'var(--text-2, #cbd5e1)',
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
-                            borderRadius: '4px',
-                            padding: '1px 5px',
-                          }}
-                        >
-                          {formattedAlias}
-                        </span>
-                      );
-                    })}
-                  </div>
-                ) : null}
+              {desc ? <p className="pd-cmd-desc">{desc}</p> : null}
+            </li>
+          );
+        })}
+      </ul>
 
-                {/* Permission row */}
-                {cmd.permission ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', minWidth: 0 }}>
-                      <Key size={10} color="var(--text-muted)" style={{ flexShrink: 0 }} />
-                      <span style={{
-                        fontSize: '0.7rem',
-                        fontFamily: 'var(--font-mono)',
-                        color: 'var(--text-muted)',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}>
-                        {cmd.permission}
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleCopy(cmd.permission, permCopyKey)}
-                      title={t('plugin.commands.copy_permission', 'Copy permission')}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: copiedId === permCopyKey ? 'var(--success, #4ade80)' : 'var(--text-muted)',
-                        cursor: 'pointer',
-                        padding: '2px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {copiedId === permCopyKey ? <Check size={11} /> : <Copy size={10} />}
-                    </button>
-                  </div>
-                ) : null}
-
-                {/* Description */}
-                {desc ? (
-                  <p style={{
-                    margin: '0.15rem 0 0 0',
-                    fontSize: '0.78rem',
-                    color: 'var(--text-2, #94a3b8)',
-                    lineHeight: 1.4,
-                  }}>
-                    {desc}
-                  </p>
-                ) : null}
-              </div>
-            );
-          })}
-        </div>
-
-        {commands.length > 4 && (
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            style={{
-              width: '100%',
-              marginTop: '0.75rem',
-              background: 'rgba(255, 255, 255, 0.04)',
-              border: '1px solid var(--border)',
-              borderRadius: '6px',
-              color: 'var(--text)',
-              padding: '6px 10px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              transition: 'background 0.15s ease',
-            }}
-          >
-            {expanded ? (
-              <>
-                <ChevronUp size={13} />
-                {t('plugin.commands.show_less', 'Show less')}
-              </>
-            ) : (
-              <>
-                <ChevronDown size={13} />
-                {t('plugin.commands.show_all', 'Show all {{count}} commands', { count: commands.length })}
-              </>
-            )}
-          </button>
-        )}
-      </div>
-    </>
+      {commands.length > 4 && (
+        <button type="button" className="button button-flat button-block" onClick={() => setExpanded(!expanded)}>
+          {expanded ? (
+            <>
+              <ChevronUp />
+              {t('plugin.commands.show_less', 'Show less')}
+            </>
+          ) : (
+            <>
+              <ChevronDown />
+              {t('plugin.commands.show_all', 'Show all {{count}} commands', { count: commands.length })}
+            </>
+          )}
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -496,7 +345,7 @@ const PluginPage = () => {
   const [reportCustom, setReportCustom] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
-  const [changelogOpen, setChangelogOpen] = useState(false);
+  const [tab, setTab] = useState<'overview' | 'versions' | 'reviews' | 'commands'>('overview');
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
@@ -618,8 +467,7 @@ const PluginPage = () => {
           alt={alt || 'Plugin illustration'}
           loading="lazy"
           decoding="async"
-          className="markdown-img"
-          style={{ cursor: 'zoom-in' }}
+          className="pd-md-img"
           onClick={() => openLightboxWithSrc(src)}
           {...props}
         />
@@ -832,12 +680,18 @@ const PluginPage = () => {
     return `(${bytes} B)`;
   };
 
+
+  const openTab = (next: typeof tab) => {
+    setTab(next);
+    document.getElementById('pd-tabs')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
   if (loading) {
     return (
-      <div className="container">
-        <div className="loading-state" style={{ minHeight: '60vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-          <div className="spinner" />
-          <p>{t('common.loading')}</p>
+      <div className="page-loader">
+        <div className="stack pd-loading">
+          <span className="loading" />
+          <p className="label">{t('common.loading')}</p>
         </div>
       </div>
     );
@@ -845,15 +699,11 @@ const PluginPage = () => {
 
   if (error || !plugin) {
     return (
-      <div className="container">
-        <div className="empty-state" style={{ minHeight: '60vh', textAlign: 'center', padding: '4rem 1rem' }}>
-          <h2>Plugin Not Found</h2>
-          <p style={{ color: 'var(--text-muted)', margin: '1rem 0 1.5rem' }}>
-            {error || 'The requested plugin could not be found.'}
-          </p>
-          <Link to="/" className="btn btn-secondary">
-            {t('common.back')}
-          </Link>
+      <div className="page pd">
+        <div className="blank">
+          <h1 className="h1">Plugin Not <span className="mark">Found</span></h1>
+          <p className="small">{error || 'The requested plugin could not be found.'}</p>
+          <Link to="/" className="button">{t('common.back')}</Link>
         </div>
       </div>
     );
@@ -940,883 +790,652 @@ const PluginPage = () => {
     ]
   };
 
+  const versions = Array.isArray(plugin.versions) ? plugin.versions : [];
+  const reviews = Array.isArray(plugin.reviews) ? plugin.reviews : [];
+  const commandCount = plugin.commands?.length ?? 0;
+  const basePrice = plugin.price_cents ?? 0;
+  const saleDiscount = plugin.sale_active ? plugin.sale_discount_percent ?? 0 : 0;
+  const salePrice = saleDiscount > 0 ? Math.round(basePrice * (1 - saleDiscount / 100)) : basePrice;
+  const finalPrice = couponDiscount > 0 ? Math.round(salePrice * (1 - couponDiscount / 100)) : salePrice;
+  const discounted = saleDiscount > 0 || couponDiscount > 0;
+  const ppmCommand = `ppm install ${plugin.public_id || plugin.id}`;
+  const trackTone: Record<string, string> = { stable: 'tag-success', beta: 'tag-warning', alpha: 'tag-danger' };
+
+  const tabList: [typeof tab, string, number?][] = [
+    ['overview', 'Overview'],
+    ...(versions.length > 0 ? [['versions', 'Versions', versions.length] as [typeof tab, string, number]] : []),
+    ['reviews', 'Reviews', reviews.length],
+    ...(commandCount > 0 ? [['commands', t('plugin.commands.title', 'Commands'), commandCount] as [typeof tab, string, number]] : []),
+  ];
+
+  const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
+
+  const reasonPicker = (
+    reasons: string[],
+    selected: string,
+    onPick: (reason: string) => void,
+  ) => (
+    <div className="segmented pd-reasons">
+      {reasons.map(reason => (
+        <button key={reason} type="button" aria-pressed={selected === reason} onClick={() => onPick(reason)}>
+          {reason}
+        </button>
+      ))}
+    </div>
+  );
+
   return (
-    <div className="container">
-    <SEO
-    title={plugin.name}
-    description={cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`}
-    keywords={`${plugin.name}, minecraft plugin, ${plugin.category || ''}, ${plugin.keywords || ''}`}
-    ogType="product"
-    ogImage={plugin.preview_path || "/icon.png"}
-    />
-    <script type="application/ld+json">
-    {JSON.stringify(productSchema)}
-    </script>
+    <div className="page pd">
+      <SEO
+        title={plugin.name}
+        description={cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`}
+        keywords={`${plugin.name}, minecraft plugin, ${plugin.category || ''}, ${plugin.keywords || ''}`}
+        ogType="product"
+        ogImage={plugin.preview_path || "/icon.png"}
+      />
+      <script type="application/ld+json">
+        {JSON.stringify(productSchema)}
+      </script>
 
-    {/* ── Pre-Order Banner ── */}
-    {plugin.is_preorder && (
-      <div style={{
-        marginBottom: '1.5rem',
-        padding: '1.25rem 1.5rem',
-        background: 'linear-gradient(135deg, rgba(249,115,22,0.12) 0%, rgba(249,115,22,0.04) 100%)',
-        border: '1px solid rgba(249,115,22,0.35)',
-        borderRadius: 12,
-        display: 'flex',
-        alignItems: 'flex-start',
-        gap: '1rem',
-        boxShadow: '0 4px 20px rgba(249,115,22,0.08)'
-      }}>
-        <div style={{
-          width: 38,
-          height: 38,
-          borderRadius: 8,
-          background: 'rgba(249,115,22,0.2)',
-          color: '#f97316',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flexShrink: 0
-        }}>
-          <Clock size={20} />
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontWeight: 700, fontSize: '1rem', color: '#f97316', marginBottom: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Available for Pre-Order
-            {plugin.preorder_release_date && (
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, background: 'rgba(249,115,22,0.2)', color: '#f97316', padding: '2px 8px', borderRadius: 4 }}>
-                Expected: {formatDate(plugin.preorder_release_date)}
-              </span>
-            )}
-          </div>
-          <div style={{ fontSize: '0.85rem', color: 'var(--text-muted, #94a3b8)', lineHeight: 1.5 }}>
-            {ownsPlugin ? (
-              <span style={{ color: '#4ade80', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <Check size={16} color="#4ade80" /> You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.
-              </span>
-            ) : (
-              <span>
-                Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* ── Early Access Banner ── */}
-    {plugin.is_early_access && (
-      <div className="early-access-banner" style={{ marginBottom: '1.5rem' }}>
-        <div className="early-access-icon"><Clock size={18} /></div>
-        <div className="early-access-content">
-          <div className="early-access-title">Early Access Plugin</div>
-          <div className="early-access-text">
-            This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features. 
-            Downloading it now helps support the developer and shape the future of the plugin!
-          </div>
-        </div>
-      </div>
-    )}
-
-    {/* ── Payment success banner ── */}
-    {showPaymentSuccess && (
-      <div className="payment-success-banner">
-      <span className="success-icon"><CheckCircle2 size={24} color="#10b981" /></span>
-      <div className="banner-content">
-      <div className="banner-title">
-      Purchase successful!
-      </div>
-      <div className="banner-text">
-      You now own <strong>{plugin.name}</strong>. Click the download button to get your WASM file.
-      </div>
-      </div>
-      <button
-      onClick={() => setShowPaymentSuccess(false)}
-      className="banner-close"
-      >×</button>
-      </div>
-    )}
-
-    {/* HEADER */}
-    <div className="plugin-detail-header">
-    <div
-    className="plugin-icon large"
-    style={{ backgroundImage: plugin.preview_path ? `url(${plugin.preview_path})` : 'none' }}
-    >
-    {!plugin.preview_path && plugin.name.charAt(0)}
-    </div>
-    <div className="plugin-header-info">
-    <h1 className="plugin-title">{plugin.name}</h1>
-    <p className="dev-name">by <Link to={`/profile/${plugin.dev_name}`} style={{ color: 'inherit', textDecoration: 'none' }} onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')} onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}>{plugin.dev_name}</Link></p>
-    </div>
-    </div>
-
-    <div className="plugin-detail-layout">
-    <div className="plugin-main-content">
-
-    {/* OPTIONAL MEDIA SHOWCASE (only if creator explicitly uploaded screenshots or video) */}
-    {screenshots.length > 0 ? (
-      <div className="screenshot-gallery">
-        {mainScreenshot === 'video' ? (
-          <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
-        ) : (
-          <img
-            src={mainScreenshot || screenshots[0]?.path}
-            alt="Main"
-            className="main-screenshot"
-            style={{ cursor: 'pointer' }}
-            onClick={() => {
-              const idx = screenshots.findIndex((s: any) => s.path === (mainScreenshot || screenshots[0]?.path));
-              openLightbox(idx >= 0 ? idx : 0);
-            }}
-          />
+      <nav className="crumbs" aria-label="Breadcrumb">
+        <Link to="/">Market</Link>
+        <ChevronRight />
+        {plugin.category && (
+          <>
+            <Link to={`/search?category=${encodeURIComponent(plugin.category)}`}>{plugin.category}</Link>
+            <ChevronRight />
+          </>
         )}
-        <div className="thumbnail-strip">
-          {plugin.youtube_video_url && (
-            <div 
-              className={`thumbnail ${mainScreenshot === 'video' ? 'active' : ''}`}
-              onClick={() => setMainScreenshot('video')}
-              style={{ position: 'relative', overflow: 'hidden' }}
-            >
-              {getYoutubeVideoId(plugin.youtube_video_url) ? (
-                <img 
-                  src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} 
-                  alt="Video Thumbnail"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#000', color: '#fff', fontSize: '10px' }}>Video</div>
-              )}
-              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
-                <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--primary, #ff6b00)">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
+        <span aria-current="page">{plugin.name}</span>
+      </nav>
+
+      {(showPaymentSuccess || plugin.is_preorder || plugin.is_early_access) && (
+        <div className="pd-notices">
+          {showPaymentSuccess && (
+            <div className="notice notice-success" role="status">
+              <span className="sticker sticker-success">Purchase successful!</span>
+              <p className="notice-text">
+                You now own <strong>{plugin.name}</strong>. Click the download button to get your WASM file.
+              </p>
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setShowPaymentSuccess(false)} aria-label="Dismiss">
+                <X />
+              </button>
+            </div>
+          )}
+
+          {plugin.is_preorder && (
+            <div className="notice notice-pumpkin">
+              <span className="sticker">Available for Pre-Order</span>
+              <div className="notice-text pd-notice-body">
+                {plugin.preorder_release_date && (
+                  <span className="label label-fg">Expected: {formatDate(plugin.preorder_release_date)}</span>
+                )}
+                {ownsPlugin ? (
+                  <p className="pd-ok">
+                    <Check /> You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.
+                  </p>
+                ) : (
+                  <p>
+                    Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.
+                  </p>
+                )}
               </div>
             </div>
           )}
-          {screenshots.map((shot: any) => (
-            <img
-              key={shot.id}
-              src={shot.path}
-              alt="Thumbnail"
-              className={`thumbnail ${mainScreenshot === shot.path ? 'active' : ''}`}
-              onClick={() => setMainScreenshot(shot.path)}
-            />
-          ))}
-        </div>
-      </div>
-    ) : plugin.youtube_video_url ? (
-      <div className="plugin-video-showcase" style={{ marginBottom: '1.5rem', borderRadius: '12px', overflow: 'hidden' }}>
-        <PluginVideoPlayer url={plugin.youtube_video_url} />
-      </div>
-    ) : null}
 
-    {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (() => {
-      const latest = plugin.versions[0];
-      const isLong = Boolean(latest.release_notes && (latest.release_notes.length > 200 || latest.release_notes.split('\n').length > 4));
-      return (
-        <div className="plugin-recent-update">
-          <div className="plugin-recent-update-header">
-            <div className="plugin-recent-update-title-group">
-              <h3 className="plugin-recent-update-title">
-                <Sparkles size={16} color="var(--primary)" />
-                What's New
-              </h3>
-              <span className="plugin-recent-update-badge">
-                v{latest.version}
-              </span>
-              {latest.created_at && (
-                <span className="plugin-recent-update-date">
-                  {formatDate(latest.created_at)}
-                </span>
-              )}
-            </div>
-            {plugin.versions.length > 1 && (
-              <button
-                type="button"
-                className="plugin-recent-update-history-btn"
-                onClick={() => setChangelogOpen(true)}
-              >
-                <History size={13} />
-                <span>Version History ({plugin.versions.length})</span>
-              </button>
-            )}
-          </div>
-          <div className={`plugin-recent-update-body markdown-content ${isLong ? 'is-clamped' : ''}`}>
-            {latest.release_notes ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-                {latest.release_notes}
-              </ReactMarkdown>
-            ) : (
-              <p className="plugin-recent-update-empty">
-                Bug fixes and performance improvements.
+          {plugin.is_early_access && (
+            <div className="notice notice-warning">
+              <span className="sticker sticker-warning">Early Access Plugin</span>
+              <p className="notice-text">
+                This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features.
+                Downloading it now helps support the developer and shape the future of the plugin!
               </p>
-            )}
-          </div>
-          {isLong && (
-            <button
-              type="button"
-              className="plugin-recent-update-more-btn"
-              onClick={() => setChangelogOpen(true)}
-            >
-              <span>View More</span>
-              <ChevronRight size={14} />
-            </button>
+            </div>
           )}
         </div>
-      );
-    })()}
-
-    {/* DESCRIPTION */}
-    <div className="markdown-content">
-    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
-    </div>
-
-    <hr className="divider" />
-
-    {/* REVIEWS */}
-    <section className="reviews-section">
-    <span className="reviews-section-label">Ratings &amp; Reviews</span>
-
-    {stats ? (
-      <div className="review-summary-grid">
-      <div className="review-avg-block">
-      <div className="review-big-avg">{stats.avg}</div>
-      <div className="review-stars-row">
-      {[1, 2, 3, 4, 5].map(n => (
-        <span key={n} className={`review-star-icon ${n <= Math.round(Number(stats.avg)) ? 'filled' : 'empty'}`}>
-          <Star size={14} fill={n <= Math.round(Number(stats.avg)) ? 'currentColor' : 'none'} />
-        </span>
-      ))}
-      </div>
-      <div className="review-total-label">{stats.total.toLocaleString()} Ratings</div>
-      </div>
-      <div className="review-bars-block">
-      {[5, 4, 3, 2, 1].map(num => (
-        <div key={num} className="review-bar-row">
-        <span className="review-bar-num">{num}</span>
-        <div className="review-bar-track">
-        <div
-        className="review-bar-fill"
-        style={{ width: `${(stats.distribution[num as keyof typeof stats.distribution] / stats.total) * 100}%` }}
-        />
-        </div>
-        <span className="review-bar-count">
-        {stats.distribution[num as keyof typeof stats.distribution]}
-        </span>
-        </div>
-      ))}
-      </div>
-      </div>
-    ) : (
-      <div className="empty-reviews-prompt">No reviews yet. Be the first to leave one!</div>
-    )}
-
-    <div className="review-list-premium">
-    {Array.isArray(plugin.reviews) && plugin.reviews.map((r: any) => (
-      <div key={r.id} className="review-item-premium">
-      <div className="review-item-top">
-      <div className={`review-avatar ${getAvatarClass(r.username)}`}>
-      {getInitials(r.username)}
-      </div>
-      <div className="review-item-meta">
-      <span className="review-item-author">{r.username}</span>
-      <span className="review-item-date">{formatDate(r.created_at)}</span>
-      </div>
-      </div>
-      <div className="review-item-stars">
-      {[1, 2, 3, 4, 5].map(n => (
-        <span key={n} className={`review-star-sm ${n <= r.rating ? 'filled' : 'empty'}`}>
-          <Star size={12} fill={n <= r.rating ? 'currentColor' : 'none'} />
-        </span>
-      ))}
-      </div>
-      <ExpandableText className="review-item-body" text={r.comment} limit={400} />
-
-      {/* Developer Reply */}
-      {r.developer_reply && (
-        <div className="developer-reply" style={{
-          marginTop: '1rem',
-          padding: '1rem',
-          background: 'rgba(255, 117, 24, 0.05)',
-          borderLeft: '2px solid var(--primary)',
-          borderRadius: '4px',
-          overflowWrap: 'break-word',
-          wordBreak: 'break-word'
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: 'var(--primary)' }}>Developer Response</span>
-            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{formatDate(r.replied_at)}</span>
-          </div>
-          <ExpandableText 
-            text={r.developer_reply} 
-            limit={300} 
-            pStyle={{ fontSize: '0.9rem', color: 'var(--text)', lineHeight: 1.6 }}
-          />
-        </div>
       )}
-      
-      {/* Review Report & Reply Buttons */}
-      <div style={{ marginTop: '0.75rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        {reportedReviews.has(r.id) ? (
-          <p style={{ fontSize: '0.75rem', color: 'var(--success)', margin: 0, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <Check size={13} /> Report submitted
-          </p>
-        ) : reviewReportOpen === r.id ? (
-          <form onSubmit={(e) => submitReviewReport(e, r.id)} className="report-form" style={{ maxWidth: '400px', width: '100%' }}>
-            <label className="report-form-label">Reason for reporting this review</label>
-            <div className="report-reasons" style={{ transform: 'scale(0.9)', transformOrigin: 'left' }}>
-              {REVIEW_REPORT_REASONS.map(reason => (
-                <button
-                  key={reason}
-                  type="button"
-                  className={`report-reason-chip ${reviewReportSelected === reason ? 'selected' : ''}`}
-                  onClick={() => { setReviewReportSelected(reason); setReviewReportCustom(''); }}
-                >
-                  {reason}
+
+      <div className="pd-layout">
+        <div className="pd-main">
+          <header className="pd-head">
+            <span className="avatar pd-icon">
+              {plugin.preview_path ? <img src={plugin.preview_path} alt="" /> : plugin.name.charAt(0)}
+            </span>
+            <div className="pd-title">
+              <h1 className="display-2">{plugin.name}</h1>
+              <div className="row">
+                <span className="entry-by">by <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
+                {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
+                {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
+                {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
+                {plugin.type === 'paid' && saleDiscount > 0 && <span className="sticker sticker-sm">-{saleDiscount}%</span>}
+              </div>
+              {stats && (
+                <div className="row pd-score">
+                  <Stars value={Number(stats.avg)} />
+                  <span className="small"><strong>{stats.avg}</strong> · {stats.total.toLocaleString()} Ratings</span>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <div className="pd-body">
+            <div className="tabs" role="tablist" id="pd-tabs">
+              {tabList.map(([key, label, count]) => (
+                <button key={key} type="button" role="tab" aria-selected={activeTab === key} aria-controls="pd-panel" onClick={() => setTab(key)}>
+                  {label}
+                  {count !== undefined && <span className="count">{count}</span>}
                 </button>
               ))}
             </div>
-            {reviewReportSelected === 'Other' && (
-              <textarea
-                className="report-textarea"
-                placeholder="Describe the issue…"
-                value={reviewReportCustom}
-                onChange={e => setReviewReportCustom(e.target.value)}
-                rows={2}
-                autoFocus
-                style={{ fontSize: '0.8rem' }}
-              />
-            )}
-            <div className="report-form-actions">
-              <button type="button" className="btn-report-cancel" onClick={resetReviewReport} style={{ padding: '4px 8px', fontSize: '0.7rem' }}>
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn-report-submit"
-                disabled={
-                  reviewReportSubmitting ||
-                  !reviewReportSelected ||
-                  (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
-                }
-                style={{ padding: '4px 8px', fontSize: '0.7rem' }}
-              >
-                {reviewReportSubmitting ? 'Sending…' : 'Submit'}
-              </button>
-            </div>
-          </form>
-        ) : replyOpen === r.id ? (
-          <form onSubmit={(e) => submitReply(e, r.id)} style={{ width: '100%', maxWidth: '500px' }}>
-            <textarea
-              className="report-textarea"
-              placeholder="Write your response to this review..."
-              value={replyText}
-              onChange={e => setReplyText(e.target.value)}
-              rows={3}
-              autoFocus
-              style={{ fontSize: '0.85rem', marginBottom: '0.5rem' }}
-            />
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                type="button" 
-                className="btn-report-cancel" 
-                onClick={() => { setReplyOpen(null); setReplyText(''); }}
-                style={{ padding: '4px 12px', fontSize: '0.75rem' }}
-              >
-                Cancel
-              </button>
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
-                disabled={replySubmitting || !replyText.trim()}
-                style={{ padding: '4px 12px', fontSize: '0.75rem', height: 'auto' }}
-              >
-                {replySubmitting ? 'Replying...' : 'Post Reply'}
-              </button>
-            </div>
-          </form>
-        ) : (
-          <>
-            {user && user.username === r.username ? (
-              <button className="btn-report" onClick={deleteReview} style={{ fontSize: '0.7rem', color: '#ff4d4f', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Trash2 size={12} /> Delete my review
-              </button>
-            ) : user && (
-              <button className="btn-report" onClick={() => setReviewReportOpen(r.id)} style={{ fontSize: '0.7rem', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-                <Flag size={12} /> Report review
-              </button>
-            )}
 
-            {isOwner && !r.developer_reply && !replyOpen && (
-              <button 
-                className="btn-report" 
-                onClick={() => setReplyOpen(r.id)} 
-                style={{ fontSize: '0.7rem', color: 'var(--primary)', display: 'inline-flex', alignItems: 'center', gap: 4 }}
-              >
-                <MessageSquare size={12} /> Reply as developer
-              </button>
-            )}
-          </>
-        )}
-      </div>
-      </div>
-    ))}
-    </div>
+            <div className="pd-panel" id="pd-panel" role="tabpanel">
+              {activeTab === 'overview' && (
+                <>
+                  {screenshots.length > 0 ? (
+                    <div className="pd-media">
+                      {mainScreenshot === 'video' ? (
+                        <PluginVideoPlayer url={plugin.youtube_video_url || undefined} />
+                      ) : (
+                        <button
+                          type="button"
+                          className="pd-stage"
+                          onClick={() => {
+                            const idx = screenshots.findIndex((s: any) => s.path === (mainScreenshot || screenshots[0]?.path));
+                            openLightbox(idx >= 0 ? idx : 0);
+                          }}
+                        >
+                          <img src={mainScreenshot || screenshots[0]?.path} alt="Main" />
+                        </button>
+                      )}
+                      <div className="pd-thumbs">
+                        {plugin.youtube_video_url && (
+                          <button type="button" className="pd-thumb" aria-pressed={mainScreenshot === 'video'} onClick={() => setMainScreenshot('video')}>
+                            {getYoutubeVideoId(plugin.youtube_video_url) ? (
+                              <img src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} alt="Video Thumbnail" />
+                            ) : (
+                              <span className="label">Video</span>
+                            )}
+                            <span className="pd-play"><Play /></span>
+                          </button>
+                        )}
+                        {screenshots.map((shot: any) => (
+                          <button key={shot.id} type="button" className="pd-thumb" aria-pressed={mainScreenshot === shot.path} onClick={() => setMainScreenshot(shot.path)}>
+                            <img src={shot.path} alt="Thumbnail" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : plugin.youtube_video_url ? (
+                    <div className="pd-media">
+                      <PluginVideoPlayer url={plugin.youtube_video_url} />
+                    </div>
+                  ) : null}
 
-    {user ? (
-      hasReviewed ? (
-        <div className="review-already-posted">
-        <span className="review-already-icon"><Check size={14} /></span>
-        <div style={{ flex: 1 }}>
-        <div className="review-already-title">Review posted</div>
-        <div className="review-already-sub">You've already reviewed this plugin. Thanks for the feedback!</div>
-        </div>
-        <button 
-          onClick={deleteReview}
-          style={{ 
-            background: 'rgba(255, 77, 79, 0.1)', 
-            color: '#ff4d4f', 
-            border: 'none', 
-            padding: '8px 12px', 
-            borderRadius: '6px',
-            fontSize: '0.8rem',
-            cursor: 'pointer',
-            fontWeight: '600'
-          }}
-        >
-          Delete Review
-        </button>
-        </div>
-      ) : (
-        <form onSubmit={submitReview} className="review-submit-form">
-        <h3 className="review-form-title">Leave a Review</h3>
-        <div className="form-group">
-        <label>Your Rating</label>
-        <StarRating rating={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
-        </div>
-        <div className="form-group">
-        <label>Your Experience</label>
-        <textarea
-        placeholder="What did you like? What could be better?"
-        value={reviewForm.comment}
-        maxLength={MAX_REVIEW_LENGTH}
-        onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
-        required
-        />
-        </div>
-        <button className="btn btn-primary" type="submit">Post Review</button>
-        </form>
-      )
-    ) : (
-      <div className="auth-notice">
-      Please <Link to="/login">login</Link> to rate this plugin.
-      </div>
-    )}
-    </section>
-    </div>
+                  {versions.length > 0 && (() => {
+                    const latest = versions[0];
+                    const isLong = Boolean(latest.release_notes && (latest.release_notes.length > 200 || latest.release_notes.split('\n').length > 4));
+                    return (
+                      <section className="panel pd-news">
+                        <div className="panel-head">
+                          <Sparkles className="pumpkin" />
+                          <h2 className="h3">What's New</h2>
+                          <span className="tag tag-pumpkin">v{latest.version}</span>
+                          {latest.created_at && <span className="small">{formatDate(latest.created_at)}</span>}
+                          <span className="spacer" />
+                          {versions.length > 1 && (
+                            <button type="button" className="button button-flat button-sm" onClick={() => openTab('versions')}>
+                              <History />
+                              Version History ({versions.length})
+                            </button>
+                          )}
+                        </div>
+                        <div className={`panel-body pd-prose${isLong ? ' pd-clamp' : ''}`}>
+                          {latest.release_notes ? (
+                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                              {latest.release_notes}
+                            </ReactMarkdown>
+                          ) : (
+                            <p className="muted">Bug fixes and performance improvements.</p>
+                          )}
+                        </div>
+                        {isLong && (
+                          <div className="panel-foot">
+                            <button type="button" className="button button-ghost button-sm" onClick={() => openTab('versions')}>
+                              View More
+                              <ChevronRight />
+                            </button>
+                          </div>
+                        )}
+                      </section>
+                    );
+                  })()}
 
-    {/* SIDEBAR */}
-    <aside className="plugin-sidebar">
-    <div className="sidebar-widget">
+                  <div className="pd-prose">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
+                  </div>
+                </>
+              )}
 
-    {/* Price / owned indicator */}
-    <div className="price-hero-section">
-    {plugin.type === 'paid' && ownsPlugin ? (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: plugin.is_preorder ? '#f97316' : 'var(--success, #4ade80)', fontWeight: 700, fontSize: '0.9rem' }}>
-      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
-      </svg>
-      {plugin.is_preorder ? 'Pre-Ordered (Awaiting Release)' : 'Purchased'}
-      </div>
-    ) : plugin.type === 'paid' ? (
-      <div>
-        {plugin.is_preorder && (
-          <span style={{ display: 'inline-block', fontSize: '0.68rem', fontWeight: 800, background: 'rgba(249,115,22,0.15)', color: '#f97316', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 4, padding: '1px 6px', marginBottom: '0.35rem' }}>
-            PRE-ORDER
-          </span>
-        )}
-        {(() => {
-          const base = plugin.price_cents ?? 0;
-          const discount = plugin.sale_discount_percent ?? 0;
-          const salePrice = plugin.sale_active && discount > 0 
-            ? Math.round(base * (1 - discount / 100))
-            : base;
-          
-          const finalPrice = couponDiscount > 0
-            ? Math.round(salePrice * (1 - couponDiscount / 100))
-            : salePrice;
+              {activeTab === 'versions' && (
+                <ol className="pd-versions">
+                  {versions.map((v: any) => (
+                    <li key={v.id} className="pd-version">
+                      <div className="row">
+                        <span className="pd-version-num">v{v.version}</span>
+                        {v.track && <span className={`tag tag-solid ${trackTone[v.track] ?? 'tag-fg'}`}>{v.track}</span>}
+                        <span className="small">Released {formatDate(v.created_at)}</span>
+                      </div>
+                      <div className="pd-prose">
+                        {v.release_notes ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
+                        ) : (
+                          <p className="muted">No specific release notes for this update.</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              )}
 
-          return (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-              <PriceDisplay cents={finalPrice} />
-              
-              {(plugin.sale_active && discount > 0) || couponDiscount > 0 ? (
-                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through', fontFamily: 'var(--font-mono)' }}>
-                    €{(base / 100).toFixed(2)}
-                  </span>
-                  
-                  {plugin.sale_active && discount > 0 && (
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(255,107,107,0.1) ', border: '1px solid rgba(255,107,107,0.2) ', color: '#ff6b6b', borderRadius: 4, padding: '1px 6px' }}>
-                      -{discount}% SALE
-                    </span>
-                  )}
-                  
-                  {couponDiscount > 0 && (
-                    <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'rgba(74,222,128,0.1) ', border: '1px solid rgba(74,222,128,0.2) ', color: '#4ade80', borderRadius: 4, padding: '1px 6px' }}>
-                      -{couponDiscount}% COUPON
-                    </span>
-                  )}
-                </div>
-              ) : null}
-            </div>
-          );
-        })()}
-      </div>
-    ) : (
-      <div className="price-free">{plugin.type === 'adwall' ? 'AD SUPPORTED' : 'FREE'}</div>
-    )}
-    </div>
-
-    {plugin.type === 'paid' && !ownsPlugin && (
-      <div style={{ marginBottom: '1.25rem', marginTop: '1rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '0.5rem', letterSpacing: '0.05em' }}>Have a promo code?</label>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <input
-            id="detailPromoCode"
-            name="promoCode"
-            type="text"
-            value={couponCode}
-            onChange={e => setCouponCode(e.target.value.toUpperCase())}
-            placeholder="PROMOCODE"
-            disabled={validatingCoupon || appliedCoupon !== null}
-            autoComplete="off"
-            autoCapitalize="characters"
-            spellCheck={false}
-            style={{ 
-              flex: 1, 
-              padding: '8px 12px', 
-              fontSize: '0.85rem', 
-              fontFamily: 'var(--font-mono)',
-              textTransform: 'uppercase',
-              borderRadius: '6px',
-              border: '1px solid var(--border)',
-              backgroundColor: 'rgba(0,0,0,0.2)',
-              color: 'var(--text)',
-              outline: 'none'
-            }}
-          />
-          {appliedCoupon ? (
-            <button
-              onClick={handleClearCoupon}
-              className="btn btn-secondary"
-              style={{ padding: '8px 16px', fontSize: '0.85rem', borderRadius: '6px', cursor: 'pointer', height: 'auto', display: 'flex', alignItems: 'center' }}
-            >
-              Clear
-            </button>
-          ) : (
-            <button
-              onClick={handleApplyCoupon}
-              disabled={validatingCoupon || !couponCode.trim()}
-              className="btn btn-download-main"
-              style={{ width: 'auto', padding: '8px 16px', fontSize: '0.85rem', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            >
-              {validatingCoupon ? '…' : 'Apply'}
-            </button>
-          )}
-        </div>
-        {couponMessage && (
-          <p style={{ 
-            fontSize: '0.78rem', 
-            marginTop: '6px', 
-            color: couponMessage.isError ? '#ef4444' : '#4ade80',
-            fontWeight: 500
-          }}>
-            {couponMessage.text}
-          </p>
-        )}
-      </div>
-    )}
-
-    <button
-    className="btn btn-download-main"
-    onClick={handleDownload}
-    disabled={plugin.type === 'paid' && !ownershipChecked}
-    >
-    {downloadLabel}
-    </button>
-
-    {(() => {
-      const pluginId = plugin.public_id || plugin.id;
-      const ppmCommand = `ppm install ${pluginId}`;
-      return (
-        <div className="ppm-install-box">
-          <div className="ppm-install-header">
-            <a
-              href="https://github.com/Pumpkin-MC/ppm"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ppm-install-link"
-              title="View ppm package manager on GitHub"
-            >
-              <Package size={14} />
-              <span>Install with ppm package manager</span>
-            </a>
-          </div>
-          <div className="ppm-command-row">
-            <code className="ppm-command-code" title={ppmCommand}>
-              {ppmCommand}
-            </code>
-            <button
-              type="button"
-              onClick={() => handleCopyPpm(ppmCommand)}
-              className={`ppm-copy-btn ${ppmCopied ? 'copied' : ''}`}
-              title="Copy command"
-              aria-label="Copy ppm install command"
-            >
-              {ppmCopied ? <Check size={12} color="var(--success, #4ade80)" /> : <Copy size={12} />}
-              <span>{ppmCopied ? 'Copied' : 'Copy'}</span>
-            </button>
-          </div>
-        </div>
-      );
-    })()}
-
-    {plugin.source_link && (
-      <a
-      href={plugin.source_link}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="github-link-secondary"
-      >
-      <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      stroke="currentColor"
-      strokeWidth="2"
-      fill="none"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      >
-      <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path>
-      </svg>
-      View Source Code
-      </a>
-    )}
-
-    <div className="sidebar-stats">
-    <div className="stat-item"><strong>{(plugin.downloads ?? 0).toLocaleString()}</strong> Downloads</div>
-    {plugin.created_at && (
-      <div className="stat-item">Released: <strong>{formatDate(plugin.created_at)}</strong></div>
-    )}
-    <div className="stat-item">Category: <strong>{plugin.category}</strong></div>
-    {plugin.version && (
-      <div className="stat-item" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span>Version: <strong>{plugin.version}</strong></span>
-        {Array.isArray(plugin.versions) && plugin.versions.length > 0 && (
-          <button 
-            onClick={() => setChangelogOpen(true)}
-            style={{
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'var(--text)',
-              padding: '2px 8px',
-              borderRadius: '4px',
-              fontSize: '0.7rem',
-              cursor: 'pointer',
-              fontWeight: 600,
-              marginLeft: '8px'
-            }}
-          >
-            Update History
-          </button>
-        )}
-      </div>
-    )}
-    </div>
-
-    <PluginCommandsSidebarWidget commands={plugin.commands} />
-
-    {(user || reportDone) && <div className="divider-sm" />}
-    {user && !reportDone && (
-      <>
-      {!reportOpen ? (
-        <button className="btn-report" onClick={() => setReportOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
-          <Flag size={12} /> Report plugin
-        </button>
-      ) : (
-        <form onSubmit={submitReport} className="report-form">
-        <label className="report-form-label">Reason for report</label>
-        <div className="report-reasons">
-        {REPORT_REASONS.map(reason => (
-          <button
-          key={reason}
-          type="button"
-          className={`report-reason-chip ${reportSelected === reason ? 'selected' : ''}`}
-          onClick={() => { setReportSelected(reason); setReportCustom(''); }}
-          >
-          {reason}
-          </button>
-        ))}
-        </div>
-        {reportSelected === 'Other' && (
-          <textarea
-          className="report-textarea"
-          placeholder="Describe the issue…"
-          value={reportCustom}
-          onChange={e => setReportCustom(e.target.value)}
-          rows={3}
-          autoFocus
-          />
-        )}
-        <div className="report-form-actions">
-        <button type="button" className="btn-report-cancel" onClick={resetReport}>
-        Cancel
-        </button>
-        <button
-        type="submit"
-        className="btn-report-submit"
-        disabled={
-          reportSubmitting ||
-          !reportSelected ||
-          (reportSelected === 'Other' && !reportCustom.trim())
-        }
-        >
-        {reportSubmitting ? 'Sending…' : 'Submit'}
-        </button>
-        </div>
-        </form>
-      )}
-      </>
-    )}
-    {reportDone && (
-      <p className="report-done" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <Check size={14} /> Report submitted. Thanks for keeping the marketplace safe.
-      </p>
-    )}
-    </div>
-    </aside>
-    </div>
-
-    {/* LIGHTBOX MODAL */}
-    {lightboxImage && (
-      <div className="lightbox-overlay" onClick={closeLightbox}>
-      <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-      <img src={lightboxImage} alt="Expanded view" className="lightbox-img" />
-      <button className="lightbox-close" onClick={closeLightbox}>
-      &times;
-      </button>
-
-      {/* Left arrow — only shown when navigating multiple gallery screenshots */}
-      {isScreenshotInGallery && (
-        <button
-        className="lightbox-arrow lightbox-arrow-left"
-        onClick={(e) => { e.stopPropagation(); lightboxPrev(); }}
-        aria-label="Previous screenshot"
-        >
-        &#8249;
-        </button>
-      )}
-
-      {/* Right arrow */}
-      {isScreenshotInGallery && (
-        <button
-        className="lightbox-arrow lightbox-arrow-right"
-        onClick={(e) => { e.stopPropagation(); lightboxNext(); }}
-        aria-label="Next screenshot"
-        >
-        &#8250;
-        </button>
-      )}
-
-      {/* Dot indicators */}
-      {isScreenshotInGallery && (
-        <div className="lightbox-dots">
-        {screenshots.map((_: any, i: number) => (
-          <button
-          key={i}
-          className={`lightbox-dot ${i === lightboxIndex ? 'active' : ''}`}
-          onClick={(e) => { e.stopPropagation(); openLightbox(i); }}
-          aria-label={`Go to screenshot ${i + 1}`}
-          />
-        ))}
-        </div>
-      )}
-      </div>
-      </div>
-    )}
-
-    {/* CHANGELOG MODAL */}
-    {changelogOpen && (
-      <div className="lightbox-overlay" onClick={() => setChangelogOpen(false)} style={{ zIndex: 2000 }}>
-        <div className="lightbox-content" onClick={(e) => e.stopPropagation()} style={{ 
-          maxWidth: '800px', 
-          width: '90%', 
-          maxHeight: '80vh', 
-          backgroundColor: 'var(--surface)', 
-          borderRadius: '12px',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: 0,
-          overflow: 'hidden',
-          border: '1px solid var(--border)',
-          boxShadow: '0 20px 50px rgba(0,0,0,0.8)'
-        }}>
-          <div style={{ 
-            padding: '20px 24px', 
-            borderBottom: '1px solid var(--border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            background: 'linear-gradient(to right, rgba(255, 117, 24, 0.05), transparent)'
-          }}>
-            <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--primary)', fontWeight: 800 }}>Update History</h2>
-          </div>
-          
-          <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
-            {(plugin.versions ?? []).map((v: any, idx: number, arr: any[]) => (
-              <div key={v.id} style={{ 
-                marginBottom: idx === arr.length - 1 ? 0 : '32px',
-                paddingBottom: idx === arr.length - 1 ? 0 : '32px',
-                borderBottom: idx === arr.length - 1 ? 'none' : '1px solid var(--border)'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <span style={{ 
-                    color: 'var(--primary)', 
-                    fontSize: '1.1rem', 
-                    fontWeight: 800,
-                    fontFamily: 'var(--font-mono)'
-                  }}>
-                    v{v.version}
-                  </span>
-                  <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                    Released {formatDate(v.created_at)}
-                  </span>
-                </div>
-                <div className="markdown-content" style={{ color: 'var(--text)', fontSize: '0.95rem', lineHeight: 1.6 }}>
-                  {v.release_notes ? (
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
+              {activeTab === 'reviews' && (
+                <section className="pd-reviews" aria-label="Ratings & Reviews">
+                  {stats ? (
+                    <div className="pd-ratings">
+                      <div className="pd-avg">
+                        <span className="stat-value">{stats.avg}</span>
+                        <Stars value={Number(stats.avg)} />
+                        <span className="small">{stats.total.toLocaleString()} Ratings</span>
+                      </div>
+                      <div className="pd-bars">
+                        {[5, 4, 3, 2, 1].map(num => (
+                          <div key={num}>
+                            <span className="small num">{num}</span>
+                            <div className="meter meter-pumpkin">
+                              <span style={{ width: `${(stats.distribution[num as keyof typeof stats.distribution] / stats.total) * 100}%` }} />
+                            </div>
+                            <span className="small num">{stats.distribution[num as keyof typeof stats.distribution]}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   ) : (
-                    <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', opacity: 0.5 }}>No specific release notes for this update.</p>
+                    <div className="blank">
+                      <p className="h3">No reviews yet. Be the first to leave one!</p>
+                    </div>
                   )}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div style={{ padding: '16px 24px', borderTop: '1px solid var(--border)', background: 'rgba(0,0,0,0.1)', textAlign: 'right' }}>
-            <button 
-              onClick={() => setChangelogOpen(false)}
-              className="btn btn-secondary"
-              style={{ padding: '8px 24px' }}
-            >
-              Close
-            </button>
+
+                  {reviews.length > 0 && (
+                    <ul className="pd-review-list">
+                      {reviews.map((r: any) => (
+                        <li key={r.id} className="pd-review">
+                          <div className="pd-review-top">
+                            <span className={`avatar ${getAvatarClass(r.username)}`}>{getInitials(r.username)}</span>
+                            <div className="pd-review-meta">
+                              <strong>{r.username}</strong>
+                              <span className="small">{formatDate(r.created_at)}</span>
+                            </div>
+                            <Stars value={r.rating} />
+                          </div>
+                          <ExpandableText className="pd-review-body" text={r.comment} limit={400} />
+
+                          {r.developer_reply && (
+                            <div className="pd-reply">
+                              <div className="row">
+                                <span className="label pumpkin">Developer Response</span>
+                                <span className="small">{formatDate(r.replied_at)}</span>
+                              </div>
+                              <ExpandableText text={r.developer_reply} limit={300} />
+                            </div>
+                          )}
+
+                          <div className="pd-review-actions">
+                            {reportedReviews.has(r.id) ? (
+                              <p className="small pd-ok">
+                                <Check /> Report submitted
+                              </p>
+                            ) : reviewReportOpen === r.id ? (
+                              <form onSubmit={(e) => submitReviewReport(e, r.id)} className="pd-form">
+                                <span className="field-label">Reason for reporting this review</span>
+                                {reasonPicker(REVIEW_REPORT_REASONS, reviewReportSelected, reason => { setReviewReportSelected(reason); setReviewReportCustom(''); })}
+                                {reviewReportSelected === 'Other' && (
+                                  <div className="control">
+                                    <textarea
+                                      className="input"
+                                      placeholder="Describe the issue…"
+                                      value={reviewReportCustom}
+                                      onChange={e => setReviewReportCustom(e.target.value)}
+                                      rows={2}
+                                      autoFocus
+                                    />
+                                  </div>
+                                )}
+                                <div className="row">
+                                  <button type="button" className="button button-ghost button-sm" onClick={resetReviewReport}>
+                                    Cancel
+                                  </button>
+                                  <button
+                                    type="submit"
+                                    className="button button-primary button-sm"
+                                    disabled={
+                                      reviewReportSubmitting ||
+                                      !reviewReportSelected ||
+                                      (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
+                                    }
+                                  >
+                                    {reviewReportSubmitting ? 'Sending…' : 'Submit'}
+                                  </button>
+                                </div>
+                              </form>
+                            ) : replyOpen === r.id ? (
+                              <form onSubmit={(e) => submitReply(e, r.id)} className="pd-form">
+                                <div className="control">
+                                  <textarea
+                                    className="input"
+                                    placeholder="Write your response to this review..."
+                                    value={replyText}
+                                    onChange={e => setReplyText(e.target.value)}
+                                    rows={3}
+                                    autoFocus
+                                  />
+                                </div>
+                                <div className="row">
+                                  <button type="button" className="button button-ghost button-sm" onClick={() => { setReplyOpen(null); setReplyText(''); }}>
+                                    Cancel
+                                  </button>
+                                  <button type="submit" className="button button-primary button-sm" disabled={replySubmitting || !replyText.trim()}>
+                                    {replySubmitting ? 'Replying...' : 'Post Reply'}
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <>
+                                {user && user.username === r.username ? (
+                                  <button type="button" className="button button-ghost button-sm pd-danger" onClick={deleteReview}>
+                                    <Trash2 /> Delete my review
+                                  </button>
+                                ) : user && (
+                                  <button type="button" className="button button-ghost button-sm" onClick={() => setReviewReportOpen(r.id)}>
+                                    <Flag /> Report review
+                                  </button>
+                                )}
+
+                                {isOwner && !r.developer_reply && !replyOpen && (
+                                  <button type="button" className="button button-ghost button-sm pd-accent" onClick={() => setReplyOpen(r.id)}>
+                                    <MessageSquare /> Reply as developer
+                                  </button>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {user ? (
+                    hasReviewed ? (
+                      <div className="notice notice-success">
+                        <span className="mark-box"><Check /></span>
+                        <p className="notice-text">
+                          <strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!
+                        </p>
+                        <button type="button" className="button button-danger button-sm" onClick={deleteReview}>
+                          Delete Review
+                        </button>
+                      </div>
+                    ) : (
+                      <form onSubmit={submitReview} className="panel">
+                        <div className="panel-head">
+                          <h3 className="h3">Leave a Review</h3>
+                        </div>
+                        <div className="panel-body fields">
+                          <div className="field">
+                            <span className="field-label">Your Rating</span>
+                            <Stars value={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
+                          </div>
+                          <label className="field">
+                            <span className="field-label">Your Experience</span>
+                            <span className="control">
+                              <textarea
+                                className="input"
+                                placeholder="What did you like? What could be better?"
+                                value={reviewForm.comment}
+                                maxLength={MAX_REVIEW_LENGTH}
+                                onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                required
+                              />
+                            </span>
+                          </label>
+                        </div>
+                        <div className="panel-foot">
+                          <button className="button button-primary" type="submit">Post Review</button>
+                        </div>
+                      </form>
+                    )
+                  ) : (
+                    <div className="notice notice-plain">
+                      <p className="notice-text">
+                        Please <Link className="link link-pumpkin" to="/login">login</Link> to rate this plugin.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
+
+              {activeTab === 'commands' && <PluginCommands commands={plugin.commands} />}
+            </div>
           </div>
         </div>
+
+        <aside className="pd-aside">
+          <div className="panel panel-pumpkin pd-buy">
+            <div className="panel-body stack">
+              {plugin.type === 'paid' && ownsPlugin ? (
+                <span className="status pd-owned">
+                  <span className={`mark-box ${plugin.is_preorder ? 'mark-box-warning' : 'mark-box-success'}`}><Check /></span>
+                  {plugin.is_preorder ? 'Pre-Ordered (Awaiting Release)' : 'Purchased'}
+                </span>
+              ) : plugin.type === 'paid' ? (
+                <div className="stack pd-price">
+                  {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
+                  <span className={`cost cost-lg${discounted ? ' cost-sale' : ''}`}>
+                    {discounted && <s>{euro(basePrice)}</s>}
+                    {euro(finalPrice)}
+                  </span>
+                  {discounted && (
+                    <div className="row">
+                      {saleDiscount > 0 && <span className="tag tag-danger">-{saleDiscount}% SALE</span>}
+                      {couponDiscount > 0 && <span className="tag tag-success">-{couponDiscount}% COUPON</span>}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className={`cost cost-lg${plugin.type === 'adwall' ? '' : ' cost-free'}`}>{plugin.type === 'adwall' ? 'AD SUPPORTED' : 'FREE'}</span>
+              )}
+
+              {plugin.type === 'paid' && !ownsPlugin && (
+                <div className="field">
+                  <label className="field-label" htmlFor="detailPromoCode">Have a promo code?</label>
+                  <div className="pd-coupon">
+                    <span className="control">
+                      <input
+                        id="detailPromoCode"
+                        name="promoCode"
+                        type="text"
+                        className="input"
+                        value={couponCode}
+                        onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                        placeholder="PROMOCODE"
+                        disabled={validatingCoupon || appliedCoupon !== null}
+                        autoComplete="off"
+                        autoCapitalize="characters"
+                        spellCheck={false}
+                      />
+                    </span>
+                    {appliedCoupon ? (
+                      <button type="button" className="button button-flat" onClick={handleClearCoupon}>
+                        Clear
+                      </button>
+                    ) : (
+                      <button type="button" className="button" onClick={handleApplyCoupon} disabled={validatingCoupon || !couponCode.trim()}>
+                        {validatingCoupon ? '…' : 'Apply'}
+                      </button>
+                    )}
+                  </div>
+                  {couponMessage && (
+                    <p className={couponMessage.isError ? 'field-error' : 'small pd-ok'}>{couponMessage.text}</p>
+                  )}
+                </div>
+              )}
+
+              <button
+                type="button"
+                className="button button-primary button-lg button-block"
+                onClick={handleDownload}
+                disabled={plugin.type === 'paid' && !ownershipChecked}
+              >
+                {downloadLabel}
+              </button>
+
+              <div className="cmd">
+                <code title={ppmCommand}>{ppmCommand}</code>
+                <button type="button" onClick={() => handleCopyPpm(ppmCommand)} title="Copy command" aria-label="Copy ppm install command">
+                  {ppmCopied ? <Check /> : <Copy />}
+                  {ppmCopied ? 'Copied' : 'Copy'}
+                </button>
+              </div>
+              <a
+                href="https://github.com/Pumpkin-MC/ppm"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pd-ppm"
+                title="View ppm package manager on GitHub"
+              >
+                <Package />
+                Install with ppm package manager
+              </a>
+            </div>
+          </div>
+
+          <div className="pd-meta">
+            <dl className="specs">
+              {plugin.version && (
+                <>
+                  <dt>Version</dt>
+                  <dd>
+                    <span className="pd-spec-version">
+                      <span className="mono">{plugin.version}</span>
+                      {versions.length > 0 && (
+                        <button type="button" className="pd-textbtn" onClick={() => openTab('versions')}>Update History</button>
+                      )}
+                    </span>
+                  </dd>
+                </>
+              )}
+              <dt>Downloads</dt>
+              <dd>{(plugin.downloads ?? 0).toLocaleString()}</dd>
+              {plugin.created_at && (
+                <>
+                  <dt>Released</dt>
+                  <dd>{formatDate(plugin.created_at)}</dd>
+                </>
+              )}
+              <dt>Category</dt>
+              <dd>{plugin.category}</dd>
+              {plugin.source_link && (
+                <>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="link link-pumpkin">View Source Code</a>
+                  </dd>
+                </>
+              )}
+            </dl>
+
+            {user && !reportDone && (
+              !reportOpen ? (
+                <button type="button" className="button button-ghost button-sm pd-report-btn" onClick={() => setReportOpen(true)}>
+                  <Flag /> Report plugin
+                </button>
+              ) : (
+                <form onSubmit={submitReport} className="pd-form">
+                  <span className="field-label">Reason for report</span>
+                  {reasonPicker(REPORT_REASONS, reportSelected, reason => { setReportSelected(reason); setReportCustom(''); })}
+                  {reportSelected === 'Other' && (
+                    <div className="control">
+                      <textarea
+                        className="input"
+                        placeholder="Describe the issue…"
+                        value={reportCustom}
+                        onChange={e => setReportCustom(e.target.value)}
+                        rows={3}
+                        autoFocus
+                      />
+                    </div>
+                  )}
+                  <div className="row">
+                    <button type="button" className="button button-ghost button-sm" onClick={resetReport}>
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="button button-primary button-sm"
+                      disabled={
+                        reportSubmitting ||
+                        !reportSelected ||
+                        (reportSelected === 'Other' && !reportCustom.trim())
+                      }
+                    >
+                      {reportSubmitting ? 'Sending…' : 'Submit'}
+                    </button>
+                  </div>
+                </form>
+              )
+            )}
+            {reportDone && (
+              <p className="small pd-ok">
+                <Check /> Report submitted. Thanks for keeping the marketplace safe.
+              </p>
+            )}
+          </div>
+        </aside>
       </div>
-    )}
+
+      {lightboxImage && (
+        <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label="Expanded view">
+          <div className="pd-lightbox-frame" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxImage} alt="Expanded view" />
+            <div className="pd-lightbox-bar">
+              {isScreenshotInGallery && (
+                <>
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxPrev} aria-label="Previous screenshot">
+                    <ChevronLeft />
+                  </button>
+                  <div className="pd-dots">
+                    {screenshots.map((_: any, i: number) => (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-current={i === lightboxIndex}
+                        onClick={() => openLightbox(i)}
+                        aria-label={`Go to screenshot ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxNext} aria-label="Next screenshot">
+                    <ChevronRight />
+                  </button>
+                </>
+              )}
+              <span className="spacer" />
+              <button type="button" className="button button-sm button-icon" onClick={closeLightbox} aria-label="Close">
+                <X />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

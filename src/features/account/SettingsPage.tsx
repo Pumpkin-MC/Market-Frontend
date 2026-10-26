@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../app/auth';
 import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../studio/DeveloperOnboardingModal';
 import { getPluginUrl } from '../../lib/url';
@@ -13,7 +13,7 @@ import { RecoveryCodesModal } from './RecoveryCodesModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
 import {
   User, Mail, Lock, Shield, CreditCard,
-  BookOpen, AlertTriangle, LogOut, CheckCircle,
+  BookOpen, AlertTriangle, LogOut,
   AlertCircle, Eye, EyeOff, ChevronRight, Bell,
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
   ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
@@ -21,6 +21,8 @@ import {
   Cloud, Pencil, X
 } from 'lucide-react';
 import { getDevicePasskeyName } from '../../lib/deviceInfo';
+import { Select } from '../../components/Select';
+import '../../styles/account.css';
 
 interface LibraryEntry {
   plugin_id:    number;
@@ -47,8 +49,6 @@ const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger
   { key: 'danger',        label: 'Danger Zone',         icon: AlertTriangle, danger: true },
 ];
 
-// ── Settings Subcomponents (defined at module level to prevent remounting on state changes) ──
-
 interface SettingsCardProps {
   title?: string;
   description?: string;
@@ -57,18 +57,18 @@ interface SettingsCardProps {
 }
 
 const SettingsCard: React.FC<SettingsCardProps> = ({ title, description, icon: Icon, children }) => (
-  <div className="settings-card">
+  <section className="panel">
     {(title || Icon) && (
-      <div className="settings-card-header">
-        {Icon && <div className="settings-card-icon"><Icon size={16} /></div>}
+      <header className="panel-head ac-panel-head">
+        {Icon && <span className="ac-icon"><Icon /></span>}
         <div>
-          {title && <p className="settings-card-title">{title}</p>}
-          {description && <p className="settings-card-desc">{description}</p>}
+          {title && <h3 className="h3">{title}</h3>}
+          {description && <p className="small">{description}</p>}
         </div>
-      </div>
+      </header>
     )}
-    <div className="settings-card-body">{children}</div>
-  </div>
+    <div className="panel-body stack">{children}</div>
+  </section>
 );
 
 interface FieldProps {
@@ -78,11 +78,11 @@ interface FieldProps {
 }
 
 const Field: React.FC<FieldProps> = ({ label, hint, children }) => (
-  <div className="settings-field">
-    <label className="settings-label">{label}</label>
-    {hint && <p className="settings-hint">{hint}</p>}
+  <label className="field">
+    <span className="field-label">{label}</span>
     {children}
-  </div>
+    {hint && <span className="field-hint">{hint}</span>}
+  </label>
 );
 
 interface SaveBtnProps {
@@ -92,8 +92,8 @@ interface SaveBtnProps {
 }
 
 const SaveBtn: React.FC<SaveBtnProps> = ({ isSaving = false, disabled = false, label = 'Save Changes' }) => (
-  <button type="submit" className="settings-btn settings-btn-primary" disabled={isSaving || disabled}>
-    {isSaving ? <><span className="spinner-sm" />{label.replace('Save', 'Saving')}…</> : label}
+  <button type="submit" className="button button-primary" disabled={isSaving || disabled} aria-busy={isSaving}>
+    {isSaving ? `${label.replace('Save', 'Saving')}…` : label}
   </button>
 );
 
@@ -105,21 +105,19 @@ interface ToggleProps {
 }
 
 const Toggle: React.FC<ToggleProps> = ({ checked, onChange, label, desc }) => (
-  <div className="settings-toggle-row">
-    <div>
-      <p className="settings-toggle-label">{label}</p>
-      {desc && <p className="settings-toggle-desc">{desc}</p>}
-    </div>
-    <button
-      type="button"
+  <label className="choice ac-toggle-row">
+    <span>
+      {label}
+      {desc && <span className="small">{desc}</span>}
+    </span>
+    <input
+      type="checkbox"
       role="switch"
-      aria-checked={checked}
-      className={`settings-toggle ${checked ? 'on' : ''}`}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="settings-toggle-thumb" />
-    </button>
-  </div>
+      className="toggle"
+      checked={checked}
+      onChange={e => onChange(e.target.checked)}
+    />
+  </label>
 );
 
 interface PwInputProps {
@@ -134,22 +132,60 @@ interface PwInputProps {
 }
 
 const PwInput: React.FC<PwInputProps> = ({ placeholder, value, onChange, show, onToggle, autoComplete, id, name }) => (
-  <div className="settings-pw-wrap">
+  <span className="control">
     <input
       id={id}
       name={name}
       type={show ? 'text' : 'password'}
-      className="settings-input"
+      className="input"
       placeholder={placeholder}
       value={value}
       onChange={e => onChange(e.target.value)}
       autoComplete={autoComplete}
       required
     />
-    <button type="button" className="settings-pw-eye" onClick={onToggle} tabIndex={-1} aria-label={show ? 'Hide password' : 'Show password'}>
-      {show ? <EyeOff size={16} /> : <Eye size={16} />}
+    <button type="button" className="ac-eye" onClick={onToggle} tabIndex={-1} aria-label={show ? 'Hide password' : 'Show password'}>
+      {show ? <EyeOff /> : <Eye />}
     </button>
-  </div>
+  </span>
+);
+
+const COUNTRY_OPTIONS = [
+  { value: '', label: 'Select a country…' },
+  ...Object.entries(getCodeList())
+    .sort((a, b) => a[1].localeCompare(b[1]))
+    .map(([code, name]) => ({ value: code, label: name })),
+];
+
+const LANGUAGE_OPTIONS = [
+  { value: 'en', label: 'English' },
+  { value: 'de', label: 'Deutsch (German)' },
+  { value: 'fr', label: 'Français (French)' },
+  { value: 'es', label: 'Español (Spanish)' },
+  { value: 'it', label: 'Italiano (Italian)' },
+  { value: 'nl', label: 'Nederlands (Dutch)' },
+  { value: 'pt', label: 'Português (Portuguese)' },
+  { value: 'pl', label: 'Polski (Polish)' },
+  { value: 'ru', label: 'Русский (Russian)' },
+  { value: 'tr', label: 'Türkçe (Turkish)' },
+  { value: 'ja', label: '日本語 (Japanese)' },
+  { value: 'ko', label: '한국어 (Korean)' },
+  { value: 'zh', label: '中文 (Chinese)' },
+];
+
+const EXPIRY_OPTIONS = [
+  { value: '30', label: '30 Days' },
+  { value: '90', label: '90 Days (Recommended)' },
+  { value: '180', label: '180 Days' },
+  { value: '365', label: '1 Year' },
+  { value: '0', label: 'No Expiration' },
+];
+
+const SectionHead: React.FC<{ lead: React.ReactNode; rest: string; sub?: string; children?: React.ReactNode }> = ({ lead, rest, sub, children }) => (
+  <header className="ac-section-head">
+    <h2 className="h1"><span className="mark">{lead}</span> {rest}{children}</h2>
+    {sub && <p className="small">{sub}</p>}
+  </header>
 );
 
 const SettingsPage = () => {
@@ -177,17 +213,14 @@ const SettingsPage = () => {
   const [isStripeLoading, setIsStripeLoading] = useState(false);
   const [saving, setSaving] = useState<Record<string, boolean>>({});
 
-  // Library
   const [library, setLibrary]           = useState<LibraryEntry[]>([]);
   const [libraryLoading, setLibraryLoading] = useState(false);
   const [libraryError, setLibraryError] = useState<string | null>(null);
 
-  // 2FA
   const [is2faEnabled, setIs2faEnabled] = useState(false);
   const [setup2faData, setSetup2faData] = useState<{ uri: string; secret: string } | null>(null);
   const [verify2faCode, setVerify2faCode] = useState('');
 
-  // Notifications (UI-only for now, persisted locally)
   const [notifPrefs, setNotifPrefs] = useState({
     purchaseEmail: true,
     reviewEmail: true,
@@ -210,7 +243,6 @@ const SettingsPage = () => {
     }
   }, [user, i18n.language]);
 
-  // Developer Profile State
   const [isDevModalOpen, setIsDevModalOpen] = useState(false);
   const [devProfile, setDevProfile] = useState<any>(null);
   const [devProfileForm, setDevProfileForm] = useState({
@@ -331,7 +363,6 @@ const SettingsPage = () => {
   const [verify2faError, setVerify2faError] = useState('');
   const [verify2faLoading, setVerify2faLoading] = useState(false);
 
-  // API Keys / Personal Access Tokens
   interface ApiKey {
     id: number;
     name: string;
@@ -344,7 +375,6 @@ const SettingsPage = () => {
   }
 
   const API_KEY_SCOPES = {
-    // Plugins
     PLUGINS_READ: 'plugins:read',
     PLUGINS_DOWNLOAD: 'plugins:download',
     PLUGINS_CREATE: 'plugins:create',
@@ -354,21 +384,17 @@ const SettingsPage = () => {
     PLUGINS_PUBLISH: 'plugins:publish',
     PLUGINS_DELETE: 'plugins:delete',
 
-    // Licenses
     LICENSES_READ: 'licenses:read',
     LICENSES_CREATE: 'licenses:create',
     LICENSES_REVOKE: 'licenses:revoke',
     LICENSES_DELETE: 'licenses:delete',
 
-    // Coupons
     COUPONS_READ: 'coupons:read',
     COUPONS_WRITE: 'coupons:write',
 
-    // Reviews
     REVIEWS_READ: 'reviews:read',
     REVIEWS_REPLY: 'reviews:reply',
 
-    // Analytics & Telemetry
     ANALYTICS_READ: 'analytics:read',
     TELEMETRY_READ: 'telemetry:read',
   } as const;
@@ -959,236 +985,220 @@ const SettingsPage = () => {
     }
   };
 
-  // ── render ────────────────────────────────────────────────────────────────────
-
   return (
-    <div className="container profile-page">
-      <h1 className="page-title">Account <span>Settings</span></h1>
+    <div className="page ac-settings">
+      <header className="ac-settings-head">
+        <h1 className="display-2">Account <span className="mark">Settings</span></h1>
+      </header>
 
-      {/* Toast */}
       {toast && (
-        <div className={`settings-toast ${toast.type}`}>
-          {toast.type === 'success'
-            ? <CheckCircle size={16} />
-            : <AlertCircle size={16} />}
+        <div className="toast ac-toast" data-type={toast.type} role="status">
+          <span className="mark-box">
+            {toast.type === 'success' ? <Check /> : <AlertCircle />}
+          </span>
           {toast.text}
         </div>
       )}
 
-      <div className="profile-layout">
-        {/* ── Sidebar nav ── */}
-        <nav className="profile-nav">
-          <div className="settings-nav-user">
-            <div className="settings-nav-avatar">
+      <div className="tabs ac-tabs" role="tablist" aria-label="Settings">
+        {NAV.map(({ key, label, icon: Icon, danger }) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === key}
+            data-danger={danger || undefined}
+            onClick={() => setActiveTab(key)}
+          >
+            <Icon size={15} />
+            {label}
+          </button>
+        ))}
+        <button type="button" role="tab" aria-selected={false} onClick={handleLogout}>
+          <LogOut size={15} />
+          Sign Out
+        </button>
+      </div>
+
+      <div className="ac-layout">
+        <aside className="ac-aside">
+          <div className="ac-user">
+            <span className="avatar">
               {user?.username?.charAt(0).toUpperCase() ?? '?'}
-            </div>
-            <div className="settings-nav-meta">
-              <p className="settings-nav-name">{user?.username}</p>
-              <p className="settings-nav-email">{user?.email}</p>
+            </span>
+            <div>
+              <strong>{user?.username}</strong>
+              <span className="small">{user?.email}</span>
             </div>
           </div>
 
-          <div className="settings-nav-divider" />
+          <nav className="sidenav ac-sidenav" aria-label="Settings">
+            {NAV.map(({ key, label, icon: Icon, danger }) => (
+              <a
+                key={key}
+                href={`?tab=${key}`}
+                aria-current={activeTab === key ? 'page' : undefined}
+                data-danger={danger || undefined}
+                onClick={e => { e.preventDefault(); setActiveTab(key); }}
+              >
+                <Icon />
+                {label}
+                {activeTab === key && <ChevronRight size={14} className="count" />}
+              </a>
+            ))}
+          </nav>
 
-          {NAV.map(({ key, label, icon: Icon, danger }) => (
-            <button
-              key={key}
-              className={`profile-nav-item ${activeTab === key ? 'active' : ''} ${danger ? 'danger' : ''}`}
-              onClick={() => setActiveTab(key)}
-            >
-              <Icon size={15} />
-              {label}
-              {activeTab === key && <ChevronRight size={14} style={{ marginLeft: 'auto', opacity: 0.5 }} />}
+          <div className="ac-signout">
+            <button type="button" className="button button-ghost" onClick={handleLogout}>
+              <LogOut />
+              Sign Out
             </button>
-          ))}
+          </div>
+        </aside>
 
-          <div className="settings-nav-divider" style={{ marginTop: 'auto' }} />
-          <button className="profile-nav-item" onClick={handleLogout}>
-            <LogOut size={15} />
-            Sign Out
-          </button>
-        </nav>
+        <div className="ac-main">
 
-        {/* ── Main content ── */}
-        <div className="profile-content">
-
-          {/* ══ ACCOUNT ══════════════════════════════════════════════════ */}
           {activeTab === 'account' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>Account</span> Details
-                </h2>
-              </div>
+            <>
+              <SectionHead lead="Account" rest="Details" />
 
               <SettingsCard title="Account Profile" icon={User}>
-                <form onSubmit={handleSaveAccountInfo} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
+                <form className="stack" onSubmit={handleSaveAccountInfo}>
+                  <div className="fields ac-fields-2">
                     <Field label="Username">
-                      <input
-                        id="accountUsername"
-                        name="username"
-                        className="settings-input"
-                        type="text"
-                        value={formData.username}
-                        onChange={e => setFormData({ ...formData, username: e.target.value })}
-                        placeholder="Your username"
-                        autoComplete="username"
-                        required
-                      />
+                      <span className="control">
+                        <input
+                          id="accountUsername"
+                          name="username"
+                          className="input"
+                          type="text"
+                          value={formData.username}
+                          onChange={e => setFormData({ ...formData, username: e.target.value })}
+                          placeholder="Your username"
+                          autoComplete="username"
+                          required
+                        />
+                      </span>
                     </Field>
 
                     <Field label="Email Address">
+                      <span className="control">
+                        <input
+                          id="accountEmail"
+                          name="email"
+                          className="input"
+                          type="email"
+                          value={formData.email}
+                          onChange={e => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="your@email.com"
+                          autoComplete="email"
+                          required
+                        />
+                      </span>
+                    </Field>
+
+                    <Field label="Country">
+                      <Select
+                        options={COUNTRY_OPTIONS}
+                        value={formData.country}
+                        onChange={v => setFormData({ ...formData, country: v })}
+                        placeholder="Select a country…"
+                      />
                       <input
-                        id="accountEmail"
-                        name="email"
-                        className="settings-input"
-                        type="email"
-                        value={formData.email}
-                        onChange={e => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="your@email.com"
-                        autoComplete="email"
+                        className="ac-required"
+                        name="country"
+                        value={formData.country}
+                        onChange={() => {}}
+                        tabIndex={-1}
+                        aria-hidden="true"
                         required
+                      />
+                    </Field>
+
+                    <Field label="Preferred Language">
+                      <Select
+                        options={LANGUAGE_OPTIONS}
+                        value={formData.language ? formData.language.split('-')[0] : 'en'}
+                        onChange={v => setFormData({ ...formData, language: v })}
                       />
                     </Field>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.25rem' }}>
-                    <Field label="Country">
-                      <select
-                        id="accountCountry"
-                        name="country"
-                        className="settings-input settings-select"
-                        value={formData.country}
-                        onChange={e => setFormData({ ...formData, country: e.target.value })}
-                        autoComplete="country"
-                        required
-                      >
-                        <option value="">Select a country…</option>
-                        {Object.entries(getCodeList())
-                          .sort((a, b) => a[1].localeCompare(b[1]))
-                          .map(([code, name]) => (
-                            <option key={code} value={code}>{name}</option>
-                          ))}
-                      </select>
-                    </Field>
-
-                    <Field label="Preferred Language">
-                      <select
-                        id="accountLanguage"
-                        name="language"
-                        className="settings-input settings-select"
-                        value={formData.language ? formData.language.split('-')[0] : 'en'}
-                        onChange={e => setFormData({ ...formData, language: e.target.value })}
-                      >
-                        <option value="en">English</option>
-                        <option value="de">Deutsch (German)</option>
-                        <option value="fr">Français (French)</option>
-                        <option value="es">Español (Spanish)</option>
-                        <option value="it">Italiano (Italian)</option>
-                        <option value="nl">Nederlands (Dutch)</option>
-                        <option value="pt">Português (Portuguese)</option>
-                        <option value="pl">Polski (Polish)</option>
-                        <option value="ru">Русский (Russian)</option>
-                        <option value="tr">Türkçe (Turkish)</option>
-                        <option value="ja">日本語 (Japanese)</option>
-                        <option value="ko">한국어 (Korean)</option>
-                        <option value="zh">中文 (Chinese)</option>
-                      </select>
-                    </Field>
-                  </div>
-
-                  <div style={{ marginTop: '0.5rem' }}>
+                  <div className="row">
                     <SaveBtn isSaving={saving['accountInfo']} label="Save Changes" />
                   </div>
                 </form>
               </SettingsCard>
-            </div>
+            </>
           )}
 
-          {/* ══ SECURITY ══════════════════════════════════════════════════ */}
           {activeTab === 'security' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>Security</span> Settings
-                </h2>
-                <p className="settings-section-sub">Protect your account with a strong password and two-factor authentication.</p>
-              </div>
+            <>
+              <SectionHead lead="Security" rest="Settings" sub="Protect your account with a strong password and two-factor authentication." />
 
-              {/* Password */}
               <SettingsCard title="Password" description="Use a strong, unique password you don't use elsewhere." icon={Key}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                <div className="ac-split">
+                  <p className="small">
                     Protect your account with a strong password. You can also choose to log out of other active devices when updating your password.
-                  </div>
+                  </p>
                   <button
                     type="button"
-                    className="settings-btn settings-btn-primary"
+                    className="button button-sm"
                     onClick={() => setShowChangePasswordModal(true)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
                   >
-                    <Key size={15} /> Change Password
+                    <Key /> Change Password
                   </button>
                 </div>
               </SettingsCard>
 
-              {/* Passkeys */}
               <SettingsCard
                 title="Passkeys & Biometrics"
                 icon={Fingerprint}
                 description="Sign in securely and instantly with Touch ID, Face ID, Windows Hello, or physical security keys."
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                  <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                <div className="ac-split">
+                  <p className="small">
                     Passkeys provide phishing-resistant security backed by hardware cryptographic keys on your device.
-                  </div>
+                  </p>
                   <button
                     type="button"
-                    className="settings-btn settings-btn-primary"
+                    className="button button-primary button-sm"
                     onClick={() => {
                       setNewPasskeyName(getDevicePasskeyName());
                       setShowAddPasskeyModal(true);
                     }}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
                   >
-                    <Plus size={15} /> Add Passkey
+                    <Plus /> Add Passkey
                   </button>
                 </div>
 
                 {showAddPasskeyModal && (
-                  <form onSubmit={handleRegisterPasskey} style={{
-                    padding: '1.25rem',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 12,
-                    border: '1px solid var(--mp-border, rgba(255,255,255,0.1))',
-                    marginBottom: '1.25rem'
-                  }}>
-                    <p style={{ margin: '0 0 0.75rem 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--mp-text, #fff)' }}>
-                      Register a New Passkey
-                    </p>
+                  <form className="ac-inset" onSubmit={handleRegisterPasskey}>
+                    <p className="h3">Register a New Passkey</p>
                     <Field label="Passkey Name (e.g. MacBook Pro Touch ID, Windows Hello)" hint="Give your passkey a descriptive nickname so you recognize the device later.">
-                      <input
-                        type="text"
-                        className="settings-input"
-                        placeholder={getDevicePasskeyName()}
-                        value={newPasskeyName}
-                        onChange={e => setNewPasskeyName(e.target.value)}
-                        autoFocus
-                      />
+                      <span className="control">
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder={getDevicePasskeyName()}
+                          value={newPasskeyName}
+                          onChange={e => setNewPasskeyName(e.target.value)}
+                          autoFocus
+                        />
+                      </span>
                     </Field>
-                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                    <div className="row">
                       <button
                         type="submit"
-                        className="settings-btn settings-btn-primary"
+                        className="button button-primary"
                         disabled={passkeyRegistering}
-                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+                        aria-busy={passkeyRegistering}
                       >
-                        <Fingerprint size={16} /> {passkeyRegistering ? 'Prompting Device...' : 'Continue with Biometrics'}
+                        <Fingerprint /> {passkeyRegistering ? 'Prompting Device...' : 'Continue with Biometrics'}
                       </button>
                       <button
                         type="button"
-                        className="settings-btn settings-btn-danger-outline"
+                        className="button button-ghost"
                         onClick={() => { setShowAddPasskeyModal(false); setNewPasskeyName(''); }}
                       >
                         Cancel
@@ -1198,146 +1208,88 @@ const SettingsPage = () => {
                 )}
 
                 {passkeysLoading ? (
-                  <p style={{ color: 'var(--mp-muted, #94a3b8)', fontSize: '0.88rem' }}>Loading registered passkeys...</p>
+                  <p className="small">Loading registered passkeys...</p>
                 ) : passkeys.length === 0 ? (
-                  <div className="settings-status-row warn">
-                    <AlertCircle size={16} />
+                  <p className="status">
+                    <span className="mark-box mark-box-warning"><AlertCircle /></span>
                     <span>No passkeys registered yet. Add one to enable passwordless biometrics.</span>
-                  </div>
+                  </p>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="ac-list">
                     {passkeys.map(pk => (
-                      <div
-                        key={pk.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '0.85rem 1.1rem',
-                          background: 'rgba(255,255,255,0.02)',
-                          border: '1px solid var(--mp-border, rgba(255,255,255,0.08))',
-                          borderRadius: 10,
-                          gap: '0.75rem',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
-                          <div style={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 8,
-                            background: 'rgba(34, 197, 94, 0.12)',
-                            color: '#4ade80',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}>
-                            <Fingerprint size={20} />
-                          </div>
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            {editingPasskeyId === pk.id ? (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
+                      <div key={pk.id} className="ac-item">
+                        <span className="ac-icon ac-icon-success"><Fingerprint /></span>
+                        <div className="ac-item-main">
+                          {editingPasskeyId === pk.id ? (
+                            <div className="ac-rename">
+                              <span className="control">
                                 <input
                                   type="text"
-                                  className="settings-input"
+                                  className="input"
                                   value={editingPasskeyName}
                                   onChange={e => setEditingPasskeyName(e.target.value)}
                                   disabled={passkeyRenaming}
                                   autoFocus
-                                  style={{ padding: '0.2rem 0.5rem', fontSize: '0.88rem', height: 28, maxWidth: 220 }}
+                                  aria-label="Rename Passkey"
                                   onKeyDown={e => {
                                     if (e.key === 'Enter') handleSaveRenamePasskey(pk.id);
                                     if (e.key === 'Escape') setEditingPasskeyId(null);
                                   }}
                                 />
-                                <button
-                                  type="button"
-                                  onClick={() => handleSaveRenamePasskey(pk.id)}
-                                  disabled={passkeyRenaming}
-                                  style={{ background: 'none', border: 'none', color: '#4ade80', cursor: 'pointer', padding: 4 }}
-                                  title="Save Name"
-                                >
-                                  <Check size={16} />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setEditingPasskeyId(null)}
-                                  disabled={passkeyRenaming}
-                                  style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', padding: 4 }}
-                                  title="Cancel"
-                                >
-                                  <X size={16} />
-                                </button>
-                              </div>
-                            ) : (
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.15rem' }}>
-                                <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
-                                  {pk.name}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleStartRenamePasskey(pk)}
-                                  style={{ background: 'none', border: 'none', color: 'var(--mp-muted, #94a3b8)', cursor: 'pointer', padding: 2, display: 'inline-flex' }}
-                                  title="Rename Passkey"
-                                >
-                                  <Pencil size={12} />
-                                </button>
-                                {pk.synced !== false ? (
-                                  <span style={{
-                                    fontSize: '0.68rem',
-                                    fontWeight: 600,
-                                    background: 'rgba(56, 189, 248, 0.1)',
-                                    color: '#38bdf8',
-                                    padding: '1px 5px',
-                                    borderRadius: 4,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 3,
-                                    border: '1px solid rgba(56, 189, 248, 0.2)'
-                                  }}>
-                                    <Cloud size={10} /> Synced
-                                  </span>
-                                ) : (
-                                  <span style={{
-                                    fontSize: '0.68rem',
-                                    fontWeight: 600,
-                                    background: 'rgba(168, 85, 247, 0.1)',
-                                    color: '#c084fc',
-                                    padding: '1px 5px',
-                                    borderRadius: 4,
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: 3,
-                                    border: '1px solid rgba(168, 85, 247, 0.2)'
-                                  }}>
-                                    <Key size={10} /> Hardware Key
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                            <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)' }}>
-                              Added {pk.createdAt ? new Date(pk.createdAt).toLocaleDateString() : 'recently'}
-                              {pk.lastUsedAt && ` • Last used ${new Date(pk.lastUsedAt).toLocaleDateString()}`}
+                              </span>
+                              <button
+                                type="button"
+                                className="ac-icon-btn"
+                                onClick={() => handleSaveRenamePasskey(pk.id)}
+                                disabled={passkeyRenaming}
+                                title="Save Name"
+                                aria-label="Save Name"
+                              >
+                                <Check />
+                              </button>
+                              <button
+                                type="button"
+                                className="ac-icon-btn"
+                                onClick={() => setEditingPasskeyId(null)}
+                                disabled={passkeyRenaming}
+                                title="Cancel"
+                                aria-label="Cancel"
+                              >
+                                <X />
+                              </button>
                             </div>
+                          ) : (
+                            <div className="ac-item-title">
+                              {pk.name}
+                              <button
+                                type="button"
+                                className="ac-icon-btn"
+                                onClick={() => handleStartRenamePasskey(pk)}
+                                title="Rename Passkey"
+                                aria-label="Rename Passkey"
+                              >
+                                <Pencil />
+                              </button>
+                              {pk.synced !== false ? (
+                                <span className="tag tag-info"><Cloud /> Synced</span>
+                              ) : (
+                                <span className="tag tag-fg"><Key /> Hardware Key</span>
+                              )}
+                            </div>
+                          )}
+                          <div className="ac-meta">
+                            <span>Added {pk.createdAt ? new Date(pk.createdAt).toLocaleDateString() : 'recently'}</span>
+                            {pk.lastUsedAt && <span>Last used {new Date(pk.lastUsedAt).toLocaleDateString()}</span>}
                           </div>
                         </div>
                         <button
                           type="button"
+                          className="button button-ghost button-sm button-icon"
                           onClick={() => handleDeletePasskey(pk.id)}
-                          style={{
-                            background: 'none',
-                            border: 'none',
-                            color: '#f87171',
-                            cursor: 'pointer',
-                            padding: '0.4rem',
-                            borderRadius: 6,
-                            display: 'flex',
-                            alignItems: 'center',
-                            flexShrink: 0,
-                          }}
                           title="Delete Passkey"
+                          aria-label="Delete Passkey"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 />
                         </button>
                       </div>
                     ))}
@@ -1345,24 +1297,23 @@ const SettingsPage = () => {
                 )}
               </SettingsCard>
 
-              {/* 2FA */}
               <SettingsCard title="Two-Factor Authentication" icon={Smartphone}
                 description="Add an extra layer of security using an authenticator app like Google Authenticator or Authy.">
                 {is2faEnabled ? (
-                  <div>
-                    <div className="settings-status-row success">
-                      <CheckCircle size={16} />
+                  <>
+                    <p className="status">
+                      <span className="mark-box mark-box-success"><Check /></span>
                       <span>2FA is currently <strong>enabled</strong> on your account.</span>
-                    </div>
+                    </p>
                     {user?.role === 'admin' || user?.role === 'moderator' ? (
-                      <div className="settings-status-row warn" style={{ marginTop: '1.25rem' }}>
-                        <Shield size={16} />
+                      <p className="status">
+                        <span className="mark-box mark-box-warning"><Shield /></span>
                         <span>
                           Staff members ({user.role === 'admin' ? 'Administrator' : 'Moderator'}) are required to keep 2FA enabled for platform security.
                         </span>
-                      </div>
+                      </p>
                     ) : (
-                      <form onSubmit={disable2fa} style={{ marginTop: '1.5rem' }}>
+                      <form className="stack" onSubmit={disable2fa}>
                         <Field label="Confirm with your password to disable">
                           <PwInput
                             id="disable2faPassword"
@@ -1375,152 +1326,140 @@ const SettingsPage = () => {
                             autoComplete="current-password"
                           />
                         </Field>
-                        <button type="submit" className="settings-btn settings-btn-danger-outline">
-                          Disable 2FA
-                        </button>
+                        <div className="row">
+                          <button type="submit" className="button button-danger">
+                            Disable 2FA
+                          </button>
+                        </div>
                       </form>
                     )}
-                  </div>
+                  </>
                 ) : !setup2faData ? (
-                  <div>
-                    <div className="settings-status-row warn">
-                      <AlertCircle size={16} />
+                  <>
+                    <p className="status">
+                      <span className="mark-box mark-box-warning"><AlertCircle /></span>
                       <span>2FA is <strong>not enabled</strong>. We recommend enabling it for account protection.</span>
+                    </p>
+                    <div className="row">
+                      <button className="button button-primary" onClick={start2faSetup}>
+                        Set Up 2FA
+                      </button>
                     </div>
-                    <button className="settings-btn settings-btn-primary" style={{ marginTop: '1.5rem' }} onClick={start2faSetup}>
-                      Set Up 2FA
-                    </button>
-                  </div>
+                  </>
                 ) : (
-                  <div className="settings-2fa-setup">
-                    <p className="settings-2fa-step"><span>1</span> Scan this QR code with your authenticator app:</p>
-                    <div className="settings-qr-wrap">
+                  <>
+                    <p className="ac-step"><span className="mark-box ac-num">1</span> Scan this QR code with your authenticator app:</p>
+                    <div className="ac-qr">
                       <QRCodeSVG value={setup2faData.uri} size={140} />
                     </div>
-                    <p className="settings-2fa-manual">
-                      Or enter this code manually:<br />
-                      <code className="settings-secret">{setup2faData.secret}</code>
-                    </p>
-                    <p className="settings-2fa-step" style={{ marginTop: '1.5rem' }}><span>2</span> Enter the 6-digit code from your app:</p>
-                    <form onSubmit={confirm2faSetup} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', marginTop: '0.75rem', flexWrap: 'wrap' }}>
-                      <input
-                        type="text"
-                        id="verify2faCode"
-                        name="code"
-                        className="settings-input settings-code-input"
-                        placeholder="000 000"
-                        maxLength={8}
-                        value={verify2faCode}
-                        onChange={e => {
-                          setVerify2faError('');
-                          setVerify2faCode(e.target.value.replace(/\D/g, '').slice(0, 6));
-                        }}
-                        autoComplete="one-time-code"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        required
-                        autoFocus
-                        style={{
-                          borderColor: verify2faError ? '#ef4444' : undefined,
-                          boxShadow: verify2faError ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
-                        }}
-                      />
+                    <div className="field">
+                      <span className="field-hint">Or enter this code manually:</span>
+                      <div className="ac-secret"><code>{setup2faData.secret}</code></div>
+                    </div>
+                    <p className="ac-step"><span className="mark-box ac-num">2</span> Enter the 6-digit code from your app:</p>
+                    <form className="ac-verify" onSubmit={confirm2faSetup}>
+                      <span className="control">
+                        <input
+                          type="text"
+                          id="verify2faCode"
+                          name="code"
+                          className="input ac-code"
+                          placeholder="000 000"
+                          maxLength={8}
+                          value={verify2faCode}
+                          onChange={e => {
+                            setVerify2faError('');
+                            setVerify2faCode(e.target.value.replace(/\D/g, '').slice(0, 6));
+                          }}
+                          autoComplete="one-time-code"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          required
+                          autoFocus
+                          aria-label="Authentication Code"
+                          aria-invalid={verify2faError ? true : undefined}
+                        />
+                      </span>
                       <button
                         type="submit"
-                        className={`settings-btn ${verify2faError ? 'settings-btn-danger' : 'settings-btn-primary'}`}
+                        className={`button ${verify2faError ? 'button-danger' : 'button-primary'}`}
                         disabled={verify2faLoading}
-                        style={
-                          verify2faError
-                            ? {
-                                backgroundColor: '#ef4444',
-                                borderColor: '#ef4444',
-                                color: '#fff',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.4rem',
-                              }
-                            : undefined
-                        }
+                        aria-busy={verify2faLoading}
                       >
                         {verify2faLoading ? (
                           'Verifying...'
                         ) : verify2faError ? (
                           <>
-                            <AlertCircle size={15} /> {verify2faError} — Try Again
+                            <AlertCircle /> {verify2faError} — Try Again
                           </>
                         ) : (
                           'Verify & Enable'
                         )}
                       </button>
                     </form>
-                  </div>
+                  </>
                 )}
               </SettingsCard>
 
-              {/* Recovery Codes */}
               <SettingsCard
                 title="Emergency Recovery Codes"
                 icon={ShieldAlert}
                 description="One-time use backup codes to regain access to your account if you lose your phone or security key."
               >
                 {recoveryLoading ? (
-                  <p className="settings-hint" style={{ padding: '0.75rem 0' }}>Loading recovery codes status...</p>
+                  <p className="small">Loading recovery codes status...</p>
                 ) : (
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--mp-muted, #94a3b8)', flex: 1 }}>
+                  <div className="ac-split">
+                    <p className="small">
                       {recoveryStatus?.hasCodes ? (
-                        <span>You have <strong>{recoveryStatus.remaining}</strong> of <strong>{recoveryStatus.total}</strong> recovery codes remaining.</span>
+                        <span>You have <strong className="pumpkin">{recoveryStatus.remaining}</strong> of <strong>{recoveryStatus.total}</strong> recovery codes remaining.</span>
                       ) : (
                         <span>No active recovery codes. Generate a set of backup codes to prevent getting locked out.</span>
                       )}
-                    </div>
+                    </p>
                     <button
                       type="button"
-                      className="settings-btn settings-btn-primary"
+                      className="button button-sm"
                       onClick={() => setShowRegenModal(true)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 0.9rem', fontSize: '0.85rem' }}
                     >
-                      <RefreshCw size={14} /> {recoveryStatus?.hasCodes ? 'Generate New Codes' : 'Generate Codes'}
+                      <RefreshCw /> {recoveryStatus?.hasCodes ? 'Generate New Codes' : 'Generate Codes'}
                     </button>
                   </div>
                 )}
 
                 {showRegenModal && (
-                  <form onSubmit={handleGenerateRecoveryCodes} style={{
-                    padding: '1.25rem',
-                    background: 'rgba(255,255,255,0.03)',
-                    borderRadius: 12,
-                    border: '1px solid var(--mp-border, rgba(255,255,255,0.1))',
-                    marginBottom: '1rem'
-                  }}>
-                    <p style={{ margin: '0 0 0.5rem 0', fontWeight: 600, fontSize: '0.95rem', color: 'var(--mp-text, #fff)' }}>
-                      Confirm Password to Generate Recovery Codes
-                    </p>
-                    <p style={{ margin: '0 0 0.75rem 0', fontSize: '0.82rem', color: 'var(--mp-muted, #94a3b8)' }}>
-                      Generating new recovery codes will automatically invalidate all previously generated codes.
-                    </p>
+                  <form className="ac-inset" onSubmit={handleGenerateRecoveryCodes}>
+                    <div className="stack ac-tight">
+                      <p className="h3">Confirm Password to Generate Recovery Codes</p>
+                      <p className="small">
+                        Generating new recovery codes will automatically invalidate all previously generated codes.
+                      </p>
+                    </div>
                     <Field label="Your Current Password">
-                      <input
-                        type="password"
-                        className="settings-input"
-                        placeholder="••••••••"
-                        value={regenPassword}
-                        onChange={e => setRegenPassword(e.target.value)}
-                        autoFocus
-                        required
-                      />
+                      <span className="control">
+                        <input
+                          type="password"
+                          className="input"
+                          placeholder="••••••••"
+                          value={regenPassword}
+                          onChange={e => setRegenPassword(e.target.value)}
+                          autoFocus
+                          required
+                        />
+                      </span>
                     </Field>
-                    <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1rem' }}>
+                    <div className="row">
                       <button
                         type="submit"
-                        className="settings-btn settings-btn-primary"
+                        className="button button-primary"
                         disabled={regenLoading}
+                        aria-busy={regenLoading}
                       >
                         {regenLoading ? 'Generating...' : 'Generate 10 Codes'}
                       </button>
                       <button
                         type="button"
-                        className="settings-btn settings-btn-danger-outline"
+                        className="button button-ghost"
                         onClick={() => { setShowRegenModal(false); setRegenPassword(''); }}
                       >
                         Cancel
@@ -1530,99 +1469,51 @@ const SettingsPage = () => {
                 )}
               </SettingsCard>
 
-              {/* Active Devices & Sessions */}
               <SettingsCard
                 title="Active Devices & Sessions"
                 icon={Laptop}
                 description="Review browsers and devices currently logged into your account. You can revoke unrecognized sessions at any time."
               >
                 {sessionsLoading ? (
-                  <p className="settings-hint" style={{ textAlign: 'center', padding: '1.5rem 0' }}>Loading active devices…</p>
+                  <p className="small">Loading active devices…</p>
                 ) : sessions.length === 0 ? (
-                  <p className="settings-hint">No active sessions found.</p>
+                  <p className="small">No active sessions found.</p>
                 ) : (
-                  <div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <>
+                    <div className="ac-list">
                       {sessions.map((s: any) => {
                         const isMobile = s.device_type === 'mobile';
                         const isTablet = s.device_type === 'tablet';
                         const DeviceIcon = isMobile ? Smartphone : isTablet ? Tablet : Laptop;
 
                         return (
-                          <div
-                            key={s.id}
-                            style={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              gap: '1rem',
-                              padding: '1rem 1.15rem',
-                              borderRadius: '10px',
-                              background: s.is_current ? 'rgba(249, 115, 22, 0.06)' : 'rgba(255,255,255,0.02)',
-                              border: s.is_current ? '1px solid rgba(249, 115, 22, 0.3)' : '1px solid rgba(255,255,255,0.07)',
-                              flexWrap: 'wrap'
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-                              <div style={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: '8px',
-                                background: s.is_current ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255,255,255,0.05)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                color: s.is_current ? 'var(--mp-accent, #f97316)' : 'var(--dash-text-muted, #94a3b8)',
-                                flexShrink: 0
-                              }}>
-                                <DeviceIcon size={20} />
+                          <div key={s.id} className="ac-item" data-current={s.is_current || undefined}>
+                            <span className={`ac-icon${s.is_current ? ' ac-icon-pumpkin' : ''}`}><DeviceIcon /></span>
+                            <div className="ac-item-main">
+                              <div className="ac-item-title">
+                                {s.device_name || s.os || 'Web Device'}
+                                {s.is_current && <span className="tag tag-solid tag-success">Current Device</span>}
                               </div>
-                                <div>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <span style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--dash-text-primary, #fff)' }}>
-                                      {s.device_name || s.os || 'Web Device'}
-                                    </span>
-                                    {s.is_current && (
-                                      <span style={{
-                                        fontSize: '0.72rem',
-                                        padding: '2px 8px',
-                                        borderRadius: '12px',
-                                        background: 'rgba(16, 185, 129, 0.15)',
-                                        color: '#10b981',
-                                        border: '1px solid rgba(16, 185, 129, 0.3)',
-                                        fontWeight: 600
-                                      }}>
-                                        Current Device
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted, #94a3b8)', marginTop: '0.25rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <span>{s.browser || 'Web Browser'}</span>
-                                    {s.os && s.os !== s.device_name && (
-                                      <span>• {s.os}</span>
-                                    )}
-                                    {s.country && (
-                                      <span>• {s.country}</span>
-                                    )}
-                                    {s.ip_address && (
-                                      <span>• IP: {s.ip_address}</span>
-                                    )}
-                                    <span>
-                                      • {s.is_current ? 'Active now' : `Last active ${new Date(s.last_active_at).toLocaleDateString()} ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
-                                    </span>
-                                  </div>
-                                </div>
+                              <div className="ac-meta">
+                                <span>{s.browser || 'Web Browser'}</span>
+                                {s.os && s.os !== s.device_name && <span>{s.os}</span>}
+                                {s.country && <span>{s.country}</span>}
+                                {s.ip_address && <span className="mono">IP: {s.ip_address}</span>}
+                                <span>
+                                  {s.is_current ? 'Active now' : `Last active ${new Date(s.last_active_at).toLocaleDateString()} ${new Date(s.last_active_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                                </span>
+                              </div>
                             </div>
 
                             {!s.is_current && (
                               <button
                                 type="button"
-                                className="settings-btn settings-btn-danger-outline"
-                                style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                                className="button button-danger button-sm"
                                 onClick={() => handleRevokeSession(s.id)}
                                 disabled={revokingSessionId === s.id}
+                                aria-busy={revokingSessionId === s.id}
                               >
-                                <LogOut size={13} />
+                                <LogOut />
                                 {revokingSessionId === s.id ? 'Revoking…' : 'Revoke'}
                               </button>
                             )}
@@ -1632,156 +1523,114 @@ const SettingsPage = () => {
                     </div>
 
                     {sessions.length > 1 && (
-                      <div style={{ marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
+                      <div className="row ac-end">
                         <button
                           type="button"
-                          className="settings-btn settings-btn-danger-outline"
+                          className="button button-danger"
                           onClick={handleRevokeOtherSessions}
                           disabled={revokingAllSessions}
-                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                          aria-busy={revokingAllSessions}
                         >
-                          <LogOut size={14} />
+                          <LogOut />
                           {revokingAllSessions ? 'Signing out…' : 'Sign Out of All Other Devices'}
                         </button>
                       </div>
                     )}
-                  </div>
+                  </>
                 )}
               </SettingsCard>
-            </div>
+            </>
           )}
 
-          {/* ══ PERSONAL ACCESS TOKENS (API KEYS) ══════════════════════════ */}
           {activeTab === 'api_keys' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>API Keys</span> & Automation Tokens
-                </h2>
-                <p className="settings-section-sub">
-                  Personal access tokens allow external tools, CI/CD pipelines, and Minecraft servers to securely call the Pumpkin Market REST API without exposing your account password.
-                </p>
-              </div>
+            <>
+              <SectionHead
+                lead="API Keys"
+                rest="& Automation Tokens"
+                sub="Personal access tokens allow external tools, CI/CD pipelines, and Minecraft servers to securely call the Pumpkin Market REST API without exposing your account password."
+              />
 
-              {/* Newly Generated Raw Key Modal / Highlight Box */}
               {createdRawKey && (
-                <div
-                  style={{
-                    background: 'rgba(34, 197, 94, 0.1)',
-                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                    borderRadius: 12,
-                    padding: '1.25rem',
-                    marginBottom: '1.5rem',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#4ade80', fontWeight: 600, marginBottom: '6px' }}>
-                    <CheckCircle size={18} />
-                    <span>Personal Access Token Created Successfully!</span>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', color: '#cbd5e1', margin: '0 0 12px 0' }}>
-                    <strong>Make sure to copy your token now.</strong> For your security, you will not be able to view this token again after leaving this page.
-                  </p>
-                  <div
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '10px',
-                      background: 'rgba(0, 0, 0, 0.4)',
-                      padding: '10px 14px',
-                      borderRadius: 8,
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                    }}
-                  >
-                    <code style={{ fontFamily: 'monospace', color: '#f1f5f9', fontSize: '0.9rem', wordBreak: 'break-all', flex: 1 }}>
-                      {createdRawKey}
-                    </code>
-                    <button
-                      type="button"
-                      className="settings-btn settings-btn-primary"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
-                      onClick={handleCopyRawKey}
-                    >
-                      {copiedKey ? <Check size={14} /> : <Copy size={14} />}
-                      <span>{copiedKey ? 'Copied!' : 'Copy Token'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      className="settings-btn settings-btn-secondary"
-                      onClick={() => setCreatedRawKey(null)}
-                    >
-                      Dismiss
-                    </button>
+                <div className="panel panel-pumpkin">
+                  <div className="panel-body stack">
+                    <p className="status">
+                      <span className="mark-box mark-box-success"><Check /></span>
+                      <span>Personal Access Token Created Successfully!</span>
+                    </p>
+                    <p className="small">
+                      <strong>Make sure to copy your token now.</strong> For your security, you will not be able to view this token again after leaving this page.
+                    </p>
+                    <div className="ac-secret"><code>{createdRawKey}</code></div>
+                    <div className="row">
+                      <button
+                        type="button"
+                        className="button button-primary button-sm"
+                        onClick={handleCopyRawKey}
+                      >
+                        {copiedKey ? <Check /> : <Copy />}
+                        <span>{copiedKey ? 'Copied!' : 'Copy Token'}</span>
+                      </button>
+                      <button
+                        type="button"
+                        className="button button-ghost button-sm"
+                        onClick={() => setCreatedRawKey(null)}
+                      >
+                        Dismiss
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Generate New API Key Card */}
               <SettingsCard
                 title="Generate New API Key"
                 icon={Key}
                 description="Create a dedicated token for automated plugin downloads, server setup scripts, or backup bots."
               >
-                <form onSubmit={handleCreateApiKey}>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1.25rem' }}>
+                <form className="stack" onSubmit={handleCreateApiKey}>
+                  <div className="fields ac-fields-2">
                     <Field label="Key Name / Purpose" hint="e.g., 'SMP Server 1', 'Pterodactyl Daemon', 'CI Automation'">
-                      <input
-                        type="text"
-                        className="settings-input"
-                        placeholder="My Production Server"
-                        value={newKeyName}
-                        onChange={e => setNewKeyName(e.target.value)}
-                        maxLength={64}
-                        required
-                      />
+                      <span className="control">
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="My Production Server"
+                          value={newKeyName}
+                          onChange={e => setNewKeyName(e.target.value)}
+                          maxLength={64}
+                          required
+                        />
+                      </span>
                     </Field>
 
                     <Field label="Expiration" hint="Tokens will automatically stop working after expiry">
-                      <select
-                        className="settings-input"
-                        value={newKeyExpiresIn}
-                        onChange={e => setNewKeyExpiresIn(Number(e.target.value))}
-                      >
-                        <option value={30}>30 Days</option>
-                        <option value={90}>90 Days (Recommended)</option>
-                        <option value={180}>180 Days</option>
-                        <option value={365}>1 Year</option>
-                        <option value={0}>No Expiration</option>
-                      </select>
+                      <Select
+                        options={EXPIRY_OPTIONS}
+                        value={String(newKeyExpiresIn)}
+                        onChange={v => setNewKeyExpiresIn(Number(v))}
+                      />
                     </Field>
                   </div>
 
-                  {/* Scopes & Permissions Selection */}
-                  <div style={{ marginBottom: '1.5rem' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '8px' }}>
-                      <div>
-                        <label style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--mp-text, #fff)', display: 'block' }}>
-                          Permission Scopes
-                        </label>
-                        <span style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)' }}>
+                  <div className="stack">
+                    <div className="ac-split">
+                      <div className="stack ac-tight">
+                        <span className="field-label">Permission Scopes</span>
+                        <span className="field-hint">
                           Configure permissions granted to this token. External tools will only be able to perform authorized actions.
                         </span>
                       </div>
-                      <div style={{ display: 'flex', gap: '6px' }}>
-                        <button
-                          type="button"
-                          onClick={selectAllScopes}
-                          className="settings-btn settings-btn-secondary"
-                          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
-                        >
+                      <div className="row">
+                        <button type="button" onClick={selectAllScopes} className="button button-flat button-sm">
                           Select All
                         </button>
-                        <button
-                          type="button"
-                          onClick={deselectAllScopes}
-                          className="settings-btn settings-btn-secondary"
-                          style={{ padding: '0.25rem 0.65rem', fontSize: '0.75rem' }}
-                        >
+                        <button type="button" onClick={deselectAllScopes} className="button button-flat button-sm">
                           Deselect All
                         </button>
                       </div>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginTop: '0.75rem' }}>
+                    <div className="ac-scopes">
                       {SCOPE_CATEGORIES.map(cat => {
                         const catScopeKeys = cat.scopes.map(s => s.key);
                         const selectedCount = catScopeKeys.filter(k => selectedScopes.includes(k)).length;
@@ -1789,105 +1638,47 @@ const SettingsPage = () => {
                         const someSelected = selectedCount > 0 && !allSelected;
 
                         return (
-                          <div
-                            key={cat.id}
-                            style={{
-                              background: 'rgba(255, 255, 255, 0.02)',
-                              border: '1px solid var(--mp-border, rgba(255, 255, 255, 0.08))',
-                              borderRadius: 10,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            {/* Category Header with Master Toggle */}
-                            <div
-                              onClick={() => toggleCategory(cat)}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                padding: '0.75rem 1rem',
-                                background: selectedCount > 0 ? 'rgba(249, 115, 22, 0.06)' : 'rgba(255, 255, 255, 0.01)',
-                                borderBottom: '1px solid var(--mp-border, rgba(255, 255, 255, 0.06))',
-                                cursor: 'pointer',
-                                userSelect: 'none',
-                              }}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={allSelected}
-                                  ref={el => {
-                                    if (el) el.indeterminate = someSelected;
-                                  }}
-                                  onChange={() => toggleCategory(cat)}
-                                  onClick={e => e.stopPropagation()}
-                                  style={{ cursor: 'pointer', accentColor: '#f97316', width: 16, height: 16 }}
-                                />
-                                <div>
-                                  <span style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--mp-text, #fff)' }}>
-                                    {cat.name}
-                                  </span>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--mp-muted, #94a3b8)', marginLeft: '8px' }}>
-                                    {cat.description}
-                                  </span>
-                                </div>
-                              </div>
-                              <span
-                                style={{
-                                  fontSize: '0.74rem',
-                                  padding: '2px 8px',
-                                  borderRadius: 12,
-                                  background: selectedCount > 0 ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                                  color: selectedCount > 0 ? '#f97316' : '#64748b',
-                                  fontWeight: 500,
+                          <div key={cat.id} className="ac-scope" data-on={selectedCount > 0 || undefined}>
+                            <div className="ac-scope-head" onClick={() => toggleCategory(cat)}>
+                              <input
+                                type="checkbox"
+                                className="check"
+                                checked={allSelected}
+                                ref={el => {
+                                  if (el) el.indeterminate = someSelected;
                                 }}
-                              >
+                                onChange={() => toggleCategory(cat)}
+                                onClick={e => e.stopPropagation()}
+                                aria-label={cat.name}
+                              />
+                              <div>
+                                <strong>{cat.name}</strong>
+                                <span className="small">{cat.description}</span>
+                              </div>
+                              <span className={`tag${selectedCount > 0 ? ' tag-pumpkin' : ''}`}>
                                 {selectedCount} / {catScopeKeys.length} selected
                               </span>
                             </div>
 
-                            {/* Individual Scopes */}
-                            <div style={{ padding: '0.5rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+                            <div className="ac-scope-body">
                               {cat.scopes.map(scope => {
                                 const isChecked = selectedScopes.includes(scope.key);
                                 return (
-                                  <label
-                                    key={scope.key}
-                                    style={{
-                                      display: 'flex',
-                                      alignItems: 'flex-start',
-                                      gap: '10px',
-                                      padding: '0.45rem 0.5rem',
-                                      borderRadius: 6,
-                                      background: isChecked ? 'rgba(255, 255, 255, 0.03)' : 'transparent',
-                                      cursor: 'pointer',
-                                      userSelect: 'none',
-                                    }}
-                                  >
+                                  <label key={scope.key} className="choice">
                                     <input
                                       type="checkbox"
+                                      className="check"
                                       checked={isChecked}
                                       onChange={() => toggleScope(scope.key)}
-                                      style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#f97316', width: 15, height: 15 }}
                                     />
-                                    <div style={{ flex: 1 }}>
-                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                                        <code style={{ fontSize: '0.76rem', background: isChecked ? 'rgba(56, 189, 248, 0.12)' : 'rgba(255, 255, 255, 0.05)', color: isChecked ? '#38bdf8' : '#94a3b8', padding: '1px 6px', borderRadius: 4, fontFamily: 'monospace' }}>
-                                          {scope.key}
-                                        </code>
-                                        <span style={{ fontSize: '0.84rem', fontWeight: 500, color: isChecked ? 'var(--mp-text, #fff)' : '#94a3b8' }}>
-                                          {scope.name}
-                                        </span>
-                                        {scope.devOnly && (
-                                          <span style={{ fontSize: '0.68rem', background: 'rgba(168, 85, 247, 0.12)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.25)', padding: '0 5px', borderRadius: 4 }}>
-                                            Developer
-                                          </span>
-                                        )}
-                                      </div>
-                                      <p style={{ margin: '2px 0 0', fontSize: '0.75rem', color: '#64748b' }}>
-                                        {scope.description}
-                                      </p>
-                                    </div>
+                                    <span>
+                                      <span className="ac-scope-name">
+                                        <code className={`tag ac-mono-tag${isChecked ? ' tag-info' : ''}`}>{scope.key}</code>
+                                        {scope.name}
+                                        {scope.devOnly && <span className="tag tag-pumpkin">Developer</span>}
+                                      </span>
+                                      <span className="small">{scope.description}</span>
+                                    </span>
                                   </label>
                                 );
                               })}
@@ -1898,81 +1689,53 @@ const SettingsPage = () => {
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    className="settings-btn settings-btn-primary"
-                    disabled={creatingKey || !newKeyName.trim() || selectedScopes.length === 0}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                  >
-                    <Plus size={16} />
-                    {creatingKey ? 'Generating…' : 'Generate Token'}
-                  </button>
+                  <div className="row">
+                    <button
+                      type="submit"
+                      className="button button-primary"
+                      disabled={creatingKey || !newKeyName.trim() || selectedScopes.length === 0}
+                      aria-busy={creatingKey}
+                    >
+                      <Plus />
+                      {creatingKey ? 'Generating…' : 'Generate Token'}
+                    </button>
+                  </div>
                 </form>
               </SettingsCard>
 
-              {/* Active API Keys List */}
               <SettingsCard
                 title="Active Tokens"
                 icon={Key}
                 description="Tokens currently authorized to authenticate as your account."
               >
                 {apiKeysLoading ? (
-                  <p className="settings-hint" style={{ textAlign: 'center', padding: '1.5rem 0' }}>Loading your API keys…</p>
+                  <p className="small">Loading your API keys…</p>
                 ) : apiKeys.length === 0 ? (
-                  <div style={{ textAlign: 'center', padding: '2rem 1rem', color: '#94a3b8' }}>
-                    <Key size={32} style={{ opacity: 0.3, marginBottom: '8px' }} />
-                    <p style={{ margin: 0, fontWeight: 500 }}>No API keys generated yet.</p>
-                    <p style={{ fontSize: '0.82rem', color: '#64748b', marginTop: '4px' }}>
+                  <div className="blank">
+                    <span className="ac-icon"><Key /></span>
+                    <p className="h3">No API keys generated yet.</p>
+                    <p className="small">
                       Generate your first token above to start automating plugin downloads with curl or scripts.
                     </p>
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div className="ac-list">
                     {apiKeys.map(k => (
-                      <div
-                        key={k.id}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: '1rem',
-                          padding: '1rem 1.15rem',
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          border: '1px solid var(--mp-border, rgba(255, 255, 255, 0.08))',
-                          borderRadius: 10,
-                        }}
-                      >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                            <span style={{ fontWeight: 600, fontSize: '0.92rem', color: 'var(--mp-text, #fff)' }}>
-                              {k.name}
-                            </span>
-                            <code style={{ fontSize: '0.78rem', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: 4, color: '#38bdf8' }}>
-                              {k.keyPrefix}
-                            </code>
+                      <div key={k.id} className="ac-item">
+                        <div className="ac-item-main">
+                          <div className="ac-item-title">
+                            {k.name}
+                            <code className="tag tag-info ac-mono-tag">{k.keyPrefix}</code>
                           </div>
-                          <div style={{ fontSize: '0.78rem', color: 'var(--mp-muted, #94a3b8)', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                          <div className="ac-meta">
                             <span>Created: {new Date(k.createdAt).toLocaleDateString()}</span>
                             <span>Expires: {k.expiresAt ? new Date(k.expiresAt).toLocaleDateString() : 'Never'}</span>
                             <span>Last used: {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : 'Never'}</span>
                           </div>
                           {k.scopes && k.scopes.length > 0 && (
-                            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                            <div className="row ac-tags">
                               {k.scopes.map(s => (
-                                <span
-                                  key={s}
-                                  style={{
-                                    fontSize: '0.72rem',
-                                    background: 'rgba(56, 189, 248, 0.08)',
-                                    color: '#7dd3fc',
-                                    border: '1px solid rgba(56, 189, 248, 0.2)',
-                                    padding: '1px 7px',
-                                    borderRadius: 12,
-                                    fontFamily: 'monospace',
-                                  }}
-                                >
-                                  {s}
-                                </span>
+                                <code key={s} className="tag ac-mono-tag">{s}</code>
                               ))}
                             </div>
                           )}
@@ -1980,12 +1743,12 @@ const SettingsPage = () => {
 
                         <button
                           type="button"
-                          className="settings-btn settings-btn-danger-outline"
-                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}
+                          className="button button-danger button-sm"
                           onClick={() => handleRevokeApiKey(k.id)}
                           disabled={revokingKeyId === k.id}
+                          aria-busy={revokingKeyId === k.id}
                         >
-                          <Trash2 size={13} />
+                          <Trash2 />
                           {revokingKeyId === k.id ? 'Revoking…' : 'Revoke'}
                         </button>
                       </div>
@@ -1994,281 +1757,286 @@ const SettingsPage = () => {
                 )}
               </SettingsCard>
 
-              {/* Usage Guide Box */}
               <SettingsCard
                 title="How to Use Your Token"
                 icon={Terminal}
                 description="Using your token with cURL or automation scripts."
               >
-                <p style={{ fontSize: '0.85rem', color: '#94a3b8', margin: '0 0 10px 0' }}>
-                  Pass your token in the <code>Authorization: Bearer</code> header to authenticate directly with the REST API:
+                <p className="small">
+                  Pass your token in the <code className="mono pumpkin">Authorization: Bearer</code> header to authenticate directly with the REST API:
                 </p>
-                <div style={{ background: 'rgba(0, 0, 0, 0.3)', padding: '12px 16px', borderRadius: 8, border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <code style={{ fontSize: '0.82rem', color: '#f1f5f9', display: 'block', lineHeight: 1.6 }}>
+                <div className="cmd">
+                  <code>
                     curl -H "Authorization: Bearer pmk_your_token_here" \<br />
                     &nbsp;&nbsp;https://market.pumpkinmc.org/api/v1/rest/plugins/1/download -o my_plugin.wasm
                   </code>
                 </div>
               </SettingsCard>
-            </div>
+            </>
           )}
 
-          {/* ══ DEVELOPER PROFILE ════════════════════════════════════════════ */}
           {activeTab === 'developer' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>Developer</span> Account & Payouts
-                </h2>
-                <p className="settings-section-sub">Manage your creator identity, support information, and payout settings.</p>
-              </div>
+            <>
+              <SectionHead lead="Developer" rest="Account & Payouts" sub="Manage your creator identity, support information, and payout settings." />
 
               {!user?.is_developer ? (
                 <SettingsCard title="Become a Developer" icon={Sparkles}
                   description="Unlock developer features to publish free or paid plugins to PumpkinMarket.">
-                  <div className="settings-stripe-empty">
-                    <Code size={36} style={{ color: '#f97316' }} />
-                    <p style={{ margin: '0.75rem 0', fontWeight: 600 }}>You haven't set up a Developer Profile yet.</p>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                  <div className="blank">
+                    <span className="ac-badge"><Code /></span>
+                    <p className="h3">You haven't set up a Developer Profile yet.</p>
+                    <p className="small">
                       Individual creators and organizations can publish plugins for $0. Start your onboarding now!
                     </p>
                     <button
-                      className="settings-btn settings-btn-primary"
-                      style={{ marginTop: '1rem' }}
+                      className="button button-primary"
                       onClick={() => setIsDevModalOpen(true)}
                     >
-                      <Sparkles size={16} /> Complete Developer Onboarding
+                      <Sparkles /> Complete Developer Onboarding
                     </button>
                   </div>
                 </SettingsCard>
               ) : (
                 <>
-                  {/* Developer Details */}
                   {devProfile && (
                     <SettingsCard title="Developer Identity" icon={Building2}
                       description="Your public developer information shown on plugin pages.">
-                      <form onSubmit={handleUpdateDevProfile}>
+                      <form className="fields ac-fields-2" onSubmit={handleUpdateDevProfile}>
                         <Field label="Entity Type">
-                          <input
-                            className="settings-input"
-                            type="text"
-                            value={devProfile.entity_type === 'organization' ? 'Organization / Studio' : 'Individual Developer'}
-                            disabled
-                          />
+                          <span className="control">
+                            <input
+                              className="input"
+                              type="text"
+                              value={devProfile.entity_type === 'organization' ? 'Organization / Studio' : 'Individual Developer'}
+                              disabled
+                            />
+                          </span>
                         </Field>
 
                         <Field label="Public Display Name" hint="Shown on your public developer profile and plugin listings.">
-                          <input
-                            id="devDisplayName"
-                            name="displayName"
-                            className="settings-input"
-                            style={devNameError ? { borderColor: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.05)' } : {}}
-                            type="text"
-                            value={devProfileForm.displayName}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, displayName: e.target.value })}
-                            autoComplete="nickname"
-                            required
-                          />
+                          <span className={`control${devNameAvailable && !devNameChecking && !devNameError ? ' ac-valid' : ''}`}>
+                            <input
+                              id="devDisplayName"
+                              name="displayName"
+                              className="input"
+                              type="text"
+                              value={devProfileForm.displayName}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, displayName: e.target.value })}
+                              autoComplete="nickname"
+                              required
+                              aria-invalid={devNameError ? true : undefined}
+                            />
+                            {devNameChecking && <span className="loading" />}
+                          </span>
                           {devNameChecking && (
-                            <span style={{ fontSize: '0.76rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
-                              Checking availability…
-                            </span>
+                            <span className="field-hint">Checking availability…</span>
                           )}
                           {devNameError && (
-                            <span style={{ fontSize: '0.76rem', color: '#ef4444', marginTop: '4px', display: 'block' }}>
-                              {devNameError}
-                            </span>
+                            <span className="field-error"><AlertCircle size={14} />{devNameError}</span>
                           )}
                           {devNameAvailable && !devNameChecking && !devNameError && (
-                            <span style={{ fontSize: '0.76rem', color: '#10b981', marginTop: '4px', display: 'block' }}>
-                              Developer name is available
-                            </span>
+                            <span className="field-hint ac-hint-ok">Developer name is available</span>
                           )}
                         </Field>
 
                         <Field label="Legal Full Name / Business Name" hint="Used for internal verification & tax compliance">
-                          <input
-                            id="devLegalName"
-                            name="legalName"
-                            className="settings-input"
-                            type="text"
-                            value={devProfileForm.legalName}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, legalName: e.target.value })}
-                            autoComplete="name"
-                          />
+                          <span className="control">
+                            <input
+                              id="devLegalName"
+                              name="legalName"
+                              className="input"
+                              type="text"
+                              value={devProfileForm.legalName}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, legalName: e.target.value })}
+                              autoComplete="name"
+                            />
+                          </span>
                         </Field>
 
                         <Field label="Street Address">
-                          <input
-                            id="devStreetAddress"
-                            name="streetAddress"
-                            className="settings-input"
-                            type="text"
-                            value={devProfileForm.streetAddress}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, streetAddress: e.target.value })}
-                            placeholder="123 Main St"
-                            autoComplete="street-address"
-                          />
+                          <span className="control">
+                            <input
+                              id="devStreetAddress"
+                              name="streetAddress"
+                              className="input"
+                              type="text"
+                              value={devProfileForm.streetAddress}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, streetAddress: e.target.value })}
+                              placeholder="123 Main St"
+                              autoComplete="street-address"
+                            />
+                          </span>
                         </Field>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                          <Field label="City">
+                        <Field label="City">
+                          <span className="control">
                             <input
                               id="devCity"
                               name="city"
-                              className="settings-input"
+                              className="input"
                               type="text"
                               value={devProfileForm.city}
                               onChange={e => setDevProfileForm({ ...devProfileForm, city: e.target.value })}
                               autoComplete="address-level2"
                             />
-                          </Field>
-                          <Field label="Postal / ZIP Code">
+                          </span>
+                        </Field>
+
+                        <Field label="Postal / ZIP Code">
+                          <span className="control">
                             <input
                               id="devPostalCode"
                               name="postalCode"
-                              className="settings-input"
+                              className="input"
                               type="text"
                               value={devProfileForm.postalCode}
                               onChange={e => setDevProfileForm({ ...devProfileForm, postalCode: e.target.value })}
                               autoComplete="postal-code"
                             />
-                          </Field>
-                        </div>
+                          </span>
+                        </Field>
 
                         <Field label="VAT / Tax ID" hint="Optional for businesses">
-                          <input
-                            id="devVatId"
-                            name="vatId"
-                            className="settings-input"
-                            type="text"
-                            value={devProfileForm.vatId}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, vatId: e.target.value })}
-                            placeholder="EU123456789"
-                            autoComplete="off"
-                          />
+                          <span className="control">
+                            <input
+                              id="devVatId"
+                              name="vatId"
+                              className="input"
+                              type="text"
+                              value={devProfileForm.vatId}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, vatId: e.target.value })}
+                              placeholder="EU123456789"
+                              autoComplete="off"
+                            />
+                          </span>
                         </Field>
 
                         <Field label="Support Email" hint="Public email for plugin buyers to contact you">
-                          <input
-                            id="devSupportEmail"
-                            name="supportEmail"
-                            className="settings-input"
-                            type="email"
-                            value={devProfileForm.supportEmail}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, supportEmail: e.target.value })}
-                            placeholder="support@domain.com"
-                            autoComplete="email"
-                          />
+                          <span className="control">
+                            <input
+                              id="devSupportEmail"
+                              name="supportEmail"
+                              className="input"
+                              type="email"
+                              value={devProfileForm.supportEmail}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, supportEmail: e.target.value })}
+                              placeholder="support@domain.com"
+                              autoComplete="email"
+                            />
+                          </span>
                         </Field>
 
                         <Field label="Website URL">
-                          <input
-                            id="devWebsiteUrl"
-                            name="websiteUrl"
-                            className="settings-input"
-                            type="url"
-                            value={devProfileForm.websiteUrl}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, websiteUrl: e.target.value })}
-                            placeholder="https://website.com"
-                            autoComplete="url"
-                          />
+                          <span className="control">
+                            <input
+                              id="devWebsiteUrl"
+                              name="websiteUrl"
+                              className="input"
+                              type="url"
+                              value={devProfileForm.websiteUrl}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, websiteUrl: e.target.value })}
+                              placeholder="https://website.com"
+                              autoComplete="url"
+                            />
+                          </span>
                         </Field>
 
                         <Field label="GitHub Profile">
-                          <input
-                            id="devGithubUrl"
-                            name="githubUrl"
-                            className="settings-input"
-                            type="text"
-                            value={devProfileForm.githubUrl}
-                            onChange={e => setDevProfileForm({ ...devProfileForm, githubUrl: e.target.value })}
-                            placeholder="https://github.com/username"
-                            autoComplete="url"
-                          />
+                          <span className="control">
+                            <input
+                              id="devGithubUrl"
+                              name="githubUrl"
+                              className="input"
+                              type="text"
+                              value={devProfileForm.githubUrl}
+                              onChange={e => setDevProfileForm({ ...devProfileForm, githubUrl: e.target.value })}
+                              placeholder="https://github.com/username"
+                              autoComplete="url"
+                            />
+                          </span>
                         </Field>
 
-                        <SaveBtn isSaving={saving['devProfile']} disabled={Boolean(devNameError) || devNameChecking} label="Save Developer Info" />
+                        <div className="row ac-span">
+                          <SaveBtn isSaving={saving['devProfile']} disabled={Boolean(devNameError) || devNameChecking} label="Save Developer Info" />
+                        </div>
                       </form>
                     </SettingsCard>
                   )}
 
-                  {/* Payouts */}
                   <SettingsCard title="Developer Payouts (Paid Plugins)" icon={CreditCard}
                     description="Connect your payout account to receive earnings from paid plugin sales. Optional for free plugins.">
-                    <div className="settings-stripe-box">
-                      {user?.stripe_ready ? (
-                        <>
-                          <div className="settings-status-row success" style={{ marginBottom: '1.5rem' }}>
-                            <CheckCircle size={18} />
-                            <div>
-                              <p style={{ fontWeight: 700, margin: 0 }}>Payout account connected</p>
-                              <p style={{ fontSize: '0.82rem', margin: '0.2rem 0 0', opacity: 0.7 }}>Your payouts are active and ready to receive funds from paid plugin sales.</p>
-                            </div>
+                    {user?.stripe_ready ? (
+                      <>
+                        <div className="status ac-status-block">
+                          <span className="mark-box mark-box-success"><Check /></span>
+                          <div>
+                            <strong>Payout account connected</strong>
+                            <p className="small">Your payouts are active and ready to receive funds from paid plugin sales.</p>
                           </div>
-                          <button className="settings-btn settings-btn-secondary" onClick={handleGoToStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Opening…</> : 'Go to Payout Dashboard →'}
+                        </div>
+                        <div className="row">
+                          <button className="button" onClick={handleGoToStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
+                            {isStripeLoading ? 'Opening…' : 'Go to Payout Dashboard →'}
                           </button>
-                        </>
-                      ) : user?.stripe_account_id ? (
-                        <>
-                          <div className="settings-status-row warn" style={{ marginBottom: '1.5rem' }}>
-                            <AlertCircle size={18} />
-                            <div>
-                              <p style={{ fontWeight: 700, margin: 0 }}>Payout onboarding incomplete</p>
-                              <p style={{ fontSize: '0.82rem', margin: '0.2rem 0 0', opacity: 0.7 }}>Your account was created but hasn't been fully activated yet.</p>
-                            </div>
+                        </div>
+                      </>
+                    ) : user?.stripe_account_id ? (
+                      <>
+                        <div className="status ac-status-block">
+                          <span className="mark-box mark-box-warning"><AlertCircle /></span>
+                          <div>
+                            <strong>Payout onboarding incomplete</strong>
+                            <p className="small">Your account was created but hasn't been fully activated yet.</p>
                           </div>
-                          <button className="settings-btn settings-btn-warn" onClick={handleConnectStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Redirecting…</> : 'Continue Payout Setup →'}
+                        </div>
+                        <div className="row">
+                          <button className="button button-primary" onClick={handleConnectStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
+                            {isStripeLoading ? 'Redirecting…' : 'Continue Payout Setup →'}
                           </button>
-                        </>
-                      ) : (
-                        <>
-                          <div className="settings-stripe-empty">
-                            <CreditCard size={32} style={{ opacity: 0.3 }} />
-                            <p>No payout account linked yet. Free plugin uploads are fully enabled.</p>
-                          </div>
-                          <button className="settings-btn settings-btn-primary" onClick={handleConnectStripe} disabled={isStripeLoading}>
-                            {isStripeLoading ? <><span className="spinner-sm" />Connecting…</> : 'Connect Payout Account for Paid Sales'}
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <p className="status">
+                          <span className="dot" />
+                          <span className="muted">No payout account linked yet. Free plugin uploads are fully enabled.</span>
+                        </p>
+                        <div className="row">
+                          <button className="button button-primary" onClick={handleConnectStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
+                            <CreditCard />
+                            {isStripeLoading ? 'Connecting…' : 'Connect Payout Account for Paid Sales'}
                           </button>
-                        </>
-                      )}
-                    </div>
+                        </div>
+                      </>
+                    )}
                   </SettingsCard>
 
                   <SettingsCard title="Payout FAQ" icon={Lock}>
-                    <div className="settings-faq">
+                    <div className="ac-faq">
                       {[
                         { q: 'Can I upload free plugins without a payout account?', a: 'Yes! A payout account is only required if you want to sell paid plugins.' },
                         { q: 'When do I get paid for sales?', a: 'Earnings are transferred automatically within 2–7 business days according to your payout schedule.' },
                         { q: 'What platform fee applies?', a: 'PumpkinMarket takes a platform commission per sale. Standard payment processing fees apply.' },
                       ].map(({ q, a }) => (
-                        <div key={q} className="settings-faq-item">
-                          <p className="settings-faq-q">{q}</p>
-                          <p className="settings-faq-a">{a}</p>
+                        <div key={q}>
+                          <p className="h3">{q}</p>
+                          <p className="small">{a}</p>
                         </div>
                       ))}
                     </div>
                   </SettingsCard>
                 </>
               )}
-            </div>
+            </>
           )}
 
-          {/* ══ NOTIFICATIONS ═════════════════════════════════════════════ */}
           {activeTab === 'notifications' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>Notification</span> Preferences
-                </h2>
-                <p className="settings-section-sub">Choose which emails and alerts you want to receive.</p>
-              </div>
+            <>
+              <SectionHead lead="Notification" rest="Preferences" sub="Choose which emails and alerts you want to receive." />
 
               <SettingsCard title="Email Notifications" icon={Mail}
                 description="Control which transactional emails we send to your registered address.">
-                <div className="settings-toggles">
+                <div className="ac-toggles">
                   <Toggle
                     checked={notifPrefs.purchaseEmail}
                     onChange={v => setNotifPrefs(p => ({ ...p, purchaseEmail: v }))}
@@ -2294,221 +2062,202 @@ const SettingsPage = () => {
                     desc="Occasional tips to grow your plugin sales."
                   />
                 </div>
-                <div style={{ marginTop: '1.5rem' }}>
+                <div className="row">
                   <button
-                    className="settings-btn settings-btn-primary"
+                    className="button button-primary"
                     onClick={() => showToast('Notification preferences saved!')}
                   >
                     Save Preferences
                   </button>
                 </div>
               </SettingsCard>
-            </div>
+            </>
           )}
 
-          {/* ══ LIBRARY ═══════════════════════════════════════════════════ */}
           {activeTab === 'library' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>My</span> Library
-                  {library.length > 0 && (
-                    <span style={{ fontSize: '0.75rem', fontWeight: 500, color: 'var(--text-muted)', marginLeft: '0.75rem', fontFamily: 'var(--font-mono)' }}>
-                      {library.length} plugin{library.length !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </h2>
-                <p className="settings-section-sub">Your purchased plugins, available to download at any time.</p>
-              </div>
+            <>
+              <SectionHead lead="My" rest="Library" sub="Your purchased plugins, available to download at any time.">
+                {library.length > 0 && (
+                  <span className="label mono ac-count">
+                    {library.length} plugin{library.length !== 1 ? 's' : ''}
+                  </span>
+                )}
+              </SectionHead>
 
               {libraryLoading && (
-                <div className="library-loading">
+                <div className="catalogue">
                   {[...Array(3)].map((_, i) => (
-                    <div key={i} className="library-skeleton" style={{ animationDelay: `${i * 0.1}s` }} />
+                    <div key={i} className="skeleton ac-skeleton" />
                   ))}
                 </div>
               )}
 
               {libraryError && (
-                <div className="library-error">
-                  <AlertTriangle size={20} color="#f59e0b" />
-                  <span>{libraryError}</span>
+                <div className="notice notice-warning ac-alert" role="alert">
+                  <span className="mark-box mark-box-warning"><AlertTriangle /></span>
+                  <p className="notice-text">{libraryError}</p>
                 </div>
               )}
 
               {!libraryLoading && !libraryError && library.length === 0 && (
-                <div className="library-empty">
-                  <div className="library-empty-bg" />
-                  <div className="library-empty-icon"><Package size={36} color="var(--mp-text-3, #64748b)" /></div>
-                  <p className="library-empty-title">Your library is empty</p>
-                  <p className="library-empty-sub">Purchased plugins will appear here, ready to download anytime.</p>
-                  <Link to="/" className="btn" style={{ marginTop: '1.25rem', fontSize: '0.8rem', padding: '0.6rem 1.4rem' }}>
+                <div className="blank">
+                  <span className="ac-icon"><Package /></span>
+                  <p className="h2">Your library is <span className="mark">empty</span></p>
+                  <p className="small">Purchased plugins will appear here, ready to download anytime.</p>
+                  <Link to="/" className="button button-primary">
                     Browse Plugins
                   </Link>
                 </div>
               )}
 
               {!libraryLoading && !libraryError && library.length > 0 && (
-                <div className="library-grid">
-                  {library.map((entry, idx) => (
+                <div className="catalogue ac-library">
+                  {library.map(entry => (
                     <Link
                       key={entry.plugin_id}
                       to={getPluginUrl({ id: entry.plugin_id, public_id: entry.public_id, name: entry.name })}
-                      className="library-card"
-                      style={{ animationDelay: `${idx * 0.05}s` }}
+                      className="entry"
                     >
-                      <div className="library-card-image">
+                      <div className="entry-cover">
                         {entry.preview_path ? (
                           <img src={entry.preview_path} alt={entry.name} />
                         ) : (
-                          <div className="library-card-image-fallback">
-                            {entry.name.charAt(0).toUpperCase()}
+                          <div className="placeholder">
+                            <span className="avatar">{entry.name.charAt(0).toUpperCase()}</span>
                           </div>
                         )}
-                        <div className="library-owned-badge" style={entry.is_preorder ? { background: '#f97316' } : undefined}>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
-                          {entry.is_preorder ? 'Pre-Ordered' : 'Owned'}
+                        <div className="entry-flags">
+                          <span className={`sticker sticker-sm ${entry.is_preorder ? '' : 'sticker-success'}`}>
+                            {entry.is_preorder ? 'Pre-Ordered' : 'Owned'}
+                          </span>
                         </div>
-                        {entry.category && (
-                          <div className="library-card-category-tag">{entry.category}</div>
-                        )}
                       </div>
-                      <div className="library-card-body">
-                        <div className="library-card-title-row">
-                          <span className="library-card-name">{entry.name}</span>
-                        </div>
-                        <span className="library-card-dev">by {entry.dev_name}</span>
-                        <div className="library-card-footer">
-                          <span className="library-card-price">€{(entry.amount_cents / 100).toFixed(2)}</span>
-                          <span className="library-card-date">
+                      <div className="entry-body">
+                        {entry.category && (
+                          <div className="entry-meta">
+                            <span className="label">{entry.category}</span>
+                          </div>
+                        )}
+                        <h3 className="entry-name">{entry.name}</h3>
+                        <p className="entry-by">by <strong>{entry.dev_name}</strong></p>
+                        <div className="entry-foot">
+                          <span className="cost">€{(entry.amount_cents / 100).toFixed(2)}</span>
+                          <span className="small">
                             {new Date(entry.purchased_at).toLocaleDateString(undefined, {
                               year: 'numeric', month: 'short', day: 'numeric',
                             })}
                           </span>
                         </div>
                       </div>
-                      <div className="library-card-arrow">→</div>
                     </Link>
                   ))}
                 </div>
               )}
-            </div>
+            </>
           )}
 
-          {/* ══ PRIVACY & DATA ═════════════════════════════════════════ */}
           {activeTab === 'privacy' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span>Privacy</span> & Data
-                </h2>
-                <p className="settings-section-sub">
-                  Manage your personal data, download an export of your account, and configure cookie settings.
-                </p>
-              </div>
+            <>
+              <SectionHead
+                lead="Privacy"
+                rest="& Data"
+                sub="Manage your personal data, download an export of your account, and configure cookie settings."
+              />
 
-              {/* Data Portability */}
               <SettingsCard
                 title="Export Account Data"
                 icon={Download}
                 description="Download a copy of your account data including your purchases, licenses, reviews, and developer details in JSON format."
               >
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                <p className="small">
                   Generate a structured machine-readable export of all data associated with your PumpkinMarket account.
                 </p>
-                <button
-                  type="button"
-                  onClick={handleExportData}
-                  className="settings-btn settings-btn-primary"
-                  disabled={isExporting}
-                >
-                  <Download size={15} />
-                  {isExporting ? <><span className="spinner-sm" />Generating Export…</> : 'Download Data Export (.json)'}
-                </button>
+                <div className="row">
+                  <button
+                    type="button"
+                    onClick={handleExportData}
+                    className="button button-primary"
+                    disabled={isExporting}
+                    aria-busy={isExporting}
+                  >
+                    <Download />
+                    {isExporting ? 'Generating Export…' : 'Download Data Export (.json)'}
+                  </button>
+                </div>
               </SettingsCard>
 
-              {/* Cookie & Tracking Consent */}
               <SettingsCard
                 title="Cookie Preferences"
                 icon={Sliders}
                 description="Choose what cookies and tracking technologies are enabled while you browse PumpkinMarket."
               >
-                <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
+                <p className="small">
                   You can update your preferences or turn off analytics cookies at any time without affecting your marketplace experience.
                 </p>
-                <button
-                  type="button"
-                  onClick={openCookiePreferencesModal}
-                  className="settings-btn settings-btn-secondary"
-                >
-                  <Sliders size={15} />
-                  Manage Cookie Preferences
-                </button>
+                <div className="row">
+                  <button
+                    type="button"
+                    onClick={openCookiePreferencesModal}
+                    className="button"
+                  >
+                    <Sliders />
+                    Manage Cookie Preferences
+                  </button>
+                </div>
               </SettingsCard>
 
-              {/* Privacy Controls Summary */}
               <SettingsCard
                 title="Data & Privacy Controls"
                 icon={ShieldCheck}
                 description="How you can access, update, or remove your data on PumpkinMarket."
               >
-                <div className="settings-faq">
-                  <div className="settings-faq-item">
-                    <p className="settings-faq-q">Access & Portability</p>
-                    <p className="settings-faq-a">You can request and download a full copy of your account records at any time using the export tool above.</p>
+                <div className="ac-faq">
+                  <div>
+                    <p className="h3">Access & Portability</p>
+                    <p className="small">You can request and download a full copy of your account records at any time using the export tool above.</p>
                   </div>
-                  <div className="settings-faq-item">
-                    <p className="settings-faq-q">Updating Your Information</p>
-                    <p className="settings-faq-a">Keep your email, username, country, and developer profile up to date anytime directly from your settings tabs.</p>
+                  <div>
+                    <p className="h3">Updating Your Information</p>
+                    <p className="small">Keep your email, username, country, and developer profile up to date anytime directly from your settings tabs.</p>
                   </div>
-                  <div className="settings-faq-item">
-                    <p className="settings-faq-q">Deleting Your Account</p>
-                    <p className="settings-faq-a">Permanently delete your account and all associated data anytime in the Danger Zone tab.</p>
+                  <div>
+                    <p className="h3">Deleting Your Account</p>
+                    <p className="small">Permanently delete your account and all associated data anytime in the Danger Zone tab.</p>
                   </div>
-                  <div className="settings-faq-item">
-                    <p className="settings-faq-q">Contact & Support</p>
-                    <p className="settings-faq-a">
-                      Have questions about your data or privacy? Contact our team anytime at <a href="mailto:privacy@pumpkinmc.org" style={{ color: 'var(--primary)' }}>privacy@pumpkinmc.org</a>.
+                  <div>
+                    <p className="h3">Contact & Support</p>
+                    <p className="small">
+                      Have questions about your data or privacy? Contact our team anytime at <a href="mailto:privacy@pumpkinmc.org" className="link link-pumpkin">privacy@pumpkinmc.org</a>.
                     </p>
                   </div>
                 </div>
               </SettingsCard>
-            </div>
+            </>
           )}
 
-          {/* ══ DANGER ZONE ═══════════════════════════════════════════════ */}
           {activeTab === 'danger' && (
-            <div className="profile-section">
-              <div className="settings-section-header">
-                <h2 className="section-title" style={{ marginBottom: 0 }}>
-                  <span style={{ color: 'var(--danger, #ef4444)' }}>Danger</span> Zone
-                </h2>
-                <p className="settings-section-sub">These actions are permanent and cannot be undone.</p>
-              </div>
+            <>
+              <header className="ac-section-head">
+                <h2 className="h1"><span className="mark ac-mark-danger">Danger</span> Zone</h2>
+                <p className="small">These actions are permanent and cannot be undone.</p>
+              </header>
 
-              <SettingsCard title="Delete Account" icon={Trash2}
-                description="Permanently deletes your account, all uploaded plugins, and any remaining balance. This cannot be reversed.">
-                <div className="settings-danger-box">
-                  <div className="settings-status-row error">
-                    <AlertTriangle size={16} />
-                    <span>
-                      Deleting your account will immediately remove all your plugins from the marketplace
-                      and forfeit any pending payouts.
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleDeleteAccount}
-                    className="settings-btn settings-btn-danger"
-                    style={{ marginTop: '1.5rem' }}
-                  >
-                    <Trash2 size={15} />
-                    Delete My Account Permanently
-                  </button>
-                </div>
-              </SettingsCard>
-            </div>
+              <div className="notice notice-danger ac-danger">
+                <span className="sticker sticker-danger"><Trash2 size={13} /> Delete Account</span>
+                <p className="notice-text">
+                  <strong>Permanently deletes your account, all uploaded plugins, and any remaining balance. This cannot be reversed.</strong>
+                  {' '}Deleting your account will immediately remove all your plugins from the marketplace
+                  and forfeit any pending payouts.
+                </p>
+                <button
+                  onClick={handleDeleteAccount}
+                  className="button button-danger"
+                >
+                  <Trash2 />
+                  Delete My Account Permanently
+                </button>
+              </div>
+            </>
           )}
 
         </div>

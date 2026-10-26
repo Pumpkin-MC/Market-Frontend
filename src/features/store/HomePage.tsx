@@ -1,16 +1,24 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import api from '../../lib/api';
 import SEO from '../../components/SEO';
 import PluginCard from '../../components/PluginCard';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../app/auth';
+import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 import { getPluginUrl } from '../../lib/url';
+import '../../styles/store.css';
 
 const PAGE_SIZE = 12;
 
-// Global cache to persist data across component unmounts (navigation)
+const markFirst = (text: string): ReactNode => {
+    const i = text.trim().indexOf(' ');
+    if (i < 0) return <span className="mark">{text}</span>;
+    return <><span className="mark">{text.slice(0, i)}</span>{text.slice(i)}</>;
+};
+
 let homeCache: {
     popular: any[];
     newest: any[];
@@ -27,6 +35,7 @@ const HomePage = () => {
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
     const [loading, setLoading] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [moreFailed, setMoreFailed] = useState(false);
     const [nextCursor, setNextCursor] = useState<string | null>(homeCache?.nextCursor ?? null);
     const [hasMore, setHasMore] = useState<boolean>(homeCache?.hasMore ?? true);
     const [heroIndex, setHeroIndex] = useState(0);
@@ -34,7 +43,6 @@ const HomePage = () => {
 
     const popularRef = useRef<HTMLElement | null>(null);
     const newestRef = useRef<HTMLElement | null>(null);
-    const observerTarget = useRef<HTMLDivElement | null>(null);
     const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest, all: !!homeCache?.all });
     const prevUserIdRef = useRef<number | undefined>(user?.id);
 
@@ -124,32 +132,16 @@ const HomePage = () => {
             }
         } catch (err) {
             console.error('Failed to load more plugins:', err);
+            setMoreFailed(true);
         } finally {
             setLoadingMore(false);
         }
     };
 
-    useEffect(() => {
-        const target = observerTarget.current;
-        if (!target) return;
+    const observerTarget = useInfiniteScroll(loadMorePlugins, hasMore && !loading && !loadingMore && !moreFailed);
 
-        const observer = new IntersectionObserver(
-            (entries) => {
-                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
-                    loadMorePlugins();
-                }
-            },
-            { rootMargin: '300px' }
-        );
-
-        observer.observe(target);
-        return () => observer.disconnect();
-    }, [hasMore, loading, loadingMore, allPlugins.length]);
-
-    // Featured plugins for top showcase carousel
     const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
 
-    // Auto rotate hero slide every 6s
     useEffect(() => {
         if (featuredPlugins.length <= 1) return;
         const timer = setInterval(() => {
@@ -186,174 +178,167 @@ const HomePage = () => {
 
     if (loading && popular.length === 0) {
         return (
-            <div className="loading-state">
-                <div className="spinner"></div>
-                <p>Discovering best plugins...</p>
+            <div className="sf-loader">
+                <span className="loading" />
+                <p className="small">Discovering best plugins...</p>
             </div>
         );
     }
 
+    const isSale = activeFeatured?.sale_active && activeFeatured.sale_discount_percent > 0;
+    const shelf = (title: string, items: any[], ref?: Ref<HTMLElement>, surface?: boolean) => (
+        <section className={`band${surface ? ' band-surface' : ''}`} ref={ref}>
+            <div className="page sect">
+                <h2 className="sect-title">{markFirst(title)}</h2>
+                {items.length > 0 ? (
+                    <div className="catalogue">
+                        {items.map((plugin: any) => <PluginCard key={plugin.id} plugin={plugin} />)}
+                    </div>
+                ) : (
+                    <p className="small">{t('home.no_plugins')}</p>
+                )}
+            </div>
+        </section>
+    );
+
     return (
         <>
-            <SEO 
-                title="Home" 
-                description="Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place." 
+            <SEO
+                title="Home"
+                description="Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place."
             />
 
             {activeFeatured && (
-                <section className="featured-showcase-container">
-                    <div className="featured-showcase-main">
-                        <Link to={getPluginUrl(activeFeatured)} className="featured-showcase-link">
-                            {/* Main visual display */}
-                            <div className="featured-main-visual">
+                <section className="band">
+                    <div className="page">
+                        <Link to={getPluginUrl(activeFeatured)} className="feature sf-feature">
+                            <div className="feature-cover">
                                 {activeImage ? (
-                                    <img src={activeImage} alt={activeFeatured.name} className="featured-main-img" />
+                                    <img src={activeImage} alt={activeFeatured.name} />
                                 ) : (
-                                    <div className="featured-visual-fallback">
-                                        <span>{activeFeatured.name.charAt(0).toUpperCase()}</span>
+                                    <div className="placeholder">
+                                        <span className="avatar">{activeFeatured.name.charAt(0).toUpperCase()}</span>
                                     </div>
                                 )}
-
-                                <div className="featured-badge-overlay">
-                                    <span className="featured-tag">Trending & Popular</span>
-                                    {activeFeatured.type === 'free' ? (
-                                        <span className="featured-price-tag free">Free</span>
-                                    ) : activeFeatured.sale_active && activeFeatured.sale_discount_percent > 0 ? (
-                                        <span className="featured-price-tag sale">
-                                            -{activeFeatured.sale_discount_percent}% OFF
-                                        </span>
-                                    ) : (
-                                        <span className="featured-price-tag paid">
-                                            €{((activeFeatured.price_cents || 0) / 100).toFixed(2)}
-                                        </span>
-                                    )}
-                                </div>
+                                {activeFeatured.type !== 'free' && isSale && (
+                                    <div className="entry-flags">
+                                        <span className="sticker">-{activeFeatured.sale_discount_percent}% OFF</span>
+                                    </div>
+                                )}
                             </div>
 
-                            {/* Sidebar Info */}
-                            <div className="featured-sidebar-info">
-                                <h2 className="featured-title">{activeFeatured.name}</h2>
-                                <p className="featured-dev">by <strong>{activeFeatured.dev_name}</strong></p>
+                            <div className="feature-body">
+                                <span className="sticker sticker-success">Trending & Popular</span>
+                                <h2 className="display-2 sf-feature-name" title={activeFeatured.name}>{activeFeatured.name}</h2>
+                                <p className="entry-by">by <strong>{activeFeatured.dev_name}</strong></p>
 
-                                <div className="featured-screenshots-grid">
-                                    {featuredImages.slice(0, 4).map((src: string, idx: number) => (
-                                        <div 
-                                            key={src + idx} 
-                                            className={`featured-thumb ${idx === heroSubImageIndex ? 'active' : ''}`}
-                                            onMouseEnter={(e) => {
-                                                e.preventDefault();
-                                                setHeroSubImageIndex(idx);
-                                            }}
-                                        >
-                                            <img src={src} alt="thumbnail" />
-                                        </div>
-                                    ))}
+                                <div className="sf-thumbs">
+                                    {[0, 1, 2, 3].map((idx) => {
+                                        const src = featuredImages.length > 1 ? featuredImages[idx] : undefined;
+                                        return src ? (
+                                            <span
+                                                key={src + idx}
+                                                data-active={idx === heroSubImageIndex || undefined}
+                                                onMouseEnter={(e) => {
+                                                    e.preventDefault();
+                                                    setHeroSubImageIndex(idx);
+                                                }}
+                                            >
+                                                <img src={src} alt="thumbnail" />
+                                            </span>
+                                        ) : (
+                                            <span key={idx} data-empty />
+                                        );
+                                    })}
                                 </div>
 
-                                <p className="featured-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
+                                <p className="sf-feature-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
 
-                                <div className="featured-meta">
-                                    <div className="featured-stat">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
-                                        </svg>
-                                        <span>{(activeFeatured.downloads || 0).toLocaleString()} Downloads</span>
-                                    </div>
-                                    {activeFeatured.version && (
-                                        <span className="featured-version">v{activeFeatured.version}</span>
+                                <dl className="specs">
+                                    <dt>Downloads</dt><dd>{(activeFeatured.downloads || 0).toLocaleString()}</dd>
+                                    <dt>Version</dt><dd className="mono">{activeFeatured.version ? `v${activeFeatured.version}` : '—'}</dd>
+                                </dl>
+
+                                <div className="row sf-feature-foot">
+                                    {activeFeatured.type === 'free' ? (
+                                        <span className="cost cost-free cost-lg">Free</span>
+                                    ) : isSale ? (
+                                        <span className="cost cost-sale cost-lg">
+                                            <s>€{((activeFeatured.price_cents || 0) / 100).toFixed(2)}</s>
+                                            €{(Math.round((activeFeatured.price_cents || 0) * (1 - activeFeatured.sale_discount_percent / 100)) / 100).toFixed(2)}
+                                        </span>
+                                    ) : (
+                                        <span className="cost cost-lg">€{((activeFeatured.price_cents || 0) / 100).toFixed(2)}</span>
                                     )}
-                                </div>
-
-                                <div className="featured-action-btn">
-                                    <span>View Plugin</span>
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                        <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                                    </svg>
+                                    <span className="spacer" />
+                                    <span className="button button-primary">View Plugin<ArrowRight /></span>
                                 </div>
                             </div>
                         </Link>
-                    </div>
 
-                    {/* Navigation Dots / Controls */}
-                    <div className="featured-nav-dots">
-                        {featuredPlugins.map((item, idx) => (
-                            <button
-                                key={item.id}
-                                className={`featured-dot-btn ${idx === heroIndex ? 'active' : ''}`}
-                                onClick={() => {
-                                    setHeroIndex(idx);
-                                    setHeroSubImageIndex(0);
-                                }}
-                            >
-                                <span className="dot-title">{item.name}</span>
-                                <div className="dot-bar" />
-                            </button>
-                        ))}
+                        <div className="feature-steps">
+                            {featuredPlugins.map((item, idx) => (
+                                <button
+                                    key={item.id}
+                                    className="feature-step sf-feature-step"
+                                    aria-current={idx === heroIndex}
+                                    onClick={() => {
+                                        setHeroIndex(idx);
+                                        setHeroSubImageIndex(0);
+                                    }}
+                                >
+                                    <span className="num">{String(idx + 1).padStart(2, '0')}</span>
+                                    <span>{item.name}</span>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 </section>
             )}
 
-            <div className="container" id="browse">
-                <section className="home-section" ref={popularRef}>
-                    <h2 className="section-title"><span>{t('home.trending')}</span></h2>
-                    <div className="home-plugin-grid">
-                        {popular.length > 0 ? (
-                            popular.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
-                        ) : (
-                            <p className="no-plugins">{t('home.no_plugins')}</p>
-                        )}
-                    </div>
-                </section>
+            <div id="browse">
+                {shelf(t('home.trending'), popular.slice(0, 10), popularRef, true)}
+                {shelf(t('home.latest'), newest.slice(0, 10), newestRef)}
 
-                <section className="home-section" ref={newestRef}>
-                    <h2 className="section-title"><span>{t('home.latest')}</span></h2>
-                    <div className="home-plugin-grid">
-                        {newest.length > 0 ? (
-                            newest.slice(0, 10).map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
-                        ) : (
-                            <p className="no-plugins">{t('home.no_plugins')}</p>
-                        )}
-                    </div>
-                </section>
-
-                <section className="home-section">
-                    <h2 className="section-title"><span>{t('home.all_plugins')}</span></h2>
-                    <div className="home-plugin-grid">
+                <section className="band band-surface">
+                    <div className="page sect">
+                        <h2 className="sect-title">{markFirst(t('home.all_plugins'))}</h2>
                         {allPlugins.length > 0 ? (
-                            allPlugins.map((plugin: any) => (
-                                <PluginCard key={plugin.id} plugin={plugin} />
-                            ))
+                            <div className="catalogue">
+                                {allPlugins.map((plugin: any) => (
+                                    <PluginCard key={plugin.id} plugin={plugin} />
+                                ))}
+                            </div>
                         ) : (
-                            !loading && <p className="no-plugins">{t('home.no_plugins')}</p>
+                            !loading && <p className="small">{t('home.no_plugins')}</p>
+                        )}
+
+                        <div ref={observerTarget} className="sf-sentinel" />
+
+                        {loadingMore && (
+                            <div className="row sf-more">
+                                <span className="loading" />
+                                <span className="small">Loading more plugins...</span>
+                            </div>
+                        )}
+
+                        {moreFailed && (
+                            <div className="row sf-more">
+                                <button className="button" onClick={() => setMoreFailed(false)}>Retry</button>
+                            </div>
+                        )}
+
+                        {!hasMore && allPlugins.length > 0 && (
+                            <span className="sticker sticker-fg sf-end">You've reached the end of the plugins catalog.</span>
+                        )}
+
+                        {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (
+                            <div className="blank">
+                                <p className="h2">No plugins found. Check back later!</p>
+                            </div>
                         )}
                     </div>
-
-                    {/* Sentinel target for infinite scrolling */}
-                    <div ref={observerTarget} style={{ height: '1px', width: '100%', pointerEvents: 'none' }} />
-
-                    {loadingMore && (
-                        <div className="infinite-scroll-loader">
-                            <div className="spinner"></div>
-                            <p>Loading more plugins...</p>
-                        </div>
-                    )}
-
-                    {!hasMore && allPlugins.length > 0 && (
-                        <div className="infinite-scroll-end">
-                            <p>You've reached the end of the plugins catalog.</p>
-                        </div>
-                    )}
                 </section>
-
-                {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (
-                    <div className="empty-state">
-                        <p>No plugins found. Check back later!</p>
-                    </div>
-                )}
             </div>
         </>
     );

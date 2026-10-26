@@ -2,15 +2,17 @@ import { useMemo, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Settings, Plus, ExternalLink, Search, BarChart2, Package, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { Settings, Plus, ExternalLink, Search, BarChart2, Package, CheckCircle, X, AlertTriangle, Check } from 'lucide-react';
 import api from '../../lib/api';
-import { useAuth } from '../../app/App';
+import { useAuth } from '../../app/auth';
 import DeveloperOnboardingModal from './DeveloperOnboardingModal';
 import { getPluginUrl } from '../../lib/url';
+import { Select } from '../../components/Select';
+import '../../styles/studio.css';
+import { useDialog } from '../../hooks/useDialog';
 
 const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
 
-// --- Main Component ---
 const PluginsPage = () => {
     const { t } = useTranslation();
     const { user, refreshUser } = useAuth();
@@ -22,7 +24,6 @@ const PluginsPage = () => {
     const [incomingTransfers, setIncomingTransfers] = useState<any[]>([]);
     const [transferLoadingId, setTransferLoadingId] = useState<number | null>(null);
 
-    // Create Draft Plugin modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [newPluginName, setNewPluginName] = useState('');
     const [newPluginCategory, setNewPluginCategory] = useState('Utilities');
@@ -98,7 +99,6 @@ const PluginsPage = () => {
         }
     };
 
-    // Grouping analytics data by plugin ID
     const plugins = useMemo(() => {
         return Object.values(timeSeries.reduce((acc, curr) => {
             const id = curr.plugin_id || curr.id; 
@@ -129,7 +129,6 @@ const PluginsPage = () => {
         }, {} as Record<string, any>));
     }, [timeSeries]);
 
-    // Check if creator has any paid plugins or earnings
     const hasPaidPlugins = useMemo(() => {
         return plugins.some((p: any) => 
             (p.pluginType && p.pluginType.toLowerCase() === 'paid') ||
@@ -166,9 +165,11 @@ const PluginsPage = () => {
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
+    const createDialog = useDialog<HTMLDivElement>(isCreateModalOpen, () => setIsCreateModalOpen(false));
+
     if (!user?.is_developer) {
         return (
-            <div className="dev-plugins-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '2rem 1rem' }}>
+            <div className="page page-wide st-page st-plugins-onboard">
                 <DeveloperOnboardingModal
                     embedded={true}
                     onSuccess={() => refreshUser?.()}
@@ -177,152 +178,107 @@ const PluginsPage = () => {
         );
     }
 
+    const filters: [string, string][] = [
+        ['all', `All (${plugins.length})`],
+        ...(hasPaidPlugins ? [['paid', 'Paid'] as [string, string]] : []),
+        ['free', 'Free'],
+        ['early_access', 'Early Access'],
+    ];
+
     return (
-        <div className="dev-plugins-container">
-            <div className="dev-plugins-card">
-                {/* Header */}
-                <div className="dev-plugins-header">
-                    <div className="dev-plugins-title-area">
-                        <h3 className="dev-plugins-title">{t('developer.dashboard.plugins')}</h3>
-                        <span className="dev-plugins-count">{plugins.length}</span>
-                    </div>
-                    <button className="btn btn-primary" onClick={() => setIsCreateModalOpen(true)}>
-                        <Plus size={18} style={{ marginRight: '8px' }} />
+        <div className="page page-wide st-page">
+            <header className="st-head">
+                <div className="st-head-text">
+                    <h1 className="display-2">{t('developer.dashboard.plugins')} <span className="mark num">{plugins.length}</span></h1>
+                </div>
+                <div className="st-head-actions">
+                    <button className="button button-primary" onClick={() => setIsCreateModalOpen(true)}>
+                        <Plus />
                         {t('developer.dashboard.add_plugin')}
                     </button>
                 </div>
+            </header>
 
-                {/* Incoming Plugin Transfer Requests */}
-                {incomingTransfers.length > 0 && (
-                    <div style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {incomingTransfers.map((req: any) => (
-                            <div key={req.id} style={{
-                                background: 'rgba(249, 115, 22, 0.08)',
-                                border: '1px solid rgba(249, 115, 22, 0.35)',
-                                borderRadius: '12px',
-                                padding: '1.25rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                gap: '1rem',
-                                flexWrap: 'wrap'
-                            }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                                    <div style={{
-                                        width: '48px',
-                                        height: '48px',
-                                        borderRadius: '10px',
-                                        background: req.preview_url ? `url(${req.preview_url}) center/cover no-repeat` : 'rgba(249, 115, 22, 0.2)',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '1.25rem',
-                                        fontWeight: 700,
-                                        color: '#f97316',
-                                        flexShrink: 0,
-                                        border: '1px solid rgba(249, 115, 22, 0.3)'
-                                    }}>
-                                        {!req.preview_url && req.plugin_name?.charAt(0).toUpperCase()}
-                                    </div>
-                                    <div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                            <span style={{ fontWeight: 600, fontSize: '1rem' }}>{req.plugin_name}</span>
-                                            {req.plugin_category && (
-                                                <span className="dev-plugins-badge" style={{ fontSize: '0.7rem' }}>
-                                                    {req.plugin_category}
-                                                </span>
-                                            )}
-                                        </div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--dash-text-muted)', marginTop: '0.2rem' }}>
-                                            Transfer request from <strong>@{req.sender_name}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <button
-                                        className="btn btn-secondary"
-                                        disabled={transferLoadingId === req.id}
-                                        onClick={() => handleRejectTransfer(req.id)}
-                                        style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem', color: '#f87171' }}
-                                    >
-                                        <X size={14} style={{ marginRight: '4px' }} />
-                                        Decline
-                                    </button>
-                                    <button
-                                        className="btn btn-primary"
-                                        disabled={transferLoadingId === req.id}
-                                        onClick={() => handleAcceptTransfer(req.id)}
-                                        style={{ padding: '0.45rem 0.9rem', fontSize: '0.82rem' }}
-                                    >
-                                        <CheckCircle size={14} style={{ marginRight: '4px' }} />
-                                        {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
-                                    </button>
-                                </div>
+            {incomingTransfers.length > 0 && (
+                <div className="stack">
+                    {incomingTransfers.map((req: any) => (
+                        <div key={req.id} className="notice notice-pumpkin">
+                            <span className="avatar st-plugins-avatar">
+                                {req.preview_url ? <img src={req.preview_url} alt="" /> : req.plugin_name?.charAt(0).toUpperCase()}
+                            </span>
+                            <div className="notice-text stack st-plugins-transfer">
+                                <span className="row">
+                                    <strong>{req.plugin_name}</strong>
+                                    {req.plugin_category && <span className="tag tag-fg">{req.plugin_category}</span>}
+                                </span>
+                                <span className="small">Transfer request from <strong>@{req.sender_name}</strong></span>
                             </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Toolbar */}
-                <div className="dev-plugins-toolbar">
-                    <div className="dev-plugins-filter-box">
-                        <Search size={15} color="var(--dash-text-muted)" />
-                        <input
-                            type="text"
-                            placeholder="Filter your plugins..."
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                            autoComplete="off"
-                            spellCheck={false}
-                        />
-                    </div>
-
-                    <div className="dev-plugins-filter-tabs">
-                        <button
-                            type="button"
-                            className={`dev-plugins-filter-tab ${filterType === 'all' ? 'active' : ''}`}
-                            onClick={() => setFilterType('all')}
-                        >
-                            All ({plugins.length})
-                        </button>
-                        {hasPaidPlugins && (
-                            <button
-                                type="button"
-                                className={`dev-plugins-filter-tab ${filterType === 'paid' ? 'active' : ''}`}
-                                onClick={() => setFilterType('paid')}
-                            >
-                                Paid
-                            </button>
-                        )}
-                        <button
-                            type="button"
-                            className={`dev-plugins-filter-tab ${filterType === 'free' ? 'active' : ''}`}
-                            onClick={() => setFilterType('free')}
-                        >
-                            Free
-                        </button>
-                        <button
-                            type="button"
-                            className={`dev-plugins-filter-tab ${filterType === 'early_access' ? 'active' : ''}`}
-                            onClick={() => setFilterType('early_access')}
-                        >
-                            Early Access
-                        </button>
-                    </div>
+                            <div className="row">
+                                <button
+                                    className="button button-danger button-sm"
+                                    disabled={transferLoadingId === req.id}
+                                    onClick={() => handleRejectTransfer(req.id)}
+                                >
+                                    <X />
+                                    Decline
+                                </button>
+                                <button
+                                    className="button button-primary button-sm"
+                                    disabled={transferLoadingId === req.id}
+                                    onClick={() => handleAcceptTransfer(req.id)}
+                                >
+                                    <CheckCircle />
+                                    {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
+                                </button>
+                            </div>
+                        </div>
+                    ))}
                 </div>
-                
-                {/* Table */}
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="dev-plugins-table">
+            )}
+
+            <div className="row">
+                <label className="search st-plugins-search">
+                    <Search />
+                    <input
+                        type="text"
+                        className="input"
+                        placeholder="Filter your plugins..."
+                        aria-label="Filter your plugins..."
+                        value={searchTerm}
+                        onChange={e => setSearchTerm(e.target.value)}
+                        autoComplete="off"
+                        spellCheck={false}
+                    />
+                </label>
+                <span className="spacer" />
+                <div className="segmented" role="group" aria-label="Filter">
+                    {filters.map(([key, label]) => (
+                        <button key={key} type="button" aria-pressed={filterType === key} onClick={() => setFilterType(key)}>
+                            {label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {filteredPlugins.length === 0 ? (
+                <div className="blank">
+                    <Package size={36} className="pumpkin" />
+                    <span className="h2">{searchTerm ? 'No plugins matched your filter.' : 'No plugins created yet.'}</span>
+                    <p className="small">
+                        {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to create your first plugin.'}
+                    </p>
+                </div>
+            ) : (
+                <div className="scroll-x">
+                    <table className="ledger st-plugins-table">
                         <thead>
                             <tr>
-                                <th className="dev-plugins-col-main">Plugin</th>
+                                <th>Plugin</th>
                                 <th>Visibility</th>
-                                <th>{t('developer.dashboard.total_downloads')}</th>
-                                {hasPaidPlugins && <th>{t('developer.dashboard.total_revenue')}</th>}
+                                <th className="end">{t('developer.dashboard.total_downloads')}</th>
+                                {hasPaidPlugins && <th className="end">{t('developer.dashboard.total_revenue')}</th>}
                                 <th>Date</th>
-                                <th style={{ textAlign: 'right' }}>Actions</th>
+                                <th className="end">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -334,108 +290,76 @@ const PluginsPage = () => {
                                 const isDraft = p.status === 'draft';
 
                                 return (
-                                    <tr key={p.id} className="dev-plugins-row">
-                                        {/* Plugin Details (Wide Column) */}
-                                        <td className="dev-plugins-col-main">
-                                            <div className="dev-plugins-cell">
-                                                {/* 16:9 Thumbnail */}
-                                                <div
-                                                    className="dev-plugins-thumb"
+                                    <tr key={p.id}>
+                                        <td>
+                                            <div className="st-plugins-cell">
+                                                <button
+                                                    type="button"
+                                                    className="st-plugins-thumb"
                                                     onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
                                                     title="Manage Plugin"
                                                 >
                                                     {p.previewPath ? (
                                                         <img src={p.previewPath} alt={p.name} loading="lazy" />
                                                     ) : (
-                                                        <div className="dev-plugins-thumb-fallback">
-                                                            <span>{initial}</span>
-                                                        </div>
+                                                        <span className="avatar">{initial}</span>
                                                     )}
-                                                </div>
-
-                                                {/* Info & Meta */}
-                                                <div className="dev-plugins-info">
-                                                    <div className="dev-plugins-title-row">
-                                                        <span
-                                                            className="dev-plugins-item-title"
-                                                            onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                            title={p.name}
-                                                        >
-                                                            {p.name}
-                                                        </span>
+                                                </button>
+                                                <div className="st-plugins-info">
+                                                    <button
+                                                        type="button"
+                                                        className="st-plugins-name"
+                                                        onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
+                                                        title={p.name}
+                                                    >
+                                                        {p.name}
+                                                    </button>
+                                                    <div className="row st-plugins-tags">
+                                                        <span className="tag mono st-case">{p.version ? `v${p.version}` : `ID: ${p.id}`}</span>
+                                                        {p.category && <span className="tag tag-fg">{p.category}</span>}
+                                                        {p.isEarlyAccess && <span className="tag tag-warning">Early Access</span>}
                                                     </div>
-
-                                                    <div className="dev-plugins-meta-row">
-                                                        <span className="dev-plugins-badge dev-plugins-badge-mono">
-                                                            {p.version ? `v${p.version}` : `ID: ${p.id}`}
-                                                        </span>
-                                                        {p.category && (
-                                                            <span className="dev-plugins-badge">
-                                                                {p.category}
-                                                            </span>
-                                                        )}
-                                                        {p.isEarlyAccess && (
-                                                            <span className="dev-plugins-badge dev-plugins-badge-early">
-                                                                Early Access
-                                                            </span>
-                                                        )}
-                                                    </div>
-
-                                                    {/* Hover Quick Actions */}
-                                                    <div className="dev-plugins-hover-actions">
+                                                    <div className="row st-plugins-quick">
                                                         <button
                                                             type="button"
-                                                            className="dev-plugins-action-icon-btn"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
                                                             title="Edit plugin details & settings"
                                                         >
-                                                            <Settings size={13} style={{ marginRight: 3 }} />
-                                                            <span style={{ fontSize: '0.72rem' }}>Edit</span>
+                                                            <Settings />Edit
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            className="dev-plugins-action-icon-btn"
                                                             onClick={() => navigate(getPluginUrl(p))}
                                                             title="View in Marketplace"
                                                         >
-                                                            <ExternalLink size={13} style={{ marginRight: 3 }} />
-                                                            <span style={{ fontSize: '0.72rem' }}>Store</span>
+                                                            <ExternalLink />Store
                                                         </button>
                                                         <button
                                                             type="button"
-                                                            className="dev-plugins-action-icon-btn"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}?tab=analytics`)}
                                                             title="Plugin Analytics"
                                                         >
-                                                            <BarChart2 size={13} style={{ marginRight: 3 }} />
-                                                            <span style={{ fontSize: '0.72rem' }}>Analytics</span>
+                                                            <BarChart2 />Analytics
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        {/* Visibility & Type */}
-                                        <td>
-                                            <div className="dev-plugins-visibility-cell">
-                                                <div className={`dev-plugins-visibility-status ${isDraft ? 'draft' : ''}`}>
-                                                    <span className={`dev-plugins-status-dot ${isDraft ? 'draft' : ''}`} />
-                                                    <span>{isDraft ? t('developer.dashboard.status_draft', 'Offline (Draft)') : t('developer.dashboard.status_published', 'Published')}</span>
-                                                </div>
-                                                <span className="dev-plugins-type-pill">
-                                                    {isPaid ? priceFormatted : 'Free'}
+                                        <td data-label="Visibility">
+                                            <div className="stack st-plugins-vis">
+                                                <span className="status">
+                                                    {isDraft ? <span className="dot" /> : <span className="mark-box mark-box-success"><Check /></span>}
+                                                    {isDraft ? t('developer.dashboard.status_draft', 'Offline (Draft)') : t('developer.dashboard.status_published', 'Published')}
                                                 </span>
+                                                <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : 'Free'}</span>
                                             </div>
                                         </td>
 
-                                        {/* Total Downloads */}
-                                        <td className="mono">
-                                            {p.downloads.toLocaleString()}
-                                        </td>
+                                        <td className="end num" data-label={t('developer.dashboard.total_downloads')}>{p.downloads.toLocaleString()}</td>
 
-                                        {/* Total Revenue (Only shown if hasPaidPlugins is true) */}
                                         {hasPaidPlugins && (
-                                            <td className="mono" style={{ color: p.earnings > 0 ? 'var(--success)' : 'var(--dash-text-muted)' }}>
+                                            <td className={`end num ${p.earnings > 0 ? 'st-pos' : 'muted'}`} data-label={t('developer.dashboard.total_revenue')}>
                                                 {isPaid || p.earnings > 0 ? (
                                                     p.earnings > 0 ? `+€${p.earnings.toFixed(2)}` : '€0.00'
                                                 ) : (
@@ -444,31 +368,26 @@ const PluginsPage = () => {
                                             </td>
                                         )}
 
-                                        {/* Dates */}
-                                        <td>
-                                            <div className="dev-plugins-date-cell">
-                                                <div className="dev-plugins-date-primary">{formatDate(p.created_at)}</div>
-                                                <div style={{ fontSize: '0.72rem' }}>Uploaded</div>
-                                            </div>
+                                        <td data-label="Date">
+                                            <strong>{formatDate(p.created_at)}</strong>
+                                            <span className="ledger-sub">Uploaded</span>
                                         </td>
 
-                                        {/* Quick Actions */}
-                                        <td style={{ textAlign: 'right' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                                <button 
-                                                    className="btn btn-icon-only" 
+                                        <td className="end st-plugins-actions-cell">
+                                            <div className="row st-plugins-actions">
+                                                <button
+                                                    className="button button-flat button-sm button-icon"
                                                     onClick={() => navigate(getPluginUrl(p))}
                                                     title="View in Store"
+                                                    aria-label="View in Store"
                                                 >
-                                                    <ExternalLink size={16} />
+                                                    <ExternalLink />
                                                 </button>
-                                                
-                                                <button 
-                                                    className="btn btn-secondary" 
+                                                <button
+                                                    className="button button-sm"
                                                     onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                    style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '0.4rem 0.75rem', fontSize: '0.8rem' }}
                                                 >
-                                                    <Settings size={14} />
+                                                    <Settings />
                                                     {t('developer.dashboard.manage_plugin')}
                                                 </button>
                                             </div>
@@ -476,120 +395,86 @@ const PluginsPage = () => {
                                     </tr>
                                 );
                             })}
-                            
-                            {filteredPlugins.length === 0 && (
-                                <tr>
-                                    <td colSpan={hasPaidPlugins ? 6 : 5} style={{ textAlign: 'center', padding: '3.5rem 1rem' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', opacity: 0.7 }}>
-                                            <Package size={36} color="var(--dash-text-muted)" />
-                                            <p style={{ margin: 0, fontWeight: 600, fontSize: '0.95rem' }}>
-                                                {searchTerm ? 'No plugins matched your filter.' : 'No plugins created yet.'}
-                                            </p>
-                                            <small style={{ color: 'var(--dash-text-muted)' }}>
-                                                {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to create your first plugin.'}
-                                            </small>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
-            </div>
+            )}
 
-            {/* Create New Plugin Draft Modal */}
             {isCreateModalOpen && (
-                <div className="create-plugin-overlay" onClick={() => setIsCreateModalOpen(false)}>
-                    <div className="create-plugin-modal" onClick={e => e.stopPropagation()}>
-                        <button className="create-plugin-close" onClick={() => setIsCreateModalOpen(false)} aria-label="Close">
-                            <X size={18} />
-                        </button>
-
-                        <div className="create-plugin-header">
-                            <h3>{t('developer.dashboard.create_plugin_title', 'Create New Plugin')}</h3>
-                            <p>{t('developer.dashboard.create_plugin_desc', 'Set up your plugin draft. You can configure your store listing, upload builds, and test offline before publishing.')}</p>
-                        </div>
-
-                        {createError && (
-                            <div style={{
-                                padding: '0.75rem 1rem',
-                                background: 'rgba(239, 68, 68, 0.12)',
-                                border: '1px solid rgba(239, 68, 68, 0.3)',
-                                borderRadius: '8px',
-                                color: '#f87171',
-                                fontSize: '0.85rem',
-                                marginBottom: '1rem',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '0.5rem'
-                            }}>
-                                <AlertTriangle size={16} />
-                                <span>{createError}</span>
-                            </div>
-                        )}
-
-                        <form onSubmit={handleCreateDraft} className="create-plugin-form">
-                            <div className="create-plugin-field">
-                                <label htmlFor="newPluginName">Plugin Name *</label>
-                                <input
-                                    id="newPluginName"
-                                    type="text"
-                                    className="create-plugin-input"
-                                    placeholder="e.g. QuantumVault, DragonFly"
-                                    value={newPluginName}
-                                    onChange={e => setNewPluginName(e.target.value)}
-                                    maxLength={64}
-                                    required
-                                    autoFocus
-                                />
+                <div className="overlay" onClick={() => setIsCreateModalOpen(false)}>
+                    <div ref={createDialog} tabIndex={-1} className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="createPluginTitle" onClick={e => e.stopPropagation()}>
+                        <form onSubmit={handleCreateDraft}>
+                            <div className="sheet-head">
+                                <div className="stack st-sheet-title">
+                                    <h2 className="h1" id="createPluginTitle">{t('developer.dashboard.create_plugin_title', 'Create New Plugin')}</h2>
+                                </div>
+                                <button type="button" className="button button-ghost button-icon" onClick={() => setIsCreateModalOpen(false)} aria-label="Close">
+                                    <X />
+                                </button>
                             </div>
 
-                            <div className="create-plugin-field">
-                                <label htmlFor="newPluginCategory">Category *</label>
-                                <select
-                                    id="newPluginCategory"
-                                    className="create-plugin-select"
-                                    value={newPluginCategory}
-                                    onChange={e => setNewPluginCategory(e.target.value)}
-                                >
-                                    {PLUGIN_CATEGORIES.map(cat => (
-                                        <option key={cat} value={cat}>{cat}</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <div className="sheet-body">
+                                <p className="small">{t('developer.dashboard.create_plugin_desc', 'Set up your plugin draft. You can configure your store listing, upload builds, and test offline before publishing.')}</p>
 
-                            <div className="create-plugin-field">
-                                <label>Distribution Type</label>
-                                <div className="create-plugin-type-grid">
-                                    <div
-                                        className={`create-plugin-type-card ${newPluginType === 'free' ? 'selected' : ''}`}
-                                        onClick={() => setNewPluginType('free')}
-                                    >
-                                        <h5>Free Plugin</h5>
-                                        <p>Available to the entire community for free.</p>
-                                    </div>
-                                    <div
-                                        className={`create-plugin-type-card ${newPluginType === 'paid' ? 'selected' : ''}`}
-                                        onClick={() => setNewPluginType('paid')}
-                                    >
-                                        <h5>Paid / Premium</h5>
-                                        <p>Sell licenses with automated developer payouts.</p>
+                                {createError && (
+                                    <span className="field-error"><AlertTriangle size={14} />{createError}</span>
+                                )}
+
+                                <label className="field">
+                                    <span className="field-label">Plugin Name *</span>
+                                    <span className="control">
+                                        <input
+                                            id="newPluginName"
+                                            type="text"
+                                            className="input"
+                                            placeholder="e.g. QuantumVault, DragonFly"
+                                            value={newPluginName}
+                                            onChange={e => setNewPluginName(e.target.value)}
+                                            maxLength={64}
+                                            required
+                                            autoFocus
+                                        />
+                                    </span>
+                                </label>
+
+                                <div className="field">
+                                    <span className="field-label" id="newPluginCategory">Category *</span>
+                                    <Select
+                                        options={PLUGIN_CATEGORIES}
+                                        value={newPluginCategory}
+                                        onChange={setNewPluginCategory}
+                                        aria-labelledby="newPluginCategory"
+                                    />
+                                </div>
+
+                                <div className="field">
+                                    <span className="field-label">Distribution Type</span>
+                                    <div className="st-pick">
+                                        <button type="button" className="st-option" aria-pressed={newPluginType === 'free'} onClick={() => setNewPluginType('free')}>
+                                            <strong>Free Plugin</strong>
+                                            <span className="small">Available to the entire community for free.</span>
+                                        </button>
+                                        <button type="button" className="st-option" aria-pressed={newPluginType === 'paid'} onClick={() => setNewPluginType('paid')}>
+                                            <strong>Paid / Premium</strong>
+                                            <span className="small">Sell licenses with automated developer payouts.</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="create-plugin-actions">
+                            <div className="sheet-foot">
                                 <button
                                     type="button"
-                                    className="btn btn-secondary"
+                                    className="button button-ghost"
                                     onClick={() => setIsCreateModalOpen(false)}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-primary"
+                                    className="button button-primary"
                                     disabled={!newPluginName.trim() || creatingPlugin}
+                                    aria-busy={creatingPlugin}
                                 >
                                     {creatingPlugin ? 'Creating Draft…' : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
                                 </button>

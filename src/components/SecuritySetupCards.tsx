@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from '../app/App';
+import { useAuth } from '../app/auth';
 import api from '../lib/api';
 import { startRegistration } from '@simplewebauthn/browser';
 import { QRCodeSVG } from 'qrcode.react';
@@ -14,10 +14,9 @@ import {
     Copy,
     Check,
     AlertCircle,
-    Loader2,
-    Sparkles,
     Shield
 } from 'lucide-react';
+import '../styles/account.css';
 
 interface SecuritySetupCardsProps {
     title?: string;
@@ -42,17 +41,14 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
 
     const [expandedBox, setExpandedBox] = useState<'passkey' | 'totp' | null>(null);
 
-    // Recovery Codes Modal State
     const [recoveryCodes, setRecoveryCodes] = useState<string[]>([]);
     const [showRecoveryModal, setShowRecoveryModal] = useState(false);
 
-    // Passkey State
     const [passkeyName, setPasskeyName] = useState(() => getDevicePasskeyName());
     const [passkeyLoading, setPasskeyLoading] = useState(false);
     const [passkeyError, setPasskeyError] = useState<string | null>(null);
     const [passkeySuccess, setPasskeySuccess] = useState(false);
 
-    // TOTP State
     const [totpLoading, setTotpLoading] = useState(false);
     const [totpUri, setTotpUri] = useState<string | null>(null);
     const [totpSecret, setTotpSecret] = useState<string | null>(null);
@@ -176,436 +172,139 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
     const hasSecureAuth = Boolean(user?.totp_enabled || (user?.passkey_count && user.passkey_count > 0) || user?.has_passkey);
 
     return (
-        <div style={compact ? {
-            width: '100%',
-            padding: '0.85rem',
-            background: 'rgba(255,255,255,0.02)',
-            borderRadius: 12,
-            border: '1px solid var(--mp-border, rgba(255,255,255,0.08))',
-            boxSizing: 'border-box',
-        } : {
-            maxWidth: 680,
-            width: '100%',
-            margin: '0 auto',
-            padding: '2rem 1.5rem',
-            background: 'var(--mp-surface, #14171c)',
-            borderRadius: 20,
-            border: '1px solid var(--mp-border, rgba(255,255,255,0.08))',
-            boxShadow: '0 20px 40px -15px rgba(0,0,0,0.5)',
-            boxSizing: 'border-box',
-        }}>
-            {/* Header */}
-            {compact ? (
-                <div style={{ marginBottom: '0.85rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
-                        <div style={{
-                            width: 28,
-                            height: 28,
-                            borderRadius: 6,
-                            background: 'rgba(249, 115, 22, 0.15)',
-                            color: 'var(--mp-accent, #f97316)',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                        }}>
-                            <Shield size={16} />
-                        </div>
-                        <div>
-                            <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 700, color: 'var(--mp-text, #f8fafc)' }}>
-                                {title}
-                            </h4>
-                            <p style={{ margin: 0, fontSize: '0.76rem', color: 'var(--mp-muted, #94a3b8)', lineHeight: 1.3 }}>
-                                {description}
-                            </p>
-                        </div>
-                    </div>
-                    {isRequired && (
-                        <span style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            padding: '0.15rem 0.5rem',
-                            background: 'rgba(239, 68, 68, 0.12)',
-                            border: '1px solid rgba(239, 68, 68, 0.25)',
-                            borderRadius: 9999,
-                            color: '#f87171',
-                            fontSize: '0.72rem',
-                            fontWeight: 600,
-                        }}>
-                            <AlertCircle size={12} /> Required
-                        </span>
-                    )}
+        <div className={`ac-setup panel ${compact ? 'ac-setup-compact' : 'panel-fg ac-setup-full'}`}>
+            <div className="ac-setup-head">
+                <span className={compact ? 'ac-icon ac-icon-pumpkin' : 'ac-badge'}><Shield /></span>
+                <div className="stack ac-tight">
+                    <h2 className={compact ? 'h3' : 'h2'}>{title}</h2>
+                    <p className="small">{description}</p>
                 </div>
-            ) : (
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.2), rgba(234, 88, 12, 0.05))',
-                        border: '1px solid rgba(249, 115, 22, 0.3)',
-                        color: 'var(--mp-accent, #f97316)',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: '1rem',
-                    }}>
-                        <Shield size={28} />
-                    </div>
-                    <h2 style={{
-                        fontSize: '1.6rem',
-                        fontWeight: 700,
-                        margin: '0 0 0.5rem 0',
-                        color: 'var(--mp-text, #f8fafc)',
-                        letterSpacing: '-0.02em',
-                    }}>
-                        {title}
-                    </h2>
-                    <p style={{
-                        color: 'var(--mp-muted, #94a3b8)',
-                        fontSize: '0.95rem',
-                        lineHeight: 1.5,
-                        maxWidth: 540,
-                        margin: '0 auto',
-                    }}>
-                        {description}
-                    </p>
+                {isRequired && (
+                    <span className="sticker sticker-danger sticker-sm">
+                        {compact ? 'Required' : 'Required for Plugin Publishing & Developer Verification'}
+                    </span>
+                )}
+            </div>
 
-                    {isRequired && (
-                        <div style={{
-                            marginTop: '1rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            padding: '0.4rem 0.85rem',
-                            background: 'rgba(239, 68, 68, 0.12)',
-                            border: '1px solid rgba(239, 68, 68, 0.25)',
-                            borderRadius: 9999,
-                            color: '#f87171',
-                            fontSize: '0.82rem',
-                            fontWeight: 600,
-                        }}>
-                            <AlertCircle size={14} /> Required for Plugin Publishing & Developer Verification
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Boxes Grid */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: compact ? '0.65rem' : '1rem' }}>
-                {/* ── Box 1: Passkey / Biometrics (Recommended) ── */}
-                <div style={{
-                    border: expandedBox === 'passkey' ? '1px solid var(--mp-accent, #f97316)' : '1px solid var(--mp-border, rgba(255,255,255,0.08))',
-                    borderRadius: compact ? 10 : 14,
-                    background: expandedBox === 'passkey' ? 'rgba(249, 115, 22, 0.03)' : 'rgba(255,255,255,0.02)',
-                    transition: 'all 0.2s ease',
-                    overflow: 'hidden',
-                }}>
+            <div className="ac-options">
+                <div className="ac-option" data-open={expandedBox === 'passkey' || undefined}>
                     <button
                         type="button"
+                        className="ac-option-head"
                         onClick={() => toggleBox('passkey')}
-                        style={{
-                            width: '100%',
-                            padding: compact ? '0.75rem 0.9rem' : '1.25rem 1.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                        }}
+                        aria-expanded={expandedBox === 'passkey'}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.75rem' : '1rem' }}>
-                            <div style={{
-                                width: compact ? 36 : 44,
-                                height: compact ? 36 : 44,
-                                borderRadius: compact ? 8 : 12,
-                                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(34, 197, 94, 0.05))',
-                                border: '1px solid rgba(34, 197, 94, 0.3)',
-                                color: '#4ade80',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                            }}>
-                                <Fingerprint size={compact ? 20 : 24} />
-                            </div>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
-                                    <span style={{ fontWeight: 700, fontSize: compact ? '0.92rem' : '1.05rem', color: 'var(--mp-text, #f8fafc)' }}>
-                                        Passkey & Biometrics
-                                    </span>
-                                    <span style={{
-                                        fontSize: '0.68rem',
-                                        fontWeight: 700,
-                                        padding: '0.1rem 0.45rem',
-                                        borderRadius: 999,
-                                        background: 'rgba(34, 197, 94, 0.15)',
-                                        color: '#4ade80',
-                                        border: '1px solid rgba(34, 197, 94, 0.3)',
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '0.2rem',
-                                    }}>
-                                        <Sparkles size={10} /> Recommended
-                                    </span>
-                                </div>
-                                <p style={{ margin: 0, fontSize: compact ? '0.75rem' : '0.85rem', color: 'var(--mp-muted, #94a3b8)' }}>
-                                    Fastest & most secure. Touch ID, Face ID, Windows Hello, or Security Key.
-                                </p>
-                            </div>
+                        <span className="ac-icon ac-icon-success"><Fingerprint /></span>
+                        <div>
+                            <span className="row ac-tight">
+                                <span className="h3">Passkey & Biometrics</span>
+                                <span className="tag tag-solid tag-success">Recommended</span>
+                            </span>
+                            <span className="small">
+                                Fastest & most secure. Touch ID, Face ID, Windows Hello, or Security Key.
+                            </span>
                         </div>
-                        <div style={{ color: 'var(--mp-muted, #94a3b8)', marginLeft: '0.5rem' }}>
-                            {expandedBox === 'passkey' ? <ChevronUp size={compact ? 18 : 20} /> : <ChevronDown size={compact ? 18 : 20} />}
-                        </div>
+                        {expandedBox === 'passkey' ? <ChevronUp /> : <ChevronDown />}
                     </button>
 
-                    {/* Passkey Expanded Content */}
                     {expandedBox === 'passkey' && (
-                        <div style={{
-                            padding: compact ? '0 0.9rem 0.9rem 0.9rem' : '0 1.5rem 1.5rem 1.5rem',
-                            borderTop: '1px solid rgba(255,255,255,0.06)',
-                            paddingTop: compact ? '0.85rem' : '1.25rem',
-                        }}>
-                            <div style={{
-                                padding: compact ? '0.65rem 0.8rem' : '0.9rem 1rem',
-                                background: 'rgba(255,255,255,0.03)',
-                                borderRadius: 8,
-                                marginBottom: '1rem',
-                                fontSize: compact ? '0.78rem' : '0.85rem',
-                                color: 'var(--mp-muted, #94a3b8)',
-                                lineHeight: 1.45,
-                            }}>
-                                <strong>How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device's keychain. They are 100% phishing-proof.
-                            </div>
+                        <div className="ac-option-body">
+                            <p className="small">
+                                <strong className="pumpkin">How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device's keychain. They are 100% phishing-proof.
+                            </p>
 
                             {passkeyError && (
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    padding: '0.65rem 0.85rem',
-                                    background: 'rgba(239, 68, 68, 0.1)',
-                                    border: '1px solid rgba(239, 68, 68, 0.25)',
-                                    borderRadius: 8,
-                                    color: '#f87171',
-                                    fontSize: '0.82rem',
-                                    marginBottom: '0.85rem',
-                                }}>
-                                    <AlertCircle size={15} />
-                                    <span>{passkeyError}</span>
+                                <div className="notice notice-danger ac-alert" role="alert">
+                                    <span className="mark-box mark-box-danger"><AlertCircle /></span>
+                                    <p className="notice-text">{passkeyError}</p>
                                 </div>
                             )}
 
                             {passkeySuccess ? (
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    padding: '0.75rem 1rem',
-                                    background: 'rgba(34, 197, 94, 0.12)',
-                                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                                    borderRadius: 8,
-                                    color: '#4ade80',
-                                    fontSize: '0.85rem',
-                                    fontWeight: 600,
-                                }}>
-                                    <Check size={16} />
+                                <p className="status">
+                                    <span className="mark-box mark-box-success"><Check /></span>
                                     <span>Passkey created successfully!</span>
-                                </div>
+                                </p>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                                    <div>
-                                        <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--mp-text, #f8fafc)', marginBottom: '0.35rem' }}>
-                                            Device / Passkey Name (Optional)
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={passkeyName}
-                                            onChange={(e) => setPasskeyName(e.target.value)}
-                                            placeholder="e.g. MacBook Pro Touch ID, Windows PC, or YubiKey"
-                                            style={{
-                                                width: '100%',
-                                                padding: compact ? '0.6rem 0.85rem' : '0.75rem 1rem',
-                                                background: 'rgba(255,255,255,0.05)',
-                                                border: '1px solid var(--mp-border, rgba(255,255,255,0.12))',
-                                                borderRadius: 8,
-                                                color: '#fff',
-                                                fontSize: compact ? '0.85rem' : '0.9rem',
-                                                boxSizing: 'border-box',
-                                                outline: 'none',
-                                            }}
-                                        />
-                                    </div>
+                                <>
+                                    <label className="field">
+                                        <span className="field-label">Device / Passkey Name (Optional)</span>
+                                        <span className="control">
+                                            <input
+                                                type="text"
+                                                className="input"
+                                                value={passkeyName}
+                                                onChange={(e) => setPasskeyName(e.target.value)}
+                                                placeholder="e.g. MacBook Pro Touch ID, Windows PC, or YubiKey"
+                                            />
+                                        </span>
+                                    </label>
                                     <button
                                         type="button"
-                                        className="mp-btn mp-btn-primary"
+                                        className="button button-primary button-block"
                                         disabled={passkeyLoading}
+                                        aria-busy={passkeyLoading}
                                         onClick={handleRegisterPasskey}
-                                        style={{
-                                            padding: compact ? '0.65rem' : '0.85rem',
-                                            fontWeight: 600,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            gap: '0.5rem',
-                                            fontSize: compact ? '0.85rem' : '0.9rem',
-                                            cursor: passkeyLoading ? 'not-allowed' : 'pointer',
-                                            borderRadius: 8,
-                                        }}
                                     >
-                                        {passkeyLoading ? (
-                                            <>
-                                                <Loader2 size={16} className="animate-spin" /> Setting up Passkey...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Fingerprint size={16} /> Create & Register Passkey
-                                            </>
-                                        )}
+                                        {passkeyLoading ? 'Setting up Passkey...' : <><Fingerprint /> Create & Register Passkey</>}
                                     </button>
-                                </div>
+                                </>
                             )}
                         </div>
                     )}
                 </div>
 
-                {/* ── Box 2: Authenticator App (TOTP 2FA) ── */}
-                <div style={{
-                    border: expandedBox === 'totp' ? '1px solid var(--mp-accent, #f97316)' : '1px solid var(--mp-border, rgba(255,255,255,0.08))',
-                    borderRadius: compact ? 10 : 14,
-                    background: expandedBox === 'totp' ? 'rgba(249, 115, 22, 0.03)' : 'rgba(255,255,255,0.02)',
-                    transition: 'all 0.2s ease',
-                    overflow: 'hidden',
-                }}>
+                <div className="ac-option" data-open={expandedBox === 'totp' || undefined}>
                     <button
                         type="button"
+                        className="ac-option-head"
                         onClick={() => toggleBox('totp')}
-                        style={{
-                            width: '100%',
-                            padding: compact ? '0.75rem 0.9rem' : '1.25rem 1.5rem',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            background: 'none',
-                            border: 'none',
-                            cursor: 'pointer',
-                            textAlign: 'left',
-                        }}
+                        aria-expanded={expandedBox === 'totp'}
                     >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: compact ? '0.75rem' : '1rem' }}>
-                            <div style={{
-                                width: compact ? 36 : 44,
-                                height: compact ? 36 : 44,
-                                borderRadius: compact ? 8 : 12,
-                                background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05))',
-                                border: '1px solid rgba(59, 130, 246, 0.3)',
-                                color: '#60a5fa',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                flexShrink: 0,
-                            }}>
-                                <Smartphone size={compact ? 20 : 24} />
-                            </div>
-                            <div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.15rem' }}>
-                                    <span style={{ fontWeight: 700, fontSize: compact ? '0.92rem' : '1.05rem', color: 'var(--mp-text, #f8fafc)' }}>
-                                        Authenticator App (TOTP 2FA)
-                                    </span>
-                                </div>
-                                <p style={{ margin: 0, fontSize: compact ? '0.75rem' : '0.85rem', color: 'var(--mp-muted, #94a3b8)' }}>
-                                    Use Google Authenticator, Microsoft Authenticator, Authy, or 1Password.
-                                </p>
-                            </div>
+                        <span className="ac-icon"><Smartphone /></span>
+                        <div>
+                            <span className="h3">Authenticator App (TOTP 2FA)</span>
+                            <span className="small">
+                                Use Google Authenticator, Microsoft Authenticator, Authy, or 1Password.
+                            </span>
                         </div>
-                        <div style={{ color: 'var(--mp-muted, #94a3b8)', marginLeft: '0.5rem' }}>
-                            {expandedBox === 'totp' ? <ChevronUp size={compact ? 18 : 20} /> : <ChevronDown size={compact ? 18 : 20} />}
-                        </div>
+                        {expandedBox === 'totp' ? <ChevronUp /> : <ChevronDown />}
                     </button>
 
-                    {/* TOTP Expanded Content */}
                     {expandedBox === 'totp' && (
-                        <div style={{
-                            padding: compact ? '0 0.9rem 0.9rem 0.9rem' : '0 1.5rem 1.5rem 1.5rem',
-                            borderTop: '1px solid rgba(255,255,255,0.06)',
-                            paddingTop: compact ? '0.85rem' : '1.25rem',
-                        }}>
+                        <div className="ac-option-body">
                             {totpLoading ? (
-                                <div style={{ textAlign: 'center', padding: '1.5rem', color: 'var(--mp-muted, #94a3b8)' }}>
-                                    <Loader2 size={22} className="animate-spin" style={{ margin: '0 auto 0.5rem auto' }} />
-                                    <p style={{ margin: 0, fontSize: '0.85rem' }}>Generating 2FA Secret & QR Code...</p>
-                                </div>
+                                <p className="status">
+                                    <span className="loading" />
+                                    <span className="muted">Generating 2FA Secret & QR Code...</span>
+                                </p>
                             ) : totpSuccess ? (
-                                <div style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '0.5rem',
-                                    padding: '0.75rem 1rem',
-                                    background: 'rgba(34, 197, 94, 0.12)',
-                                    border: '1px solid rgba(34, 197, 94, 0.3)',
-                                    borderRadius: 8,
-                                    color: '#4ade80',
-                                    fontSize: '0.85rem',
-                                    fontWeight: 600,
-                                }}>
-                                    <Check size={16} />
+                                <p className="status">
+                                    <span className="mark-box mark-box-success"><Check /></span>
                                     <span>Two-Factor Authentication enabled successfully!</span>
-                                </div>
+                                </p>
                             ) : (
-                                <div>
-                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: compact ? '1rem' : '1.5rem', alignItems: 'center', marginBottom: '1rem' }}>
+                                <>
+                                    <div className="ac-totp">
                                         {totpUri && (
-                                            <div style={{
-                                                padding: '0.5rem',
-                                                background: '#fff',
-                                                borderRadius: 10,
-                                                display: 'inline-flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                flexShrink: 0,
-                                            }}>
+                                            <div className="ac-qr">
                                                 <QRCodeSVG value={totpUri} size={compact ? 115 : 135} />
                                             </div>
                                         )}
-                                        <div style={{ flex: 1, minWidth: compact ? 180 : 200 }}>
-                                            <p style={{ margin: '0 0 0.35rem 0', fontSize: compact ? '0.8rem' : '0.85rem', color: 'var(--mp-text, #f8fafc)', fontWeight: 600 }}>
-                                                1. Scan QR Code with Authenticator App
-                                            </p>
-                                            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.75rem', color: 'var(--mp-muted, #94a3b8)', lineHeight: 1.35 }}>
-                                                Or manually copy the setup key below:
-                                            </p>
+                                        <div>
+                                            <p className="ac-step">1. Scan QR Code with Authenticator App</p>
+                                            <p className="small">Or manually copy the setup key below:</p>
                                             {totpSecret && (
-                                                <div style={{
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '0.4rem',
-                                                    background: 'rgba(255,255,255,0.05)',
-                                                    padding: '0.35rem 0.6rem',
-                                                    borderRadius: 6,
-                                                    border: '1px solid rgba(255,255,255,0.1)',
-                                                }}>
-                                                    <code style={{ fontSize: compact ? '0.75rem' : '0.82rem', color: '#f97316', flex: 1, letterSpacing: '0.05em', wordBreak: 'break-all' }}>
-                                                        {totpSecret}
-                                                    </code>
+                                                <div className="ac-secret">
+                                                    <code>{totpSecret}</code>
                                                     <button
                                                         type="button"
+                                                        className="ac-icon-btn"
                                                         onClick={handleCopySecret}
-                                                        style={{
-                                                            background: 'none',
-                                                            border: 'none',
-                                                            color: copiedSecret ? '#4ade80' : 'var(--mp-muted, #94a3b8)',
-                                                            cursor: 'pointer',
-                                                            padding: '0.2rem',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            flexShrink: 0,
-                                                        }}
                                                         title="Copy Secret"
+                                                        aria-label="Copy Secret"
                                                     >
-                                                        {copiedSecret ? <Check size={14} /> : <Copy size={14} />}
+                                                        {copiedSecret ? <Check /> : <Copy />}
                                                     </button>
                                                 </div>
                                             )}
@@ -613,149 +312,75 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                     </div>
 
                                     {totpError && (
-                                        <div style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            padding: '0.6rem 0.8rem',
-                                            background: 'rgba(239, 68, 68, 0.1)',
-                                            border: '1px solid rgba(239, 68, 68, 0.25)',
-                                            borderRadius: 8,
-                                            color: '#f87171',
-                                            fontSize: '0.82rem',
-                                            marginBottom: '0.75rem',
-                                        }}>
-                                            <AlertCircle size={15} />
-                                            <span>{totpError}</span>
+                                        <div className="notice notice-danger ac-alert" role="alert">
+                                            <span className="mark-box mark-box-danger"><AlertCircle /></span>
+                                            <p className="notice-text">{totpError}</p>
                                         </div>
                                     )}
 
-                                    <form onSubmit={handleVerifyTotp} style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                                        <div>
-                                            <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--mp-text, #f8fafc)', marginBottom: '0.35rem' }}>
-                                                2. Enter the 6-Digit Code from the App
-                                            </label>
-                                            <input
-                                                type="text"
-                                                maxLength={6}
-                                                value={totpCode}
-                                                onChange={(e) => {
-                                                    setTotpError(null);
-                                                    setTotpCode(e.target.value.replace(/\D/g, ''));
-                                                }}
-                                                placeholder="000 000"
-                                                style={{
-                                                    width: '100%',
-                                                    padding: compact ? '0.6rem 0.85rem' : '0.75rem 1rem',
-                                                    background: 'rgba(255,255,255,0.05)',
-                                                    border: totpError ? '1px solid #ef4444' : '1px solid var(--mp-border, rgba(255,255,255,0.12))',
-                                                    boxShadow: totpError ? '0 0 0 3px rgba(239, 68, 68, 0.2)' : undefined,
-                                                    borderRadius: 8,
-                                                    color: '#fff',
-                                                    fontSize: compact ? '1rem' : '1.1rem',
-                                                    letterSpacing: '0.2em',
-                                                    textAlign: 'center',
-                                                    boxSizing: 'border-box',
-                                                    outline: 'none',
-                                                }}
-                                                autoComplete="one-time-code"
-                                                inputMode="numeric"
-                                            />
-                                        </div>
+                                    <form className="stack" onSubmit={handleVerifyTotp}>
+                                        <label className="field">
+                                            <span className="field-label">2. Enter the 6-Digit Code from the App</span>
+                                            <span className="control">
+                                                <input
+                                                    type="text"
+                                                    className="input ac-code"
+                                                    maxLength={6}
+                                                    value={totpCode}
+                                                    onChange={(e) => {
+                                                        setTotpError(null);
+                                                        setTotpCode(e.target.value.replace(/\D/g, ''));
+                                                    }}
+                                                    placeholder="000 000"
+                                                    autoComplete="one-time-code"
+                                                    inputMode="numeric"
+                                                    aria-invalid={totpError ? true : undefined}
+                                                />
+                                            </span>
+                                        </label>
                                         <button
                                             type="submit"
-                                            className="mp-btn mp-btn-primary"
+                                            className={`button button-block ${totpError ? 'button-danger' : 'button-primary'}`}
                                             disabled={totpVerifying || (totpCode.trim().length !== 6 && !totpError)}
-                                            style={{
-                                                padding: compact ? '0.65rem' : '0.85rem',
-                                                fontWeight: 600,
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                justifyContent: 'center',
-                                                gap: '0.5rem',
-                                                fontSize: compact ? '0.85rem' : '0.9rem',
-                                                cursor: totpVerifying ? 'not-allowed' : 'pointer',
-                                                borderRadius: 8,
-                                                backgroundColor: totpError ? '#ef4444' : undefined,
-                                                borderColor: totpError ? '#ef4444' : undefined,
-                                                color: '#fff',
-                                                opacity: (totpCode.trim().length !== 6 && !totpError) ? 0.6 : 1,
-                                            }}
+                                            aria-busy={totpVerifying}
                                         >
                                             {totpVerifying ? (
-                                                <>
-                                                    <Loader2 size={16} className="animate-spin" /> Verifying Code...
-                                                </>
+                                                'Verifying Code...'
                                             ) : totpError ? (
                                                 <>
-                                                    <AlertCircle size={16} /> Try Again
+                                                    <AlertCircle /> Try Again
                                                 </>
                                             ) : (
                                                 <>
-                                                    <ShieldCheck size={16} /> Verify & Enable 2FA
+                                                    <ShieldCheck /> Verify & Enable 2FA
                                                 </>
                                             )}
                                         </button>
                                     </form>
-                                </div>
+                                </>
                             )}
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* Footer / Skip Actions */}
-            {!compact && (
-                <div style={{
-                    marginTop: '1.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: canSkip ? 'space-between' : 'center',
-                    paddingTop: '1rem',
-                    borderTop: '1px solid rgba(255,255,255,0.06)',
-                }}>
+            {!compact && (canSkip || hasSecureAuth) && (
+                <div className="ac-setup-foot" data-solo={!canSkip || undefined}>
                     {canSkip ? (
                         <>
-                            <button
-                                type="button"
-                                onClick={onSkip}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    color: 'var(--mp-muted, #94a3b8)',
-                                    fontSize: '0.9rem',
-                                    cursor: 'pointer',
-                                    padding: '0.5rem 0.75rem',
-                                    borderRadius: 6,
-                                    transition: 'color 0.2s',
-                                }}
-                                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-                                onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--mp-muted, #94a3b8)')}
-                            >
+                            <button type="button" className="button button-ghost" onClick={onSkip}>
                                 Skip for now →
                             </button>
                             {hasSecureAuth && (
-                                <button
-                                    type="button"
-                                    className="mp-btn mp-btn-primary"
-                                    onClick={onComplete}
-                                    style={{ padding: '0.6rem 1.25rem', fontSize: '0.9rem', fontWeight: 600 }}
-                                >
+                                <button type="button" className="button button-primary" onClick={onComplete}>
                                     Continue →
                                 </button>
                             )}
                         </>
                     ) : (
-                        hasSecureAuth && (
-                            <button
-                                type="button"
-                                className="mp-btn mp-btn-primary"
-                                onClick={onComplete}
-                                style={{ width: '100%', padding: '0.85rem', fontSize: '0.95rem', fontWeight: 600 }}
-                            >
-                                Continue to Upload →
-                            </button>
-                        )
+                        <button type="button" className="button button-primary button-block" onClick={onComplete}>
+                            Continue to Upload →
+                        </button>
                     )}
                 </div>
             )}
@@ -771,4 +396,3 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
         </div>
     );
 };
-
