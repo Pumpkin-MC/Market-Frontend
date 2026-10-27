@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CircleAlert } from 'lucide-react';
 import api from '../../lib/api';
@@ -18,9 +19,18 @@ const readPage = (res: any) => {
   };
 };
 
-const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
+const PLUGIN_CATEGORIES = [
+  { value: 'Admin Tools', label: 'developer.categories.admin_tools' },
+  { value: 'Economy', label: 'developer.categories.economy' },
+  { value: 'Fun', label: 'developer.categories.fun' },
+  { value: 'World Management', label: 'developer.categories.world_management' },
+  { value: 'Utilities', label: 'developer.categories.utilities' },
+  { value: 'Chat', label: 'developer.categories.chat' },
+  { value: 'Other', label: 'developer.categories.other' },
+] as const;
 
 const SearchPage = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get('q') || '';
   const initialCategory = searchParams.get('category') || '';
@@ -30,7 +40,7 @@ const SearchPage = () => {
 
   const [plugins, setPlugins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [moreFailed, setMoreFailed] = useState(false);
@@ -57,7 +67,7 @@ const SearchPage = () => {
     const fetchPlugins = async () => {
       const id = ++request.current;
       setLoading(true);
-      setError(null);
+      setLoadFailed(false);
       setMoreFailed(false);
       setLoadingMore(false);
       try {
@@ -68,7 +78,7 @@ const SearchPage = () => {
       } catch (err: any) {
         if (id !== request.current) return;
         console.error('Error fetching plugins:', err);
-        setError('Failed to load plugins. Please try again.');
+        setLoadFailed(true);
         setPlugins([]);
         setHasMore(false);
       } finally {
@@ -121,20 +131,20 @@ const SearchPage = () => {
   return (
     <div className="page sf-search-layout">
       <SEO
-        title={searchQuery ? `${searchQuery} - Plugins` : "All Plugins"}
-        description={`Browse our collection of Minecraft plugins. ${searchQuery ? `Showing results for ${searchQuery}.` : ''}`}
+        title={searchQuery ? t('search.page_title', { query: searchQuery }) : t('home.all_plugins')}
+        description={searchQuery ? t('search.results_description', { query: searchQuery }) : t('search.page_description')}
       />
 
       <aside className="panel sf-filters">
         <div className="panel-head">
-          <h2 className="h3">Filters</h2>
-          <button className="button button-ghost button-sm" onClick={clearFilters}>Clear All</button>
+          <h2 className="h3">{t('search.filters')}</h2>
+          <button className="button button-ghost button-sm" onClick={clearFilters}>{t('search.clear_all')}</button>
         </div>
         <div className="panel-body fields">
           <label className="field">
-            <span className="field-label" id="sf-filter-category">Category</span>
+            <span className="field-label" id="sf-filter-category">{t('plugin.category')}</span>
             <Select
-              options={[{ value: '', label: 'All Categories' }, ...PLUGIN_CATEGORIES]}
+              options={[{ value: '', label: t('home.filter_all') }, ...PLUGIN_CATEGORIES.map(option => ({ ...option, label: t(option.label) }))]}
               value={category}
               onChange={setCategory}
               aria-labelledby="sf-filter-category"
@@ -142,13 +152,13 @@ const SearchPage = () => {
           </label>
 
           <label className="field">
-            <span className="field-label" id="sf-filter-type">License Type</span>
+            <span className="field-label" id="sf-filter-type">{t('search.license_type')}</span>
             <Select
               options={[
-                { value: '', label: 'All Types' },
-                { value: 'free', label: 'Free' },
-                { value: 'paid', label: 'Paid' },
-                { value: 'adwall', label: 'Adwall' },
+                { value: '', label: t('search.all_types') },
+                { value: 'free', label: t('plugin.free') },
+                { value: 'paid', label: t('developer.upload.price_paid') },
+                { value: 'adwall', label: t('search.adwall') },
               ]}
               value={type}
               onChange={setType}
@@ -157,7 +167,7 @@ const SearchPage = () => {
           </label>
 
           <div className="field">
-            <span className="field-label">Price Range ($)</span>
+            <span className="field-label">{t('search.price_range')}</span>
             <div className="sf-range">
               <span className="control">
                 <input
@@ -167,8 +177,8 @@ const SearchPage = () => {
                   type="number"
                   inputMode="decimal"
                   autoComplete="off"
-                  placeholder="Min"
-                  aria-label="Min"
+                  placeholder={t('search.min_price')}
+                  aria-label={t('search.min_price')}
                   value={minPrice}
                   onChange={e => setMinPrice(e.target.value)}
                 />
@@ -182,8 +192,8 @@ const SearchPage = () => {
                   type="number"
                   inputMode="decimal"
                   autoComplete="off"
-                  placeholder="Max"
-                  aria-label="Max"
+                  placeholder={t('search.max_price')}
+                  aria-label={t('search.max_price')}
                   value={maxPrice}
                   onChange={e => setMaxPrice(e.target.value)}
                 />
@@ -196,12 +206,12 @@ const SearchPage = () => {
       <section className="sect">
         <div className="row sf-results-head">
           <div className="stack">
-            <h1 className="display-2"><span className="mark">All</span> Plugins</h1>
-            <span className="label">({plugins.length}{hasMore ? '+' : ''} found)</span>
+            <h1 className="display-2"><Trans t={t} i18nKey="search.results_title" components={{ highlight: <span className="mark" /> }} /></h1>
+            <span className="label">{t('search.results_count', { total: plugins.length, more: hasMore ? '+' : '' })}</span>
           </div>
           <span className="spacer" />
           <label className="field sf-sort">
-            <span className="field-label" id="sort-by">Sort by:</span>
+            <span className="field-label" id="sort-by">{t('search.sort_by')}</span>
             <Select
               options={[
                 { value: '', label: 'Newest' },
@@ -218,17 +228,17 @@ const SearchPage = () => {
           </label>
         </div>
 
-        {error && (
+        {loadFailed && (
           <div className="notice notice-danger">
             <span className="mark-box mark-box-danger"><CircleAlert /></span>
-            <p className="notice-text">{error}</p>
+            <p className="notice-text">{t('search.load_failed')}</p>
           </div>
         )}
 
         {loading ? (
           <div className="sf-loader">
             <span className="loading" />
-            <p className="small">Searching market...</p>
+            <p className="small">{t('search.searching')}</p>
           </div>
         ) : plugins.length > 0 ? (
           <>
@@ -241,12 +251,12 @@ const SearchPage = () => {
             {loadingMore && (
               <div className="row sf-more">
                 <span className="loading" />
-                <span className="small">Loading more plugins...</span>
+                <span className="small">{t('home.loading_more')}</span>
               </div>
             )}
             {moreFailed && (
               <div className="row sf-more">
-                <button className="button" onClick={() => setMoreFailed(false)}>Retry</button>
+                <button className="button" onClick={() => setMoreFailed(false)}>{t('common.retry')}</button>
               </div>
             )}
           </>
@@ -254,11 +264,11 @@ const SearchPage = () => {
           <div className="blank">
             <p className="h2">
               {searchQuery
-                ? `No plugins found matching your search and filters.`
-                : 'No plugins available with these filters.'
+                ? t('search.no_matches')
+                : t('search.no_plugins')
               }
             </p>
-            <button className="button" onClick={clearFilters}>Clear Filters</button>
+            <button className="button" onClick={clearFilters}>{t('search.clear_filters')}</button>
           </div>
         )}
       </section>

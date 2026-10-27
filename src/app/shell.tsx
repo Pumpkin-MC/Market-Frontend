@@ -5,6 +5,7 @@ import { Menu, Store, X } from 'lucide-react';
 import { Select } from '../components/Select';
 import { openCookiePreferencesModal } from '../lib/consent';
 import api from '../lib/api';
+import { getLanguageCode, normalizeLocale } from '../lib/locale';
 import { NavSearch } from '../features/store/NavSearch';
 import { useAuth } from './auth';
 
@@ -46,11 +47,14 @@ const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) =
   </NavLink>
 );
 
-const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
-  <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label="Toggle menu" aria-expanded={open}>
-    {open ? <X /> : <Menu />}
-  </button>
-);
+const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label={t('nav.toggle_menu')} aria-expanded={open}>
+      {open ? <X /> : <Menu />}
+    </button>
+  );
+};
 
 const useMenu = () => {
   const [open, setOpen] = useState(false);
@@ -66,8 +70,8 @@ const Masthead = ({ user }: any) => {
     <>
       <NavLink to="/search" onClick={menu.close}>{t('nav.browse')}</NavLink>
       {user && (user.plugin_count > 0 || isStaff(user)) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
-      {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>Publish</NavLink>}
-      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>Staff</NavLink>}
+      {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>{t('nav.publish')}</NavLink>}
+      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>{t('nav.staff')}</NavLink>}
     </>
   );
   const actions = user ? (
@@ -87,7 +91,7 @@ const Masthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Market</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Main">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.main_navigation')}>{links}</nav>
           <div className="masthead-search">
             <NavSearch onNavigate={menu.close} />
           </div>
@@ -96,7 +100,7 @@ const Masthead = ({ user }: any) => {
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -108,21 +112,22 @@ const Masthead = ({ user }: any) => {
 };
 
 const StudioMasthead = ({ user }: any) => {
+  const { t } = useTranslation();
   const menu = useMenu();
   const links = (
     <>
       {user?.is_developer && (
         <>
-          <NavLink to="/dashboard/plugins" end onClick={menu.close}>Plugins</NavLink>
-          <NavLink to="/dashboard/audience" onClick={menu.close}>Audience</NavLink>
+          <NavLink to="/dashboard/plugins" end onClick={menu.close}>{t('search.plugins_title')}</NavLink>
+          <NavLink to="/dashboard/audience" onClick={menu.close}>{t('nav.audience')}</NavLink>
         </>
       )}
-      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>Staff</NavLink>}
+      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>{t('nav.staff')}</NavLink>}
     </>
   );
   const actions = (
     <>
-      <Link to="/" className="button button-sm" onClick={menu.close}><Store />Store</Link>
+      <Link to="/" className="button button-sm" onClick={menu.close}><Store />{t('nav.store')}</Link>
       {user && <UserChip user={user} onNavigate={menu.close} />}
     </>
   );
@@ -135,13 +140,13 @@ const StudioMasthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Studio</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Studio">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.studio')}>{links}</nav>
           <div className="masthead-actions">{actions}</div>
           <MenuToggle open={menu.open} onToggle={menu.toggle} />
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -167,30 +172,30 @@ export const StudioLayout = () => {
 };
 
 const LANGUAGES = [
-  { value: 'en', label: 'English' },
-  { value: 'de', label: 'Deutsch' },
-  { value: 'fr', label: 'Français' },
-  { value: 'es', label: 'Español' },
-  { value: 'it', label: 'Italiano' },
-  { value: 'nl', label: 'Nederlands' },
-  { value: 'pt', label: 'Português' },
-  { value: 'pl', label: 'Polski' },
-  { value: 'ru', label: 'Русский' },
-  { value: 'tr', label: 'Türkçe' },
-  { value: 'ja', label: '日本語' },
-  { value: 'ko', label: '한국어' },
-  { value: 'zh', label: '中文' },
+  { value: 'en_us', label: 'English' },
+  { value: 'de_de', label: 'Deutsch' },
+  { value: 'fr_fr', label: 'Français' },
+  { value: 'es_es', label: 'Español' },
+  { value: 'it_it', label: 'Italiano' },
+  { value: 'nl_nl', label: 'Nederlands' },
+  { value: 'pt_br', label: 'Português' },
+  { value: 'pl_pl', label: 'Polski' },
+  { value: 'ru_ru', label: 'Русский' },
+  { value: 'tr_tr', label: 'Türkçe' },
+  { value: 'ja_jp', label: '日本語' },
+  { value: 'ko_kr', label: '한국어' },
+  { value: 'zh_cn', label: '简体中文' },
 ];
 
 const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, login } = useAuth();
 
   const handleLanguageChange = async (newLang: string) => {
     i18n.changeLanguage(newLang);
     if (user) {
       try {
-        const res = await api.post('/user/change-language', { newLanguage: newLang });
+        const res = await api.post('/user/change-language', { newLanguage: getLanguageCode(newLang) });
         if (res.data.token) {
           login(res.data.token);
         }
@@ -200,14 +205,14 @@ const LanguageSelector = () => {
     }
   };
 
-  const currentLang = i18n.language ? i18n.language.split('-')[0] : 'en';
+  const currentLang = normalizeLocale(i18n.language);
 
   return (
     <Select
       options={LANGUAGES}
       value={currentLang}
       onChange={handleLanguageChange}
-      aria-label="Language selection"
+      aria-label={t('nav.language_selection')}
       className="language-select"
     />
   );
@@ -226,33 +231,33 @@ const Footer = () => {
             </Link>
           </div>
           <div className="colophon-col">
-            <span className="label">Market</span>
+            <span className="label">{t('nav.footer.market')}</span>
             <ul>
               <li><Link to="/search">{t('nav.browse')}</Link></li>
-              <li><Link to="/dashboard/plugins">Publish</Link></li>
+              <li><Link to="/dashboard/plugins">{t('nav.publish')}</Link></li>
               <li><a href="https://pumpkinmc.org">Pumpkin</a></li>
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Legal</span>
+            <span className="label">{t('nav.footer.legal')}</span>
             <ul>
-              <li><Link to="/terms">Terms</Link></li>
-              <li><Link to="/privacy">Privacy</Link></li>
-              <li><Link to="/legal-notice">Legal Notice</Link></li>
+              <li><Link to="/terms">{t('nav.footer.terms')}</Link></li>
+              <li><Link to="/privacy">{t('nav.footer.privacy')}</Link></li>
+              <li><Link to="/legal-notice">{t('nav.footer.legal_notice')}</Link></li>
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Developers</span>
+            <span className="label">{t('nav.footer.developers')}</span>
             <ul>
-              <li><Link to="/guidelines">Guidelines</Link></li>
-              <li><Link to="/developer-terms">Developer Terms</Link></li>
-              <li><button type="button" onClick={openCookiePreferencesModal}>Cookie Preferences</button></li>
+              <li><Link to="/guidelines">{t('nav.footer.guidelines')}</Link></li>
+              <li><Link to="/developer-terms">{t('nav.footer.developer_terms')}</Link></li>
+              <li><button type="button" onClick={openCookiePreferencesModal}>{t('cookie.banner_title')}</button></li>
             </ul>
           </div>
         </div>
         <div className="colophon-base">
           <span>© 2026 PumpkinMC</span>
-          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span>{t('nav.footer.minecraft_disclaimer')}</span>
           <span className="spacer" />
           <LanguageSelector />
         </div>

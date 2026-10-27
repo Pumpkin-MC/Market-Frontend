@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
+import { normalizeLocale } from '../lib/locale';
 
 const AuthContext = createContext<any>(null);
 export const useAuth = () => useContext(AuthContext);
@@ -35,8 +36,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const payload = decodeToken(res.data.token);
           if (payload && payload.exp * 1000 > Date.now()) {
             setUser(payload);
-            if (payload.preferred_language && i18n.language !== payload.preferred_language) {
-              i18n.changeLanguage(payload.preferred_language);
+            const language = normalizeLocale(payload.preferred_language);
+            if (payload.preferred_language && i18n.language !== language) {
+              i18n.changeLanguage(language);
             }
           }
         }
@@ -55,8 +57,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Decode token for client-side state without persisting in localStorage
     const payload = decodeToken(token);
     setUser(payload);
-    if (payload?.preferred_language && i18n.language !== payload.preferred_language) {
-      i18n.changeLanguage(payload.preferred_language);
+    const language = normalizeLocale(payload?.preferred_language);
+    if (payload?.preferred_language && i18n.language !== language) {
+      i18n.changeLanguage(language);
     }
   };
 

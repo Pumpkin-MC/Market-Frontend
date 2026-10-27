@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useMemo, type ReactNode, type Ref } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import api from '../../lib/api';
+import { getLocalizedText } from '../../lib/locale';
 import SEO from '../../components/SEO';
 import PluginCard from '../../components/PluginCard';
 import { useAuth } from '../../app/auth';
@@ -166,13 +167,12 @@ const HomePage = () => {
     const activeImage = featuredImages[heroSubImageIndex] || featuredImages[0];
 
     const getDesc = (translated?: Record<string, string> | string) => {
-        if (!translated) return 'Discover this high performance Minecraft plugin.';
+        if (!translated) return t('home.default_description');
         try {
             const data = typeof translated === 'string' ? JSON.parse(translated) : translated;
-            const currentLang = i18n.language.split('-')[0];
-            return data[currentLang] || data.en || Object.values(data)[0] || 'Discover this high performance Minecraft plugin.';
+            return getLocalizedText(data, i18n.language) || t('home.default_description');
         } catch {
-            return typeof translated === 'string' ? translated : 'Discover this high performance Minecraft plugin.';
+            return typeof translated === 'string' ? translated : t('home.default_description');
         }
     };
 
@@ -180,7 +180,7 @@ const HomePage = () => {
         return (
             <div className="sf-loader">
                 <span className="loading" />
-                <p className="small">Discovering best plugins...</p>
+                <p className="small">{t('home.loading')}</p>
             </div>
         );
     }
@@ -204,8 +204,8 @@ const HomePage = () => {
     return (
         <>
             <SEO
-                title="Home"
-                description="Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place."
+                title={t('home.page_title')}
+                description={t('home.page_description')}
             />
 
             {activeFeatured && (
@@ -222,15 +222,17 @@ const HomePage = () => {
                                 )}
                                 {activeFeatured.type !== 'free' && isSale && (
                                     <div className="entry-flags">
-                                        <span className="sticker">-{activeFeatured.sale_discount_percent}% OFF</span>
+                                        <span className="sticker">{t('home.discount', { discount: activeFeatured.sale_discount_percent })}</span>
                                     </div>
                                 )}
                             </div>
 
                             <div className="feature-body">
-                                <span className="sticker sticker-success">Trending & Popular</span>
+                                <span className="sticker sticker-success">{t('home.featured_badge')}</span>
                                 <h2 className="display-2 sf-feature-name" title={activeFeatured.name}>{activeFeatured.name}</h2>
-                                <p className="entry-by">by <strong>{activeFeatured.dev_name}</strong></p>
+                                <p className="entry-by">
+                                    <Trans t={t} i18nKey="common.by_author" components={{ author: <strong>{activeFeatured.dev_name}</strong> }} />
+                                </p>
 
                                 <div className="sf-thumbs">
                                     {[0, 1, 2, 3].map((idx) => {
@@ -244,7 +246,7 @@ const HomePage = () => {
                                                     setHeroSubImageIndex(idx);
                                                 }}
                                             >
-                                                <img src={src} alt="thumbnail" />
+                                                <img src={src} alt={t('home.thumbnail')} />
                                             </span>
                                         ) : (
                                             <span key={idx} data-empty />
@@ -255,13 +257,13 @@ const HomePage = () => {
                                 <p className="sf-feature-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
 
                                 <dl className="specs">
-                                    <dt>Downloads</dt><dd>{(activeFeatured.downloads || 0).toLocaleString()}</dd>
-                                    <dt>Version</dt><dd className="mono">{activeFeatured.version ? `v${activeFeatured.version}` : '—'}</dd>
+                                    <dt>{t('plugin.downloads')}</dt><dd>{(activeFeatured.downloads || 0).toLocaleString()}</dd>
+                                    <dt>{t('plugin.version')}</dt><dd className="mono">{activeFeatured.version ? `v${activeFeatured.version}` : '—'}</dd>
                                 </dl>
 
                                 <div className="row sf-feature-foot">
                                     {activeFeatured.type === 'free' ? (
-                                        <span className="cost cost-free cost-lg">Free</span>
+                                        <span className="cost cost-free cost-lg">{t('plugin.free')}</span>
                                     ) : isSale ? (
                                         <span className="cost cost-sale cost-lg">
                                             <s>€{((activeFeatured.price_cents || 0) / 100).toFixed(2)}</s>
@@ -271,7 +273,7 @@ const HomePage = () => {
                                         <span className="cost cost-lg">€{((activeFeatured.price_cents || 0) / 100).toFixed(2)}</span>
                                     )}
                                     <span className="spacer" />
-                                    <span className="button button-primary">View Plugin<ArrowRight /></span>
+                                    <span className="button button-primary">{t('home.view_plugin')}<ArrowRight /></span>
                                 </div>
                             </div>
                         </Link>
@@ -318,23 +320,23 @@ const HomePage = () => {
                         {loadingMore && (
                             <div className="row sf-more">
                                 <span className="loading" />
-                                <span className="small">Loading more plugins...</span>
+                                <span className="small">{t('home.loading_more')}</span>
                             </div>
                         )}
 
                         {moreFailed && (
                             <div className="row sf-more">
-                                <button className="button" onClick={() => setMoreFailed(false)}>Retry</button>
+                                <button className="button" onClick={() => setMoreFailed(false)}>{t('common.retry')}</button>
                             </div>
                         )}
 
                         {!hasMore && allPlugins.length > 0 && (
-                            <span className="sticker sticker-fg sf-end">You've reached the end of the plugins catalog.</span>
+                            <span className="sticker sticker-fg sf-end">{t('home.catalog_end')}</span>
                         )}
 
                         {(fetched.current?.popular && fetched.current?.newest && popular.length === 0 && newest.length === 0 && allPlugins.length === 0) && (
                             <div className="blank">
-                                <p className="h2">No plugins found. Check back later!</p>
+                                <p className="h2">{t('home.empty_catalog')}</p>
                             </div>
                         )}
                     </div>
