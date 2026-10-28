@@ -185,6 +185,8 @@ const LANGUAGES = [
   { value: 'ja_jp', label: '日本語' },
   { value: 'ko_kr', label: '한국어' },
   { value: 'zh_cn', label: '简体中文' },
+  { value: 'zh_hk', label: '繁體中文（香港）' },
+  { value: 'zh_tw', label: '繁體中文（台灣）' },
 ];
 
 const LanguageSelector = () => {

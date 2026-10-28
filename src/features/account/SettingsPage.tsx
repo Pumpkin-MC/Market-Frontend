@@ -5,7 +5,7 @@ import type { ParseKeys } from 'i18next';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../../lib/api';
 import { translateApiMessage } from '../../lib/apiMessages';
-import { getLanguageCode, normalizeLocale } from '../../lib/locale';
+import { getLanguageCode, normalizeLocale, sameBaseLanguage } from '../../lib/locale';
 import { useAuth } from '../../app/auth';
 import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../studio/DeveloperOnboardingModal';
@@ -180,6 +180,8 @@ const LANGUAGE_OPTIONS = [
   { value: 'ja_jp', label: 'profile.languages.ja' },
   { value: 'ko_kr', label: 'profile.languages.ko' },
   { value: 'zh_cn', label: 'profile.languages.zh' },
+  { value: 'zh_hk', label: 'profile.languages.zh_hk' },
+  { value: 'zh_tw', label: 'profile.languages.zh_tw' },
  ] as const;
 
 const EXPIRY_OPTIONS = [
@@ -246,7 +248,12 @@ const SettingsPage = () => {
         username: user.username || '',
         email: user.email || '',
         country: user.country || '',
-        language: normalizeLocale(user.preferred_language || prev.language || i18n.language),
+        // The server stores only the base code (e.g. "zh"), so prefer the
+        // locally-active locale to preserve regional Chinese variants
+        // (zh_hk / zh_tw) instead of collapsing them to zh_cn.
+        language: sameBaseLanguage(i18n.language, user.preferred_language)
+          ? normalizeLocale(i18n.language)
+          : normalizeLocale(user.preferred_language),
       }));
       setIs2faEnabled(user.totp_enabled || false);
     }
@@ -870,16 +877,24 @@ const SettingsPage = () => {
         }
       }
 
-      if (formData.language && formData.language !== normalizeLocale(user?.preferred_language)) {
+      if (formData.language && !sameBaseLanguage(formData.language, user?.preferred_language)) {
         try {
+          // Apply the new language locally first so login() below (which
+          // reads the server's base code) cannot reset a regional variant.
+          i18n.changeLanguage(formData.language);
           const res = await api.post('/user/change-language', { newLanguage: getLanguageCode(formData.language) });
           if (res.data.token) login(res.data.token);
-          i18n.changeLanguage(formData.language);
           updatedAny = true;
         } catch (err: any) {
           showToast(translateApiMessage(t, err.response?.data?.error || t('profile.account.language_failed')), 'error');
           return;
         }
+      } else if (formData.language && formData.language !== normalizeLocale(i18n.language)) {
+        // Same base language but a different regional variant (e.g. zh_cn ->
+        // zh_hk): the server only stores the base code, so just apply it
+        // locally without an API round-trip.
+        i18n.changeLanguage(formData.language);
+        updatedAny = true;
       }
 
       if (updatedAny) {

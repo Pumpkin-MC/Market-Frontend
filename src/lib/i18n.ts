@@ -11,6 +11,8 @@ import frTranslation from '../locales/fr_fr.json';
 import esTranslation from '../locales/es_es.json';
 import ruTranslation from '../locales/ru_ru.json';
 import zhTranslation from '../locales/zh_cn.json';
+import zhHkTranslation from '../locales/zh_hk.json';
+import zhTwTranslation from '../locales/zh_tw.json';
 import ptTranslation from '../locales/pt_br.json';
 import plTranslation from '../locales/pl_pl.json';
 import trTranslation from '../locales/tr_tr.json';
@@ -26,6 +28,8 @@ const resources = {
   es_es: { translation: esTranslation },
   ru_ru: { translation: ruTranslation },
   zh_cn: { translation: zhTranslation },
+  zh_hk: { translation: zhHkTranslation },
+  zh_tw: { translation: zhTwTranslation },
   pt_br: { translation: ptTranslation },
   pl_pl: { translation: plTranslation },
   tr_tr: { translation: trTranslation },
