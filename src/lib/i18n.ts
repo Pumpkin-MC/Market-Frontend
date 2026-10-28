@@ -1,7 +1,7 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
-import { DEFAULT_LOCALE, getLocaleCode } from './locale';
+import { DEFAULT_LOCALE, getLocaleCode, toLanguageTag } from './locale';
 
 // Import translation files directly to avoid extra HTTP requests
 // and ensure we don't have issues with Vite's dev server for static assets
@@ -53,5 +53,14 @@ i18n
       convertDetectedLanguage: language => getLocaleCode(language) ?? language,
     },
   });
+
+// Keep the document language in sync so screen readers, hyphenation and
+// fonts follow the active locale instead of the static value in index.html.
+const syncDocumentLanguage = (language: string) => {
+  document.documentElement.lang = toLanguageTag(language);
+};
+
+i18n.on('languageChanged', syncDocumentLanguage);
+syncDocumentLanguage(i18n.language || DEFAULT_LOCALE);
 
 export default i18n;

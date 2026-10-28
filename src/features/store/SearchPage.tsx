@@ -214,12 +214,12 @@ const SearchPage = () => {
             <span className="field-label" id="sort-by">{t('search.sort_by')}</span>
             <Select
               options={[
-                { value: '', label: 'Newest' },
-                { value: 'downloads', label: 'Most Popular' },
-                { value: 'name-asc', label: 'Name (A-Z)' },
-                { value: 'name-desc', label: 'Name (Z-A)' },
-                { value: 'price-asc', label: 'Price (Low to High)' },
-                { value: 'price-desc', label: 'Price (High to Low)' },
+                { value: '', label: t('search.sort_newest') },
+                { value: 'downloads', label: t('search.sort_popular') },
+                { value: 'name-asc', label: t('search.sort_name_asc') },
+                { value: 'name-desc', label: t('search.sort_name_desc') },
+                { value: 'price-asc', label: t('search.sort_price_asc') },
+                { value: 'price-desc', label: t('search.sort_price_desc') },
               ]}
               value={sort}
               onChange={setSort}

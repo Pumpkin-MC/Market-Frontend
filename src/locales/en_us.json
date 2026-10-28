@@ -337,7 +337,10 @@
       "tr": "Türkçe (Turkish)",
       "ja": "日本語 (Japanese)",
       "ko": "한국어 (Korean)",
-      "zh": "中文 (Chinese)"
+      "zh": "中文 (Chinese)",
+      "zh_cn": "Simplified Chinese",
+      "zh_hk": "Traditional Chinese (Hong Kong)",
+      "zh_tw": "Traditional Chinese (Taiwan)"
     },
     "expiry": {
       "days_30": "30 Days",
@@ -683,6 +686,16 @@
       "skip": "Skip for now →",
       "continue": "Continue →",
       "continue_upload": "Continue to Upload →"
+    },
+    "author": {
+      "page_title": "{{username}} — Developer",
+      "page_description": "Plugins published by {{username}} on Pumpkin Market.",
+      "load_failed": "Could not load this profile.",
+      "not_found": "Developer not found.",
+      "member_since": "Member since {{date}}",
+      "published_plugins": "<total>{{count}}</total> published plugins",
+      "plugins_by": "Plugins by <author />",
+      "no_plugins": "This developer has not published any plugins yet."
     }
   },
   "developer": {
@@ -1370,7 +1383,492 @@
     "view_all_results": "View all results for \"{{query}}\"",
     "loading_suggestions": "Loading suggestions",
     "clear_input": "Clear search input",
-    "remove_recent": "Remove {{term}} from recent searches"
+    "remove_recent": "Remove {{term}} from recent searches",
+    "page_title": "{{query}} — Search",
+    "page_description": "Search plugins, developers, and categories on Pumpkin Market.",
+    "results_title": "Search <highlight>results</highlight>",
+    "results_description": "Plugins matching \"{{query}}\" on Pumpkin Market.",
+    "results_count": "{{total}}{{more}} plugins",
+    "filters": "Filters",
+    "clear_all": "Clear all",
+    "clear_filters": "Clear filters",
+    "license_type": "License",
+    "all_types": "All types",
+    "adwall": "Ad-supported",
+    "price_range": "Price range",
+    "min_price": "Min",
+    "max_price": "Max",
+    "sort_by": "Sort by",
+    "sort_newest": "Newest",
+    "sort_popular": "Most popular",
+    "sort_name_asc": "Name (A-Z)",
+    "sort_name_desc": "Name (Z-A)",
+    "sort_price_asc": "Price (low to high)",
+    "sort_price_desc": "Price (high to low)",
+    "load_failed": "Could not load plugins. Please try again.",
+    "searching": "Searching…",
+    "no_matches": "No plugins match your filters.",
+    "no_plugins": "No plugins found yet."
+  },
+  "legal": {
+    "on_this_page": "On this page",
+    "cookie_preferences": "Cookie Preferences",
+    "manage_cookie_preferences": "Manage Cookie Preferences",
+    "links": {
+      "terms": "Terms of Service",
+      "privacy": "Privacy Policy",
+      "marketplace": "Marketplace",
+      "create_account": "Create Account"
+    },
+    "notice": {
+      "kicker": "Legal Notice / Impressum",
+      "title": "Legal Notice &",
+      "title_highlight": "Provider Identification",
+      "lede": "Information and provider identification pursuant to § 5 of the German Digital Services Act (DDG) and § 18 Section 2 MStV.",
+      "updated": "Last updated: August 2026 · Effective immediately",
+      "footer": "Official Provider Identification for the PumpkinMC Plugin Marketplace · Contact:",
+      "sections": {
+        "operator": {
+          "title": "1. Service Provider & Operator Information (§ 5 DDG)",
+          "content": "Information pursuant to § 5 of the German Digital Services Act (Digitale-Dienste-Gesetz - DDG):\n\nService Operator:\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden\nGermany\n\nContact Details:\n• Direct Email: lilalexmed@proton.me\n• Platform Support: support@pumpkinmc.org\n• Privacy & Data Protection: privacy@pumpkinmc.org\n• Official Website: https://pumpkinmc.org\n• Discord Community: https://discord.gg/pumpkinmc"
+        },
+        "editorial": {
+          "title": "2. Responsible for Content (§ 18 Abs. 2 MStV)",
+          "content": "Responsible for journalistic and editorial content pursuant to § 18 Section 2 of the German Interstate Media Treaty (Medienstaatsvertrag - MStV):\n\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden\nGermany"
+        },
+        "dispute-resolution": {
+          "title": "3. EU Online Dispute Resolution & Consumer Arbitration",
+          "content": "Online Dispute Resolution (ODR):\nThe European Commission provides a platform for online dispute resolution (ODR), accessible at:\nhttps://ec.europa.eu/consumers/odr/\n\nOur contact email for consumer dispute matters: lilalexmed@proton.me\n\nConsumer Dispute Resolution:\nWe are neither obligated nor willing to participate in dispute resolution proceedings before a consumer arbitration board (Verbraucherschlichtungsstelle) pursuant to the German Consumer Dispute Resolution Act (VSBG)."
+        },
+        "liability-content": {
+          "title": "4. Liability for Content (§ 7 Abs. 1 DDG)",
+          "content": "As a service provider, we are responsible for our own content on these pages under general statutory laws pursuant to § 7 Section 1 of the German Digital Services Act (DDG).\n\nAccording to §§ 8 to 10 DDG, however, we as a service provider are not obligated to permanently monitor transmitted or stored third-party information (such as user-submitted plugins, reviews, or comments) or to investigate circumstances that indicate illegal activity.\n\nObligations to remove or block the use of information under general statutory laws remain unaffected. Any liability in this respect, however, is only possible from the time of knowledge of a specific infringement. Upon notification of corresponding infringements, we will remove this content immediately."
+        },
+        "liability-links": {
+          "title": "5. Liability for External Links",
+          "content": "Our Service contains links to external third-party websites (such as plugin repositories, creator documentation, and Discord) over whose content we have no influence. Therefore, we cannot assume any liability for this external content.\n\nThe respective provider or operator of the pages is always responsible for the content of the linked pages. The linked pages were checked for possible legal violations at the time of linking. Illegal content was not recognizable at the time of linking.\n\nPermanent monitoring of the content of the linked pages is not reasonable without concrete evidence of an infringement. Upon notification of legal infringements, we will remove such links immediately."
+        },
+        "copyright": {
+          "title": "6. Copyright & Intellectual Property",
+          "content": "The content and works created by the site operators on these pages are subject to German copyright law. Duplication, processing, distribution, and any kind of exploitation outside the limits of copyright law require the written consent of the respective author or creator.\n\nDownloads and copies of this site are only permitted for private, non-commercial use, unless expressly permitted otherwise by the respective plugin's open-source or commercial license.\n\nInsofar as the content on this site was not created by the operator, the copyrights of third parties (such as plugin creators and contributing developers) are respected. In particular, third-party content is marked as such. Should you nevertheless become aware of a copyright infringement, please notify us at support@pumpkinmc.org. Upon notification of infringements, we will remove such content immediately."
+        }
+      }
+    },
+    "terms": {
+      "kicker": "Legal",
+      "title": "Plugin Marketplace",
+      "title_highlight": "Terms of Service",
+      "lede": "Please read these terms carefully before buying or selling plugins on PumpkinMC.",
+      "updated": "Last updated: March 3, 2026 · Effective immediately",
+      "footer": "Questions about these terms? Reach us at <email /> or join our <discord>Discord server</discord>.",
+      "sections": {
+        "acceptance": {
+          "title": "1. Acceptance of Terms",
+          "content": "By accessing or using the PumpkinMC Plugin Marketplace (\"Marketplace\"), you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree to these Terms, you may not access or use the Marketplace. These Terms apply to all visitors, buyers, sellers, and developers who access the Marketplace.\n\nPumpkinMC reserves the right to update or modify these Terms at any time. Continued use of the Marketplace after any changes constitutes your acceptance of the new Terms. We will notify registered users of material changes via email or a prominent notice on the platform."
+        },
+        "eligibility": {
+          "title": "2. Eligibility",
+          "content": "You must be at least 13 years of age to use the Marketplace. If you are under 18, you must have the consent of a parent or legal guardian. By using the Marketplace, you represent and warrant that you meet these eligibility requirements.\n\nYou may not use the Marketplace if you have previously been banned or suspended from PumpkinMC or any related service, or if your use would violate any applicable law or regulation."
+        },
+        "accounts": {
+          "title": "3. Accounts & Registration",
+          "content": "To access certain features of the Marketplace, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep your account information up to date.\n\nYou are responsible for safeguarding your password and for any activity that occurs under your account. You must notify PumpkinMC immediately of any unauthorized use. PumpkinMC is not liable for any loss or damage arising from your failure to protect your account credentials.\n\nAccounts are personal and non-transferable. You may not create multiple accounts to circumvent bans, purchase limits, or any other restrictions."
+        },
+        "plugins": {
+          "title": "4. Plugin Listings & Content",
+          "content": "Sellers may submit Minecraft plugins and related digital goods (\"Plugins\") for listing on the Marketplace subject to review and approval. By submitting a Plugin, you represent and warrant that:\n\n• You are the original author or have the legal right to sell the Plugin.\n• The Plugin does not infringe upon any third-party intellectual property rights, including those of Mojang Studios or Microsoft.\n• The Plugin does not contain malicious code, backdoors, exploits, or any functionality designed to harm servers, players, or end users.\n• All Plugin descriptions, screenshots, and metadata are accurate and not misleading.\n• The Plugin complies with Mojang's End User License Agreement (EULA) and any applicable Minecraft usage policies.\n\nPumpkinMC reserves the right to remove any Plugin listing at any time, without notice, for any reason including but not limited to violation of these Terms, community reports, or suspected malicious activity."
+        },
+        "prohibited": {
+          "title": "5. Prohibited Content",
+          "content": "The following content is strictly prohibited on the Marketplace:\n\n• Plugins containing malware, ransomware, spyware, or any malicious code.\n• Plugins that steal player data, credentials, or personal information.\n• Duplicate or plagiarized plugins submitted without the original author's consent.\n• Plugins that enable griefing, cheating, or exploiting of unrelated servers or players.\n• Adult, explicit, or NSFW content of any kind.\n• Plugins that violate Mojang's EULA, including those that grant gameplay advantages for real-money purchases in non-compliant ways.\n• Content that promotes hate speech, harassment, or discrimination.\n• Any Plugin misrepresented as an official PumpkinMC, Mojang, or Microsoft product.\n\nViolation of these prohibitions may result in immediate account termination and, where applicable, referral to relevant authorities."
+        },
+        "transactions": {
+          "title": "6. Purchases & Payments",
+          "content": "All purchases made through the Marketplace are final unless otherwise stated or required by applicable law. By completing a purchase, you authorize PumpkinMC to charge your selected payment method for the listed price.\n\nPrices are displayed in EUR and may be subject to applicable taxes depending on your jurisdiction. PumpkinMC is not responsible for currency conversion fees charged by your bank or payment provider.\n\nIn the event of a disputed charge, please contact support@pumpkinmc.org before initiating a chargeback with your payment provider. Chargebacks initiated without prior contact may result in account suspension."
+        },
+        "refunds": {
+          "title": "7. Digital Withdrawal Waiver & Refund Policy",
+          "content": "Digital Content & Right of Withdrawal Waiver:\nDue to the digital nature of software downloads, when you purchase and download a Plugin, you expressly consent to immediate performance of the contract and acknowledge that you lose your statutory 14-day right of withdrawal under EU Consumer Rights Directive (2011/83/EU) once the download or key generation commences.\n\nWhen Refunds Are Granted:\nWe want all buyers to have a safe and fair experience. Refunds may be approved under the following conditions:\n• Technical Defect: The Plugin has a verifiable critical defect on supported server software, and the developer fails to provide a working fix or update within 5 business days of your support request.\n• Material Misrepresentation: The Plugin is missing core advertised features explicitly listed on its store page.\n• Accidental Duplicate Purchase: You accidentally purchased the identical Plugin twice within 24 hours.\n• Security & Policy Violation: The Plugin is found to contain unauthorized backdoors, malware, or violates our safety policies.\n\nNon-Refundable Circumstances:\n• Change of Mind (\"Buyer's Remorse\"): Deciding you no longer need the Plugin or purchased by mistake after downloading.\n• Incompatibility with Unsupported Versions: Attempting to run the Plugin on an incompatible server engine or Minecraft version clearly marked unsupported on the store listing.\n• Configuration / Administration Issues: Inability or lack of technical knowledge to configure YAML/JSON files or server environments.\n\nDispute & Refund Workflow:\n1. Contact the Developer: Reach out directly to the developer using their support email or Discord listed on the Plugin page.\n2. 5-Day Resolution Window: Give the developer 5 business days to assist or resolve the defect.\n3. Escalate to PumpkinMarket: If the developer is unresponsive or unable to resolve the verified defect, forward your proof of purchase and communication to support@pumpkinmc.org.\n\nLicense Revocation:\nUpon any approved refund or chargeback, the associated cryptographic license key is immediately revoked, and download access from your Library is disabled."
+        },
+        "sellers": {
+          "title": "8. Seller Obligations",
+          "content": "Sellers are responsible for maintaining and supporting their Plugins for a reasonable period following sale. This includes providing updates to maintain compatibility with reasonably current versions of Minecraft and Spigot/Paper API where applicable.\n\nSellers receive payouts according to the PumpkinMC revenue share agreement communicated at the time of seller onboarding. PumpkinMC reserves the right to adjust revenue share rates with 30 days' notice to active sellers.\n\nSellers must respond to buyer support inquiries within 5 business days. Failure to maintain adequate support may result in Plugin delisting or seller account review.\n\nSellers may not solicit buyers to transact outside of the Marketplace in order to circumvent fees or protections."
+        },
+        "ip": {
+          "title": "9. Intellectual Property",
+          "content": "Sellers retain ownership of their Plugin source code and associated assets. By listing a Plugin on the Marketplace, sellers grant PumpkinMC a non-exclusive, royalty-free license to display, reproduce, and distribute the Plugin solely for the purpose of operating the Marketplace.\n\nBuyers receive a limited, non-exclusive, non-transferable license to use purchased Plugins on their own Minecraft servers. Buyers may not resell, redistribute, decompile, reverse-engineer, or sublicense Plugins unless explicitly permitted by the seller's stated license terms.\n\nThe PumpkinMC name, logo, and branding are the exclusive property of PumpkinMC and may not be used without prior written consent."
+        },
+        "privacy": {
+          "title": "10. Privacy",
+          "content": "Your use of the Marketplace is also governed by our Privacy Policy, which is incorporated into these Terms by reference. By using the Marketplace, you consent to the collection and use of your information as described in our Privacy Policy.\n\nWe collect information necessary to operate the Marketplace, process transactions, and provide support. We do not sell your personal information to third parties. Seller payout information may be shared with payment processors as necessary to complete transactions."
+        },
+        "disclaimer": {
+          "title": "11. Disclaimer of Warranties",
+          "content": "The Marketplace is provided on an \"as is\" and \"as available\" basis without warranties of any kind, either express or implied. PumpkinMC does not warrant that the Marketplace will be uninterrupted, error-free, or free of viruses or other harmful components.\n\nPumpkinMC does not endorse, verify, or take responsibility for any Plugin listed by third-party sellers. You download and install Plugins at your own risk. PumpkinMC strongly recommends reviewing Plugin source code and testing in a non-production environment before deploying to a live server."
+        },
+        "liability": {
+          "title": "12. Limitation of Liability",
+          "content": "To the fullest extent permitted by applicable law, PumpkinMC and its affiliates, officers, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the Marketplace, including but not limited to server damage, data loss, or loss of profits.\n\nIn no event shall PumpkinMC's total liability to you for all claims exceed the greater of the amount you paid to PumpkinMC in the twelve months preceding the claim or USD $50."
+        },
+        "termination": {
+          "title": "13. Termination",
+          "content": "PumpkinMC may suspend or terminate your account at any time, with or without notice, for conduct that violates these Terms or is harmful to other users, PumpkinMC, or third parties, or for any other reason at PumpkinMC's sole discretion.\n\nUpon termination, your right to use the Marketplace ceases immediately. Provisions of these Terms that by their nature should survive termination — including intellectual property, disclaimers, and limitations of liability — shall survive.\n\nYou may close your account at any time by contacting support@pumpkinmc.org. Closing your account does not entitle you to a refund of any purchases."
+        },
+        "governing": {
+          "title": "14. Governing Law",
+          "content": "These Terms are governed by and construed in accordance with applicable law. Any disputes arising under or in connection with these Terms shall be resolved through binding arbitration, except that either party may seek injunctive or other equitable relief in a court of competent jurisdiction.\n\nIf any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force and effect."
+        },
+        "contact": {
+          "title": "15. Contact",
+          "content": "If you have any questions about these Terms or the Marketplace, please contact us at:\n\nEmail: support@pumpkinmc.org\nDiscord: discord.gg/pumpkinmc\nWebsite: pumpkinmc.org\n\nWe aim to respond to all inquiries within 3 business days."
+        }
+      }
+    },
+    "privacy": {
+      "kicker": "Privacy Policy",
+      "title": "Your Privacy,",
+      "title_highlight": "Our Commitment",
+      "lede": "Learn how we collect, use, and protect your personal information, and the choices you have regarding your data.",
+      "updated": "Last updated: August 2026 · Effective immediately",
+      "footer": "Questions about your privacy or data? Reach us anytime at <email />",
+      "sections": {
+        "overview": {
+          "title": "1. Overview & Data Controller",
+          "content": "PumpkinMC (\"we\", \"us\", or \"our\") operates the PumpkinMC Plugin Marketplace and related services (the \"Service\"). This Privacy Policy explains how we collect, use, store, and protect your information when you browse our site, publish plugins, or make purchases.\n\nWe believe in privacy by design. We do not sell your personal data to advertisers or third parties, and we only collect information necessary to operate, improve, and secure our marketplace.\n\nData Controller Contact Information:\n• Entity: PumpkinMC Data Protection\n• Email: privacy@pumpkinmc.org\n• Support: support@pumpkinmc.org\n• Website: https://pumpkinmc.org"
+        },
+        "information-collected": {
+          "title": "2. Information We Collect",
+          "content": "We collect the following categories of information:\n\nAccount Information\nWhen you create an account, we collect your username, email address, password hash (salted using bcrypt), country of residence, preferred currency, and two-factor authentication (TOTP) status.\n\nDeveloper & Seller Profile\nIf you register as a creator or publish plugins, we collect your public display name, entity type (individual vs. organization), and payout/tax details where applicable (legal name, address, VAT ID, support email, website, and GitHub link).\n\nTransactions & Licenses\nWhen you purchase or sell plugins, we record transaction details including plugin ID, amount, date, and generated license keys. Payment processing is handled directly by Stripe — we do not store full credit card numbers on our servers.\n\nTechnical & Security Data\nTo defend against automated bots, fraud, and attacks, we process basic connection headers, coarse country location (via Cloudflare edge headers without storing raw IP addresses in application databases), and Cloudflare Turnstile security tokens.\n\nUser Content & Reviews\nReviews, ratings, replies, and plugin listings you post publicly on the platform."
+        },
+        "how-we-use": {
+          "title": "3. How & Why We Process Your Data",
+          "content": "We process your information under the following legal standards and purposes:\n\nTo Deliver Our Marketplace Services\n• Creating and managing your account.\n• Delivering purchased plugins and verifying license keys.\n• Enabling developer payouts and sales management.\n• Sending necessary transactional emails (email confirmations, password resets, security alerts).\n\nTo Ensure Security & Prevent Abuse\n• Defending against spam, bots, and brute force attacks (via Cloudflare Turnstile).\n• Preventing fraudulent payments and chargebacks.\n• Resolving customer support requests and enforcing marketplace rules.\n\nWith Your Consent\n• Anonymous aggregated analytics to understand popular plugins and site traffic (Google Analytics 4 with IP anonymization).\n• Optional product announcements. You may change your preferences or opt out at any time.\n\nCompliance with Legal Obligations\n• Retaining transaction records and invoices as required by financial, commercial, and tax laws."
+        },
+        "service-providers": {
+          "title": "4. Third-Party Service Providers",
+          "content": "We work with trusted third-party providers who process data on our behalf under strict data protection agreements:\n\nStripe (Payments & Payouts)\nProcesses payments and creator payout onboarding securely under PCI-DSS Level 1 compliance.\n\nCloudflare (Security & CDN)\nProvides fast content delivery, DDoS protection, and privacy-preserving bot detection (Turnstile).\n\nGoogle Analytics (Analytics — Consent Only)\nCollects aggregated visit metrics only when you choose to enable analytics cookies. IP anonymization is enforced.\n\nEmail Delivery Service\nTransmits essential account notices, security updates, and verification emails.\n\nWe never sell, rent, or trade your personal data with third-party advertisers or data brokers."
+        },
+        "international-transfers": {
+          "title": "5. International Transfers",
+          "content": "PumpkinMC operates globally. When data is transferred across international borders, we ensure appropriate safeguards are in place — including Standard Contractual Clauses (SCCs) and verified compliance frameworks — to ensure your data receives strong and consistent protection."
+        },
+        "retention": {
+          "title": "6. Data Retention",
+          "content": "We keep your personal information only for as long as needed to fulfill the purposes outlined in this policy:\n\n• Active Accounts: Retained for the lifetime of your account.\n• Deleted Accounts: Removed immediately upon account deletion; backup archives clear within 30 days.\n• Invoices & Financial Records: Retained for up to 7 to 10 years to comply with statutory accounting and tax regulations.\n• Analytics Logs: Stored in aggregated, anonymized form without personal identifiers."
+        },
+        "cookies": {
+          "title": "7. Cookies & Local Storage",
+          "content": "We use cookies and browser storage responsibly:\n\nStrictly Necessary Storage (Always Active)\nEssential for session authentication, security verification, and remembering your language or currency. The marketplace cannot function without these.\n\nAnalytics Cookies (Optional)\nHelp us understand how users interact with the site so we can improve performance and feature discovery. These are turned off by default and only activate if you consent.\n\nYou can customize or change your cookie choices at any time using the preferences button below or from the site footer."
+        },
+        "rights": {
+          "title": "8. Your Rights & Choices",
+          "content": "Regardless of your location, you have strong controls over your personal data:\n\n• Access & Portability: You can request and download a full machine-readable JSON export of your account data at any time from your Account Settings.\n• Correction & Updates: You can update your email, username, country, and developer profile directly from your settings.\n• Account Deletion: You can permanently delete your account and all associated personal data anytime in the Danger Zone settings tab.\n• Manage Consent: You can update your cookie preferences or opt out of analytics tracking at any time with immediate effect.\n• Inquiries & Concerns: You have the right to contact us or lodge a complaint with your local data protection supervisory authority if you believe your data has been mishandled.\n\nTo exercise any of your rights, use the tools in your Account Settings or contact us at privacy@pumpkinmc.org."
+        },
+        "security": {
+          "title": "9. Data Security",
+          "content": "We implement robust security measures to protect your information:\n\n• Strong one-way password hashing using bcrypt.\n• End-to-end encrypted web traffic using TLS 1.3 encryption.\n• Two-factor authentication (TOTP) support for all accounts.\n• Strict role-based access controls limiting internal data access to authorized systems only."
+        },
+        "children": {
+          "title": "10. Children's Privacy",
+          "content": "The Service is not intended for children under 16 years of age. We do not knowingly collect personal data from minors. If you believe a minor has registered an account without appropriate parental consent, please contact us at privacy@pumpkinmc.org and we will promptly remove the account."
+        },
+        "contact": {
+          "title": "11. Contact Us",
+          "content": "If you have any questions or requests regarding this Privacy Policy or your data, please contact our team:\n\nEmail: privacy@pumpkinmc.org\nSupport: support@pumpkinmc.org\nDiscord: https://discord.gg/pumpkinmc\nWebsite: https://pumpkinmc.org\n\nWe respond to all privacy inquiries within 5 business days."
+        }
+      }
+    },
+    "developer_terms": {
+      "seo_title": "Developer Distribution Agreement",
+      "seo_description": "Legal terms and distribution agreement for developers publishing plugins on Pumpkin Marketplace.",
+      "title": "Developer",
+      "title_highlight": "Distribution Agreement",
+      "lede": "Terms, distribution rights, and platform governance for Pumpkin Marketplace creators.",
+      "updated": "Effective Date: June 2026 • Version 2026.1",
+      "summary_title": "Summary for Creators",
+      "summary": {
+        "ownership": "<strong>You own your code:</strong> You retain ownership of your original Plugin source code and assets.",
+        "license": "<strong>Distribution license:</strong> You grant Pumpkin Marketplace a worldwide license to host, cache, security-scan, sign, and distribute your binaries to buyers.",
+        "control": "<strong>Full platform control:</strong> Pumpkin Marketplace maintains strict quality & safety standards and reserves the right to delist or quarantine non-compliant, unsafe, or abandoned plugins.",
+        "revenue": "<strong>Revenue & payouts:</strong> Paid plugins follow a standard 70/30 developer/platform split with automated payouts.",
+        "security": "<strong>Security & EULA:</strong> Code must be free of backdoors, spyware, or malicious payloads and comply with Mojang's Minecraft EULA."
+      },
+      "footer_terms": "→ General Terms of Service",
+      "footer_guidelines": "→ Marketplace Review Guidelines",
+      "footer_privacy": "→ Privacy Policy",
+      "sections": {
+        "definitions": {
+          "title": "1. Definitions & Scope of Agreement",
+          "content": "This Developer Distribution Agreement (\"Agreement\") constitutes a legally binding contract between you (either as an individual developer or an authorized representative of a company/entity, referred to as \"Developer\" or \"You\") and Aleksandr Medvedev (\"Operator\", \"Pumpkin Marketplace\", \"We\", or \"Us\"), governing your distribution, publication, sale, and licensing of Minecraft plugins, WebAssembly modules, and associated digital assets (\"Plugins\") via the Pumpkin Marketplace platform.\n\nBy completing developer onboarding or submitting any Plugin to Pumpkin Marketplace, you explicitly agree to be bound by this Agreement, our general Terms of Service, Privacy Policy, and Marketplace Review Guidelines. If you do not agree to all terms of this Agreement, you must not register as a developer or submit Plugins."
+        },
+        "license-grant": {
+          "title": "2. Grant of Worldwide Distribution & Processing License",
+          "content": "2.1 Distribution License:\nYou retain your intellectual property ownership in your original Plugin source code. However, you hereby grant to Pumpkin Marketplace a worldwide, non-exclusive, royalty-free, transferable, and sublicensable license to:\n• Host, reproduce, store, cache, format, sign, compile, and distribute the Plugin binary (.wasm) and metadata to end users.\n• Parse, inspect, sandbox, benchmark, decompile, and security-scan your Plugin files for malicious behavior, stability, and policy compliance.\n• Use your Plugin's name, icon, screenshots, video trailers, and developer display name for marketing, promotional campaigns, showcase reels, and marketplace cataloging.\n\n2.2 End User Sublicense:\nYou grant Pumpkin Marketplace the authority to issue licenses to end users who acquire your Plugin (whether free, ad-supported, or paid) allowing them to install and run the Plugin on their Minecraft servers in accordance with your specified license terms."
+        },
+        "platform-control": {
+          "title": "3. Absolute Platform Control, Moderation & Discretionary Takedowns",
+          "content": "3.1 Sole Discretion over Distribution:\nPumpkin Marketplace operates a curated, secure ecosystem. The Operator retains absolute and sole discretion regarding whether to approve, reject, feature, sandbox, delist, disable, or remove any Plugin, update, or developer account from the platform at any time.\n\n3.2 Zero-Liability Takedown Rights:\nThe Operator may immediately remove, disable, or quarantine any Plugin without prior notice and without liability to you in circumstances including but not limited to:\n• Security Vulnerabilities: Discovery of security exploits, backdoors, crash triggers, memory leaks, or unauthorized remote code execution.\n• Malicious Functionality: Inclusion of hidden \"OP\" commands, ransomware, token stealers, botnets, or undisclosed spyware.\n• Copyright & IP Disputes: Receipt of a credible DMCA notice, copyright infringement claim, or trademark violation.\n• Minecraft / Mojang EULA Breaches: Violations of Mojang Studios' Commercial Usage Guidelines or EULA.\n• Deceptive Practices: Misleading store descriptions, false advertising, fake ratings, or review manipulation.\n• Developer Abandonment: Extended periods of non-responsiveness to critical bug reports or severe compatibility failures.\n\n3.3 Emergency Remote Kill Switch & Binary Revocation:\nIn the event of a verified critical security threat or zero-day vulnerability threatening the wider Minecraft server ecosystem, Pumpkin Marketplace reserves the right to disable cryptographic license verification, revoke download links, or instruct client runtimes to block the affected binary immediately."
+        },
+        "developer-warranties": {
+          "title": "4. Developer Warranties, Security & Prohibited Conduct",
+          "content": "By publishing any Plugin, you represent and warrant that:\n• Originality & Ownership: You are the original author of the Plugin or possess all necessary commercial licenses, intellectual property rights, and permissions to distribute all included code, libraries, and assets.\n• No Malicious Payloads: The Plugin does not contain malware, trojans, cryptominers, spyware, keyloggers, or hidden administrative backdoors.\n• Transparent Telemetry: Any telemetry, remote licensing validation, or analytics performed by your Plugin must be explicitly disclosed in the store listing description and must include an opt-out configuration setting.\n• No Circumvention: You will not attempt to bypass platform review processes, evade sandboxing restrictions, or distribute obfuscated code designed to hide non-compliant functionality.\n• Truthful Information: All documentation, changelogs, system requirements, and marketing materials provided are accurate and not misleading."
+        },
+        "mojang-compliance": {
+          "title": "5. Mojang Studios & Minecraft EULA Compliance",
+          "content": "5.1 Strict EULA Compliance:\nYou acknowledge that all Minecraft-related creations must strictly adhere to Mojang Studios' End User License Agreement (EULA), Brand and Asset Guidelines, and Commercial Usage Guidelines.\n\n5.2 In-Game Monetization Rules:\nPlugins distributed on Pumpkin Marketplace must not facilitate \"pay-to-win\" mechanics or gameplay features that violate Mojang's commercial rules for server monetization. You are solely responsible for ensuring your Plugin's functionality conforms to Mojang's evolving policies.\n\n5.3 No Official Endorsement:\nYou may not claim, imply, or advertise that your Plugin or studio is officially affiliated with, endorsed by, or sponsored by Mojang Studios, Microsoft, or PumpkinMC."
+        },
+        "commercial-terms": {
+          "title": "6. Commercial Terms, Revenue Share (70/30) & Payouts",
+          "content": "6.1 Revenue Split:\nFor all paid Plugin sales and pre-orders processed through the Marketplace, the standard revenue distribution is:\n• 70% of Net Revenue to the Developer.\n• 30% Platform Fee to Pumpkin Marketplace for hosting, cryptographic licensing infrastructure, bandwidth, catalog distribution, and maintenance.\n\n6.2 Payouts via Stripe Connect:\nSellers must maintain an active, fully verified Stripe Connected Account in an eligible jurisdiction. Payouts are transferred automatically by Stripe in accordance with your regional Stripe payout schedule.\n\n6.3 Payment Processing & Currency:\nTransactions are executed in EUR. Standard payment gateway processing fees (e.g., Stripe processing fees) and mandatory government taxes (such as VAT where applicable) are deducted from gross receipts before net distribution.\n\n6.4 Refund & Chargeback Offsets (Clawbacks):\nIf a refund is issued in accordance with our Digital Withdrawal Waiver & Refund Policy, or if a buyer initiates a fraudulent payment chargeback, the refunded amount and associated payment dispute fees will be deducted from your developer account balance or offset against future earnings."
+        },
+        "support-sla": {
+          "title": "7. Customer Support & Maintenance Commitments",
+          "content": "7.1 Support Obligation:\nAs a developer selling or distributing software on Pumpkin Marketplace, you are solely responsible for providing end-user technical support for your Plugins. You must maintain a valid, monitored support email address or support Discord server listed on your profile and plugin listings.\n\n7.2 Response Time SLA:\nYou agree to make reasonable, good-faith efforts to respond to customer support inquiries and defect reports within 5 business days. Repeated failure to respond to buyer inquiries regarding verified technical defects may result in listing suspension or mandatory refund issuance."
+        },
+        "anti-circumvention": {
+          "title": "8. Anti-Steering & Circumvention Prohibitions",
+          "content": "Developers may not use Pumpkin Marketplace listings, descriptions, binary messages, or community features to direct users off-platform for the purpose of evading platform fees or purchasing digital goods outside of our secure checkout. Any attempt to circumvent Marketplace payment systems will result in immediate termination of developer privileges and permanent forfeiture of pending payouts."
+        },
+        "indemnification": {
+          "title": "9. Developer Indemnification & Operator Liability Shield",
+          "content": "To the maximum extent permitted by applicable law, you agree to DEFEND, INDEMNIFY, and HOLD HARMLESS Aleksandr Medvedev (Operator), Pumpkin Marketplace, its affiliates, contributors, and agents from and against any and all claims, demands, liabilities, damages, losses, costs, expenses, and legal fees arising out of or related to:\n• Any breach by you of this Agreement, warranties, or representations.\n• Any claim that your Plugin infringes or misappropriates any third-party patent, copyright, trademark, trade secret, or privacy right.\n• Any harm, server crash, data loss, financial loss, or damage caused to end users or third parties by your Plugin.\n• Any violation by your Plugin of the Minecraft / Mojang EULA or applicable regional laws and regulations."
+        },
+        "termination": {
+          "title": "10. Term, Suspension & Post-Termination Rights",
+          "content": "10.1 Voluntary Termination:\nYou may terminate your developer account at any time by delisting your Plugins and contacting support@pumpkinmc.org.\n\n10.2 Survival of Buyer Licenses:\nIn the event of delisting or developer account closure, existing buyers who previously purchased or acquired your Plugin retain their perpetual license to access, download, and use the versions they acquired.\n\n10.3 Survival of Legal Provisions:\nSections 2.1 (for existing installations), 3, 4, 5, 6.4, 9, 10, and 11 shall survive any termination of this Agreement."
+        },
+        "governing-law": {
+          "title": "11. Governing Law & Operator Contact",
+          "content": "11.1 Governing Law:\nThis Agreement and any disputes arising out of or related to it shall be governed by and construed in accordance with the substantive laws of the Federal Republic of Germany, without regard to its conflict of law principles.\n\n11.2 Operator Legal Contact:\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden, Germany\nContact: lilalexmed@proton.me / support@pumpkinmc.org"
+        }
+      }
+    },
+    "guidelines": {
+      "title": "PumpkinMarket",
+      "title_highlight": "Review Guidelines",
+      "lede": "High-quality plugins for a high-quality community.",
+      "updated": "Last Updated: June 11, 2026",
+      "footer": "We hope these guidelines help you build better plugins and a better PumpkinMarket. We’re excited to see what you create!",
+      "toc": {
+        "safety": "1. Safety",
+        "performance": "2. Performance",
+        "business": "3. Business",
+        "design": "4. Design",
+        "legal": "5. Legal"
+      },
+      "intro": "Plugins are a great way to extend the functionality of PumpkinMC servers. Our goal is to provide a safe experience for users and a great opportunity for every developer to succeed. We’ve developed these Review Guidelines to help you through the development process.",
+      "before_submit": "Before You Submit",
+      "before_submit_items": {
+        "complete": "Ensure your plugin is complete and functional.",
+        "crashes": "Test for crashes and server performance impact.",
+        "links": "Check that all links, icons, and metadata are accurate and final.",
+        "security": "Verify that your plugin follows all security best practices."
+      },
+      "safety": {
+        "lead": "When users download a plugin from PumpkinMarket, they need to be certain that it is safe to do so. Your plugin should not contain self-replicating code, backdoors, or any features that could harm a server or its data.",
+        "objectionable": {
+          "title": "1.1 Objectionable Content",
+          "intro": "Plugins should not include content that is offensive, insensitive, upsetting, intended to disgust, or in exceptionally poor taste. Examples of such content include:",
+          "defamatory": "<strong>1.1.1 Defamatory or Discriminatory:</strong> Content that is defamatory, discriminatory, or mean-spirited, including references or commentary about religion, race, sexual orientation, gender, national/ethnic origin, or other targeted groups.",
+          "violence": "<strong>1.1.2 Violence:</strong> Realistic depictions of physical harm or violence against people or animals. Content that encourages self-harm or illegal acts.",
+          "sexual": "<strong>1.1.3 Sexual Content:</strong> Overtly sexual or pornographic material, including \"adult-themed\" plugins.",
+          "harassment": "<strong>1.1.4 Harassment:</strong> Features designed to facilitate doxxing, stalking, or targeted harassment of server players."
+        },
+        "protection": {
+          "title": "1.2 User Protection",
+          "intro": "PumpkinMarket is dedicated to the prevention of \"griefing\" and malicious exploitation at the platform level.",
+          "malware": "<strong>1.2.1 Malware:</strong> Plugins must not contain any malicious code. This includes viruses, backdoors, hidden \"OP\" commands, or any code that performs actions without the server owner's knowledge.",
+          "phishing": "<strong>1.2.2 Phishing:</strong> Plugins must not attempt to steal user credentials, tokens (like Discord tokens), or any sensitive configuration files from the server host.",
+          "remote": "<strong>1.2.3 Remote Execution:</strong> Plugins must not download and execute arbitrary code from external sources that was not included in the original WASM binary approved by the market."
+        },
+        "privacy": {
+          "title": "1.3 Data Privacy",
+          "intro": "Data privacy is a fundamental right. Plugins must be transparent about data collection.",
+          "transparency": "<strong>1.3.1 Transparency:</strong> If your plugin sends data to an external server (e.g., for analytics or licensing), you must disclose this clearly in the description.",
+          "opt_out": "<strong>1.3.2 Opt-out:</strong> All telemetry or external reporting must provide a configuration option to be disabled.",
+          "sensitive": "<strong>1.3.3 Sensitive Files:</strong> Plugins must not access or upload files outside of their designated data folder without clear justification and disclosure."
+        }
+      },
+      "performance": {
+        "lead": "Users expect plugins to be reliable and efficient. Unoptimized plugins can crash servers or cause significant lag, leading to a poor user experience.",
+        "completeness": {
+          "title": "2.1 Plugin Completeness",
+          "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
+          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
+        },
+        "metadata": {
+          "title": "2.2 Accurate Metadata",
+          "intro": "The information you provide about your plugin must be accurate and honest.",
+          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
+          "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
+        },
+        "resources": {
+          "title": "2.3 Resource Management",
+          "intro": "PumpkinMC servers run in high-concurrency environments. Performance is critical.",
+          "cpu": "<strong>2.3.1 CPU usage:</strong> Avoid blocking the main server thread. Use asynchronous tasks where possible.",
+          "memory": "<strong>2.3.2 Memory leaks:</strong> Ensure your WASM binary does not leak memory over long runtimes."
+        }
+      },
+      "business": {
+        "lead": "Monetization on PumpkinMarket should be transparent and provide clear value to the user.",
+        "payments": {
+          "title": "3.1 Payments",
+          "integrated": "<strong>3.1.1 Integrated Payments:</strong> All transactions for plugins must go through the PumpkinMarket system. Linking to Patreon, PayPal, or other external payment sites within the plugin or description is not allowed.",
+          "digital": "<strong>3.1.2 Digital Goods:</strong> Plugins must not unlock features via external \"keys\" or \"codes\" purchased outside the market."
+        },
+        "practices": {
+          "title": "3.2 Business Practices",
+          "bait": "<strong>3.2.1 Bait and Switch:</strong> Plugins must not change their primary purpose after approval or hide essential features behind unexpected paywalls.",
+          "reviews": "<strong>3.2.2 Fake Reviews:</strong> Developers found to be inflating their own ratings or reviews will be permanently banned.",
+          "scamming": "<strong>3.2.3 Scamming:</strong> Any plugin found to be a scam or \"vaporware\" will result in an immediate permanent ban and possible refunding of all affected users."
+        }
+      },
+      "design": {
+        "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
+        "copycats": {
+          "title": "4.1 Copycats and Spam",
+          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
+          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+        },
+        "ux": {
+          "title": "4.2 User Experience",
+          "consistency": "<strong>4.2.1 Consistency:</strong> We recommend following standard command patterns (e.g., /pluginname help) to ensure a familiar experience for users.",
+          "documentation": "<strong>4.2.2 Documentation:</strong> Provide clear instructions in your description or a linked wiki. Plugins that are impossible to configure or use will be rejected."
+        }
+      },
+      "legal": {
+        "lead": "You are responsible for ensuring your plugin complies with all applicable laws and regulations.",
+        "ip": {
+          "title": "5.1 Intellectual Property",
+          "body": "You must be the original author of the code or have the legal right to distribute it. Using leaked or stolen code (\"leaks\") will result in an immediate ban."
+        },
+        "licenses": {
+          "title": "5.2 Open Source Licenses",
+          "body": "If your plugin includes open-source components, you must adhere to the terms of those licenses. Include necessary attributions and license files within your plugin archive."
+        },
+        "removal": {
+          "title": "5.3 Right to Remove",
+          "body": "PumpkinMarket reserves the right to remove any plugin at its sole discretion if it is determined to be detrimental to the market's reputation or user safety, even if a specific guideline has not been technically violated."
+        }
+      }
+    }
+  },
+  "staff": {
+    "title": "Staff",
+    "title_highlight": "Panel",
+    "tabs": {
+      "users": "Users",
+      "plugins": "Plugins",
+      "logs": "Logs"
+    },
+    "search_users": "Search users...",
+    "search_plugins": "Search plugins...",
+    "search_logs": "Search logs...",
+    "filters": {
+      "all_actions": "All Actions",
+      "soft_delete": "Soft Delete",
+      "role_change": "Role Change",
+      "all_moderators": "All Moderators",
+      "role": "Role"
+    },
+    "status": {
+      "active": "Active",
+      "deleted": "Deleted"
+    },
+    "roles": {
+      "user": "User",
+      "moderator": "Moderator",
+      "admin": "Admin"
+    },
+    "entity": {
+      "user": "User",
+      "plugin": "Plugin",
+      "log": "Log"
+    },
+    "details_title": "{{type}} Details",
+    "fields": {
+      "id": "ID",
+      "username": "Username",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "name": "Name",
+      "type": "Type",
+      "price": "Price",
+      "developer": "Developer",
+      "date": "Date",
+      "moderator": "Moderator",
+      "action": "Action",
+      "target_type": "Target Type",
+      "target_id": "Target ID",
+      "target": "Target",
+      "reason": "Reason",
+      "category": "Category",
+      "downloads": "Downloads",
+      "views": "Views",
+      "created": "Created",
+      "stripe_ready": "Stripe Ready",
+      "tfa_enabled": "2FA Enabled",
+      "deleted_at": "Deleted at {{date}}",
+      "no_reason": "No reason provided"
+    },
+    "actions": {
+      "view": "View",
+      "delete": "Delete"
+    },
+    "prompts": {
+      "deactivation_reason": "Enter reason for deactivation:",
+      "role_reason": "Enter reason for changing role to {{role}} (Optional):",
+      "removal_reason": "Enter reason for removal:"
+    },
+    "messages": {
+      "fetch_failed": "Failed to fetch data",
+      "delete_user_failed": "Failed to delete user",
+      "role_updated": "Role updated successfully",
+      "role_update_failed": "Failed to update role",
+      "delete_plugin_failed": "Failed to delete plugin"
+    }
+  },
+  "audience": {
+    "title": "Plugin <mark>Audience</mark> & Server Geography",
+    "lede": "Visualizing active Minecraft servers and player reach reported via telemetry",
+    "loading": "Analyzing Global Telemetry & Distribution...",
+    "stats": {
+      "live_servers": "Live Game Servers (24h)",
+      "active_past_week": "{{count}} active past 7 days",
+      "player_reach": "Online Player Reach",
+      "locations": "Server Locations",
+      "locations_hint": "Countries with deployed servers"
+    },
+    "map": {
+      "layer": "Map layer",
+      "servers": "Live Servers",
+      "players": "Online Players",
+      "visitors": "Web Visitors",
+      "free_downloads": "Free Downloads",
+      "tip_servers": "{{count}} active servers",
+      "tip_players": "{{count}} online players",
+      "tip_views": "{{count}} web views",
+      "unknown": "Unknown",
+      "empty": "No server telemetry or geographic data captured yet."
+    },
+    "breakdown_title": "Country Telemetry Breakdown",
+    "table": {
+      "country": "Country",
+      "servers": "Game Servers",
+      "players": "Online Players",
+      "visitors": "Web Visitors",
+      "downloads": "Downloads"
+    }
+  },
+  "seo": {
+    "site_name": "Pumpkin Market",
+    "home_title": "Pumpkin Market - WASM Minecraft Plugin Marketplace",
+    "title_suffix": "{{title}} | {{site}}",
+    "default_description": "Explore powerful, performance-optimized Minecraft plugins at Pumpkin Market. The one-stop marketplace for WASM-powered MC plugins.",
+    "keywords": "minecraft, plugins, wasm, marketplace, mc plugins, development"
   },
   "common": {
     "save": "Save",
@@ -1405,6 +1903,8 @@
     "saving_changes": "Saving Changes…",
     "save_changes": "Save Changes",
     "copied": "Copied!",
-    "save_preferences": "Save Preferences"
+    "save_preferences": "Save Preferences",
+    "yes": "Yes",
+    "no": "No"
   }
 }

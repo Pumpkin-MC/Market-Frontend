@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface SEOProps {
   title?: string;
@@ -12,15 +13,18 @@ interface SEOProps {
 
 const SEO = ({
   title,
-  description = "Explore powerful, performance-optimized Minecraft plugins at Pumpkin Market. The one-stop marketplace for WASM-powered MC plugins.",
-  keywords = "minecraft, plugins, wasm, marketplace, mc plugins, development",
+  description,
+  keywords,
   canonical,
   ogType = "website",
   ogImage = "/icon.png",
 }: SEOProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
-  const siteName = "Pumpkin Market";
-  const fullTitle = title ? `${title} | ${siteName}` : `${siteName} - WASM Minecraft Plugin Marketplace`;
+  const siteName = t('seo.site_name');
+  const resolvedDescription = description ?? t('seo.default_description');
+  const resolvedKeywords = keywords ?? t('seo.keywords');
+  const fullTitle = title ? t('seo.title_suffix', { title, site: siteName }) : t('seo.home_title');
   const url = canonical || `https://pumpkinmc.org${location.pathname}`;
 
   useEffect(() => {
@@ -34,7 +38,7 @@ const SEO = ({
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', description);
+    metaDescription.setAttribute('content', resolvedDescription);
 
     // Update Meta Keywords
     let metaKeywords = document.querySelector('meta[name="keywords"]');
@@ -43,7 +47,7 @@ const SEO = ({
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', keywords);
+    metaKeywords.setAttribute('content', resolvedKeywords);
 
     // Update Canonical
     let linkCanonical = document.querySelector('link[rel="canonical"]');
@@ -66,7 +70,7 @@ const SEO = ({
     };
 
     updateOG('og:title', fullTitle);
-    updateOG('og:description', description);
+    updateOG('og:description', resolvedDescription);
     updateOG('og:url', url);
     updateOG('og:type', ogType);
     updateOG('og:image', ogImage);
@@ -85,10 +89,10 @@ const SEO = ({
 
     updateTwitter('twitter:card', 'summary_large_image');
     updateTwitter('twitter:title', fullTitle);
-    updateTwitter('twitter:description', description);
+    updateTwitter('twitter:description', resolvedDescription);
     updateTwitter('twitter:image', ogImage);
 
-  }, [fullTitle, description, keywords, url, ogType, ogImage]);
+  }, [fullTitle, resolvedDescription, resolvedKeywords, url, ogType, ogImage]);
 
   return null; // This component doesn't render anything
 };

@@ -57,7 +57,7 @@ const AuthorPage = () => {
             <p className="small">
               {t('profile.author.member_since', { date: author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : t('common.not_available') })}
             </p>
-            <span className="sticker sticker-fg"><Trans t={t} i18nKey="profile.author.published_plugins" components={{ total: <span className="num">{plugins.length}</span> }} /></span>
+            <span className="sticker sticker-fg"><Trans t={t} i18nKey="profile.author.published_plugins" values={{ count: plugins.length }} components={{ total: <span className="num" /> }} /></span>
           </div>
         </div>
       </section>
