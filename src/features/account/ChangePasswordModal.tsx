@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Key, Eye, EyeOff, X, AlertCircle, Check } from 'lucide-react';
 import '../../styles/account.css';
 import api from '../../lib/api';
@@ -14,6 +15,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -49,15 +51,15 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
     setError('');
 
     if (!currentPassword) {
-      setError('Please enter your current password.');
+      setError(t('profile.password.current_required'));
       return;
     }
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long.');
+      setError(t('profile.password.minimum_length'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match.');
+      setError(t('profile.password.mismatch_error'));
       return;
     }
 
@@ -78,7 +80,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
       setError(
         err.response?.data?.error ||
         err.response?.data?.message ||
-        'Failed to change password. Please verify your current password.'
+        t('profile.password.change_failed')
       );
     } finally {
       setIsSubmitting(false);
@@ -115,7 +117,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
           className="ac-eye"
           onClick={() => setShow((s) => !s)}
           tabIndex={-1}
-          aria-label={show ? 'Hide password' : 'Show password'}
+          aria-label={show ? t('common.hide_password') : t('common.show_password')}
         >
           {show ? <EyeOff /> : <Eye />}
         </button>
@@ -136,14 +138,14 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
         <div className="sheet-head">
           <span className="ac-icon ac-icon-pumpkin"><Key /></span>
           <div>
-            <h2 className="h2" id="changePasswordTitle">Change Password</h2>
-            <p className="small">Choose a strong, unique password to secure your account.</p>
+            <h2 className="h2" id="changePasswordTitle">{t('profile.security.change_password')}</h2>
+            <p className="small">{t('profile.password.description')}</p>
           </div>
           <button
             type="button"
             className="button button-ghost button-icon button-sm"
             onClick={handleClose}
-            aria-label="Close"
+            aria-label={t('common.close')}
           >
             <X />
           </button>
@@ -161,16 +163,16 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
             {success && (
               <div className="notice notice-success ac-alert" role="status">
                 <span className="mark-box mark-box-success"><Check /></span>
-                <p className="notice-text">Password successfully updated! Closing...</p>
+                <p className="notice-text">{t('profile.password.success')}</p>
               </div>
             )}
 
-            {passwordField('modalCurrentPassword', 'Current Password', currentPassword, setCurrentPassword, showCurrentPw, setShowCurrentPw, 'Enter current password', 'current-password')}
-            {passwordField('modalNewPassword', 'New Password', newPassword, setNewPassword, showNewPw, setShowNewPw, 'At least 8 characters', 'new-password')}
+            {passwordField('modalCurrentPassword', t('profile.security.current_password'), currentPassword, setCurrentPassword, showCurrentPw, setShowCurrentPw, t('profile.password.current_placeholder'), 'current-password')}
+            {passwordField('modalNewPassword', t('profile.security.new_password'), newPassword, setNewPassword, showNewPw, setShowNewPw, t('auth.password_requirements.length'), 'new-password')}
             <div className="stack ac-tight">
-              {passwordField('modalConfirmPassword', 'Confirm New Password', confirmPassword, setConfirmPassword, showConfirmPw, setShowConfirmPw, 'Repeat new password', 'new-password', mismatch)}
+              {passwordField('modalConfirmPassword', t('profile.security.confirm_password'), confirmPassword, setConfirmPassword, showConfirmPw, setShowConfirmPw, t('profile.password.confirm_placeholder'), 'new-password', mismatch)}
               {mismatch && (
-                <span className="field-error"><AlertCircle size={14} /> Passwords do not match</span>
+                <span className="field-error"><AlertCircle size={14} /> {t('profile.password.mismatch')}</span>
               )}
             </div>
 
@@ -183,9 +185,9 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
                 onChange={(e) => setLogoutOtherDevices(e.target.checked)}
               />
               <span>
-                Log out other devices
+                {t('profile.password.logout_devices')}
                 <span className="small">
-                  Sign out of all other browsers, phones, and devices. You will remain logged in on this device.
+                  {t('profile.password.logout_description')}
                 </span>
               </span>
             </label>
@@ -198,7 +200,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               onClick={handleClose}
               disabled={isSubmitting}
             >
-              Cancel
+              {t('common.cancel')}
             </button>
             <button
               type="submit"
@@ -207,10 +209,10 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({
               aria-busy={isSubmitting}
             >
               {isSubmitting ? (
-                <span>Updating...</span>
+                <span>{t('common.updating')}</span>
               ) : (
                 <>
-                  <Key /> Update Password
+                  <Key /> {t('profile.password.update')}
                 </>
               )}
             </button>

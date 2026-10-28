@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { AlertCircle, Check } from 'lucide-react';
 import api from '../../lib/api';
@@ -41,7 +41,7 @@ const ForgotPasswordPage = () => {
     setEmailValid(isEmailValid);
 
     if (!isEmailValid) {
-      setError('Please enter a valid email address.');
+      setError(t('auth.errors.invalid_email'));
       return;
     }
 
@@ -64,16 +64,16 @@ const ForgotPasswordPage = () => {
     }
 
     if (!currentToken) {
-      setError('Please complete the security check.');
+      setError(t('auth.errors.security_check'));
       setIsSubmitting(false);
       return;
     }
 
     try {
       await api.post('/auth/forgot-password', { email, captchaToken: currentToken });
-      setMessage('If an account exists with that email, a reset link has been sent.');
+      setMessage(t('auth.forgot.sent'));
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.error || t('auth.errors.generic'));
       if (turnstileRef.current) {
         try {
           turnstileRef.current.reset();
@@ -92,8 +92,8 @@ const ForgotPasswordPage = () => {
     <div className="ac-auth">
       <div className="panel panel-fg ac-card">
         <div className="ac-card-head">
-          <h1 className="h1">Reset your <span className="mark">password</span></h1>
-          <p className="small">Enter your email and we'll send you a link to reset your password.</p>
+          <h1 className="h1"><Trans t={t} i18nKey="auth.forgot.title" components={{ highlight: <span className="mark" /> }} /></h1>
+          <p className="small">{t('auth.forgot.subtitle')}</p>
         </div>
 
         <form className="stack" onSubmit={handleSubmit} noValidate>
@@ -118,7 +118,7 @@ const ForgotPasswordPage = () => {
                 name="email"
                 className="input"
                 type="email"
-                placeholder="you@company.com"
+                placeholder={t('auth.email_placeholder')}
                 value={email}
                 onChange={handleEmailChange}
                 onBlur={handleEmailBlur}
@@ -130,7 +130,7 @@ const ForgotPasswordPage = () => {
               {emailIsValid && <Check className="ac-ok" />}
             </span>
             {emailIsInvalid && (
-              <span className="field-error"><AlertCircle size={14} />Please enter a valid email address</span>
+              <span className="field-error"><AlertCircle size={14} />{t('auth.invalid_email_hint')}</span>
             )}
           </label>
 
@@ -146,12 +146,12 @@ const ForgotPasswordPage = () => {
           </div>
 
           <button className="button button-primary button-lg button-block" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting ? 'Sending...' : 'Send reset link'}
+            {isSubmitting ? t('auth.forgot.sending') : t('auth.forgot.submit')}
           </button>
         </form>
 
         <p className="ac-card-foot small">
-          Remembered your password? <Link to="/login" className="link link-pumpkin">Sign in</Link>
+          <Trans t={t} i18nKey="auth.forgot.sign_in" components={{ login: <Link to="/login" className="link link-pumpkin" /> }} />
         </p>
       </div>
     </div>

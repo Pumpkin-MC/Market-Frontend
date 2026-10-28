@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { ShieldAlert, Download, Copy, Check, Printer, AlertTriangle } from 'lucide-react';
 import '../../styles/account.css';
 
@@ -13,23 +14,26 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
     codes,
     onClose,
 }) => {
+    const { t } = useTranslation();
     const [copied, setCopied] = useState(false);
 
     if (!isOpen || codes.length === 0) return null;
 
     const handleCopyAll = () => {
-        const text = `PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: ${new Date().toLocaleString()}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n` +
-            codes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
-            `\n\nKeep these codes in a secure location (e.g., password manager).`;
+        const text = t('profile.recovery_modal.copy_document', {
+            date: new Date().toLocaleString(),
+            codes: codes.map((c, i) => `${i + 1}. ${c}`).join('\n'),
+        });
         navigator.clipboard.writeText(text);
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
     };
 
     const handleDownload = () => {
-        const text = `PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: ${new Date().toISOString()}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n` +
-            codes.map((c, i) => `${i + 1}. ${c}`).join('\n') +
-            `\n\nStore these codes safely. Never share them with anyone.`;
+        const text = t('profile.recovery_modal.download_document', {
+            date: new Date().toISOString(),
+            codes: codes.map((c, i) => `${i + 1}. ${c}`).join('\n'),
+        });
         const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -51,9 +55,9 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
                 <div className="sheet-head">
                     <span className="ac-icon ac-icon-pumpkin"><ShieldAlert /></span>
                     <div>
-                        <h3 className="h2" id="recoveryCodesTitle">Save Your Recovery Codes</h3>
+                        <h3 className="h2" id="recoveryCodesTitle">{t('profile.recovery_modal.title')}</h3>
                         <p className="small">
-                            If you ever lose access to your authenticator app or security keys, you can use these 10 one-time codes to regain access to your account.
+                            {t('profile.recovery_modal.description')}
                         </p>
                     </div>
                 </div>
@@ -61,7 +65,7 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
                 <div className="sheet-body">
                     <div className="notice notice-warning ac-alert">
                         <span className="mark-box mark-box-warning"><AlertTriangle /></span>
-                        <p className="notice-text"><strong>Important:</strong> We do not store these codes in plaintext and cannot recover them for you. Save them in a password manager now.</p>
+                        <p className="notice-text"><Trans t={t} i18nKey="profile.recovery_modal.warning" components={{ strong: <strong /> }} /></p>
                     </div>
 
                     <div className="ac-codes">
@@ -73,17 +77,17 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
                     <div className="row">
                         <button type="button" className="button button-sm" onClick={handleCopyAll}>
                             {copied ? <Check /> : <Copy />}
-                            {copied ? 'Copied!' : 'Copy All'}
+                            {copied ? t('common.copied') : t('profile.recovery_modal.copy_all')}
                         </button>
                         <button type="button" className="button button-sm" onClick={handleDownload}>
-                            <Download /> Download (.txt)
+                            <Download /> {t('profile.recovery_modal.download')}
                         </button>
                         <button
                             type="button"
                             className="button button-sm button-icon"
                             onClick={handlePrint}
-                            title="Print Codes"
-                            aria-label="Print Codes"
+                            title={t('profile.recovery_modal.print')}
+                            aria-label={t('profile.recovery_modal.print')}
                         >
                             <Printer />
                         </button>
@@ -96,7 +100,7 @@ export const RecoveryCodesModal: React.FC<RecoveryCodesModalProps> = ({
                         className="button button-primary button-block"
                         onClick={onClose}
                     >
-                        I have safely stored my recovery codes →
+                        {t('profile.recovery_modal.confirm')}
                     </button>
                 </div>
             </div>

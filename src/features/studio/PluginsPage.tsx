@@ -1,9 +1,10 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useAnalytics } from './useAnalytics';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Settings, Plus, ExternalLink, Search, BarChart2, Package, CheckCircle, X, AlertTriangle, Check } from 'lucide-react';
 import api from '../../lib/api';
+import { translateApiMessage } from '../../lib/apiMessages';
 import { useAuth } from '../../app/auth';
 import DeveloperOnboardingModal from './DeveloperOnboardingModal';
 import { getPluginUrl } from '../../lib/url';
@@ -11,7 +12,15 @@ import { Select } from '../../components/Select';
 import '../../styles/studio.css';
 import { useDialog } from '../../hooks/useDialog';
 
-const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
+const PLUGIN_CATEGORIES = [
+    { value: 'Admin Tools', label: 'developer.categories.admin_tools' },
+    { value: 'Economy', label: 'developer.categories.economy' },
+    { value: 'Fun', label: 'developer.categories.fun' },
+    { value: 'World Management', label: 'developer.categories.world_management' },
+    { value: 'Utilities', label: 'developer.categories.utilities' },
+    { value: 'Chat', label: 'developer.categories.chat' },
+    { value: 'Other', label: 'developer.categories.other' },
+] as const;
 
 const PluginsPage = () => {
     const { t } = useTranslation();
@@ -58,20 +67,20 @@ const PluginsPage = () => {
             await fetchIncomingTransfers();
             window.location.reload();
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to accept transfer request.');
+            alert(translateApiMessage(t, err.response?.data?.error, t('developer.dashboard.accept_failed')));
         } finally {
             setTransferLoadingId(null);
         }
     };
 
     const handleRejectTransfer = async (transferId: number) => {
-        if (!window.confirm('Are you sure you want to decline this transfer request?')) return;
+        if (!window.confirm(t('developer.dashboard.decline_confirm'))) return;
         setTransferLoadingId(transferId);
         try {
             await api.post(`/user/transfers/${transferId}/reject`);
             setIncomingTransfers(prev => prev.filter(t => t.id !== transferId));
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to decline transfer request.');
+            alert(translateApiMessage(t, err.response?.data?.error, t('developer.dashboard.decline_failed')));
         } finally {
             setTransferLoadingId(null);
         }
@@ -93,7 +102,7 @@ const PluginsPage = () => {
             setNewPluginName('');
             navigate(`/dashboard/manage-plugin/${res.data.id}`);
         } catch (err: any) {
-            setCreateError(err.response?.data?.error || err.response?.data?.message || 'Failed to create plugin draft.');
+            setCreateError(translateApiMessage(t, err.response?.data?.error || err.response?.data?.message, t('developer.dashboard.create_failed')));
         } finally {
             setCreatingPlugin(false);
         }
@@ -156,12 +165,12 @@ const PluginsPage = () => {
     }, [plugins, searchTerm, filterType]);
 
     const formatDate = (dateStr: string) => {
-        if (!dateStr || typeof dateStr !== 'string') return 'N/A';
+        if (!dateStr || typeof dateStr !== 'string') return t('common.not_available');
         const normalized = dateStr.toLowerCase().trim();
-        if (normalized === 'none' || normalized === 'null' || normalized === 'undefined') return 'N/A';
+        if (normalized === 'none' || normalized === 'null' || normalized === 'undefined') return t('common.not_available');
         
         const date = new Date(dateStr);
-        if (isNaN(date.getTime())) return 'N/A';
+        if (isNaN(date.getTime())) return t('common.not_available');
         return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
     };
 
@@ -179,10 +188,10 @@ const PluginsPage = () => {
     }
 
     const filters: [string, string][] = [
-        ['all', `All (${plugins.length})`],
-        ...(hasPaidPlugins ? [['paid', 'Paid'] as [string, string]] : []),
-        ['free', 'Free'],
-        ['early_access', 'Early Access'],
+        ['all', t('developer.dashboard.all', { total: plugins.length })],
+        ...(hasPaidPlugins ? [['paid', t('developer.upload.price_paid')] as [string, string]] : []),
+        ['free', t('plugin.free')],
+        ['early_access', t('plugin.early_access_badge')],
     ];
 
     return (
@@ -211,7 +220,7 @@ const PluginsPage = () => {
                                     <strong>{req.plugin_name}</strong>
                                     {req.plugin_category && <span className="tag tag-fg">{req.plugin_category}</span>}
                                 </span>
-                                <span className="small">Transfer request from <strong>@{req.sender_name}</strong></span>
+                                <span className="small"><Trans t={t} i18nKey="developer.dashboard.transfer_from" components={{ sender: <strong>@{req.sender_name}</strong> }} /></span>
                             </div>
                             <div className="row">
                                 <button
@@ -220,7 +229,7 @@ const PluginsPage = () => {
                                     onClick={() => handleRejectTransfer(req.id)}
                                 >
                                     <X />
-                                    Decline
+                                    {t('developer.dashboard.decline')}
                                 </button>
                                 <button
                                     className="button button-primary button-sm"
@@ -228,7 +237,7 @@ const PluginsPage = () => {
                                     onClick={() => handleAcceptTransfer(req.id)}
                                 >
                                     <CheckCircle />
-                                    {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
+                                    {transferLoadingId === req.id ? t('developer.dashboard.accepting') : t('developer.dashboard.accept')}
                                 </button>
                             </div>
                         </div>
@@ -242,8 +251,8 @@ const PluginsPage = () => {
                     <input
                         type="text"
                         className="input"
-                        placeholder="Filter your plugins..."
-                        aria-label="Filter your plugins..."
+                        placeholder={t('developer.dashboard.filter_placeholder')}
+                        aria-label={t('developer.dashboard.filter_placeholder')}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         autoComplete="off"
@@ -251,7 +260,7 @@ const PluginsPage = () => {
                     />
                 </label>
                 <span className="spacer" />
-                <div className="segmented" role="group" aria-label="Filter">
+                <div className="segmented" role="group" aria-label={t('common.filter')}>
                     {filters.map(([key, label]) => (
                         <button key={key} type="button" aria-pressed={filterType === key} onClick={() => setFilterType(key)}>
                             {label}
@@ -263,9 +272,9 @@ const PluginsPage = () => {
             {filteredPlugins.length === 0 ? (
                 <div className="blank">
                     <Package size={36} className="pumpkin" />
-                    <span className="h2">{searchTerm ? 'No plugins matched your filter.' : 'No plugins created yet.'}</span>
+                    <span className="h2">{searchTerm ? t('developer.dashboard.no_matches') : t('developer.dashboard.empty')}</span>
                     <p className="small">
-                        {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to create your first plugin.'}
+                        {searchTerm ? t('developer.dashboard.adjust_filter') : t('developer.dashboard.create_first')}
                     </p>
                 </div>
             ) : (
@@ -273,19 +282,19 @@ const PluginsPage = () => {
                     <table className="ledger st-plugins-table">
                         <thead>
                             <tr>
-                                <th>Plugin</th>
-                                <th>Visibility</th>
+                                <th>{t('developer.dashboard.plugin')}</th>
+                                <th>{t('developer.dashboard.visibility')}</th>
                                 <th className="end">{t('developer.dashboard.total_downloads')}</th>
                                 {hasPaidPlugins && <th className="end">{t('developer.dashboard.total_revenue')}</th>}
-                                <th>Date</th>
-                                <th className="end">Actions</th>
+                                <th>{t('common.date')}</th>
+                                <th className="end">{t('common.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredPlugins.map((p: any) => {
                                 const pluginType = (p.pluginType || 'free').toLowerCase();
                                 const isPaid = pluginType === 'paid' || (p.priceCents && p.priceCents > 0);
-                                const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : 'Free';
+                                const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : t('plugin.free');
                                 const initial = (p.name || '?').charAt(0).toUpperCase();
                                 const isDraft = p.status === 'draft';
 
@@ -297,7 +306,7 @@ const PluginsPage = () => {
                                                     type="button"
                                                     className="st-plugins-thumb"
                                                     onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                    title="Manage Plugin"
+                                                    title={t('developer.dashboard.manage_plugin')}
                                                 >
                                                     {p.previewPath ? (
                                                         <img src={p.previewPath} alt={p.name} loading="lazy" />
@@ -315,44 +324,44 @@ const PluginsPage = () => {
                                                         {p.name}
                                                     </button>
                                                     <div className="row st-plugins-tags">
-                                                        <span className="tag mono st-case">{p.version ? `v${p.version}` : `ID: ${p.id}`}</span>
+                                                        <span className="tag mono st-case">{p.version ? `v${p.version}` : t('developer.dashboard.plugin_id', { id: p.id })}</span>
                                                         {p.category && <span className="tag tag-fg">{p.category}</span>}
-                                                        {p.isEarlyAccess && <span className="tag tag-warning">Early Access</span>}
+                                                        {p.isEarlyAccess && <span className="tag tag-warning">{t('plugin.early_access_badge')}</span>}
                                                     </div>
                                                     <div className="row st-plugins-quick">
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                            title="Edit plugin details & settings"
+                                                            title={t('developer.dashboard.edit_tooltip')}
                                                         >
-                                                            <Settings />Edit
+                                                            <Settings />{t('common.edit')}
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(getPluginUrl(p))}
-                                                            title="View in Marketplace"
+                                                            title={t('developer.dashboard.view_marketplace')}
                                                         >
-                                                            <ExternalLink />Store
+                                                            <ExternalLink />{t('nav.store')}
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}?tab=analytics`)}
-                                                            title="Plugin Analytics"
+                                                            title={t('developer.dashboard.analytics_tooltip')}
                                                         >
-                                                            <BarChart2 />Analytics
+                                                            <BarChart2 />{t('developer.dashboard.analytics')}
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        <td data-label="Visibility">
+                                        <td data-label={t('developer.dashboard.visibility')}>
                                             <div className="stack st-plugins-vis">
                                                 <span className="status">
                                                     {isDraft ? <span className="dot" /> : <span className="mark-box mark-box-success"><Check /></span>}
                                                     {isDraft ? t('developer.dashboard.status_draft', 'Offline (Draft)') : t('developer.dashboard.status_published', 'Published')}
                                                 </span>
-                                                <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : 'Free'}</span>
+                                                <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : t('plugin.free')}</span>
                                             </div>
                                         </td>
 
@@ -368,9 +377,9 @@ const PluginsPage = () => {
                                             </td>
                                         )}
 
-                                        <td data-label="Date">
+                                        <td data-label={t('common.date')}>
                                             <strong>{formatDate(p.created_at)}</strong>
-                                            <span className="ledger-sub">Uploaded</span>
+                                            <span className="ledger-sub">{t('developer.dashboard.uploaded')}</span>
                                         </td>
 
                                         <td className="end st-plugins-actions-cell">
@@ -378,8 +387,8 @@ const PluginsPage = () => {
                                                 <button
                                                     className="button button-flat button-sm button-icon"
                                                     onClick={() => navigate(getPluginUrl(p))}
-                                                    title="View in Store"
-                                                    aria-label="View in Store"
+                                                    title={t('developer.dashboard.view_store')}
+                                                    aria-label={t('developer.dashboard.view_store')}
                                                 >
                                                     <ExternalLink />
                                                 </button>
@@ -408,7 +417,7 @@ const PluginsPage = () => {
                                 <div className="stack st-sheet-title">
                                     <h2 className="h1" id="createPluginTitle">{t('developer.dashboard.create_plugin_title', 'Create New Plugin')}</h2>
                                 </div>
-                                <button type="button" className="button button-ghost button-icon" onClick={() => setIsCreateModalOpen(false)} aria-label="Close">
+                                <button type="button" className="button button-ghost button-icon" onClick={() => setIsCreateModalOpen(false)} aria-label={t('common.close')}>
                                     <X />
                                 </button>
                             </div>
@@ -421,13 +430,13 @@ const PluginsPage = () => {
                                 )}
 
                                 <label className="field">
-                                    <span className="field-label">Plugin Name *</span>
+                                    <span className="field-label">{t('developer.upload.plugin_name')}</span>
                                     <span className="control">
                                         <input
                                             id="newPluginName"
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. QuantumVault, DragonFly"
+                                            placeholder={t('developer.dashboard.name_placeholder')}
                                             value={newPluginName}
                                             onChange={e => setNewPluginName(e.target.value)}
                                             maxLength={64}
@@ -438,9 +447,9 @@ const PluginsPage = () => {
                                 </label>
 
                                 <div className="field">
-                                    <span className="field-label" id="newPluginCategory">Category *</span>
+                                    <span className="field-label" id="newPluginCategory">{t('developer.upload.category')}</span>
                                     <Select
-                                        options={PLUGIN_CATEGORIES}
+                                        options={PLUGIN_CATEGORIES.map(option => ({ value: option.value, label: t(option.label) }))}
                                         value={newPluginCategory}
                                         onChange={setNewPluginCategory}
                                         aria-labelledby="newPluginCategory"
@@ -448,15 +457,15 @@ const PluginsPage = () => {
                                 </div>
 
                                 <div className="field">
-                                    <span className="field-label">Distribution Type</span>
+                                    <span className="field-label">{t('developer.dashboard.distribution_type')}</span>
                                     <div className="st-pick">
                                         <button type="button" className="st-option" aria-pressed={newPluginType === 'free'} onClick={() => setNewPluginType('free')}>
-                                            <strong>Free Plugin</strong>
-                                            <span className="small">Available to the entire community for free.</span>
+                                            <strong>{t('developer.dashboard.free_plugin')}</strong>
+                                            <span className="small">{t('developer.dashboard.free_description')}</span>
                                         </button>
                                         <button type="button" className="st-option" aria-pressed={newPluginType === 'paid'} onClick={() => setNewPluginType('paid')}>
-                                            <strong>Paid / Premium</strong>
-                                            <span className="small">Sell licenses with automated developer payouts.</span>
+                                            <strong>{t('developer.dashboard.paid_plugin')}</strong>
+                                            <span className="small">{t('developer.dashboard.paid_description')}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -468,7 +477,7 @@ const PluginsPage = () => {
                                     className="button button-ghost"
                                     onClick={() => setIsCreateModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('common.cancel')}
                                 </button>
                                 <button
                                     type="submit"
@@ -476,7 +485,7 @@ const PluginsPage = () => {
                                     disabled={!newPluginName.trim() || creatingPlugin}
                                     aria-busy={creatingPlugin}
                                 >
-                                    {creatingPlugin ? 'Creating Draft…' : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
+                                    {creatingPlugin ? t('developer.dashboard.creating') : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
                                 </button>
                             </div>
                         </form>

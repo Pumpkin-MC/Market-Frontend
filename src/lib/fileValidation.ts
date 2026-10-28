@@ -1,3 +1,5 @@
+import i18n from './i18n';
+
 /**
  * Industry-standard file validation and sanitization for WebAssembly plugins and images.
  * Provides instant client-side verification on drop/selection with magic byte inspection,
@@ -59,15 +61,15 @@ function validateComponentSections(bytes: Uint8Array): { valid: boolean; error?:
     offset += 1;
     // Standard component section IDs are 0 (custom) through 13
     if (sectionId > 13) {
-      return { valid: false, error: `Invalid component section ID ${sectionId} at byte offset 0x${(offset - 1).toString(16)}.`, sectionCount: count };
+      return { valid: false, error: i18n.t('developer.upload.validation.component_section', { sectionId, offset: (offset - 1).toString(16) }), sectionCount: count };
     }
     const lenInfo = readLeb128U32(bytes, offset);
     if (!lenInfo) {
-      return { valid: false, error: `Corrupted LEB128 section length at byte offset 0x${offset.toString(16)}.`, sectionCount: count };
+      return { valid: false, error: i18n.t('developer.upload.validation.component_length', { offset: offset.toString(16) }), sectionCount: count };
     }
     offset += lenInfo.bytesRead;
     if (offset + lenInfo.value > bytes.length) {
-      return { valid: false, error: `Section length (${lenInfo.value} bytes) exceeds file size at offset 0x${offset.toString(16)}.`, sectionCount: count };
+      return { valid: false, error: i18n.t('developer.upload.validation.component_bounds', { length: lenInfo.value, offset: offset.toString(16) }), sectionCount: count };
     }
     offset += lenInfo.value;
     count++;
@@ -82,18 +84,18 @@ function validateComponentSections(bytes: Uint8Array): { valid: boolean; error?:
  */
 export async function validateWasmFile(file: File): Promise<WasmValidationResult> {
   if (!file) {
-    return { valid: false, error: 'No file selected.', sizeBytes: 0 };
+    return { valid: false, error: i18n.t('developer.upload.validation.no_file'), sizeBytes: 0 };
   }
 
   if (!file.name.toLowerCase().endsWith('.wasm')) {
-    return { valid: false, error: 'File must have a .wasm extension.', sizeBytes: file.size };
+    return { valid: false, error: i18n.t('developer.upload.validation.wasm_extension'), sizeBytes: file.size };
   }
 
   if (file.size > MAX_WASM_SIZE_BYTES) {
     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
     return {
       valid: false,
-      error: `Plugin binary exceeds the 5 MB limit (${sizeMb} MB). Please optimize or split your plugin.`,
+      error: i18n.t('developer.upload.validation.wasm_too_large', { size: sizeMb }),
       sizeBytes: file.size,
     };
   }
@@ -101,7 +103,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
   if (file.size < 8) {
     return {
       valid: false,
-      error: 'File is too small to be a valid WebAssembly module or component.',
+      error: i18n.t('developer.upload.validation.wasm_too_small'),
       sizeBytes: file.size,
     };
   }
@@ -120,7 +122,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
     if (!isMagicValid) {
       return {
         valid: false,
-        error: 'Invalid file format: missing standard WebAssembly header (\\0asm).',
+        error: i18n.t('developer.upload.validation.wasm_header'),
         sizeBytes: file.size,
       };
     }
@@ -142,7 +144,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
     if (!isCoreModule && !isComponentModel) {
       return {
         valid: false,
-        error: 'Unsupported WebAssembly version or format. Supported: Core WebAssembly v1 and WebAssembly Component Model (WIT).',
+        error: i18n.t('developer.upload.validation.wasm_unsupported'),
         sizeBytes: file.size,
       };
     }
@@ -154,7 +156,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
         if (!isValid) {
           return {
             valid: false,
-            error: 'WebAssembly core bytecode validation failed: module structure or types are corrupted.',
+            error: i18n.t('developer.upload.validation.wasm_bytecode'),
             sizeBytes: file.size,
           };
         }
@@ -177,7 +179,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
     if (!componentCheck.valid) {
       return {
         valid: false,
-        error: componentCheck.error || 'Corrupted WebAssembly Component Model structure.',
+        error: componentCheck.error || i18n.t('developer.upload.validation.wasm_component'),
         sizeBytes: file.size,
       };
     }
@@ -195,7 +197,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
   } catch (err: any) {
     return {
       valid: false,
-      error: `Failed to inspect WebAssembly binary: ${err.message || 'Unknown error'}`,
+      error: i18n.t('developer.upload.validation.wasm_inspection', { error: err.message || i18n.t('developer.upload.validation.unknown_error') }),
       sizeBytes: file.size,
     };
   }
@@ -225,13 +227,13 @@ export async function validateAndSanitizeImage(
   } = options;
 
   if (!file) {
-    return { valid: false, error: 'No image file provided.' };
+    return { valid: false, error: i18n.t('developer.upload.validation.no_image') };
   }
 
   if (file.size > MAX_RAW_IMAGE_BYTES) {
     return {
       valid: false,
-      error: `Image file "${file.name}" is too large (max 20 MB original). Please resize it first.`,
+      error: i18n.t('developer.upload.validation.image_too_large', { name: file.name }),
     };
   }
 
@@ -271,7 +273,7 @@ export async function validateAndSanitizeImage(
     if (!isPng && !isJpeg && !isWebp) {
       return {
         valid: false,
-        error: `"${file.name}" is not a valid image. Only genuine PNG, JPEG, and WebP files are accepted.`,
+        error: i18n.t('developer.upload.validation.image_format', { name: file.name }),
       };
     }
 
@@ -281,7 +283,7 @@ export async function validateAndSanitizeImage(
 
     const loaded = await new Promise<{ width: number; height: number }>((resolve, reject) => {
       img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
-      img.onerror = () => reject(new Error('Corrupt or malformed image data.'));
+      img.onerror = () => reject(new Error(i18n.t('developer.upload.validation.image_corrupt')));
       img.src = objectUrl;
     });
 
@@ -289,7 +291,7 @@ export async function validateAndSanitizeImage(
       URL.revokeObjectURL(objectUrl);
       return {
         valid: false,
-        error: `Image dimensions (${loaded.width}x${loaded.height}) are too small. Minimum is ${minWidth}x${minHeight}px.`,
+        error: i18n.t('developer.upload.validation.image_dimensions', { width: loaded.width, height: loaded.height, minWidth, minHeight }),
       };
     }
 
@@ -305,7 +307,7 @@ export async function validateAndSanitizeImage(
     const ctx = canvas.getContext('2d');
     if (!ctx) {
       URL.revokeObjectURL(objectUrl);
-      return { valid: false, error: 'Could not initialize image processing canvas.' };
+      return { valid: false, error: i18n.t('developer.upload.validation.image_canvas') };
     }
 
     ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
@@ -316,7 +318,7 @@ export async function validateAndSanitizeImage(
     const blob: Blob | null = await new Promise(res => canvas.toBlob(res, mimeType, quality));
 
     if (!blob) {
-      return { valid: false, error: 'Image encoding failed.' };
+      return { valid: false, error: i18n.t('developer.upload.validation.image_encoding') };
     }
 
     const sanitizedFile = new File([blob], file.name.replace(/\.[^.]+$/, mimeType === 'image/webp' ? '.webp' : '.png'), {
@@ -337,7 +339,7 @@ export async function validateAndSanitizeImage(
   } catch (err: any) {
     return {
       valid: false,
-      error: `Could not process "${file.name}": ${err.message || 'Corrupted file'}`,
+      error: i18n.t('developer.upload.validation.image_processing', { name: file.name, error: err.message || i18n.t('developer.upload.validation.corrupted_file') }),
     };
   }
 }

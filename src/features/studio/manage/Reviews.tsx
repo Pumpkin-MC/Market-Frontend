@@ -1,6 +1,8 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState, useEffect, useMemo } from 'react';
 import { Star, MessageSquare, CornerDownRight, Send, CheckCircle2 } from 'lucide-react';
 import api from '../../../lib/api';
+import { translateApiMessage } from '../../../lib/apiMessages';
 import type { PluginData } from './ManagePluginPage';
 
 interface Review {
@@ -20,6 +22,7 @@ type Props = {
 };
 
 const Reviews = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const [reviews, setReviews] = useState<Review[]>([]);
     const [loading, setLoading] = useState(true);
     const [replyText, setReplyText] = useState<{ [reviewId: number]: string }>({});
@@ -81,7 +84,7 @@ const Reviews = ({ plugin }: Props) => {
             );
             setReplyText(t => ({ ...t, [reviewId]: '' }));
         } catch (err: any) {
-            alert(err.response?.data?.error || err.response?.data || 'Failed to submit reply.');
+            alert(translateApiMessage(t, err.response?.data?.error || err.response?.data, t('developer.reviews.reply_failed')));
         } finally {
             setSubmitting(s => ({ ...s, [reviewId]: false }));
         }
@@ -98,22 +101,22 @@ const Reviews = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Reviews &amp; Ratings</h2>
-                <p className="small">Monitor user feedback, rating trends, and reply directly to customer reviews.</p>
+                <h2 className="h1">{t('developer.reviews.title')}</h2>
+                <p className="small">{t('developer.reviews.subtitle')}</p>
             </header>
 
             {loading ? (
-                <span className="row small"><span className="loading" />Loading plugin reviews…</span>
+                <span className="row small"><span className="loading" />{t('developer.reviews.loading')}</span>
             ) : (
                 <>
                     <div className="panel st-rv-summary">
                         <div className="st-rv-score">
-                            <span className="stat-value">{stats.average > 0 ? stats.average : 'N/A'}</span>
+                            <span className="stat-value">{stats.average > 0 ? stats.average : t('common.not_available')}</span>
                             {renderStars(Math.round(stats.average), 'st-stars-lg')}
-                            <span className="small">Based on {stats.total} {stats.total === 1 ? 'review' : 'reviews'}</span>
+                            <span className="small">{t('developer.reviews.based_on', { count: stats.total })}</span>
                         </div>
                         <div className="stack st-tight">
-                            <span className="label">Rating Breakdown</span>
+                            <span className="label">{t('developer.analytics.rating_breakdown')}</span>
                             {[5, 4, 3, 2, 1].map(starsCount => {
                                 const count = stats.distribution[starsCount] || 0;
                                 const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0;
@@ -129,13 +132,13 @@ const Reviews = ({ plugin }: Props) => {
                     </div>
 
                     <section className="stack">
-                        <h3 className="h2">All Reviews <span className="mark num">{reviews.length}</span></h3>
+                        <h3 className="h2"><Trans t={t} i18nKey="developer.reviews.all_reviews" components={{ count: <span className="mark num">{reviews.length}</span> }} /></h3>
 
                         {reviews.length === 0 ? (
                             <div className="blank">
                                 <MessageSquare size={36} className="pumpkin" />
-                                <p className="h3">No reviews yet</p>
-                                <p className="small">When users review this plugin, their feedback and ratings will appear here.</p>
+                                <p className="h3">{t('developer.reviews.empty_title')}</p>
+                                <p className="small">{t('developer.reviews.empty_desc')}</p>
                             </div>
                         ) : (
                             <div className="stack">
@@ -157,7 +160,7 @@ const Reviews = ({ plugin }: Props) => {
                                             {rev.developer_reply ? (
                                                 <div className="st-rv-reply">
                                                     <span className="row st-tight">
-                                                        <span className="label label-fg row st-tight"><CheckCircle2 size={14} className="st-pos" /> Developer Response</span>
+                                                        <span className="label label-fg row st-tight"><CheckCircle2 size={14} className="st-pos" />{' '}{t('plugin.reviews.developer_response')}</span>
                                                         <span className="spacer" />
                                                         {rev.replied_at && (
                                                             <span className="small">{new Date(rev.replied_at).toLocaleDateString()}</span>
@@ -167,13 +170,13 @@ const Reviews = ({ plugin }: Props) => {
                                                 </div>
                                             ) : (
                                                 <label className="field">
-                                                    <span className="field-label row st-tight"><CornerDownRight size={14} /> Respond to {rev.username}:</span>
+                                                    <span className="field-label row st-tight"><CornerDownRight size={14} /> {t('developer.reviews.respond_to', { username: rev.username })}</span>
                                                     <div className="st-inline-form">
                                                         <span className="control">
                                                             <textarea
                                                                 className="input"
                                                                 rows={2}
-                                                                placeholder="Write your official response..."
+                                                                placeholder={t('developer.reviews.reply_placeholder')}
                                                                 value={replyText[rev.id] || ''}
                                                                 onChange={e => setReplyText({ ...replyText, [rev.id]: e.target.value })}
                                                             />
@@ -186,7 +189,7 @@ const Reviews = ({ plugin }: Props) => {
                                                             onClick={() => handleSendReply(rev.id)}
                                                         >
                                                             <Send />
-                                                            {submitting[rev.id] ? 'Posting…' : 'Reply'}
+                                                            {submitting[rev.id] ? t('developer.reviews.posting') : t('plugin.reviews.reply_btn')}
                                                         </button>
                                                     </div>
                                                 </label>

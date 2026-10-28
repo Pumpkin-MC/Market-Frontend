@@ -37,7 +37,7 @@ src/
   lib/              API client, i18n, consent, helpers
   styles/           system.css is the design system; one stylesheet per feature
   types/            shared types
-  locales/          translations; en.json is the reference
+  locales/          translations; en_us.json is the reference
 ```
 
 The design system lives in `src/styles/system.css`.

@@ -2,9 +2,24 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { Navigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
+import { normalizeLocale, sameBaseLanguage } from '../lib/locale';
 
 const AuthContext = createContext<any>(null);
 export const useAuth = () => useContext(AuthContext);
+
+// The API stores only base language codes (e.g. "zh"), so a logged-in user's
+// preferred_language cannot distinguish regional Chinese variants (zh_hk / zh_tw).
+// If the current language already matches the same language family, keep the
+// user's more specific selection instead of resetting to the base variant.
+const applyPreferredLanguage = (preferred: string | undefined, current: string, i18n: any) => {
+  if (!preferred) return;
+  const target = normalizeLocale(preferred);
+  if (!target) return;
+  if (current === target) return;
+  // Preserve regional variant when the server only has the base code.
+  if (sameBaseLanguage(target, current)) return;
+  i18n.changeLanguage(target);
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(null);
@@ -35,9 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const payload = decodeToken(res.data.token);
           if (payload && payload.exp * 1000 > Date.now()) {
             setUser(payload);
-            if (payload.preferred_language && i18n.language !== payload.preferred_language) {
-              i18n.changeLanguage(payload.preferred_language);
-            }
+            applyPreferredLanguage(payload.preferred_language, i18n.language, i18n);
           }
         }
       } catch (e) {
@@ -55,9 +68,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Decode token for client-side state without persisting in localStorage
     const payload = decodeToken(token);
     setUser(payload);
-    if (payload?.preferred_language && i18n.language !== payload.preferred_language) {
-      i18n.changeLanguage(payload.preferred_language);
-    }
+    applyPreferredLanguage(payload?.preferred_language, i18n.language, i18n);
   };
 
   const logout = async () => {

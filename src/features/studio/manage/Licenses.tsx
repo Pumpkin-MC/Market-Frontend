@@ -1,6 +1,8 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState, useEffect } from 'react';
 import { Key, Plus, Trash2, ShieldAlert, ShieldCheck, Copy, Check, UserCheck } from 'lucide-react';
 import api from '../../../lib/api';
+import { translateApiMessage } from '../../../lib/apiMessages';
 import type { PluginData } from './ManagePluginPage';
 
 interface PluginLicense {
@@ -17,6 +19,7 @@ interface PluginLicense {
 type Props = { plugin: PluginData };
 
 const Licenses = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const [licenses, setLicenses] = useState<PluginLicense[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -51,15 +54,14 @@ const Licenses = ({ plugin }: Props) => {
             setLicenses(prev => [res.data, ...prev.filter(l => l.id !== res.data.id)]);
             setUserIdentifier('');
         } catch (err: any) {
-            alert(err.response?.data || 'Failed to grant license to user.');
+            alert(translateApiMessage(t, err.response?.data, t('developer.licenses.grant_failed')));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleToggleRevoke = async (licenseId: number, currentRevoked: boolean) => {
-        const action = currentRevoked ? 'unrevoke' : 'revoke';
-        if (!window.confirm(`Are you sure you want to ${action} this license key?`)) return;
+        if (!window.confirm(currentRevoked ? t('developer.licenses.confirm_unrevoke') : t('developer.licenses.confirm_revoke'))) return;
 
         try {
             await api.put(`/plugins/${plugin.id}/licenses/${licenseId}/revoke`, {
@@ -69,18 +71,18 @@ const Licenses = ({ plugin }: Props) => {
                 prev.map(l => l.id === licenseId ? { ...l, revoked: !currentRevoked } : l)
             );
         } catch (err) {
-            alert(`Failed to ${action} license.`);
+            alert(currentRevoked ? t('developer.licenses.unrevoke_failed') : t('developer.licenses.revoke_failed'));
         }
     };
 
     const handleDelete = async (licenseId: number) => {
-        if (!window.confirm('Are you sure you want to permanently delete this license key record?')) return;
+        if (!window.confirm(t('developer.licenses.delete_confirm'))) return;
 
         try {
             await api.delete(`/plugins/${plugin.id}/licenses/${licenseId}`);
             setLicenses(prev => prev.filter(l => l.id !== licenseId));
         } catch (err) {
-            alert('Failed to delete license record.');
+            alert(t('developer.licenses.delete_failed'));
         }
     };
 
@@ -93,29 +95,27 @@ const Licenses = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">License Key Management</h2>
-                <p className="small">View, grant, revoke, and manage license keys for your paid plugin buyers and testers.</p>
+                <h2 className="h1">{t('developer.licenses.title')}</h2>
+                <p className="small">{t('developer.licenses.subtitle')}</p>
             </header>
 
             <form className="panel" onSubmit={handleGrantLicense}>
                 <div className="panel-head">
                     <Plus size={16} className="pumpkin" />
-                    <h3 className="h3">Grant Manual License</h3>
+                    <h3 className="h3">{t('developer.licenses.grant_manual_license')}</h3>
                 </div>
                 <div className="panel-body stack">
-                    <p className="small">
-                        Issue a valid license key to a user by entering their username, email address, or account ID.
-                    </p>
+                    <p className="small">{t('developer.licenses.grant_desc')}</p>
                     <div className="st-inline-form">
                         <label className="field">
-                            <span className="field-label">User (Username, Email, or User ID)</span>
+                            <span className="field-label">{t('developer.licenses.recipient_label')}</span>
                             <span className="control">
                                 <input
                                     id="licenseUserIdentifier"
                                     name="userIdentifier"
                                     type="text"
                                     className="input"
-                                    placeholder="e.g. alex or alex@example.com"
+                                    placeholder={t('developer.licenses.recipient_placeholder')}
                                     value={userIdentifier}
                                     onChange={e => setUserIdentifier(e.target.value)}
                                     autoComplete="off"
@@ -131,33 +131,33 @@ const Licenses = ({ plugin }: Props) => {
                             aria-busy={submitting}
                         >
                             <Key />
-                            {submitting ? 'Granting...' : 'Issue License Key'}
+                            {submitting ? t('developer.licenses.granting') : t('developer.licenses.issue_license_key')}
                         </button>
                     </div>
                 </div>
             </form>
 
             <section className="stack">
-                <h3 className="h2">Active &amp; Issued Licenses <span className="mark num">{licenses.length}</span></h3>
+                <h3 className="h2"><Trans t={t} i18nKey="developer.licenses.issued_licenses" components={{ count: <span className="mark num">{licenses.length}</span> }} /></h3>
 
                 {loading ? (
-                    <span className="row small"><span className="loading" />Loading licenses…</span>
+                    <span className="row small"><span className="loading" />{t('developer.licenses.loading')}</span>
                 ) : licenses.length === 0 ? (
                     <div className="blank">
                         <Key size={32} className="pumpkin" />
-                        <p className="h3">No license keys issued yet for this plugin.</p>
-                        <p className="small">Licenses will automatically appear here when customers purchase your plugin.</p>
+                        <p className="h3">{t('developer.licenses.empty_title')}</p>
+                        <p className="small">{t('developer.licenses.empty_desc')}</p>
                     </div>
                 ) : (
                     <div className="scroll-x">
                         <table className="ledger st-ledger">
                             <thead>
                                 <tr>
-                                    <th>User</th>
-                                    <th>License Key</th>
-                                    <th>Issued Date</th>
-                                    <th>Status</th>
-                                    <th className="end">Actions</th>
+                                    <th>{t('developer.licenses.user')}</th>
+                                    <th>{t('plugin.license_key')}</th>
+                                    <th>{t('developer.licenses.issued_date')}</th>
+                                    <th>{t('developer.licenses.status')}</th>
+                                    <th className="end">{t('common.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -177,8 +177,8 @@ const Licenses = ({ plugin }: Props) => {
                                                     type="button"
                                                     className="button button-ghost button-sm button-icon"
                                                     onClick={() => handleCopyKey(lic.license_key)}
-                                                    title="Copy license key"
-                                                    aria-label="Copy license key"
+                                                    title={t('developer.licenses.copy_license_key')}
+                                                    aria-label={t('developer.licenses.copy_license_key')}
                                                 >
                                                     {copiedKey === lic.license_key ? <Check className="st-pos" /> : <Copy />}
                                                 </button>
@@ -189,9 +189,9 @@ const Licenses = ({ plugin }: Props) => {
                                         </td>
                                         <td>
                                             {lic.revoked ? (
-                                                <span className="tag tag-danger"><ShieldAlert />Revoked</span>
+                                                <span className="tag tag-danger"><ShieldAlert />{t('developer.licenses.revoked')}</span>
                                             ) : (
-                                                <span className="tag tag-success"><ShieldCheck />Active</span>
+                                                <span className="tag tag-success"><ShieldCheck />{t('developer.licenses.active')}</span>
                                             )}
                                         </td>
                                         <td className="end">
@@ -201,14 +201,14 @@ const Licenses = ({ plugin }: Props) => {
                                                     onClick={() => handleToggleRevoke(lic.id, lic.revoked)}
                                                     className={`button button-sm ${lic.revoked ? 'button-primary' : 'button-danger'}`}
                                                 >
-                                                    {lic.revoked ? 'Unrevoke' : 'Revoke'}
+                                                    {lic.revoked ? t('developer.licenses.unrevoke') : t('common.revoke')}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="button button-ghost button-sm button-icon"
                                                     onClick={() => handleDelete(lic.id)}
-                                                    title="Delete License"
-                                                    aria-label="Delete License"
+                                                    title={t('developer.licenses.delete_license')}
+                                                    aria-label={t('developer.licenses.delete_license')}
                                                 >
                                                     <Trash2 />
                                                 </button>

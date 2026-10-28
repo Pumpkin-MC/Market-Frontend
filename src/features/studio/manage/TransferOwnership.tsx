@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRightLeft, AlertTriangle, CheckCircle, Lock, ShieldAlert, ShieldCheck, Clock, XCircle, UserCheck } from 'lucide-react';
@@ -17,6 +18,7 @@ type PendingTransfer = {
 };
 
 const TransferOwnership = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [pendingTransfer, setPendingTransfer] = useState<PendingTransfer | null>(null);
@@ -50,12 +52,12 @@ const TransferOwnership = ({ plugin }: Props) => {
         const cleanCode = twoFactorCode.trim();
 
         if (!cleanRecipient) {
-            setError('Please specify the recipient username or email.');
+            setError(t('developer.transfer.recipient_required'));
             return;
         }
 
         if (cleanCode.length !== 6) {
-            setError('Please enter a valid 6-digit 2FA authenticator code.');
+            setError(t('developer.transfer.invalid_code'));
             return;
         }
 
@@ -71,9 +73,9 @@ const TransferOwnership = ({ plugin }: Props) => {
             setPendingTransfer(res.data);
             setRecipient('');
             setTwoFactorCode('');
-            setSuccess(`Transfer request sent to @${res.data.recipient_name}. The recipient must accept it in their dashboard.`);
+            setSuccess(t('developer.transfer.request_sent', { recipient: res.data.recipient_name }));
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to initiate transfer request.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('developer.transfer.request_failed');
             setError(msg);
         } finally {
             setSubmitting(false);
@@ -81,16 +83,16 @@ const TransferOwnership = ({ plugin }: Props) => {
     };
 
     const handleCancelTransfer = async () => {
-        if (!window.confirm('Cancel this pending transfer request?')) return;
+        if (!window.confirm(t('developer.transfer.cancel_confirm'))) return;
         setCancelling(true);
         setError(null);
         setSuccess(null);
         try {
             await api.delete(`/plugins/${plugin.id}/transfer`);
             setPendingTransfer(null);
-            setSuccess('Transfer request cancelled successfully.');
+            setSuccess(t('developer.transfer.cancel_success'));
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to cancel transfer request.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('developer.transfer.cancel_failed');
             setError(msg);
         } finally {
             setCancelling(false);
@@ -100,8 +102,8 @@ const TransferOwnership = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Transfer Ownership</h2>
-                <p className="small">Transfer this plugin to another developer on Pumpkin Market. The recipient must review and accept the request before ownership is transferred.</p>
+                <h2 className="h1">{t('developer.transfer.title')}</h2>
+                <p className="small">{t('developer.transfer.subtitle')}</p>
             </header>
 
             {error && (
@@ -113,22 +115,22 @@ const TransferOwnership = ({ plugin }: Props) => {
             )}
 
             {loading ? (
-                <span className="row small"><span className="loading" />Loading transfer status…</span>
+                <span className="row small"><span className="loading" />{t('developer.transfer.loading')}</span>
             ) : pendingTransfer ? (
                 <section className="panel panel-pumpkin">
                     <div className="panel-head">
                         <Clock size={16} className="pumpkin" />
-                        <h3 className="h3">Pending Ownership Transfer</h3>
+                        <h3 className="h3">{t('developer.transfer.pending_title')}</h3>
                     </div>
                     <div className="panel-body st-tr-pending">
                         <span className="avatar"><ArrowRightLeft size={18} /></span>
                         <div className="stack st-tight">
                             <span className="row st-tight">
-                                <strong>Pending transfer to <span className="pumpkin">@{pendingTransfer.recipient_name}</span></strong>
+                                <strong><Trans t={t} i18nKey="developer.transfer.pending_recipient" components={{ recipient: <span className="pumpkin">@{pendingTransfer.recipient_name}</span> }} /></strong>
                                 <span className="tag tag-pumpkin">{pendingTransfer.status}</span>
                             </span>
                             <p className="small">
-                                The recipient has been invited to take over <strong>{plugin.name}</strong>. Ownership and management permissions remain with you until they accept.
+                                <Trans t={t} i18nKey="developer.transfer.pending_description" components={{ plugin: <strong>{plugin.name}</strong> }} />
                             </p>
                         </div>
                     </div>
@@ -141,7 +143,7 @@ const TransferOwnership = ({ plugin }: Props) => {
                             aria-busy={cancelling}
                         >
                             <XCircle />
-                            {cancelling ? 'Cancelling…' : 'Cancel Transfer Request'}
+                            {cancelling ? t('common.cancelling') : t('developer.transfer.cancel_request')}
                         </button>
                     </div>
                 </section>
@@ -149,42 +151,40 @@ const TransferOwnership = ({ plugin }: Props) => {
                 <div className="notice notice-warning">
                     <span className="mark-box mark-box-warning"><ShieldAlert /></span>
                     <p className="notice-text">
-                        <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
-                        To protect against account takeovers, you must enable 2FA in your account settings before transferring plugins.
+                        <Trans t={t} i18nKey="developer.transfer.security_required" components={{ strong: <strong /> }} />
                     </p>
                     <button
                         type="button"
                         className="button button-sm"
                         onClick={() => navigate('/settings?tab=security')}
                     >
-                        <ShieldCheck /> Enable 2FA →
-                    </button>
+                        <ShieldCheck />{' '}{t('developer.dashboard.enable_2fa')}</button>
                 </div>
             ) : (
                 <form className="panel" onSubmit={handleInitiateTransfer}>
                     <div className="panel-head">
                         <ArrowRightLeft size={16} className="pumpkin" />
-                        <h3 className="h3">Initiate Plugin Transfer</h3>
+                        <h3 className="h3">{t('developer.transfer.initiate_title')}</h3>
                     </div>
                     <div className="panel-body stack">
                         <div className="st-callout">
-                            <span className="row st-tight label label-fg"><UserCheck size={15} className="pumpkin" /> What happens during a transfer:</span>
+                            <span className="row st-tight label label-fg"><UserCheck size={15} className="pumpkin" />{' '}{t('developer.transfer.effects_title')}</span>
                             <ul className="st-bullets small">
-                                <li>All existing releases, store listings, reviews, and active customer licenses are transferred.</li>
-                                <li>Future sales and subscription revenues will route to the recipient's payout account.</li>
-                                <li><strong>The recipient must explicitly accept the request</strong> in their dashboard before ownership changes.</li>
+                                <li>{t('developer.transfer.assets_transferred')}</li>
+                                <li>{t('developer.transfer.payouts_transferred')}</li>
+                                <li><Trans t={t} i18nKey="developer.transfer.acceptance_required" components={{ strong: <strong /> }} /></li>
                             </ul>
                         </div>
 
                         <label className="field">
-                            <span className="field-label">Recipient Username or Email</span>
+                            <span className="field-label">{t('developer.transfer.recipient_label')}</span>
                             <span className="control">
                                 <input
                                     id="transferRecipientInput"
                                     name="transferRecipient"
                                     type="text"
                                     className="input"
-                                    placeholder="e.g. notch or dev@example.com"
+                                    placeholder={t('developer.transfer.recipient_placeholder')}
                                     value={recipient}
                                     onChange={e => setRecipient(e.target.value)}
                                     autoComplete="off"
@@ -194,7 +194,7 @@ const TransferOwnership = ({ plugin }: Props) => {
                         </label>
 
                         <label className="field">
-                            <span className="field-label">Enter your 6-digit Two-Factor Authentication (2FA) Code</span>
+                            <span className="field-label">{t('developer.transfer.code_label')}</span>
                             <span className="control st-narrow">
                                 <Lock size={15} className="muted" />
                                 <input
@@ -222,7 +222,7 @@ const TransferOwnership = ({ plugin }: Props) => {
                             aria-busy={submitting}
                         >
                             <ArrowRightLeft />
-                            {submitting ? 'Sending Request…' : 'Send Transfer Request'}
+                            {submitting ? t('developer.transfer.sending_request') : t('developer.transfer.submit')}
                         </button>
                     </div>
                 </form>

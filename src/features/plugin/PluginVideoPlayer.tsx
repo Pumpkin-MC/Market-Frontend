@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback, useId } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Volume2, VolumeX, Play, Pause, Maximize, Minimize } from 'lucide-react';
 import '../../styles/plugin.css';
 import { extractYoutubeVideoId } from '../../lib/youtube';
@@ -25,6 +26,7 @@ const formatTime = (seconds: number): string => {
 };
 
 export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, videoId: propVideoId, className, loop = false }) => {
+  const { t } = useTranslation();
   const autoId = useId().replace(/[:]/g, '_');
   const domId = `plugin-yt-${autoId}`;
 
@@ -287,7 +289,7 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
       onClick={togglePlay}
       onKeyDown={handleKeyDown}
       role="region"
-      aria-label="Video Player"
+      aria-label={t('plugin.video.player')}
     >
       <div className="pd-video-frame">
         <div id={domId} />
@@ -303,7 +305,7 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
         className={`pd-video-hud${showControls || !isPlaying ? ' pd-on' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="pd-video-track" onClick={handleSeek} title="Seek">
+        <div className="pd-video-track" onClick={handleSeek} title={t('plugin.video.seek')}>
           <div className="pd-video-fill" style={{ width: `${progressPercent}%` }} />
         </div>
 
@@ -317,8 +319,8 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
             className="pd-video-btn"
             aria-pressed={isMuted}
             onClick={toggleMute}
-            title="Mute"
-            aria-label="Mute"
+            title={t('plugin.video.mute')}
+            aria-label={t('plugin.video.mute')}
           >
             {isMuted ? <VolumeX /> : <Volume2 />}
           </button>
@@ -326,8 +328,8 @@ export const PluginVideoPlayer: React.FC<PluginVideoPlayerProps> = ({ url, video
             type="button"
             className="pd-video-btn"
             onClick={toggleFullscreen}
-            title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
-            aria-label={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+            title={isFullscreen ? t('plugin.video.exit_fullscreen') : t('plugin.video.fullscreen')}
+            aria-label={isFullscreen ? t('plugin.video.exit_fullscreen') : t('plugin.video.fullscreen')}
           >
             {isFullscreen ? <Minimize /> : <Maximize />}
           </button>

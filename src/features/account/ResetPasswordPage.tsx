@@ -1,3 +1,4 @@
+import { Trans, useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { AlertCircle } from 'lucide-react';
@@ -5,6 +6,7 @@ import api from '../../lib/api';
 import '../../styles/account.css';
 
 const ResetPasswordPage = () => {
+    const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
   const navigate = useNavigate();
@@ -18,17 +20,17 @@ const ResetPasswordPage = () => {
     e.preventDefault();
     
     if (!token) {
-      setError('Invalid reset link. Please request a new one.');
+      setError(t('auth.reset.invalid_link_error'));
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
+      setError(t('auth.reset.password_length_error'));
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match.');
+      setError(t('auth.reset.password_mismatch'));
       return;
     }
 
@@ -36,10 +38,10 @@ const ResetPasswordPage = () => {
     setError('');
     try {
       await api.post('/auth/reset-password', { token, new_password: password });
-      alert('Password has been successfully reset. You can now log in with your new password.');
+      alert(t('auth.reset.success'));
       navigate('/login');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(err.response?.data?.error || t('auth.errors.generic'));
     } finally {
       setIsSubmitting(false);
     }
@@ -51,10 +53,10 @@ const ResetPasswordPage = () => {
         <div className="panel panel-fg ac-card">
           <div className="ac-card-head">
             <span className="ac-badge ac-badge-danger"><AlertCircle /></span>
-            <h1 className="h1">Invalid <span className="mark ac-mark-danger">Link</span></h1>
-            <p className="small">This password reset link is invalid or has expired.</p>
+            <h1 className="h1"><Trans t={t} i18nKey="auth.reset.invalid_link_title" components={{ highlight: <span className="mark ac-mark-danger" /> }} /></h1>
+            <p className="small">{t('auth.reset.invalid_link_description')}</p>
           </div>
-          <Link to="/forgot-password" className="button button-primary button-block">Request a new link</Link>
+          <Link to="/forgot-password" className="button button-primary button-block">{t('auth.reset.request_link')}</Link>
         </div>
       </div>
     );
@@ -64,8 +66,8 @@ const ResetPasswordPage = () => {
     <div className="ac-auth">
       <div className="panel panel-fg ac-card">
         <div className="ac-card-head">
-          <h1 className="h1">Set new <span className="mark">password</span></h1>
-          <p className="small">Choose a new, strong password for your account.</p>
+          <h1 className="h1"><Trans t={t} i18nKey="auth.reset.title" components={{ highlight: <span className="mark" /> }} /></h1>
+          <p className="small">{t('auth.reset.subtitle')}</p>
         </div>
 
         <form className="stack" onSubmit={handleSubmit}>
@@ -77,7 +79,7 @@ const ResetPasswordPage = () => {
           )}
 
           <label className="field" htmlFor="password">
-            <span className="field-label">New Password</span>
+            <span className="field-label">{t('profile.security.new_password')}</span>
             <span className="control">
               <input
                 id="password"
@@ -95,7 +97,7 @@ const ResetPasswordPage = () => {
           </label>
 
           <label className="field" htmlFor="confirmPassword">
-            <span className="field-label">Confirm New Password</span>
+            <span className="field-label">{t('profile.security.confirm_password')}</span>
             <span className="control">
               <input
                 id="confirmPassword"
@@ -113,7 +115,7 @@ const ResetPasswordPage = () => {
           </label>
 
           <button className="button button-primary button-lg button-block" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting ? 'Updating...' : 'Update password'}
+            {isSubmitting ? t('common.updating') : t('auth.reset.submit')}
           </button>
         </form>
       </div>

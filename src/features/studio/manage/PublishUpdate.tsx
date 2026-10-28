@@ -1,20 +1,29 @@
+import { Trans, useTranslation } from 'react-i18next';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock, ShieldAlert, ShieldCheck, Lock } from 'lucide-react';
 import api from '../../../lib/api';
+import { translateApiMessage } from '../../../lib/apiMessages';
 import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 import { validateWasmFile } from '../../../lib/fileValidation';
 
 type Props = { plugin: PluginData; onSaved: () => void };
 
-const TRACKS = [
-    { key: 'stable', label: 'Production (Stable)', desc: 'Available to all users across the marketplace.' },
-    { key: 'beta',   label: 'Beta',               desc: 'Public beta release for community testing.' },
-    { key: 'alpha',  label: 'Alpha / Testing',    desc: 'Early access build for testers.' },
-] as const;
+
 
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
+    const { t } = useTranslation();
+    const trackLabels = {
+        stable: t('developer.update.track_stable'),
+        beta: t('developer.update.track_beta'),
+        alpha: t('developer.update.track_alpha'),
+    };
+    const TRACKS = [
+        { key: 'stable', label: t('developer.update.stable_label'), desc: t('developer.update.stable_desc') },
+        { key: 'beta',   label: t('developer.update.beta'),               desc: t('developer.update.beta_desc') },
+        { key: 'alpha',  label: t('developer.update.alpha_label'),    desc: t('developer.update.alpha_desc') },
+    ] as const;
     const { user } = useAuth();
     const navigate = useNavigate();
     const [wasmFile, setWasmFile] = useState<File | null>(null);
@@ -28,6 +37,13 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [uploading, setUploading] = useState(false);
     const [published, setPublished] = useState(false);
     const [publishError, setPublishError] = useState<string | null>(null);
+    const formatLabel = wasmFormatInfo === 'Core Module (v1)'
+        ? t('developer.update.format_core')
+        : wasmFormatInfo === 'Component Model (WIT / Preview 2)'
+            ? t('developer.update.format_component')
+            : wasmFormatInfo === 'WebAssembly Binary'
+                ? t('developer.update.format_binary')
+                : wasmFormatInfo || '.wasm';
 
     const handleFileValidation = async (file: File | null) => {
         if (!file) {
@@ -41,7 +57,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         try {
             const res = await validateWasmFile(file);
             if (!res.valid) {
-                setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
+                setWasmValidationErr(res.error || t('developer.update.invalid_binary'));
                 setWasmFile(null);
                 setWasmFormatInfo(null);
                 return;
@@ -50,7 +66,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
             setWasmValidationErr(null);
         } catch (err: any) {
-            setWasmValidationErr(err.message || 'Failed to inspect file.');
+            setWasmValidationErr(translateApiMessage(t, err.message, t('developer.update.inspection_failed')));
             setWasmFile(null);
             setWasmFormatInfo(null);
         } finally {
@@ -89,7 +105,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 setReleaseNotes('');
             }, 3000);
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Publish failed. Please check your inputs and try again.';
+            const msg = translateApiMessage(t, err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null), t('developer.update.publish_failed_desc'));
             setPublishError(msg);
         } finally {
             setUploading(false);
@@ -102,13 +118,13 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         return (
             <div className="st-tab">
                 <header className="st-tab-head">
-                    <h2 className="h1">Publish Update</h2>
+                    <h2 className="h1">{t('developer.dashboard.publish_update')}</h2>
                 </header>
                 <div className="blank">
                     <span className="mark-box mark-box-success st-mark-lg"><CheckCircle /></span>
-                    <p className="h2">Update Published!</p>
+                    <p className="h2">{t('developer.update.published_title')}</p>
                     <p className="small">
-                        Your new version has been published successfully to the <strong>{track}</strong> track.
+                        <Trans t={t} i18nKey="developer.update.published_description" components={{ track: <strong>{trackLabels[track]}</strong> }} />
                     </p>
                 </div>
             </div>
@@ -118,60 +134,56 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Publish Update</h2>
-                <p className="small">Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes.</p>
+                <h2 className="h1">{t('developer.dashboard.publish_update')}</h2>
+                <p className="small">{t('developer.update.subtitle')}</p>
             </header>
 
             {user && !user.totp_enabled && (
                 <div className="notice notice-warning">
                     <span className="mark-box mark-box-warning"><ShieldAlert /></span>
                     <p className="notice-text">
-                        <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
-                        To protect servers and prevent unauthorized plugin uploads, 2FA is required before publishing updates.
+                        <Trans t={t} i18nKey="developer.update.security_required" components={{ strong: <strong /> }} />
                     </p>
                     <button
                         type="button"
                         className="button button-sm"
                         onClick={() => navigate('/settings?tab=security')}
                     >
-                        <ShieldCheck /> Enable 2FA →
-                    </button>
+                        <ShieldCheck />{' '}{t('developer.dashboard.enable_2fa')}</button>
                 </div>
             )}
 
             <section className="panel">
                 <div className="panel-head">
                     <Send size={16} className="pumpkin" />
-                    <h3 className="h3">Release Track</h3>
+                    <h3 className="h3">{t('developer.update.release_track')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div className="st-pick">
-                        {TRACKS.map(t => (
+                        {TRACKS.map(option => (
                             <button
-                                key={t.key}
+                                key={option.key}
                                 type="button"
                                 className="st-option"
-                                aria-pressed={track === t.key}
-                                onClick={() => setTrack(t.key)}
+                                aria-pressed={track === option.key}
+                                onClick={() => setTrack(option.key)}
                             >
                                 <span className="row st-tight">
-                                    <strong>{t.label}</strong>
-                                    <span className={`tag ${t.key === 'stable' ? 'tag-success' : t.key === 'beta' ? 'tag-warning' : 'tag-pumpkin'}`}>{t.key}</span>
+                                    <strong>{option.label}</strong>
+                                    <span className={`tag ${option.key === 'stable' ? 'tag-success' : option.key === 'beta' ? 'tag-warning' : 'tag-pumpkin'}`}>{trackLabels[option.key]}</span>
                                 </span>
-                                <span className="small">{t.desc}</span>
+                                <span className="small">{option.desc}</span>
                             </button>
                         ))}
                     </div>
 
                     {track === 'stable' ? (
                         <p className="status small">
-                            <span className="mark-box mark-box-warning"><AlertTriangle /></span>
-                            Production releases are immediately visible to all users. Make sure your build is tested.
-                        </p>
+                            <span className="mark-box mark-box-warning"><AlertTriangle /></span>{t('developer.update.production_notice')}</p>
                     ) : (
                         <p className="status small">
                             <span className="mark-box st-mark-info"><Clock /></span>
-                            Pre-release ({track}) tracks allow community testing before promoting to production.
+                            {t('developer.update.prerelease_description', { track: trackLabels[track] })}
                         </p>
                     )}
                 </div>
@@ -180,11 +192,11 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             <section className="panel">
                 <div className="panel-head">
                     <FileCode size={16} className="pumpkin" />
-                    <h3 className="h3">Version Details</h3>
+                    <h3 className="h3">{t('developer.update.version_details')}</h3>
                 </div>
                 <div className="panel-body fields">
                     <label className="field">
-                        <span className="field-label">Version Tag <em>(optional — e.g. 1.2.3)</em></span>
+                        <span className="field-label"><Trans t={t} i18nKey="developer.update.version_tag" components={{ optional: <em /> }} /></span>
                         <span className="control st-narrow">
                             <input
                                 id="pluginVersionTag"
@@ -200,14 +212,14 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         </span>
                     </label>
                     <label className="field">
-                        <span className="field-label">Release Notes</span>
+                        <span className="field-label">{t('developer.update.release_notes')}</span>
                         <span className="control">
                             <textarea
                                 className="input"
                                 rows={5}
                                 value={releaseNotes}
                                 onChange={e => setReleaseNotes(e.target.value)}
-                                placeholder={`What's new in this release?\n\n- Fixed crash on startup\n- Added support for multi-world\n- Improved performance by 30%`}
+                                placeholder={t('developer.update.release_notes_placeholder')}
                             />
                         </span>
                     </label>
@@ -217,7 +229,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             <section className="panel">
                 <div className="panel-head">
                     <Upload size={16} className="pumpkin" />
-                    <h3 className="h3">Plugin Binary</h3>
+                    <h3 className="h3">{t('developer.update.plugin_binary')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div
@@ -232,12 +244,12 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         {validatingWasm ? <span className="loading" /> : <Upload />}
                         <p>
                             {validatingWasm ? (
-                                <strong>Validating WebAssembly binary structure…</strong>
+                                <strong>{t('developer.update.validating_binary')}</strong>
                             ) : (
-                                <><strong>Drag & drop your .wasm file</strong> or click to browse</>
+                                <Trans t={t} i18nKey="developer.update.drop_file" components={{ strong: <strong /> }} />
                             )}
                         </p>
-                        <span className="small">.wasm only · max 5 MB · validated on drop</span>
+                        <span className="small">{t('developer.update.binary_hint')}</span>
                         <input
                             id="wasm-upload-input"
                             type="file"
@@ -254,9 +266,9 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         <div className="st-file">
                             <span className="mark-box mark-box-success"><CheckCircle /></span>
                             <strong className="st-file-name">{wasmFile.name}</strong>
-                            <span className="tag tag-success">Verified {wasmFormatInfo || '.wasm'}</span>
+                            <span className="tag tag-success">{t('developer.update.verified_format', { format: formatLabel })}</span>
                             <span className="spacer" />
-                            <span className="mono small">{(wasmFile.size / 1024).toFixed(1)} KB</span>
+                            <span className="mono small">{(wasmFile.size / 1024).toFixed(1)}{' '}{t('developer.update.kb')}</span>
                         </div>
                     )}
                 </div>
@@ -266,7 +278,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 <div className="notice notice-danger">
                     <span className="mark-box mark-box-danger"><Lock /></span>
                     <p className="notice-text">
-                        <strong>{twoFaError ? 'Two-Factor Authentication Required' : 'Publish Failed'}</strong>
+                        <strong>{twoFaError ? t('developer.dashboard.security_required') : t('developer.update.publish_failed_title')}</strong>
                         <span className="ledger-sub">{publishError}</span>
                     </p>
                     {(twoFaError || !user?.totp_enabled) && (
@@ -275,8 +287,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                             className="button button-sm"
                             onClick={() => navigate('/settings?tab=security')}
                         >
-                            <ShieldCheck /> Enable 2FA →
-                        </button>
+                            <ShieldCheck />{' '}{t('developer.dashboard.enable_2fa')}</button>
                     )}
                 </div>
             )}
@@ -290,7 +301,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     aria-busy={uploading}
                 >
                     <Send />
-                    {uploading ? 'Publishing…' : 'Publish Update'}
+                    {uploading ? t('developer.dashboard.publishing') : t('developer.dashboard.publish_update')}
                 </button>
             </div>
         </div>

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { useAuth } from '../app/auth';
 import api from '../lib/api';
 import { startRegistration } from '@simplewebauthn/browser';
@@ -29,14 +30,15 @@ interface SecuritySetupCardsProps {
 }
 
 export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
-    title = 'Secure Your Account',
-    description = 'Protect your account with modern security. Choose between biometric passkeys or standard 2FA authenticator apps.',
+    title,
+    description,
     onComplete,
     onSkip,
     canSkip = false,
     isRequired = false,
     compact = false,
 }) => {
+    const { t } = useTranslation();
     const { login, user, refreshUser } = useAuth();
 
     const [expandedBox, setExpandedBox] = useState<'passkey' | 'totp' | null>(null);
@@ -77,7 +79,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
             setTotpUri(res.data.uri);
             setTotpSecret(res.data.secret);
         } catch (err: any) {
-            setTotpError(err.response?.data?.error || 'Failed to initialize 2FA setup.');
+            setTotpError(err.response?.data?.error || t('profile.setup.totp_setup_failed'));
         } finally {
             setTotpLoading(false);
         }
@@ -94,7 +96,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
         e.preventDefault();
         const clean = totpCode.trim();
         if (clean.length !== 6) {
-            setTotpError('Please enter a valid 6-digit authentication code.');
+            setTotpError(t('profile.setup.code_invalid_length'));
             return;
         }
 
@@ -117,7 +119,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                 }, 1200);
             }
         } catch (err: any) {
-            setTotpError(err.response?.data?.error || 'Invalid 2FA code. Please try again.');
+            setTotpError(err.response?.data?.error || t('profile.setup.code_invalid'));
         } finally {
             setTotpVerifying(false);
         }
@@ -156,12 +158,12 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
         } catch (err: any) {
             console.error('Passkey registration error:', err);
             if (err.name === 'NotAllowedError') {
-                setPasskeyError('Registration was canceled or timed out.');
+                setPasskeyError(t('profile.setup.passkey_canceled'));
             } else {
                 setPasskeyError(
                     err.response?.data?.error ||
                     err.message ||
-                    'Failed to register passkey. Ensure your device supports biometrics/WebAuthn.'
+                    t('profile.setup.passkey_failed')
                 );
             }
         } finally {
@@ -176,12 +178,12 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
             <div className="ac-setup-head">
                 <span className={compact ? 'ac-icon ac-icon-pumpkin' : 'ac-badge'}><Shield /></span>
                 <div className="stack ac-tight">
-                    <h2 className={compact ? 'h3' : 'h2'}>{title}</h2>
-                    <p className="small">{description}</p>
+                    <h2 className={compact ? 'h3' : 'h2'}>{title ?? t('profile.setup.title')}</h2>
+                    <p className="small">{description ?? t('profile.setup.description')}</p>
                 </div>
                 {isRequired && (
                     <span className="sticker sticker-danger sticker-sm">
-                        {compact ? 'Required' : 'Required for Plugin Publishing & Developer Verification'}
+                        {compact ? t('profile.setup.required') : t('profile.setup.required_publishing')}
                     </span>
                 )}
             </div>
@@ -197,11 +199,11 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                         <span className="ac-icon ac-icon-success"><Fingerprint /></span>
                         <div>
                             <span className="row ac-tight">
-                                <span className="h3">Passkey & Biometrics</span>
-                                <span className="tag tag-solid tag-success">Recommended</span>
+                                <span className="h3">{t('profile.setup.passkey_title')}</span>
+                                <span className="tag tag-solid tag-success">{t('profile.setup.recommended')}</span>
                             </span>
                             <span className="small">
-                                Fastest & most secure. Touch ID, Face ID, Windows Hello, or Security Key.
+                                {t('profile.setup.passkey_description')}
                             </span>
                         </div>
                         {expandedBox === 'passkey' ? <ChevronUp /> : <ChevronDown />}
@@ -210,7 +212,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                     {expandedBox === 'passkey' && (
                         <div className="ac-option-body">
                             <p className="small">
-                                <strong className="pumpkin">How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device's keychain. They are 100% phishing-proof.
+                                <Trans t={t} i18nKey="profile.setup.passkey_explanation" components={{ strong: <strong className="pumpkin" /> }} />
                             </p>
 
                             {passkeyError && (
@@ -223,19 +225,19 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                             {passkeySuccess ? (
                                 <p className="status">
                                     <span className="mark-box mark-box-success"><Check /></span>
-                                    <span>Passkey created successfully!</span>
+                                    <span>{t('profile.setup.passkey_created')}</span>
                                 </p>
                             ) : (
                                 <>
                                     <label className="field">
-                                        <span className="field-label">Device / Passkey Name (Optional)</span>
+                                        <span className="field-label">{t('profile.setup.passkey_name')}</span>
                                         <span className="control">
                                             <input
                                                 type="text"
                                                 className="input"
                                                 value={passkeyName}
                                                 onChange={(e) => setPasskeyName(e.target.value)}
-                                                placeholder="e.g. MacBook Pro Touch ID, Windows PC, or YubiKey"
+                                                placeholder={t('profile.setup.passkey_placeholder')}
                                             />
                                         </span>
                                     </label>
@@ -246,7 +248,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                         aria-busy={passkeyLoading}
                                         onClick={handleRegisterPasskey}
                                     >
-                                        {passkeyLoading ? 'Setting up Passkey...' : <><Fingerprint /> Create & Register Passkey</>}
+                                        {passkeyLoading ? t('profile.setup.passkey_creating') : <><Fingerprint /> {t('profile.setup.passkey_create')}</>}
                                     </button>
                                 </>
                             )}
@@ -263,9 +265,9 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                     >
                         <span className="ac-icon"><Smartphone /></span>
                         <div>
-                            <span className="h3">Authenticator App (TOTP 2FA)</span>
+                            <span className="h3">{t('profile.setup.totp_title')}</span>
                             <span className="small">
-                                Use Google Authenticator, Microsoft Authenticator, Authy, or 1Password.
+                                {t('profile.setup.totp_description')}
                             </span>
                         </div>
                         {expandedBox === 'totp' ? <ChevronUp /> : <ChevronDown />}
@@ -276,12 +278,12 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                             {totpLoading ? (
                                 <p className="status">
                                     <span className="loading" />
-                                    <span className="muted">Generating 2FA Secret & QR Code...</span>
+                                    <span className="muted">{t('profile.setup.totp_generating')}</span>
                                 </p>
                             ) : totpSuccess ? (
                                 <p className="status">
                                     <span className="mark-box mark-box-success"><Check /></span>
-                                    <span>Two-Factor Authentication enabled successfully!</span>
+                                    <span>{t('profile.setup.totp_enabled')}</span>
                                 </p>
                             ) : (
                                 <>
@@ -292,8 +294,8 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                             </div>
                                         )}
                                         <div>
-                                            <p className="ac-step">1. Scan QR Code with Authenticator App</p>
-                                            <p className="small">Or manually copy the setup key below:</p>
+                                            <p className="ac-step">{t('profile.setup.totp_scan')}</p>
+                                            <p className="small">{t('profile.setup.totp_manual')}</p>
                                             {totpSecret && (
                                                 <div className="ac-secret">
                                                     <code>{totpSecret}</code>
@@ -301,8 +303,8 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                                         type="button"
                                                         className="ac-icon-btn"
                                                         onClick={handleCopySecret}
-                                                        title="Copy Secret"
-                                                        aria-label="Copy Secret"
+                                                        title={t('profile.setup.copy_secret')}
+                                                        aria-label={t('profile.setup.copy_secret')}
                                                     >
                                                         {copiedSecret ? <Check /> : <Copy />}
                                                     </button>
@@ -320,7 +322,7 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
 
                                     <form className="stack" onSubmit={handleVerifyTotp}>
                                         <label className="field">
-                                            <span className="field-label">2. Enter the 6-Digit Code from the App</span>
+                                            <span className="field-label">{t('profile.setup.totp_code')}</span>
                                             <span className="control">
                                                 <input
                                                     type="text"
@@ -345,14 +347,14 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                                             aria-busy={totpVerifying}
                                         >
                                             {totpVerifying ? (
-                                                'Verifying Code...'
+                                                t('profile.setup.totp_verifying')
                                             ) : totpError ? (
                                                 <>
-                                                    <AlertCircle /> Try Again
+                                                    <AlertCircle /> {t('profile.setup.try_again')}
                                                 </>
                                             ) : (
                                                 <>
-                                                    <ShieldCheck /> Verify & Enable 2FA
+                                                    <ShieldCheck /> {t('profile.setup.totp_enable')}
                                                 </>
                                             )}
                                         </button>
@@ -369,17 +371,17 @@ export const SecuritySetupCards: React.FC<SecuritySetupCardsProps> = ({
                     {canSkip ? (
                         <>
                             <button type="button" className="button button-ghost" onClick={onSkip}>
-                                Skip for now →
+                                {t('profile.setup.skip')}
                             </button>
                             {hasSecureAuth && (
                                 <button type="button" className="button button-primary" onClick={onComplete}>
-                                    Continue →
+                                    {t('profile.setup.continue')}
                                 </button>
                             )}
                         </>
                     ) : (
                         <button type="button" className="button button-primary button-block" onClick={onComplete}>
-                            Continue to Upload →
+                            {t('profile.setup.continue_upload')}
                         </button>
                     )}
                 </div>

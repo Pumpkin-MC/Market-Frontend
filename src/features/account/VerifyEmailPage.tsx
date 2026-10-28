@@ -1,12 +1,15 @@
+import { Trans, useTranslation } from 'react-i18next';
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import api from '../../lib/api';
+import { translateApiMessage } from '../../lib/apiMessages';
 import { SecuritySetupCards } from '../../components/SecuritySetupCards';
 import { Check, AlertCircle } from 'lucide-react';
 import '../../styles/account.css';
 
 const VerifyEmailPage: React.FC = () => {
+    const { t } = useTranslation();
     const [status, setStatus] = useState<'verifying' | 'success' | 'error'>('verifying');
     const [error, setError] = useState<string | null>(null);
     const location = useLocation();
@@ -20,7 +23,7 @@ const VerifyEmailPage: React.FC = () => {
 
             if (!token) {
                 setStatus('error');
-                setError('No verification token found.');
+                setError(t('auth.errors.missing_verification_token'));
                 return;
             }
 
@@ -34,7 +37,7 @@ const VerifyEmailPage: React.FC = () => {
                 setStatus('success');
             } catch (err: any) {
                 setStatus('error');
-                setError(err.response?.data?.error || 'Verification failed. The link may be invalid or expired.');
+                setError(translateApiMessage(t, err.response?.data?.error || t('auth.errors.verification_failed')));
             }
         };
 
@@ -47,8 +50,8 @@ const VerifyEmailPage: React.FC = () => {
                 <div className="panel panel-fg ac-card" role="status">
                     <div className="ac-card-head">
                         <span className="loading" />
-                        <h1 className="h1">Verifying your email address...</h1>
-                        <p className="small">Please wait while we confirm your credentials.</p>
+                        <h1 className="h1">{t('auth.verify_email.verifying')}</h1>
+                        <p className="small">{t('auth.verify_email.waiting')}</p>
                     </div>
                 </div>
             )}
@@ -57,12 +60,12 @@ const VerifyEmailPage: React.FC = () => {
                 <div className="ac-wide stack">
                     <div className="notice notice-success ac-alert" role="status">
                         <span className="mark-box mark-box-success"><Check /></span>
-                        <p className="notice-text"><strong>Email verified successfully! Welcome to Pumpkin Market.</strong></p>
+                        <p className="notice-text"><strong>{t('auth.verify_email.success')}</strong></p>
                     </div>
 
                     <SecuritySetupCards
-                        title="Protect Your Account (Recommended)"
-                        description="Add an extra layer of security before you get started. Choose passkeys (biometrics) or an authenticator app. You can also do this later."
+                        title={t('auth.verify_email.security_title')}
+                        description={t('auth.verify_email.security_description')}
                         canSkip={true}
                         onSkip={() => navigate('/')}
                         onComplete={() => navigate('/')}
@@ -74,14 +77,14 @@ const VerifyEmailPage: React.FC = () => {
                 <div className="panel panel-fg ac-card">
                     <div className="ac-card-head">
                         <span className="ac-badge ac-badge-danger"><AlertCircle /></span>
-                        <h1 className="h1">Verification <span className="mark ac-mark-danger">Failed</span></h1>
+                        <h1 className="h1"><Trans t={t} i18nKey="auth.verify_email.failed" components={{ highlight: <span className="mark ac-mark-danger" /> }} /></h1>
                         <p className="small">{error}</p>
                     </div>
                     <button
                         className="button button-primary button-block"
                         onClick={() => navigate('/register')}
                     >
-                        Return to Registration
+                        {t('auth.verify_email.return_to_registration')}
                     </button>
                 </div>
             )}

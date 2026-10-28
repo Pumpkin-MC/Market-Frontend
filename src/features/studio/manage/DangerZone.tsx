@@ -1,6 +1,8 @@
+import { Trans, useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import { Trash2, AlertTriangle, Lock, ShieldAlert, ShieldCheck } from 'lucide-react';
 import api from '../../../lib/api';
+import { translateApiMessage } from '../../../lib/apiMessages';
 import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 import { useNavigate } from 'react-router-dom';
@@ -8,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 type Props = { plugin: PluginData };
 
 const DangerZone = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -18,7 +21,7 @@ const DangerZone = ({ plugin }: Props) => {
     const handleDelete = async () => {
         if (deleteConfirm !== plugin.name) return;
         if (!twoFactorCode.trim()) {
-            setDeleteError('Please enter your 6-digit 2FA code.');
+            setDeleteError(t('developer.danger_zone.code_required'));
             return;
         }
         setDeleting(true);
@@ -29,7 +32,7 @@ const DangerZone = ({ plugin }: Props) => {
             });
             navigate('/dashboard/plugins');
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to delete plugin.';
+            const msg = translateApiMessage(t, err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null), t('developer.danger_zone.delete_failed'));
             setDeleteError(msg);
             setDeleting(false);
         }
@@ -38,22 +41,20 @@ const DangerZone = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Danger Zone</h2>
-                <p className="small">Irreversible actions live here. Proceed carefully.</p>
+                <h2 className="h1">{t('developer.dashboard.danger_zone')}</h2>
+                <p className="small">{t('developer.danger_zone.subtitle')}</p>
             </header>
 
             <section className="panel st-danger">
                 <div className="panel-head">
                     <Trash2 size={16} className="st-neg" />
-                    <h3 className="h3 st-neg">Delete Plugin</h3>
+                    <h3 className="h3 st-neg">{t('developer.danger_zone.delete_plugin')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div className="notice notice-danger">
                         <span className="mark-box mark-box-danger"><AlertTriangle /></span>
                         <p className="notice-text">
-                            <strong>This is permanent and cannot be undone.</strong> All user installs,
-                            purchase records, screenshots, and binaries will be erased. Active subscribers
-                            will be refunded automatically.
+                            <Trans t={t} i18nKey="developer.danger_zone.delete_warning" components={{ strong: <strong /> }} />
                         </p>
                     </div>
 
@@ -61,21 +62,19 @@ const DangerZone = ({ plugin }: Props) => {
                         <div className="notice notice-warning">
                             <span className="mark-box mark-box-warning"><ShieldAlert /></span>
                             <p className="notice-text">
-                                <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
-                                To protect against accidental or unauthorized deletion of published plugins, you must enable 2FA on your account before deleting.
+                                <Trans t={t} i18nKey="developer.danger_zone.security_required" components={{ strong: <strong /> }} />
                             </p>
                             <button
                                 type="button"
                                 className="button button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck /> Enable 2FA →
-                            </button>
+                                <ShieldCheck />{' '}{t('developer.dashboard.enable_2fa')}</button>
                         </div>
                     ) : (
                         <>
                             <label className="field">
-                                <span className="field-label">1. Type the plugin name <em className="mono">{plugin.name}</em> to confirm:</span>
+                                <span className="field-label"><Trans t={t} i18nKey="developer.danger_zone.confirm_name" components={{ plugin: <em className="mono">{plugin.name}</em> }} /></span>
                                 <span className="control">
                                     <input
                                         id="deleteConfirmInput"
@@ -92,7 +91,7 @@ const DangerZone = ({ plugin }: Props) => {
                             </label>
 
                             <label className="field">
-                                <span className="field-label">2. Enter your 6-digit Two-Factor Authentication (2FA) code:</span>
+                                <span className="field-label">{t('developer.danger_zone.code_label')}</span>
                                 <span className="control st-narrow">
                                     <Lock size={15} className="muted" />
                                     <input
@@ -126,7 +125,7 @@ const DangerZone = ({ plugin }: Props) => {
                             aria-busy={deleting}
                         >
                             <Trash2 />
-                            {deleting ? 'Deleting…' : 'Delete Forever with 2FA'}
+                            {deleting ? t('common.deleting') : t('developer.danger_zone.delete_confirm')}
                         </button>
                     </div>
                 )}
