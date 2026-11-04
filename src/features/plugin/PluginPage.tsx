@@ -284,7 +284,6 @@ const PluginPage = () => {
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
-  const [currentDescription, setCurrentDescription] = useState('');
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -412,26 +411,28 @@ const PluginPage = () => {
   }, [user, id]);
 
   // ── Translations ─────────────────────────────────────────────────────────
-  useEffect(() => {
+  const currentDescription = useMemo(() => {
     if (plugin?.translated_descriptions) {
       try {
         const translations = typeof plugin.translated_descriptions === 'string'
           ? JSON.parse(plugin.translated_descriptions)
           : plugin.translated_descriptions;
-        const activeLang = (i18n.language || 'en').slice(0, 2);
-        setCurrentDescription(
+        const fullLang = i18n.language || 'en-US';
+        const activeLang = fullLang.slice(0, 2);
+        return (
+          translations[fullLang] ||
           translations[activeLang] ||
-          translations['en'] ||
           translations['en-US'] ||
+          translations['en'] ||
+          translations['en-GB'] ||
           (Object.values(translations)[0] as string) ||
           ''
         );
       } catch {
-        setCurrentDescription('Description not available.');
+        return 'Description not available.';
       }
-    } else if (plugin?.description) {
-      setCurrentDescription(plugin.description);
     }
+    return plugin?.description || '';
   }, [plugin, i18n.language]);
 
   // ── Lightbox helpers ─────────────────────────────────────────────────────
@@ -731,7 +732,16 @@ const PluginPage = () => {
     return `Download ${sizeStr}`;
   })();
 
-  const cleanDesc = currentDescription.replace(/[#*`_\[\]]/g, '').slice(0, 160).trim();
+  const cleanDesc = currentDescription
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#*`_~>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200)
+    .trim();
 
   const productSchema = {
     "@context": "https://schema.org",
@@ -824,14 +834,71 @@ const PluginPage = () => {
     </div>
   );
 
+  const seoPriceLabel = (() => {
+    if (plugin.type === 'paid') {
+      const priceText = saleDiscount > 0 ? `${euro(salePrice)} (-${saleDiscount}%)` : euro(basePrice);
+      return plugin.is_preorder ? `${priceText} (Pre-Order)` : priceText;
+    }
+    if (plugin.type === 'adwall') return 'Free (Ad-Supported)';
+    return 'Free';
+  })();
+
+  const seoStatsLine = [
+    plugin.category,
+    plugin.version ? `v${plugin.version.replace(/^v/, '')}` : null,
+    seoPriceLabel,
+    plugin.is_early_access ? 'Early Access' : null,
+    `${(plugin.downloads ?? 0).toLocaleString()} ${(plugin.downloads ?? 0) === 1 ? 'download' : 'downloads'}`,
+    stats ? `★ ${stats.avg}/5 (${stats.total})` : null,
+  ].filter(Boolean).join(' • ');
+
+  const seoSummary = cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`;
+  const seoMetaDesc = `${seoSummary} — ${seoStatsLine}`;
+  const seoOgDesc = `${seoSummary}\n\n${seoStatsLine}`;
+  const seoOgTitle = plugin.version
+    ? `${plugin.name} (v${plugin.version.replace(/^v/, '')}) by ${plugin.dev_name}`
+    : `${plugin.name} by ${plugin.dev_name}`;
+  const ytVideoId = plugin.youtube_video_url ? getYoutubeVideoId(plugin.youtube_video_url) : null;
+  const seoOgImage =
+    plugin.preview_path ||
+    screenshots[0]?.path ||
+    (ytVideoId ? `https://img.youtube.com/vi/${ytVideoId}/hqdefault.jpg` : '/icon.png');
+  const seoTwitterCard = plugin.preview_path
+    ? 'summary'
+    : screenshots.length > 0 || ytVideoId
+      ? 'summary_large_image'
+      : 'summary';
+  const expectedSlug = plugin.name
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_.\-]+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+  const targetPluginId = plugin.public_id || plugin.id;
+  const canonicalUrl = expectedSlug
+    ? `https://market.pumpkinmc.org/plugin/${targetPluginId}-${expectedSlug}`
+    : `https://market.pumpkinmc.org/plugin/${targetPluginId}`;
+
   return (
     <div className="page pd">
       <SEO
-        title={plugin.name}
-        description={cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`}
-        keywords={`${plugin.name}, minecraft plugin, ${plugin.category || ''}, ${plugin.keywords || ''}`}
-        ogType="product"
-        ogImage={plugin.preview_path || "/icon.png"}
+        title={`${plugin.name} by ${plugin.dev_name}`}
+        ogTitle={seoOgTitle}
+        description={seoMetaDesc}
+        ogDescription={seoOgDesc}
+        canonical={canonicalUrl}
+        keywords={`${plugin.name}, ${plugin.dev_name}, minecraft plugin, pumpkinmc, wasm, ${plugin.category || ''}, ${plugin.keywords || ''}`}
+        ogType="website"
+        ogImage={seoOgImage}
+        twitterCard={seoTwitterCard}
+        twitterLabels={{
+          label1: 'Developer',
+          data1: plugin.dev_name,
+          label2: 'Price',
+          data2: seoPriceLabel,
+        }}
       />
       <script type="application/ld+json">
         {JSON.stringify(productSchema)}
