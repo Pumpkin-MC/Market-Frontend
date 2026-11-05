@@ -9,6 +9,7 @@ import { useAuth } from '../../app/auth';
 import { useInfiniteScroll } from '../../hooks/useInfiniteScroll';
 
 import { getPluginUrl } from '../../lib/url';
+import { markdownToPlainText } from '../../lib/markdown';
 import '../../styles/store.css';
 
 const PAGE_SIZE = 12;
@@ -252,7 +253,7 @@ const HomePage = () => {
                                     })}
                                 </div>
 
-                                <p className="sf-feature-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
+                                <p className="sf-feature-desc">{markdownToPlainText(getDesc(activeFeatured.translated_descriptions))}</p>
 
                                 <dl className="specs">
                                     <dt>Downloads</dt><dd>{(activeFeatured.downloads || 0).toLocaleString()}</dd>
