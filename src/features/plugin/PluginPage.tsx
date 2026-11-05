@@ -277,7 +277,6 @@ const PluginPage = () => {
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(0);
-  const [currentDescription, setCurrentDescription] = useState('');
 
   // Coupon state
   const [couponCode, setCouponCode] = useState('');
@@ -405,19 +404,18 @@ const PluginPage = () => {
   }, [user, id]);
 
   // ── Translations ─────────────────────────────────────────────────────────
-  useEffect(() => {
+  const currentDescription = useMemo(() => {
     if (plugin?.translated_descriptions) {
       try {
         const translations = typeof plugin.translated_descriptions === 'string'
           ? JSON.parse(plugin.translated_descriptions)
           : plugin.translated_descriptions;
-        setCurrentDescription(getLocalizedText(translations, i18n.language));
+        return getLocalizedText(translations, i18n.language);
       } catch {
-        setCurrentDescription(t('plugin.messages.description_unavailable'));
+        return t('plugin.messages.description_unavailable');
       }
-    } else if (plugin?.description) {
-      setCurrentDescription(plugin.description);
     }
+    return plugin?.description || '';
   }, [plugin, i18n.language, t]);
 
   // ── Lightbox helpers ─────────────────────────────────────────────────────
@@ -717,7 +715,16 @@ const PluginPage = () => {
     return t('plugin.purchase.download', { size: sizeStr });
   })();
 
-  const cleanDesc = currentDescription.replace(/[#*`_\[\]]/g, '').slice(0, 160).trim();
+  const cleanDesc = currentDescription
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/[#*`_~>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200)
+    .trim();
 
   const productSchema = {
     "@context": "https://schema.org",
@@ -810,14 +817,79 @@ const PluginPage = () => {
     </div>
   );
 
+  const seoPriceLabel = (() => {
+    if (plugin.type === 'paid') {
+      const priceText = saleDiscount > 0 ? `${euro(salePrice)} (-${saleDiscount}%)` : euro(basePrice);
+      return plugin.is_preorder ? `${priceText} (${t('plugin.pre_order')})` : priceText;
+    }
+    if (plugin.type === 'adwall') return t('plugin.metadata.free_ad_supported');
+    return t('plugin.free');
+  })();
+
+  const seoStatsLine = [
+    plugin.category,
+    plugin.version ? `v${plugin.version.replace(/^v/, '')}` : null,
+    seoPriceLabel,
+    plugin.is_early_access ? t('plugin.early_access_badge') : null,
+    t('plugin.metadata.downloads_count', {
+      count: plugin.downloads ?? 0,
+      formatted: (plugin.downloads ?? 0).toLocaleString(),
+    }),
+    stats ? `★ ${stats.avg}/5 (${stats.total})` : null,
+  ].filter(Boolean).join(' • ');
+
+  const seoSummary = cleanDesc || t('plugin.metadata.description', { name: plugin.name, author: plugin.dev_name });
+  const seoMetaDesc = `${seoSummary} — ${seoStatsLine}`;
+  const seoOgDesc = `${seoSummary}\n\n${seoStatsLine}`;
+  const seoOgTitle = plugin.version
+    ? t('plugin.metadata.og_title_version', { name: plugin.name, version: plugin.version.replace(/^v/, ''), author: plugin.dev_name })
+    : t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name });
+  const ytVideoId = plugin.youtube_video_url ? getYoutubeVideoId(plugin.youtube_video_url) : null;
+  const seoOgImage =
+    plugin.preview_path ||
+    screenshots[0]?.path ||
+    (ytVideoId ? `https://img.youtube.com/vi/${ytVideoId}/hqdefault.jpg` : '/icon.png');
+  const seoTwitterCard = plugin.preview_path
+    ? 'summary'
+    : screenshots.length > 0 || ytVideoId
+      ? 'summary_large_image'
+      : 'summary';
+  const expectedSlug = plugin.name
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_.\-]+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+  const targetPluginId = plugin.public_id || plugin.id;
+  const canonicalUrl = expectedSlug
+    ? `https://market.pumpkinmc.org/plugin/${targetPluginId}-${expectedSlug}`
+    : `https://market.pumpkinmc.org/plugin/${targetPluginId}`;
+
   return (
     <div className="page pd">
       <SEO
-        title={plugin.name}
-        description={cleanDesc || t('plugin.metadata.description', { name: plugin.name, author: plugin.dev_name })}
-        keywords={t('plugin.metadata.keywords', { name: plugin.name, category: plugin.category || '', keywords: plugin.keywords || '' })}
-        ogType="product"
-        ogImage={plugin.preview_path || "/icon.png"}
+        title={t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name })}
+        ogTitle={seoOgTitle}
+        description={seoMetaDesc}
+        ogDescription={seoOgDesc}
+        canonical={canonicalUrl}
+        keywords={t('plugin.metadata.keywords', {
+          name: plugin.name,
+          author: plugin.dev_name,
+          category: plugin.category || '',
+          keywords: plugin.keywords || '',
+        })}
+        ogType="website"
+        ogImage={seoOgImage}
+        twitterCard={seoTwitterCard}
+        twitterLabels={{
+          label1: t('plugin.metadata.label_developer'),
+          data1: plugin.dev_name,
+          label2: t('plugin.metadata.label_price'),
+          data2: seoPriceLabel,
+        }}
       />
       <script type="application/ld+json">
         {JSON.stringify(productSchema)}

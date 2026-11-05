@@ -225,9 +225,16 @@
     },
     "metadata": {
       "description": "Download {{name}} by {{author}} on Pumpkin Market.",
-      "keywords": "{{name}}, minecraft plugin, {{category}}, {{keywords}}",
+      "keywords": "{{name}}, {{author}}, minecraft eklentisi, pumpkinmc, wasm, {{category}}, {{keywords}}",
       "source": "Source",
-      "view_source": "View Source Code"
+      "view_source": "View Source Code",
+      "free_ad_supported": "Ücretsiz (Reklam Destekli)",
+      "downloads_count_one": "{{formatted}} indirme",
+      "downloads_count_other": "{{formatted}} indirme",
+      "og_title": "{{name}} (Geliştirici: {{author}})",
+      "og_title_version": "{{name}} (v{{version}}, Geliştirici: {{author}})",
+      "label_developer": "Geliştirici",
+      "label_price": "Fiyat"
     },
     "navigation": {
       "breadcrumb": "Breadcrumb"
@@ -1867,7 +1874,7 @@
     "site_name": "Pumpkin Market",
     "home_title": "Pumpkin Market - WASM Minecraft Plugin Marketplace",
     "title_suffix": "{{title}} | {{site}}",
-    "default_description": "Explore powerful, performance-optimized Minecraft plugins at Pumpkin Market. The one-stop marketplace for WASM-powered MC plugins.",
+    "default_description": "PumpkinMC Minecraft sunucuları için yüksek performanslı WebAssembly eklentilerini keşfedin, indirin ve yayınlayın.",
     "keywords": "minecraft, plugins, wasm, marketplace, mc plugins, development"
   },
   "common": {

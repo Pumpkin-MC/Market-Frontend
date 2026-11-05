@@ -225,9 +225,16 @@
     },
     "metadata": {
       "description": "Download {{name}} by {{author}} on Pumpkin Market.",
-      "keywords": "{{name}}, minecraft plugin, {{category}}, {{keywords}}",
+      "keywords": "{{name}}, {{author}}, マインクラフト プラグイン, pumpkinmc, wasm, {{category}}, {{keywords}}",
       "source": "Source",
-      "view_source": "View Source Code"
+      "view_source": "View Source Code",
+      "free_ad_supported": "無料（広告付き）",
+      "downloads_count_one": "{{formatted}} 回ダウンロード",
+      "downloads_count_other": "{{formatted}} 回ダウンロード",
+      "og_title": "{{name}}（作者: {{author}}）",
+      "og_title_version": "{{name}} (v{{version}}、作者: {{author}})",
+      "label_developer": "開発者",
+      "label_price": "価格"
     },
     "navigation": {
       "breadcrumb": "Breadcrumb"
@@ -1867,7 +1874,7 @@
     "site_name": "Pumpkin Market",
     "home_title": "Pumpkin Market - WASM Minecraft Plugin Marketplace",
     "title_suffix": "{{title}} | {{site}}",
-    "default_description": "Explore powerful, performance-optimized Minecraft plugins at Pumpkin Market. The one-stop marketplace for WASM-powered MC plugins.",
+    "default_description": "PumpkinMC Minecraftサーバー向けの高性能WebAssemblyプラグインを見つけ、ダウンロードし、公開しましょう。",
     "keywords": "minecraft, plugins, wasm, marketplace, mc plugins, development"
   },
   "common": {

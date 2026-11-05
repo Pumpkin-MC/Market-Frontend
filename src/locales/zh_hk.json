@@ -225,9 +225,16 @@
     },
     "metadata": {
       "description": "在 Pumpkin Market 下載由 {{author}} 開發的 {{name}}。",
-      "keywords": "{{name}}, minecraft 插件, {{category}}, {{keywords}}",
+      "keywords": "{{name}}, {{author}}, Minecraft 外掛程式, pumpkinmc, wasm, {{category}}, {{keywords}}",
       "source": "源代碼",
-      "view_source": "查看源代碼"
+      "view_source": "查看源代碼",
+      "free_ad_supported": "免費（含廣告）",
+      "downloads_count_one": "{{formatted}} 次下載",
+      "downloads_count_other": "{{formatted}} 次下載",
+      "og_title": "{{name}}（作者：{{author}}）",
+      "og_title_version": "{{name}} (v{{version}}，作者：{{author}})",
+      "label_developer": "開發者",
+      "label_price": "價格"
     },
     "navigation": {
       "breadcrumb": "麪包屑導航"
@@ -1867,7 +1874,7 @@
     "site_name": "Pumpkin Market",
     "home_title": "Pumpkin Market - WASM Minecraft 插件市場",
     "title_suffix": "{{title}} | {{site}}",
-    "default_description": "在 Pumpkin Market 探索強大、性能優化的 Minecraft 插件。一站式 WASM 驅動的 MC 插件市場。",
+    "default_description": "探索、下載並發布適用於 PumpkinMC Minecraft 伺服器的高效能 WebAssembly 外掛程式。",
     "keywords": "minecraft, 插件, wasm, 市場, mc 插件, 開發"
   },
   "common": {
