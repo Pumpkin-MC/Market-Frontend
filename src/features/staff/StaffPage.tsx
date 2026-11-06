@@ -1,5 +1,6 @@
 import { useState, useEffect, Fragment } from 'react';
-import { Check, CircleAlert, Search, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Check, CircleAlert, ExternalLink, Search, X } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
 import { Select } from '../../components/Select';
@@ -8,8 +9,9 @@ import '../../styles/store.css';
 const StaffPage = () => {
     const { user: currentUser } = useAuth();
     const isAdmin = currentUser?.role === 'admin';
+    const isStaff = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
 
-    const [activeTab, setActiveTab] = useState<'users' | 'plugins' | 'logs'>('users');
+    const [activeTab, setActiveTab] = useState<'users' | 'plugins' | 'logs'>(isStaff ? 'users' : 'plugins');
     const [users, setUsers] = useState<any[]>([]);
     const [plugins, setPlugins] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
@@ -17,6 +19,7 @@ const StaffPage = () => {
     const [error, setError] = useState<string | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [pluginStatusFilter, setPluginStatusFilter] = useState('all');
     const [logFilterAction, setLogFilterAction] = useState('all');
     const [logFilterModerator, setLogFilterModerator] = useState('all');
 
@@ -84,17 +87,79 @@ const StaffPage = () => {
         }
     };
 
+    const approvePlugin = async (id: number) => {
+        if (!window.confirm('Approve this plugin and publish it live to PumpkinMarket?')) return;
+        try {
+            await api.post(`/admin/plugins/${id}/approve`, {});
+            setPlugins(plugins.map(p => p.id === id ? { ...p, status: 'published', rejection_reason: null, claimed_by_id: null, claimed_by_name: null, claimed_at: null } : p));
+            if (selectedItem?.type === 'plugin' && selectedItem.data.id === id) {
+                setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, status: 'published', rejection_reason: null, claimed_by_id: null, claimed_by_name: null, claimed_at: null } });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || err.response?.data || 'Failed to approve plugin');
+        }
+    };
+
+    const rejectPlugin = async (id: number) => {
+        const reason = window.prompt('Enter rejection feedback for the developer (e.g., Minimum Functionality, missing config/docs):');
+        if (!reason || !reason.trim()) return;
+        try {
+            await api.post(`/admin/plugins/${id}/reject`, { reason: reason.trim() });
+            setPlugins(plugins.map(p => p.id === id ? { ...p, status: 'rejected', rejection_reason: reason.trim(), claimed_by_id: null, claimed_by_name: null, claimed_at: null } : p));
+            if (selectedItem?.type === 'plugin' && selectedItem.data.id === id) {
+                setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, status: 'rejected', rejection_reason: reason.trim(), claimed_by_id: null, claimed_by_name: null, claimed_at: null } });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || err.response?.data || 'Failed to reject plugin');
+        }
+    };
+
+    const claimPlugin = async (id: number) => {
+        try {
+            const res = await api.post(`/admin/plugins/${id}/claim`);
+            const claimData = {
+                claimed_by_id: res.data.claimed_by_id,
+                claimed_by_name: res.data.claimed_by_name,
+                claimed_at: res.data.claimed_at,
+            };
+            setPlugins(plugins.map(p => p.id === id ? { ...p, ...claimData } : p));
+            if (selectedItem?.type === 'plugin' && selectedItem.data.id === id) {
+                setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, ...claimData } });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || err.response?.data || 'Failed to claim plugin');
+            fetchData();
+        }
+    };
+
+    const unclaimPlugin = async (id: number) => {
+        try {
+            await api.post(`/admin/plugins/${id}/unclaim`);
+            setPlugins(plugins.map(p => p.id === id ? { ...p, claimed_by_id: null, claimed_by_name: null, claimed_at: null } : p));
+            if (selectedItem?.type === 'plugin' && selectedItem.data.id === id) {
+                setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, claimed_by_id: null, claimed_by_name: null, claimed_at: null } });
+            }
+        } catch (err: any) {
+            alert(err.response?.data?.error || err.response?.data || 'Failed to unclaim plugin');
+        }
+    };
+
     const filteredUsers = users.filter(u => 
         u.username.toLowerCase().includes(searchQuery.toLowerCase()) || 
         u.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.id.toString().includes(searchQuery)
     );
 
-    const filteredPlugins = plugins.filter(p => 
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        p.dev_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.id.toString().includes(searchQuery)
-    );
+    const filteredPlugins = plugins.filter(p => {
+        const matchesSearch =
+            p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+            p.dev_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.id.toString().includes(searchQuery);
+        const matchesStatus =
+            pluginStatusFilter === 'all' ||
+            (pluginStatusFilter === 'deleted' ? Boolean(p.deleted_at) : (!p.deleted_at && p.status === pluginStatusFilter));
+        return matchesSearch && matchesStatus;
+    });
 
     const filteredLogs = logs.filter(l => {
         const matchesSearch = 
@@ -116,7 +181,27 @@ const StaffPage = () => {
         ? <span className="status"><span className="mark-box mark-box-danger"><X /></span>Deleted</span>
         : <span className="status"><span className="mark-box mark-box-success"><Check /></span>Active</span>;
 
-    const roleTone: Record<string, string> = { admin: 'tag-pumpkin', moderator: 'tag-info', user: 'tag-fg' };
+    const pluginStatusBadge = (p: any) => {
+        if (p.deleted_at) {
+            return <span className="status"><span className="mark-box mark-box-danger"><X /></span>Deleted</span>;
+        }
+        switch (p.status) {
+            case 'published':
+                return <span className="status"><span className="mark-box mark-box-success"><Check /></span>Published</span>;
+            case 'under_review':
+                return p.claimed_by_name
+                    ? <span className="tag tag-info" title="Claimed for review (60 min lease)">In Review (@{p.claimed_by_name})</span>
+                    : <span className="tag tag-warning">Waiting for Review</span>;
+            case 'rejected':
+                return <span className="tag tag-danger">Rejected</span>;
+            case 'draft':
+                return <span className="tag tag-fg">Draft</span>;
+            default:
+                return <span className="tag tag-fg">{p.status || 'Unknown'}</span>;
+        }
+    };
+
+    const roleTone: Record<string, string> = { admin: 'tag-pumpkin', moderator: 'tag-info', reviewer: 'tag-success', user: 'tag-fg' };
     const typeTone: Record<string, string> = { free: 'tag-success', paid: 'tag-pumpkin', adwall: 'tag-info' };
 
     const details: [string, any][] = !selectedItem ? [] : selectedItem.type === 'user' ? [
@@ -131,14 +216,18 @@ const StaffPage = () => {
     ] : selectedItem.type === 'plugin' ? [
         ['ID', selectedItem.data.id],
         ['Name', selectedItem.data.name],
+        ['Version', selectedItem.data.version ? `v${selectedItem.data.version}` : '—'],
         ['Developer', selectedItem.data.dev_name],
         ['Type', selectedItem.data.type],
         ['Category', selectedItem.data.category],
-        ['Price', `€${(selectedItem.data.price_cents / 100).toFixed(2)}`],
+        ['Source Link', selectedItem.data.source_link ? <a href={selectedItem.data.source_link} target="_blank" rel="noreferrer">{selectedItem.data.source_link}</a> : 'None'],
+        ['Price', `€${((selectedItem.data.price_cents || 0) / 100).toFixed(2)}`],
         ['Downloads', selectedItem.data.downloads],
         ['Views', selectedItem.data.views],
         ['Created', new Date(selectedItem.data.created_at).toLocaleString()],
-        ['Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'],
+        ['Review Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : (selectedItem.data.status || 'draft')],
+        ...(selectedItem.data.claimed_by_name ? [['Claimed By', `@${selectedItem.data.claimed_by_name}`] as [string, any]] : []),
+        ...(selectedItem.data.rejection_reason ? [['Rejection Reason', selectedItem.data.rejection_reason] as [string, any]] : []),
     ] : [
         ['Date', new Date(selectedItem.data.created_at).toLocaleString()],
         ['Moderator', selectedItem.data.moderator_name],
@@ -148,7 +237,12 @@ const StaffPage = () => {
         ['Reason', selectedItem.data.reason || 'No reason provided'],
     ];
 
-    const tabs: [typeof activeTab, string][] = [['users', 'Users'], ['plugins', 'Plugins'], ['logs', 'Logs']];
+    const pendingReviewCount = plugins.filter(p => !p.deleted_at && p.status === 'under_review').length;
+    const tabs: [typeof activeTab, string][] = [
+        ...(isStaff ? [['users', 'Users'] as [typeof activeTab, string]] : []),
+        ['plugins', pendingReviewCount > 0 ? `Plugins (${pendingReviewCount} Pending)` : 'Plugins'],
+        ['logs', 'Logs'],
+    ];
 
     return (
         <div className="page stack sf-pad sf-staff">
@@ -178,11 +272,27 @@ const StaffPage = () => {
                         spellCheck={false}
                     />
                 </label>
+                {activeTab === 'plugins' && (
+                    <Select
+                        options={[
+                            { value: 'all', label: 'All Statuses' },
+                            { value: 'under_review', label: 'Pending Review' },
+                            { value: 'published', label: 'Published' },
+                            { value: 'rejected', label: 'Rejected' },
+                            { value: 'draft', label: 'Draft' },
+                        ]}
+                        value={pluginStatusFilter}
+                        onChange={setPluginStatusFilter}
+                        aria-label="Filter by Status"
+                    />
+                )}
                 {activeTab === 'logs' && (
                     <>
                         <Select
                             options={[
                                 { value: 'all', label: 'All Actions' },
+                                { value: 'approve_plugin', label: 'Approve Plugin' },
+                                { value: 'reject_plugin', label: 'Reject Plugin' },
                                 { value: 'soft_delete', label: 'Soft Delete' },
                                 { value: 'role_change', label: 'Role Change' },
                             ]}
@@ -236,6 +346,7 @@ const StaffPage = () => {
                                             <Select
                                                 options={[
                                                     { value: 'user', label: 'User' },
+                                                    { value: 'reviewer', label: 'Reviewer' },
                                                     { value: 'moderator', label: 'Moderator' },
                                                     { value: 'admin', label: 'Admin' },
                                                 ]}
@@ -281,11 +392,29 @@ const StaffPage = () => {
                                     <td><span className={`tag ${typeTone[p.type] || ''}`}>{p.type}</span></td>
                                     <td className="end">€{(p.price_cents / 100).toFixed(2)}</td>
                                     <td>{p.dev_name}</td>
-                                    <td>{status(p.deleted_at)}</td>
+                                    <td>{pluginStatusBadge(p)}</td>
                                     <td>
                                         <div className="row sf-actions">
-                                            <button className="button button-sm" onClick={() => setSelectedItem({type: 'plugin', data: p})}>View</button>
-                                            {!p.deleted_at && <button className="button button-danger button-sm" onClick={() => deletePlugin(p.id)}>Delete</button>}
+                                            <Link className="button button-sm" to={`/plugins/${p.public_id || p.id}`} target="_blank" rel="noreferrer" title="Inspect plugin page">
+                                                <ExternalLink size={14} />Inspect
+                                            </Link>
+                                            <button className="button button-sm" onClick={() => setSelectedItem({type: 'plugin', data: p})}>Details</button>
+                                            {!p.deleted_at && p.status === 'under_review' && !p.claimed_by_id && (
+                                                <button className="button button-primary button-sm" onClick={() => claimPlugin(p.id)}>Claim Review</button>
+                                            )}
+                                            {!p.deleted_at && p.status === 'under_review' && p.claimed_by_id && (p.claimed_by_id === currentUser?.id || isAdmin) && (
+                                                <>
+                                                    <button className="button button-primary button-sm" onClick={() => approvePlugin(p.id)}>Approve</button>
+                                                    <button className="button button-sm" onClick={() => rejectPlugin(p.id)}>Reject</button>
+                                                    <button className="button button-ghost button-sm" onClick={() => unclaimPlugin(p.id)}>Unclaim</button>
+                                                </>
+                                            )}
+                                            {!p.deleted_at && p.status === 'published' && isStaff && (
+                                                <button className="button button-sm" onClick={() => rejectPlugin(p.id)}>Unapprove</button>
+                                            )}
+                                            {isStaff && !p.deleted_at && (
+                                                <button className="button button-danger button-sm" onClick={() => deletePlugin(p.id)}>Delete</button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

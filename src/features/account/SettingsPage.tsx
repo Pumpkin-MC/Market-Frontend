@@ -1305,11 +1305,11 @@ const SettingsPage = () => {
                       <span className="mark-box mark-box-success"><Check /></span>
                       <span>2FA is currently <strong>enabled</strong> on your account.</span>
                     </p>
-                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                    {user?.role === 'admin' || user?.role === 'moderator' || user?.role === 'reviewer' ? (
                       <p className="status">
                         <span className="mark-box mark-box-warning"><Shield /></span>
                         <span>
-                          Staff members ({user.role === 'admin' ? 'Administrator' : 'Moderator'}) are required to keep 2FA enabled for platform security.
+                          Staff members ({user.role === 'admin' ? 'Administrator' : user.role === 'moderator' ? 'Moderator' : 'Reviewer'}) are required to keep 2FA enabled for platform security.
                         </span>
                       </p>
                     ) : (

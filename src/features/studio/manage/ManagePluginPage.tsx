@@ -107,7 +107,15 @@ const ManagePluginPage = () => {
     if (!plugin) return null;
 
     const isLive = plugin.status === 'published';
-    const statusLabel = isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)');
+    const isUnderReview = plugin.status === 'under_review';
+    const isRejected = plugin.status === 'rejected';
+    const statusLabel = isLive
+        ? t('developer.dashboard.status_published', 'Published')
+        : isUnderReview
+        ? 'Pending Review'
+        : isRejected
+        ? 'Changes Requested'
+        : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
     return (
         <div className="page page-wide st-page">
@@ -127,20 +135,34 @@ const ManagePluginPage = () => {
                 </div>
             </header>
 
-            <div className={`notice ${isLive ? 'notice-success' : 'notice-plain'}`}>
-                <span className={`sticker ${isLive ? 'sticker-success' : 'sticker-fg'}`}>{statusLabel}</span>
+            <div className={`notice ${isLive ? 'notice-success' : isRejected ? 'notice-danger' : isUnderReview ? 'notice-warning' : 'notice-plain'}`}>
+                <span className={`sticker ${isLive ? 'sticker-success' : isRejected ? 'sticker-danger' : isUnderReview ? 'sticker-warning' : 'sticker-fg'}`}>{statusLabel}</span>
                 <p className="notice-text">
                     {isLive
                         ? 'This plugin is public. You can publish updates or manage store details.'
-                        : 'Draft changes are private. Complete your store listing & binary build, then publish.'}
+                        : isUnderReview
+                        ? 'Your plugin has been submitted and is currently awaiting review by a human reviewer.'
+                        : isRejected
+                        ? `Reviewer feedback: ${plugin.rejection_reason || 'Please address the requested changes in your store listing or build, then resubmit for review.'}`
+                        : 'Draft changes are private. Complete your store listing, screenshots & binary build, then submit for review.'}
                 </p>
                 <div className="row">
-                    {!isLive ? (
+                    {isUnderReview ? (
+                        <button
+                            className="button button-sm"
+                            disabled={unpublishing}
+                            aria-busy={unpublishing}
+                            onClick={handleUnpublish}
+                        >
+                            <PowerOff />
+                            {unpublishing ? 'Cancelling…' : 'Cancel Review'}
+                        </button>
+                    ) : !isLive ? (
                         <>
                             <button
                                 className="button button-sm"
                                 onClick={() => setIsPublishModalOpen(true)}
-                                title="Check what requirements remain before publishing"
+                                title="Check what requirements remain before submitting for review"
                             >
                                 Check Readiness
                             </button>
@@ -149,7 +171,9 @@ const ManagePluginPage = () => {
                                 onClick={() => setIsPublishModalOpen(true)}
                             >
                                 <Rocket />
-                                {t('developer.dashboard.btn_publish_store', 'Publish to Store')}
+                                {isRejected
+                                    ? 'Resubmit for Review'
+                                    : t('developer.dashboard.btn_publish_store', 'Submit for Review')}
                             </button>
                         </>
                     ) : (

@@ -69,14 +69,14 @@ export const PublishReadinessModal: React.FC<Props> = ({
         setPublishing(true);
         setError(null);
         try {
-            await api.post(`/plugins/${pluginId}/publish`);
-            setSuccessMsg('Plugin published successfully and is now live!');
+            const res = await api.post(`/plugins/${pluginId}/publish`);
+            setSuccessMsg(res.data?.message || 'Plugin submitted for review! Our review team will inspect your submission shortly.');
             onPublished();
             setTimeout(() => {
                 onClose();
             }, 1800);
         } catch (err: any) {
-            setError(err.response?.data?.error || err.response?.data?.message || 'Failed to publish plugin');
+            setError(err.response?.data?.error || err.response?.data?.message || err.response?.data || 'Failed to submit plugin for review');
         } finally {
             setPublishing(false);
         }
@@ -129,8 +129,8 @@ export const PublishReadinessModal: React.FC<Props> = ({
                                 <div className="notice notice-success">
                                     <span className="sticker sticker-sm sticker-success">Ready</span>
                                     <p className="notice-text">
-                                        <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Your plugin is ready to go live.')}</strong>{' '}
-                                        Your store page, assets, and WebAssembly binary are all validated.
+                                        <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Ready to submit for review.')}</strong>{' '}
+                                        A human reviewer will inspect your plugin before it goes live on the marketplace.
                                     </p>
                                 </div>
                             ) : (
@@ -172,7 +172,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                         onClick={handlePublish}
                     >
                         <Rocket />
-                        {publishing ? 'Publishing…' : t('developer.dashboard.btn_confirm_publish', 'Confirm & Release to Store')}
+                        {publishing ? 'Submitting…' : t('developer.dashboard.btn_confirm_publish', 'Submit for Review')}
                     </button>
                 </div>
             </div>

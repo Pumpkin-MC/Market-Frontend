@@ -78,7 +78,7 @@ const GuidelinesPage = () => {
                     <h3>2.1 Plugin Completeness</h3>
                     <p>PumpkinMarket will reject plugins that are not yet complete. We do not accept "placeholder" plugins or versions that are non-functional.</p>
                     <ul>
-                        <li><strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. "Empty" plugins or those that only print a message to the console will be rejected.</li>
+                        <li><strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. Trivial single-command wrappers, "empty" plugins, or low-effort/unreviewed AI-generated scripts will be rejected.</li>
                         <li><strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed.</li>
                     </ul>
                 </div>
@@ -87,7 +87,7 @@ const GuidelinesPage = () => {
                     <h3>2.2 Accurate Metadata</h3>
                     <p>The information you provide about your plugin must be accurate and honest.</p>
                     <ul>
-                        <li><strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or "stock" images that are unrelated.</li>
+                        <li><strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's actual interface, custom UI/web panel, or effects in-game. Do not use unrelated stock images or deceptive AI-generated artwork in place of real screenshots.</li>
                         <li><strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.</li>
                         <li><strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or "tag spam" in your description to manipulate search results.</li>
                     </ul>
@@ -132,8 +132,8 @@ const GuidelinesPage = () => {
                 <div className="lg-sub">
                     <h3>4.1 Copycats and Spam</h3>
                     <ul>
-                        <li><strong>4.1.1 Originality:</strong> Do not simply "clone" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.</li>
-                        <li><strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options.</li>
+                        <li><strong>4.1.1 Originality:</strong> Competing plugins in existing categories are welcome when they offer meaningful improvements (better performance, richer configuration, database support, or active maintenance). Barebones clones or template-level duplicates that offer less functionality than established plugins will be rejected.</li>
+                        <li><strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins or mass-generated AI submissions. Consolidate features into a single, high-quality plugin with configuration options.</li>
                     </ul>
                 </div>
 

@@ -37,7 +37,7 @@ export const MainLayout = () => {
   );
 };
 
-const isStaff = (user: any) => user && (user.role === 'admin' || user.role === 'moderator');
+const isStaff = (user: any) => user && (user.role === 'admin' || user.role === 'moderator' || user.role === 'reviewer');
 
 const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) => (
   <NavLink to="/settings" className="user-chip" onClick={onNavigate}>
