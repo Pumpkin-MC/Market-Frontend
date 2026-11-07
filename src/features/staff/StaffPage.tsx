@@ -1,6 +1,17 @@
 import { useState, useEffect, useMemo, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
+    AreaChart,
+    Area,
+    BarChart,
+    Bar,
+    XAxis,
+    YAxis,
+    Tooltip,
+    ResponsiveContainer,
+    CartesianGrid,
+} from 'recharts';
+import {
     Check,
     CircleAlert,
     ExternalLink,
@@ -16,12 +27,20 @@ import {
     Lock,
     AlertTriangle,
     RefreshCw,
+    BarChart3,
+    TrendingUp,
+    Upload,
+    Download,
+    Clock,
+    Layers,
+    Star,
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
 import { Select } from '../../components/Select';
 import { getPluginUrl } from '../../lib/url';
 import '../../styles/store.css';
+import '../../styles/studio.css';
 
 const extractErrorMessage = (err: any, fallback: string) => {
     if (err?.response?.data?.error) return err.response.data.error;
@@ -34,6 +53,42 @@ const formatBytes = (bytes?: number) => {
     if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(2)} MB`;
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${bytes} B`;
+};
+
+const formatRelativeTime = (iso?: string | null) => {
+    if (!iso) return '—';
+    const dt = new Date(iso);
+    const diffMs = Date.now() - dt.getTime();
+    if (Number.isNaN(diffMs)) return '—';
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 30) return `${diffDays}d ago`;
+    const diffMonths = Math.floor(diffDays / 30);
+    if (diffMonths < 12) return `${diffMonths}mo ago`;
+    return `${Math.floor(diffMonths / 12)}y ago`;
+};
+
+const CHART_AXIS = { axisLine: false, tickLine: false, tick: { fill: 'var(--muted)', fontSize: 12 } } as const;
+const CHART_GRID = <CartesianGrid stroke="var(--line)" vertical={false} />;
+const CHART_CURSOR = { stroke: 'var(--fg)', strokeWidth: 1, fill: 'rgba(255, 255, 255, 0.04)' };
+
+const StaffChartTip = ({ active, payload, label }: any) => {
+    if (!active || !payload?.length) return null;
+    return (
+        <div className="st-tip">
+            <span className="label label-fg">{label}</span>
+            {payload.map((entry: any, index: number) => (
+                <span key={index} className="st-tip-row">
+                    <span className="dot" style={{ background: entry.color }} />
+                    {entry.name}: {Number(entry.value || 0).toLocaleString()}
+                </span>
+            ))}
+        </div>
+    );
 };
 
 const REJECTION_POLICY_PRESETS = [
@@ -88,7 +143,8 @@ const REMOVAL_POLICY_PRESETS = [
     },
 ];
 
-type StaffTab = 'plugins' | 'reports' | 'users' | 'logs';
+type StaffTab = 'queue' | 'plugins' | 'reports' | 'users' | 'logs' | 'analytics';
+type AnalyticsTimeframe = '7d' | '30d' | '365d';
 
 interface ActionModalState {
     kind: 'reject_plugin' | 'delete_plugin' | 'delete_user' | 'resolve_report';
@@ -107,19 +163,25 @@ const StaffPage = () => {
         (typeof currentUser?.passkey_count === 'number' && currentUser.passkey_count > 0)
     );
 
-    const [activeTab, setActiveTab] = useState<StaffTab>('plugins');
+    const [activeTab, setActiveTab] = useState<StaffTab>('queue');
     const [users, setUsers] = useState<any[]>([]);
     const [plugins, setPlugins] = useState<any[]>([]);
     const [reports, setReports] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
+    const [adminAnalytics, setAdminAnalytics] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     const [searchQuery, setSearchQuery] = useState('');
+    const [queueFilter, setQueueFilter] = useState('under_review');
     const [pluginStatusFilter, setPluginStatusFilter] = useState('all');
+    const [pluginSortBy, setPluginSortBy] = useState('recently_updated');
     const [reportStatusFilter, setReportStatusFilter] = useState('open');
     const [logFilterAction, setLogFilterAction] = useState('all');
     const [logFilterModerator, setLogFilterModerator] = useState('all');
+
+    const [analyticsTimeframe, setAnalyticsTimeframe] = useState<AnalyticsTimeframe>('30d');
+    const [recentActivityFilter, setRecentActivityFilter] = useState<'all' | 'updates' | 'uploads'>('all');
 
     const [selectedItem, setSelectedItem] = useState<{ type: 'user' | 'plugin' | 'log' | 'report'; data: any } | null>(null);
 
@@ -130,6 +192,26 @@ const StaffPage = () => {
     const [actionDeleteReview, setActionDeleteReview] = useState(false);
     const [actionResolutionStatus, setActionResolutionStatus] = useState<'resolved' | 'dismissed'>('resolved');
     const [actionBusy, setActionBusy] = useState(false);
+    const [rescanBusy, setRescanBusy] = useState(false);
+    const [rescanNotice, setRescanNotice] = useState<string | null>(null);
+
+    const handleRescanWasmMetadata = async () => {
+        if (rescanBusy) return;
+        setRescanBusy(true);
+        setRescanNotice(null);
+        setError(null);
+        try {
+            const res = await api.post('/admin/plugins/rescan-wasm', { force_all: true });
+            const scanned = res.data?.scanned ?? 0;
+            const updated = res.data?.updated ?? 0;
+            setRescanNotice(`Rescanned ${scanned} plugin binaries (${updated} updated with WIT metadata).`);
+            await fetchAllOverviewData();
+        } catch (err: any) {
+            setError(extractErrorMessage(err, 'Failed to rescan plugin WASM metadata'));
+        } finally {
+            setRescanBusy(false);
+        }
+    };
 
     useEffect(() => {
         fetchAllOverviewData();
@@ -152,6 +234,9 @@ const StaffPage = () => {
                 requests.push(api.get('/admin/users'));
                 requests.push(api.get('/admin/reports'));
             }
+            if (isAdmin) {
+                requests.push(api.get('/admin/analytics'));
+            }
             const results = await Promise.allSettled(requests);
 
             if (results[0].status === 'fulfilled') {
@@ -168,6 +253,9 @@ const StaffPage = () => {
             if (isStaff && results[3]?.status === 'fulfilled') {
                 setReports(Array.isArray(results[3].value.data) ? results[3].value.data : []);
             }
+            if (isAdmin && results[4]?.status === 'fulfilled') {
+                setAdminAnalytics(results[4].value.data);
+            }
         } catch (err: any) {
             setError(extractErrorMessage(err, 'Failed to fetch staff dashboard data'));
         } finally {
@@ -181,7 +269,7 @@ const StaffPage = () => {
             if (tab === 'users' && isStaff) {
                 const res = await api.get('/admin/users');
                 setUsers(Array.isArray(res.data) ? res.data : []);
-            } else if (tab === 'plugins') {
+            } else if (tab === 'queue' || tab === 'plugins') {
                 const res = await api.get('/admin/plugins');
                 setPlugins(Array.isArray(res.data) ? res.data : []);
             } else if (tab === 'reports' && isStaff) {
@@ -190,6 +278,9 @@ const StaffPage = () => {
             } else if (tab === 'logs') {
                 const res = await api.get('/admin/logs');
                 setLogs(Array.isArray(res.data) ? res.data : []);
+            } else if (tab === 'analytics' && isAdmin) {
+                const res = await api.get('/admin/analytics');
+                setAdminAnalytics(res.data);
             }
         } catch (err: any) {
             setError(extractErrorMessage(err, 'Failed to refresh tab data'));
@@ -324,7 +415,7 @@ const StaffPage = () => {
             }
         } catch (err: any) {
             alert(extractErrorMessage(err, 'Failed to claim plugin'));
-            fetchTabData('plugins');
+            fetchTabData(activeTab);
         }
     };
 
@@ -345,9 +436,19 @@ const StaffPage = () => {
         const activePlugins = plugins.filter(p => !p.deleted_at);
         const pendingReview = activePlugins.filter(p => p.status === 'under_review').length;
         const claimedReview = activePlugins.filter(p => p.status === 'under_review' && p.claimed_by_id).length;
+        const unclaimedReview = activePlugins.filter(p => p.status === 'under_review' && !p.claimed_by_id).length;
+        const claimedByMe = activePlugins.filter(p => p.status === 'under_review' && p.claimed_by_id === currentUser?.id).length;
         const publishedCount = activePlugins.filter(p => p.status === 'published').length;
         const draftCount = activePlugins.filter(p => !p.status || p.status === 'draft').length;
         const rejectedCount = activePlugins.filter(p => p.status === 'rejected').length;
+
+        const nowMs = Date.now();
+        const dayMs = 86400000;
+        const uploaded7d = activePlugins.filter(p => p.created_at && nowMs - new Date(p.created_at).getTime() <= 7 * dayMs).length;
+        const uploaded30d = activePlugins.filter(p => p.created_at && nowMs - new Date(p.created_at).getTime() <= 30 * dayMs).length;
+        const uploaded365d = activePlugins.filter(p => p.created_at && nowMs - new Date(p.created_at).getTime() <= 365 * dayMs).length;
+        const updated7d = activePlugins.filter(p => (p.updated_at || p.created_at) && nowMs - new Date(p.updated_at || p.created_at).getTime() <= 7 * dayMs).length;
+        const updated30d = activePlugins.filter(p => (p.updated_at || p.created_at) && nowMs - new Date(p.updated_at || p.created_at).getTime() <= 30 * dayMs).length;
 
         const openReports = reports.filter(r => r.status === 'open').length;
         const resolvedReports = reports.filter(r => r.status !== 'open').length;
@@ -355,20 +456,30 @@ const StaffPage = () => {
         const activeUsers = users.filter(u => !u.deleted_at);
         const verifiedDevs = activeUsers.filter(u => u.is_verified).length;
         const mfaUsers = activeUsers.filter(u => u.totp_enabled || u.has_passkey).length;
+        const newUsers30d = activeUsers.filter(u => u.created_at && nowMs - new Date(u.created_at).getTime() <= 30 * dayMs).length;
 
         return {
+            totalActivePlugins: activePlugins.length,
             pendingReview,
             claimedReview,
+            unclaimedReview,
+            claimedByMe,
             publishedCount,
             draftCount,
             rejectedCount,
+            uploaded7d: adminAnalytics?.plugins?.uploaded_7d ?? uploaded7d,
+            uploaded30d: adminAnalytics?.plugins?.uploaded_30d ?? uploaded30d,
+            uploaded365d: adminAnalytics?.plugins?.uploaded_365d ?? uploaded365d,
+            updated7d: adminAnalytics?.plugins?.updated_7d ?? updated7d,
+            updated30d: adminAnalytics?.plugins?.updated_30d ?? updated30d,
             openReports,
             resolvedReports,
-            activeUsersCount: activeUsers.length,
+            activeUsersCount: adminAnalytics?.users?.total_active ?? activeUsers.length,
             verifiedDevs,
             mfaUsers,
+            newUsers30d: adminAnalytics?.users?.new_30d ?? newUsers30d,
         };
-    }, [plugins, reports, users]);
+    }, [plugins, reports, users, adminAnalytics, currentUser?.id]);
 
     const filteredUsers = users.filter(
         u =>
@@ -377,22 +488,65 @@ const StaffPage = () => {
             u.id.toString().includes(searchQuery)
     );
 
-    const filteredPlugins = plugins.filter(p => {
-        const q = searchQuery.toLowerCase();
-        const matchesSearch =
-            p.name.toLowerCase().includes(q) ||
-            p.dev_name.toLowerCase().includes(q) ||
+    const matchesPluginSearch = (p: any, q: string) => {
+        if (!q) return true;
+        return (
+            p.name?.toLowerCase().includes(q) ||
+            p.dev_name?.toLowerCase().includes(q) ||
             (p.public_id && p.public_id.toLowerCase().includes(q)) ||
-            p.id.toString().includes(q);
-        const matchesStatus =
-            pluginStatusFilter === 'all' ||
-            (pluginStatusFilter === 'deleted'
-                ? Boolean(p.deleted_at)
-                : pluginStatusFilter === 'flagged'
-                  ? !p.deleted_at && (p.open_reports_count || 0) > 0
-                  : !p.deleted_at && p.status === pluginStatusFilter);
-        return matchesSearch && matchesStatus;
-    });
+            (p.category && p.category.toLowerCase().includes(q)) ||
+            p.id.toString().includes(q)
+        );
+    };
+
+    // Dedicated Review Queue list (separated from All Plugins catalog)
+    const queuePlugins = useMemo(() => {
+        const q = searchQuery.toLowerCase().trim();
+        return plugins
+            .filter(p => {
+                if (p.deleted_at) return false;
+                if (!matchesPluginSearch(p, q)) return false;
+                if (queueFilter === 'under_review') return p.status === 'under_review';
+                if (queueFilter === 'unclaimed') return p.status === 'under_review' && !p.claimed_by_id;
+                if (queueFilter === 'claimed_by_me') return p.status === 'under_review' && p.claimed_by_id === currentUser?.id;
+                if (queueFilter === 'rejected') return p.status === 'rejected';
+                return p.status === 'under_review' || p.status === 'rejected';
+            })
+            .sort((a, b) => {
+                if (a.status === 'under_review' && b.status !== 'under_review') return -1;
+                if (a.status !== 'under_review' && b.status === 'under_review') return 1;
+                return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
+            });
+    }, [plugins, searchQuery, queueFilter, currentUser?.id]);
+
+    // Dedicated All Plugins catalog list
+    const filteredPlugins = useMemo(() => {
+        const q = searchQuery.toLowerCase().trim();
+        return plugins
+            .filter(p => {
+                if (!matchesPluginSearch(p, q)) return false;
+                if (pluginStatusFilter === 'deleted') return Boolean(p.deleted_at);
+                if (p.deleted_at) return false;
+                if (pluginStatusFilter === 'all') return true;
+                if (pluginStatusFilter === 'flagged') return (p.open_reports_count || 0) > 0;
+                return p.status === pluginStatusFilter;
+            })
+            .sort((a, b) => {
+                if (pluginSortBy === 'recently_updated') {
+                    return new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime();
+                }
+                if (pluginSortBy === 'newest') {
+                    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                }
+                if (pluginSortBy === 'downloads') {
+                    return (b.downloads || 0) - (a.downloads || 0);
+                }
+                if (pluginSortBy === 'name') {
+                    return (a.name || '').localeCompare(b.name || '');
+                }
+                return 0;
+            });
+    }, [plugins, searchQuery, pluginStatusFilter, pluginSortBy]);
 
     const filteredReports = reports.filter(r => {
         const q = searchQuery.toLowerCase();
@@ -420,6 +574,39 @@ const StaffPage = () => {
     });
 
     const uniqueModerators = Array.from(new Set(logs.map(l => l.moderator_name)));
+
+    // ── Analytics Computations ────────────────────────────────────────────────
+    const analyticsChartData = useMemo(() => {
+        const daily = adminAnalytics?.timeline?.daily_30d || [];
+        const monthly = adminAnalytics?.timeline?.monthly_12m || [];
+        if (analyticsTimeframe === '7d') {
+            return daily.slice(-7);
+        }
+        if (analyticsTimeframe === '30d') {
+            return daily;
+        }
+        return monthly;
+    }, [adminAnalytics, analyticsTimeframe]);
+
+    const recentlyUpdatedList = useMemo(() => {
+        const rawList: any[] =
+            adminAnalytics?.recently_updated_plugins ||
+            [...plugins]
+                .filter(p => !p.deleted_at)
+                .sort((a, b) => new Date(b.updated_at || b.created_at).getTime() - new Date(a.updated_at || a.created_at).getTime())
+                .slice(0, 25);
+
+        const q = searchQuery.toLowerCase().trim();
+        return rawList.filter(p => {
+            if (!matchesPluginSearch(p, q)) return false;
+            const createdMs = p.created_at ? new Date(p.created_at).getTime() : 0;
+            const updatedMs = p.updated_at ? new Date(p.updated_at).getTime() : createdMs;
+            const isUpdate = (p.versions_count || 1) > 1 || updatedMs - createdMs > 5 * 60 * 1000;
+            if (recentActivityFilter === 'updates') return isUpdate;
+            if (recentActivityFilter === 'uploads') return !isUpdate;
+            return true;
+        });
+    }, [adminAnalytics, plugins, searchQuery, recentActivityFilter]);
 
     const status = (deletedAt?: string) =>
         deletedAt ? (
@@ -470,7 +657,11 @@ const StaffPage = () => {
             case 'rejected':
                 return <span className="tag tag-danger">Changes Requested</span>;
             case 'draft':
-                return <span className="tag tag-fg"><Lock size={12} /> Draft</span>;
+                return (
+                    <span className="tag tag-fg">
+                        <Lock size={12} /> Draft
+                    </span>
+                );
             default:
                 return <span className="tag tag-fg">{p.status || 'Draft'}</span>;
         }
@@ -574,7 +765,8 @@ const StaffPage = () => {
                       ),
                   ],
                   ['Downloads', (selectedItem.data.downloads ?? 0).toLocaleString()],
-                  ['Created', new Date(selectedItem.data.created_at).toLocaleString()],
+                  ['Created / Uploaded', selectedItem.data.created_at ? new Date(selectedItem.data.created_at).toLocaleString() : '—'],
+                  ['Last Updated', selectedItem.data.updated_at ? new Date(selectedItem.data.updated_at).toLocaleString() : '—'],
                   ['Review Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : selectedItem.data.status || 'draft'],
                   ...(selectedItem.data.claimed_by_name ? [['Claimed By', `@${selectedItem.data.claimed_by_name}`] as [string, any]] : []),
                   ...(selectedItem.data.rejection_reason ? [['Reviewer Feedback', selectedItem.data.rejection_reason] as [string, any]] : []),
@@ -612,7 +804,8 @@ const StaffPage = () => {
                 ];
 
     const tabs: [StaffTab, string][] = [
-        ['plugins', kpis.pendingReview > 0 ? `Plugin Queue (${kpis.pendingReview} Pending)` : 'Plugins & Review Queue'],
+        ['queue', kpis.pendingReview > 0 ? `Review Queue (${kpis.pendingReview} Pending)` : 'Review Queue'],
+        ['plugins', `All Plugins (${kpis.totalActivePlugins})`],
         ...(isStaff
             ? [
                   ['reports', kpis.openReports > 0 ? `User Reports (${kpis.openReports} Open)` : 'User Reports'] as [StaffTab, string],
@@ -620,7 +813,182 @@ const StaffPage = () => {
               ]
             : []),
         ['logs', 'Audit Logs'],
+        ...(isAdmin ? [['analytics', 'Platform Analytics'] as [StaffTab, string]] : []),
     ];
+
+    const renderPluginActions = (p: any) => (
+        <div className="row sf-actions">
+            <Link
+                className="button button-sm"
+                to={getPluginUrl(p)}
+                target="_blank"
+                rel="noreferrer"
+                title={
+                    p.status === 'draft'
+                        ? 'Inspect private draft page (visible only to Admins, Moderators & Developer)'
+                        : 'Inspect plugin store page'
+                }
+            >
+                <ExternalLink size={14} />
+                {p.status === 'draft' ? 'Inspect Draft' : 'Inspect'}
+            </Link>
+            <button className="button button-sm" onClick={() => setSelectedItem({ type: 'plugin', data: p })}>
+                Readiness
+            </button>
+            {!p.deleted_at && p.status === 'under_review' && !p.claimed_by_id && (
+                <button className="button button-primary button-sm" onClick={() => claimPlugin(p.id)}>
+                    Claim Review
+                </button>
+            )}
+            {!p.deleted_at &&
+                p.status === 'under_review' &&
+                p.claimed_by_id &&
+                (p.claimed_by_id === currentUser?.id || isAdmin) && (
+                    <>
+                        <button className="button button-primary button-sm" onClick={() => approvePlugin(p.id)}>
+                            Approve
+                        </button>
+                        <button
+                            className="button button-sm"
+                            onClick={() =>
+                                openActionModal({
+                                    kind: 'reject_plugin',
+                                    targetId: p.id,
+                                    targetName: p.name,
+                                    extra: p,
+                                })
+                            }
+                        >
+                            Request Changes
+                        </button>
+                        <button className="button button-ghost button-sm" onClick={() => unclaimPlugin(p.id)}>
+                            Release
+                        </button>
+                    </>
+                )}
+            {!p.deleted_at && p.status === 'published' && isStaff && (
+                <button
+                    className="button button-sm"
+                    onClick={() =>
+                        openActionModal({
+                            kind: 'reject_plugin',
+                            targetId: p.id,
+                            targetName: p.name,
+                            extra: p,
+                        })
+                    }
+                >
+                    Unapprove
+                </button>
+            )}
+            {isStaff && !p.deleted_at && (
+                <button
+                    className="button button-danger button-sm"
+                    onClick={() =>
+                        openActionModal({
+                            kind: 'delete_plugin',
+                            targetId: p.id,
+                            targetName: p.name,
+                        })
+                    }
+                >
+                    Remove
+                </button>
+            )}
+        </div>
+    );
+
+    const renderPluginsTable = (list: any[], mode: 'queue' | 'catalog') => (
+        <div className="scroll-x">
+            <table className="ledger">
+                <thead>
+                    <tr>
+                        <th>Plugin</th>
+                        <th>Developer</th>
+                        <th>{mode === 'queue' ? 'Submitted / Updated' : 'Downloads & Updated'}</th>
+                        <th>Pre-Launch Checks</th>
+                        <th>License</th>
+                        <th>Status</th>
+                        <th className="end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {list.map(p => (
+                        <tr key={p.id} className={p.deleted_at ? 'sf-row-off' : undefined}>
+                            <td>
+                                <div className="sf-plugin-cell">
+                                    <span className="avatar">
+                                        {p.preview_url ? <img src={p.preview_url} alt="" /> : p.name?.charAt(0)?.toUpperCase() || 'P'}
+                                    </span>
+                                    <div className="sf-plugin-meta">
+                                        <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                            <strong>{p.name}</strong>
+                                            {p.category && <span className="tag tag-fg">{p.category}</span>}
+                                            {(p.open_reports_count || 0) > 0 && (
+                                                <span className="tag tag-danger" title="Open user reports on this plugin">
+                                                    <Flag size={11} /> {p.open_reports_count}
+                                                </span>
+                                            )}
+                                        </div>
+                                        <span className="small mono muted">
+                                            #{p.id} · {p.version ? `v${p.version}` : 'No build'}
+                                            {p.api_version ? ` · API v${p.api_version}` : ''}
+                                            {p.file_size ? ` · ${formatBytes(p.file_size)}` : ''}
+                                        </span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div className="sf-plugin-meta">
+                                    <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                        <Link className="link" to={`/profile/${p.dev_name}`}>
+                                            @{p.dev_name}
+                                        </Link>
+                                        {p.dev_verified && (
+                                            <span className="tag tag-info" title="Verified Developer">
+                                                Verified
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="small muted">
+                                        {p.dev_secure_auth ? '2FA/Passkey OK' : 'No 2FA'}
+                                        {p.type === 'paid' ? (p.dev_stripe_ready ? ' · Stripe Ready' : ' · No Stripe') : ''}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <div className="sf-plugin-meta">
+                                    {mode === 'catalog' ? (
+                                        <strong>
+                                            {(p.downloads ?? 0).toLocaleString()} dl · {p.versions_count || 1} rel
+                                        </strong>
+                                    ) : (
+                                        <strong>{formatRelativeTime(p.updated_at || p.created_at)}</strong>
+                                    )}
+                                    <span className="small muted" title={p.updated_at ? new Date(p.updated_at).toLocaleString() : undefined}>
+                                        {mode === 'catalog'
+                                            ? `Updated ${formatRelativeTime(p.updated_at || p.created_at)}`
+                                            : p.created_at
+                                              ? `Uploaded ${new Date(p.created_at).toLocaleDateString()}`
+                                              : '—'}
+                                    </span>
+                                </div>
+                            </td>
+                            <td>{renderReadinessSignals(p)}</td>
+                            <td>
+                                <div className="sf-plugin-meta">
+                                    <span className={`tag ${typeTone[p.type] || ''}`}>{p.type}</span>
+                                    {p.type === 'paid' && <span className="small mono">€{((p.price_cents || 0) / 100).toFixed(2)}</span>}
+                                </div>
+                            </td>
+                            <td>{pluginStatusBadge(p)}</td>
+                            <td>{renderPluginActions(p)}</td>
+                        </tr>
+                    ))}
+                </tbody>
+            </table>
+        </div>
+    );
 
     return (
         <div className="page stack sf-pad sf-staff">
@@ -632,19 +1000,39 @@ const StaffPage = () => {
                             Staff <span className="mark">Console</span>
                         </h1>
                     </div>
-                    <button type="button" className="button button-sm" onClick={fetchAllOverviewData} disabled={loading}>
-                        <RefreshCw size={14} /> Refresh Console
-                    </button>
+                    <div className="row" style={{ gap: '8px', flexWrap: 'wrap' }}>
+                        {isStaff && (
+                            <button
+                                type="button"
+                                className="button button-sm"
+                                onClick={handleRescanWasmMetadata}
+                                disabled={rescanBusy || loading}
+                                title="Re-run all existing plugin .wasm binaries through the sandboxed WIT get-metadata extractor"
+                            >
+                                <FileCode2 size={14} /> {rescanBusy ? 'Scanning WASM...' : 'Rescan WASM Metadata'}
+                            </button>
+                        )}
+                        <button type="button" className="button button-sm" onClick={fetchAllOverviewData} disabled={loading}>
+                            <RefreshCw size={14} /> Refresh Console
+                        </button>
+                    </div>
                 </div>
+                {rescanNotice && (
+                    <div className="notice notice-success">
+                        <Check />
+                        <span>{rescanNotice}</span>
+                    </div>
+                )}
 
                 {/* Big-Platform KPI Overview Strip (Play Console / App Store Connect / YT Studio style) */}
                 <div className="sf-kpis">
                     <button
                         type="button"
                         className="sf-kpi"
+                        data-active={activeTab === 'queue'}
                         onClick={() => {
-                            setActiveTab('plugins');
-                            setPluginStatusFilter(kpis.pendingReview > 0 ? 'under_review' : 'all');
+                            setActiveTab('queue');
+                            setQueueFilter(kpis.pendingReview > 0 ? 'under_review' : 'all');
                         }}
                     >
                         <div className="sf-kpi-head">
@@ -659,10 +1047,36 @@ const StaffPage = () => {
                         </div>
                     </button>
 
+                    <button
+                        type="button"
+                        className="sf-kpi"
+                        data-active={activeTab === 'plugins'}
+                        onClick={() => {
+                            setActiveTab('plugins');
+                            setPluginStatusFilter('all');
+                        }}
+                    >
+                        <div className="sf-kpi-head">
+                            <span className="label">All Plugins</span>
+                            <Package size={18} className="pumpkin" />
+                        </div>
+                        <span className="sf-kpi-val">{kpis.publishedCount} Live</span>
+                        <div className="sf-kpi-meta">
+                            {isStaff && (
+                                <>
+                                    <span>{kpis.draftCount} Drafts</span>
+                                    <span>•</span>
+                                </>
+                            )}
+                            <span>{kpis.totalActivePlugins} Total</span>
+                        </div>
+                    </button>
+
                     {isStaff && (
                         <button
                             type="button"
                             className="sf-kpi"
+                            data-active={activeTab === 'reports'}
                             onClick={() => {
                                 setActiveTab('reports');
                                 setReportStatusFilter('open');
@@ -681,34 +1095,11 @@ const StaffPage = () => {
                         </button>
                     )}
 
-                    <button
-                        type="button"
-                        className="sf-kpi"
-                        onClick={() => {
-                            setActiveTab('plugins');
-                            setPluginStatusFilter('all');
-                        }}
-                    >
-                        <div className="sf-kpi-head">
-                            <span className="label">Store Catalog</span>
-                            <Package size={18} className="pumpkin" />
-                        </div>
-                        <span className="sf-kpi-val">{kpis.publishedCount} Live</span>
-                        <div className="sf-kpi-meta">
-                            {isStaff && (
-                                <>
-                                    <span>{kpis.draftCount} Private Drafts</span>
-                                    <span>•</span>
-                                </>
-                            )}
-                            <span>{plugins.filter(p => !p.deleted_at).length} Total</span>
-                        </div>
-                    </button>
-
                     {isStaff && (
                         <button
                             type="button"
                             className="sf-kpi"
+                            data-active={activeTab === 'users'}
                             onClick={() => setActiveTab('users')}
                         >
                             <div className="sf-kpi-head">
@@ -720,6 +1111,26 @@ const StaffPage = () => {
                                 <span>{kpis.verifiedDevs} Verified Devs</span>
                                 <span>•</span>
                                 <span>{kpis.mfaUsers} 2FA/Passkey</span>
+                            </div>
+                        </button>
+                    )}
+
+                    {isAdmin && (
+                        <button
+                            type="button"
+                            className="sf-kpi"
+                            data-active={activeTab === 'analytics'}
+                            onClick={() => setActiveTab('analytics')}
+                        >
+                            <div className="sf-kpi-head">
+                                <span className="label">Platform Analytics</span>
+                                <BarChart3 size={18} className="pumpkin" />
+                            </div>
+                            <span className="sf-kpi-val">+{kpis.uploaded30d} (30d)</span>
+                            <div className="sf-kpi-meta">
+                                <span>{kpis.updated7d} Updated (7d)</span>
+                                <span>•</span>
+                                <span>+{kpis.newUsers30d} Users (30d)</span>
                             </div>
                         </button>
                     )}
@@ -742,28 +1153,61 @@ const StaffPage = () => {
                         name="adminSearch"
                         className="input"
                         type="search"
-                        placeholder={`Search ${activeTab}...`}
+                        placeholder={
+                            activeTab === 'queue'
+                                ? 'Search review queue by plugin, developer, or ID...'
+                                : activeTab === 'analytics'
+                                  ? 'Filter recently updated plugins...'
+                                  : `Search ${activeTab}...`
+                        }
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         autoComplete="off"
                         spellCheck={false}
                     />
                 </label>
-                {activeTab === 'plugins' && (
+                {activeTab === 'queue' && (
                     <Select
                         options={[
-                            { value: 'all', label: 'All Statuses' },
                             { value: 'under_review', label: `Pending Review (${kpis.pendingReview})` },
-                            { value: 'published', label: `Published (${kpis.publishedCount})` },
+                            { value: 'unclaimed', label: `Unclaimed (${kpis.unclaimedReview})` },
+                            { value: 'claimed_by_me', label: `Claimed by Me (${kpis.claimedByMe})` },
                             { value: 'rejected', label: `Changes Requested (${kpis.rejectedCount})` },
-                            ...(isStaff ? [{ value: 'draft', label: `Drafts (${kpis.draftCount})` }] : []),
-                            { value: 'flagged', label: 'Flagged by Users' },
-                            { value: 'deleted', label: 'Deleted' },
+                            { value: 'all', label: `All Queue & Rejected (${kpis.pendingReview + kpis.rejectedCount})` },
                         ]}
-                        value={pluginStatusFilter}
-                        onChange={setPluginStatusFilter}
-                        aria-label="Filter by Status"
+                        value={queueFilter}
+                        onChange={setQueueFilter}
+                        aria-label="Filter Review Queue"
                     />
+                )}
+                {activeTab === 'plugins' && (
+                    <>
+                        <Select
+                            options={[
+                                { value: 'all', label: `All Active (${kpis.totalActivePlugins})` },
+                                { value: 'published', label: `Published (${kpis.publishedCount})` },
+                                { value: 'under_review', label: `Pending Review (${kpis.pendingReview})` },
+                                { value: 'rejected', label: `Changes Requested (${kpis.rejectedCount})` },
+                                ...(isStaff ? [{ value: 'draft', label: `Drafts (${kpis.draftCount})` }] : []),
+                                { value: 'flagged', label: 'Flagged by Users' },
+                                { value: 'deleted', label: 'Deleted' },
+                            ]}
+                            value={pluginStatusFilter}
+                            onChange={setPluginStatusFilter}
+                            aria-label="Filter by Status"
+                        />
+                        <Select
+                            options={[
+                                { value: 'recently_updated', label: 'Sort: Recently Updated' },
+                                { value: 'newest', label: 'Sort: Newest Uploaded' },
+                                { value: 'downloads', label: 'Sort: Most Downloads' },
+                                { value: 'name', label: 'Sort: Name (A–Z)' },
+                            ]}
+                            value={pluginSortBy}
+                            onChange={setPluginSortBy}
+                            aria-label="Sort Plugins"
+                        />
+                    </>
                 )}
                 {activeTab === 'reports' && (
                     <Select
@@ -802,6 +1246,31 @@ const StaffPage = () => {
                         />
                     </>
                 )}
+                {activeTab === 'analytics' && isAdmin && (
+                    <div className="segmented" role="group" aria-label="Analytics Timeframe">
+                        <button
+                            type="button"
+                            aria-pressed={analyticsTimeframe === '7d'}
+                            onClick={() => setAnalyticsTimeframe('7d')}
+                        >
+                            Week (7d)
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={analyticsTimeframe === '30d'}
+                            onClick={() => setAnalyticsTimeframe('30d')}
+                        >
+                            Month (30d)
+                        </button>
+                        <button
+                            type="button"
+                            aria-pressed={analyticsTimeframe === '365d'}
+                            onClick={() => setAnalyticsTimeframe('365d')}
+                        >
+                            Year (12m)
+                        </button>
+                    </div>
+                )}
             </div>
 
             {!hasSecureAuth && (
@@ -832,156 +1301,49 @@ const StaffPage = () => {
                     <span className="loading" />
                     <p className="small">Loading staff console…</p>
                 </div>
+            ) : activeTab === 'queue' ? (
+                queuePlugins.length === 0 ? (
+                    <div className="blank">
+                        <p className="h3">
+                            {queueFilter === 'under_review'
+                                ? 'Review queue is clear!'
+                                : 'No plugin submissions matching this queue filter.'}
+                        </p>
+                        <p className="small muted">
+                            {queueFilter === 'under_review'
+                                ? 'All submitted plugins have been reviewed. You can inspect changes-requested submissions or browse the full catalog.'
+                                : 'Try switching the queue filter or searching the full plugin catalog.'}
+                        </p>
+                        <div className="row" style={{ justifyContent: 'center', marginTop: 12 }}>
+                            {queueFilter !== 'all' && (
+                                <button type="button" className="button button-sm" onClick={() => setQueueFilter('all')}>
+                                    Show All Queue &amp; Rejected ({kpis.pendingReview + kpis.rejectedCount})
+                                </button>
+                            )}
+                            <button
+                                type="button"
+                                className="button button-primary button-sm"
+                                onClick={() => {
+                                    setActiveTab('plugins');
+                                    setPluginStatusFilter('all');
+                                }}
+                            >
+                                Browse All Plugins ({kpis.totalActivePlugins})
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    renderPluginsTable(queuePlugins, 'queue')
+                )
             ) : activeTab === 'plugins' ? (
-                <div className="scroll-x">
-                    <table className="ledger">
-                        <thead>
-                            <tr>
-                                <th>Plugin</th>
-                                <th>Developer</th>
-                                <th>Pre-Launch Checks</th>
-                                <th>License</th>
-                                <th>Status</th>
-                                <th className="end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredPlugins.map(p => (
-                                <tr key={p.id} className={p.deleted_at ? 'sf-row-off' : undefined}>
-                                    <td>
-                                        <div className="sf-plugin-cell">
-                                            <span className="avatar">
-                                                {p.preview_url ? <img src={p.preview_url} alt="" /> : p.name?.charAt(0)?.toUpperCase() || 'P'}
-                                            </span>
-                                            <div className="sf-plugin-meta">
-                                                <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
-                                                    <strong>{p.name}</strong>
-                                                    {(p.open_reports_count || 0) > 0 && (
-                                                        <span className="tag tag-danger" title="Open user reports on this plugin">
-                                                            <Flag size={11} /> {p.open_reports_count}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                                <span className="small mono muted">
-                                                    #{p.id} · {p.version ? `v${p.version}` : 'No build'}
-                                                    {p.api_version ? ` · API v${p.api_version}` : ''}
-                                                    {p.file_size ? ` · ${formatBytes(p.file_size)}` : ''}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <div className="sf-plugin-meta">
-                                            <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
-                                                <Link className="link" to={`/profile/${p.dev_name}`}>
-                                                    @{p.dev_name}
-                                                </Link>
-                                                {p.dev_verified && (
-                                                    <span className="tag tag-info" title="Verified Developer">
-                                                        Verified
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="small muted">
-                                                {p.dev_secure_auth ? '2FA/Passkey OK' : 'No 2FA'}
-                                                {p.type === 'paid' ? (p.dev_stripe_ready ? ' · Stripe Ready' : ' · No Stripe') : ''}
-                                            </span>
-                                        </div>
-                                    </td>
-                                    <td>{renderReadinessSignals(p)}</td>
-                                    <td>
-                                        <div className="sf-plugin-meta">
-                                            <span className={`tag ${typeTone[p.type] || ''}`}>{p.type}</span>
-                                            {p.type === 'paid' && <span className="small mono">€{((p.price_cents || 0) / 100).toFixed(2)}</span>}
-                                        </div>
-                                    </td>
-                                    <td>{pluginStatusBadge(p)}</td>
-                                    <td>
-                                        <div className="row sf-actions">
-                                            <Link
-                                                className="button button-sm"
-                                                to={getPluginUrl(p)}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                                title={
-                                                    p.status === 'draft'
-                                                        ? 'Inspect private draft page (visible only to Admins, Moderators & Developer)'
-                                                        : 'Inspect plugin store page'
-                                                }
-                                            >
-                                                <ExternalLink size={14} />
-                                                {p.status === 'draft' ? 'Inspect Draft' : 'Inspect'}
-                                            </Link>
-                                            <button className="button button-sm" onClick={() => setSelectedItem({ type: 'plugin', data: p })}>
-                                                Readiness
-                                            </button>
-                                            {!p.deleted_at && p.status === 'under_review' && !p.claimed_by_id && (
-                                                <button className="button button-primary button-sm" onClick={() => claimPlugin(p.id)}>
-                                                    Claim Review
-                                                </button>
-                                            )}
-                                            {!p.deleted_at &&
-                                                p.status === 'under_review' &&
-                                                p.claimed_by_id &&
-                                                (p.claimed_by_id === currentUser?.id || isAdmin) && (
-                                                    <>
-                                                        <button className="button button-primary button-sm" onClick={() => approvePlugin(p.id)}>
-                                                            Approve
-                                                        </button>
-                                                        <button
-                                                            className="button button-sm"
-                                                            onClick={() =>
-                                                                openActionModal({
-                                                                    kind: 'reject_plugin',
-                                                                    targetId: p.id,
-                                                                    targetName: p.name,
-                                                                    extra: p,
-                                                                })
-                                                            }
-                                                        >
-                                                            Request Changes
-                                                        </button>
-                                                        <button className="button button-ghost button-sm" onClick={() => unclaimPlugin(p.id)}>
-                                                            Release
-                                                        </button>
-                                                    </>
-                                                )}
-                                            {!p.deleted_at && p.status === 'published' && isStaff && (
-                                                <button
-                                                    className="button button-sm"
-                                                    onClick={() =>
-                                                        openActionModal({
-                                                            kind: 'reject_plugin',
-                                                            targetId: p.id,
-                                                            targetName: p.name,
-                                                            extra: p,
-                                                        })
-                                                    }
-                                                >
-                                                    Unapprove
-                                                </button>
-                                            )}
-                                            {isStaff && !p.deleted_at && (
-                                                <button
-                                                    className="button button-danger button-sm"
-                                                    onClick={() =>
-                                                        openActionModal({
-                                                            kind: 'delete_plugin',
-                                                            targetId: p.id,
-                                                            targetName: p.name,
-                                                        })
-                                                    }
-                                                >
-                                                    Remove
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                filteredPlugins.length === 0 ? (
+                    <div className="blank">
+                        <p className="h3">No plugins match your filter.</p>
+                        <p className="small muted">Try clearing your search query or selecting a different status filter.</p>
+                    </div>
+                ) : (
+                    renderPluginsTable(filteredPlugins, 'catalog')
+                )
             ) : activeTab === 'reports' ? (
                 filteredReports.length === 0 ? (
                     <div className="blank">
@@ -1161,6 +1523,468 @@ const StaffPage = () => {
                             ))}
                         </tbody>
                     </table>
+                </div>
+            ) : activeTab === 'analytics' && isAdmin ? (
+                <div className="stack" style={{ '--gap': 'var(--s-5)' } as React.CSSProperties}>
+                    {/* 1. Week / Month / Year Upload, Update, User & Download Cadence Cards */}
+                    <div className="sf-kpis">
+                        <div className="sf-kpi">
+                            <div className="sf-kpi-head">
+                                <span className="label">New Plugins Uploaded</span>
+                                <Upload size={18} className="pumpkin" />
+                            </div>
+                            <span className="sf-kpi-val">
+                                +{
+                                    analyticsTimeframe === '7d'
+                                        ? (adminAnalytics?.plugins?.uploaded_7d ?? kpis.uploaded7d)
+                                        : analyticsTimeframe === '30d'
+                                          ? (adminAnalytics?.plugins?.uploaded_30d ?? kpis.uploaded30d)
+                                          : (adminAnalytics?.plugins?.uploaded_365d ?? kpis.uploaded365d)
+                                }{' '}
+                                <span className="small muted">
+                                    ({analyticsTimeframe === '7d' ? 'This Week' : analyticsTimeframe === '30d' ? 'This Month' : 'This Year'})
+                                </span>
+                            </span>
+                            <div className="sf-an-periods">
+                                <div className="sf-an-period">
+                                    <span className="small muted">Week (7d)</span>
+                                    <strong className="num">{adminAnalytics?.plugins?.uploaded_7d ?? kpis.uploaded7d}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Month (30d)</span>
+                                    <strong className="num">{adminAnalytics?.plugins?.uploaded_30d ?? kpis.uploaded30d}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Year (365d)</span>
+                                    <strong className="num">{adminAnalytics?.plugins?.uploaded_365d ?? kpis.uploaded365d}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="sf-kpi">
+                            <div className="sf-kpi-head">
+                                <span className="label">Plugin Updates &amp; Releases</span>
+                                <Clock size={18} className="pumpkin" />
+                            </div>
+                            <span className="sf-kpi-val">
+                                {
+                                    analyticsTimeframe === '7d'
+                                        ? (adminAnalytics?.plugins?.updated_7d ?? kpis.updated7d)
+                                        : analyticsTimeframe === '30d'
+                                          ? (adminAnalytics?.plugins?.updated_30d ?? kpis.updated30d)
+                                          : (adminAnalytics?.plugins?.updated_365d ?? kpis.uploaded365d)
+                                }{' '}
+                                <span className="small muted">Updated</span>
+                            </span>
+                            <div className="sf-an-periods">
+                                <div className="sf-an-period">
+                                    <span className="small muted">Week (7d)</span>
+                                    <strong className="num">
+                                        {adminAnalytics?.plugins?.updated_7d ?? kpis.updated7d}
+                                    </strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Month (30d)</span>
+                                    <strong className="num">
+                                        {adminAnalytics?.plugins?.updated_30d ?? kpis.updated30d}
+                                    </strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Year (365d)</span>
+                                    <strong className="num">
+                                        {adminAnalytics?.plugins?.updated_365d ?? kpis.uploaded365d}
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="sf-kpi">
+                            <div className="sf-kpi-head">
+                                <span className="label">Registered Users</span>
+                                <Users size={18} className="pumpkin" />
+                            </div>
+                            <span className="sf-kpi-val">
+                                {(adminAnalytics?.users?.total_active ?? kpis.activeUsersCount).toLocaleString()}{' '}
+                                <span className="small muted">Total</span>
+                            </span>
+                            <div className="sf-an-periods">
+                                <div className="sf-an-period">
+                                    <span className="small muted">+Week (7d)</span>
+                                    <strong className="num">+{adminAnalytics?.users?.new_7d ?? 0}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">+Month (30d)</span>
+                                    <strong className="num">+{adminAnalytics?.users?.new_30d ?? kpis.newUsers30d}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">+Year (365d)</span>
+                                    <strong className="num">+{adminAnalytics?.users?.new_365d ?? kpis.activeUsersCount}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="sf-kpi">
+                            <div className="sf-kpi-head">
+                                <span className="label">Platform Downloads</span>
+                                <Download size={18} className="pumpkin" />
+                            </div>
+                            <span className="sf-kpi-val">
+                                {(adminAnalytics?.activity?.total_downloads ?? 0).toLocaleString()}{' '}
+                                <span className="small muted">All-Time</span>
+                            </span>
+                            <div className="sf-an-periods">
+                                <div className="sf-an-period">
+                                    <span className="small muted">Week (7d)</span>
+                                    <strong className="num">{adminAnalytics?.activity?.downloads_7d ?? 0}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Month (30d)</span>
+                                    <strong className="num">{adminAnalytics?.activity?.downloads_30d ?? 0}</strong>
+                                </div>
+                                <div className="sf-an-period">
+                                    <span className="small muted">Year (365d)</span>
+                                    <strong className="num">{adminAnalytics?.activity?.downloads_365d ?? 0}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. Trend Charts: Uploads & Releases + User Signups & Downloads */}
+                    <div className="st-grid-2">
+                        <section className="panel">
+                            <div className="panel-head st-an-head">
+                                <Upload className="st-an-icon" />
+                                <h3 className="h3">
+                                    Plugin Uploads &amp; Version Releases ({analyticsTimeframe === '7d' ? 'Past 7 Days' : analyticsTimeframe === '30d' ? 'Past 30 Days' : 'Past 12 Months'})
+                                </h3>
+                                <span className="spacer" />
+                                <span className="status small">
+                                    <span className="dot dot-pumpkin" /> New Plugins
+                                </span>
+                                <span className="status small">
+                                    <span className="dot st-an-dot-fg" /> Version Releases
+                                </span>
+                            </div>
+                            <div className="panel-body">
+                                <div className="st-chart st-chart-sm">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={analyticsChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            {CHART_GRID}
+                                            <XAxis dataKey="label" {...CHART_AXIS} dy={8} />
+                                            <YAxis allowDecimals={false} {...CHART_AXIS} />
+                                            <Tooltip content={<StaffChartTip />} cursor={CHART_CURSOR} />
+                                            <Bar dataKey="plugins_uploaded" name="New Plugins" fill="var(--pumpkin)" radius={0} />
+                                            <Bar dataKey="plugin_updates" name="Version Releases" fill="var(--fg)" radius={0} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="panel">
+                            <div className="panel-head st-an-head">
+                                <TrendingUp className="st-an-icon" />
+                                <h3 className="h3">
+                                    User Signups &amp; Unique Downloads ({analyticsTimeframe === '7d' ? 'Past 7 Days' : analyticsTimeframe === '30d' ? 'Past 30 Days' : 'Past 12 Months'})
+                                </h3>
+                                <span className="spacer" />
+                                <span className="status small">
+                                    <span className="dot dot-pumpkin" /> New Users
+                                </span>
+                                <span className="status small">
+                                    <span className="dot st-an-dot-fg" /> Downloads
+                                </span>
+                            </div>
+                            <div className="panel-body">
+                                <div className="st-chart st-chart-sm">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={analyticsChartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                                            {CHART_GRID}
+                                            <XAxis dataKey="label" {...CHART_AXIS} dy={8} />
+                                            <YAxis allowDecimals={false} {...CHART_AXIS} />
+                                            <Tooltip content={<StaffChartTip />} cursor={CHART_CURSOR} />
+                                            <Area
+                                                type="linear"
+                                                dataKey="downloads"
+                                                name="Downloads"
+                                                stroke="var(--fg)"
+                                                strokeWidth={2.5}
+                                                fill="var(--fg)"
+                                                fillOpacity={0.08}
+                                            />
+                                            <Area
+                                                type="linear"
+                                                dataKey="new_users"
+                                                name="New Users"
+                                                stroke="var(--pumpkin)"
+                                                strokeWidth={2.5}
+                                                fill="var(--pumpkin)"
+                                                fillOpacity={0.18}
+                                            />
+                                        </AreaChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* 3. User Community & Catalog Breakdown */}
+                    <div className="st-grid-2">
+                        <section className="panel">
+                            <div className="panel-head st-an-head">
+                                <Users className="st-an-icon" />
+                                <h3 className="h3">User &amp; Developer Breakdown</h3>
+                            </div>
+                            <div className="panel-body stack">
+                                <dl className="specs">
+                                    <dt>Total Active Users</dt>
+                                    <dd>
+                                        <strong>{(adminAnalytics?.users?.total_active ?? kpis.activeUsersCount).toLocaleString()}</strong>
+                                        {adminAnalytics?.users?.total_deleted > 0 && (
+                                            <span className="small muted"> ({adminAnalytics.users.total_deleted} deactivated)</span>
+                                        )}
+                                    </dd>
+                                    <dt>Onboarded Developers</dt>
+                                    <dd>
+                                        <strong>{adminAnalytics?.users?.developers_count ?? 0}</strong>
+                                        <span className="small muted"> ({adminAnalytics?.users?.verified_devs_count ?? kpis.verifiedDevs} verified)</span>
+                                    </dd>
+                                    <dt>Stripe-Ready Sellers</dt>
+                                    <dd>
+                                        <strong>{adminAnalytics?.users?.stripe_ready_devs_count ?? 0}</strong>
+                                    </dd>
+                                    <dt>2FA / Passkey Secured</dt>
+                                    <dd>
+                                        <strong>{adminAnalytics?.users?.mfa_enabled_count ?? kpis.mfaUsers}</strong>
+                                        <span className="small muted">
+                                            {' '}
+                                            (
+                                            {kpis.activeUsersCount > 0
+                                                ? Math.round(((adminAnalytics?.users?.mfa_enabled_count ?? kpis.mfaUsers) / kpis.activeUsersCount) * 100)
+                                                : 0}
+                                            % adoption)
+                                        </span>
+                                    </dd>
+                                    <dt>Staff &amp; Reviewers</dt>
+                                    <dd className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                        <span className="tag tag-pumpkin">{adminAnalytics?.users?.admins_count ?? 0} Admins</span>
+                                        <span className="tag tag-info">{adminAnalytics?.users?.moderators_count ?? 0} Mods</span>
+                                        <span className="tag tag-success">{adminAnalytics?.users?.reviewers_count ?? 0} Reviewers</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </section>
+
+                        <section className="panel">
+                            <div className="panel-head st-an-head">
+                                <Layers className="st-an-icon" />
+                                <h3 className="h3">Catalog &amp; Category Distribution</h3>
+                            </div>
+                            <div className="panel-body stack">
+                                <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                    <span className="tag tag-success">
+                                        {adminAnalytics?.plugins?.total_published ?? kpis.publishedCount} Published
+                                    </span>
+                                    <span className="tag tag-warning">
+                                        {adminAnalytics?.plugins?.total_under_review ?? kpis.pendingReview} In Queue
+                                    </span>
+                                    <span className="tag tag-danger">
+                                        {adminAnalytics?.plugins?.total_rejected ?? kpis.rejectedCount} Rejected
+                                    </span>
+                                    <span className="tag tag-fg">
+                                        {adminAnalytics?.plugins?.total_drafts ?? kpis.draftCount} Drafts
+                                    </span>
+                                    <span className="spacer" />
+                                    <span className="small muted">
+                                        <Star size={13} className="pumpkin" style={{ verticalAlign: '-2px' }} />{' '}
+                                        {adminAnalytics?.activity?.avg_rating ? `${adminAnalytics.activity.avg_rating}★` : '—'} (
+                                        {adminAnalytics?.activity?.total_reviews ?? 0} reviews)
+                                    </span>
+                                </div>
+
+                                {adminAnalytics?.categories?.length > 0 ? (
+                                    <div className="stack st-an-tight">
+                                        {adminAnalytics.categories.slice(0, 6).map((cat: any) => {
+                                            const total = Math.max(adminAnalytics?.plugins?.total_active || 1, 1);
+                                            const pct = Math.round((cat.count / total) * 100);
+                                            return (
+                                                <div key={cat.category} className="st-an-version">
+                                                    <div className="row">
+                                                        <span>{cat.category}</span>
+                                                        <span className="spacer" />
+                                                        <span className="small num muted">
+                                                            {cat.count} {cat.count === 1 ? 'plugin' : 'plugins'} · {(cat.downloads || 0).toLocaleString()} dl
+                                                        </span>
+                                                    </div>
+                                                    <div className="meter meter-pumpkin">
+                                                        <span style={{ width: `${Math.max(pct, 4)}%` }} />
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <p className="small muted">No category breakdown available yet.</p>
+                                )}
+                            </div>
+                        </section>
+                    </div>
+
+                    {/* 4. Recently Updated & Uploaded Plugins Feed */}
+                    <section className="panel">
+                        <div className="panel-head st-an-head">
+                            <Clock className="st-an-icon" />
+                            <h3 className="h3">Recently Updated &amp; Uploaded Plugins</h3>
+                            <span className="spacer" />
+                            <div className="segmented" role="group" aria-label="Filter recent plugin activity">
+                                <button
+                                    type="button"
+                                    aria-pressed={recentActivityFilter === 'all'}
+                                    onClick={() => setRecentActivityFilter('all')}
+                                >
+                                    All Activity
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-pressed={recentActivityFilter === 'updates'}
+                                    onClick={() => setRecentActivityFilter('updates')}
+                                >
+                                    Updates Only
+                                </button>
+                                <button
+                                    type="button"
+                                    aria-pressed={recentActivityFilter === 'uploads'}
+                                    onClick={() => setRecentActivityFilter('uploads')}
+                                >
+                                    New Uploads
+                                </button>
+                            </div>
+                        </div>
+                        <div className="panel-body" style={{ padding: 0 }}>
+                            {recentlyUpdatedList.length === 0 ? (
+                                <div className="blank">
+                                    <p className="h3">No recent plugin activity matching this filter.</p>
+                                </div>
+                            ) : (
+                                <div className="scroll-x">
+                                    <table className="ledger">
+                                        <thead>
+                                            <tr>
+                                                <th>Plugin</th>
+                                                <th>Update / Release Details</th>
+                                                <th>Developer</th>
+                                                <th>Status</th>
+                                                <th>When</th>
+                                                <th className="end">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {recentlyUpdatedList.map((p: any) => {
+                                                const createdMs = p.created_at ? new Date(p.created_at).getTime() : 0;
+                                                const updatedMs = p.updated_at ? new Date(p.updated_at).getTime() : createdMs;
+                                                const isUpdate = (p.versions_count || 1) > 1 || updatedMs - createdMs > 5 * 60 * 1000;
+                                                const fullPlugin = plugins.find(item => item.id === p.id) || p;
+
+                                                return (
+                                                    <tr key={p.id}>
+                                                        <td>
+                                                            <div className="sf-plugin-cell">
+                                                                <span className="avatar">
+                                                                    {p.preview_url ? (
+                                                                        <img src={p.preview_url} alt="" />
+                                                                    ) : (
+                                                                        p.name?.charAt(0)?.toUpperCase() || 'P'
+                                                                    )}
+                                                                </span>
+                                                                <div className="sf-plugin-meta">
+                                                                    <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                                                        <strong>{p.name}</strong>
+                                                                        {p.category && <span className="tag tag-fg">{p.category}</span>}
+                                                                    </div>
+                                                                    <span className="small mono muted">
+                                                                        #{p.id} · {p.public_id} · {(p.downloads ?? 0).toLocaleString()} dl
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className="sf-plugin-meta">
+                                                                <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                                                    <span className={`tag ${isUpdate ? 'tag-info' : 'tag-pumpkin'}`}>
+                                                                        {isUpdate ? 'UPDATED' : 'NEW UPLOAD'}
+                                                                    </span>
+                                                                    <span className="mono">
+                                                                        {p.version ? `v${p.version}` : 'No build'}
+                                                                    </span>
+                                                                    {p.api_version && (
+                                                                        <span className="small mono muted">API v{p.api_version}</span>
+                                                                    )}
+                                                                    {p.latest_release_track && p.latest_release_track !== 'stable' && (
+                                                                        <span className="tag tag-warning">
+                                                                            {p.latest_release_track.toUpperCase()}
+                                                                        </span>
+                                                                    )}
+                                                                    <span className="small muted">
+                                                                        ({p.versions_count || 1} {p.versions_count === 1 ? 'release' : 'releases'})
+                                                                    </span>
+                                                                </div>
+                                                                {p.latest_release_notes && (
+                                                                    <div className="sf-release-note">
+                                                                        {p.latest_release_notes.length > 120
+                                                                            ? `${p.latest_release_notes.slice(0, 120)}…`
+                                                                            : p.latest_release_notes}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                                                <Link className="link" to={`/profile/${p.dev_name}`}>
+                                                                    @{p.dev_name}
+                                                                </Link>
+                                                                {p.dev_verified && <span className="tag tag-info">Verified</span>}
+                                                            </div>
+                                                        </td>
+                                                        <td>{pluginStatusBadge(p)}</td>
+                                                        <td>
+                                                            <div className="sf-plugin-meta">
+                                                                <strong>{formatRelativeTime(p.updated_at || p.created_at)}</strong>
+                                                                <span className="small muted">
+                                                                    {p.updated_at
+                                                                        ? new Date(p.updated_at).toLocaleString()
+                                                                        : p.created_at
+                                                                          ? new Date(p.created_at).toLocaleString()
+                                                                          : '—'}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className="row sf-actions">
+                                                                <Link
+                                                                    className="button button-sm"
+                                                                    to={getPluginUrl(p)}
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
+                                                                >
+                                                                    <ExternalLink size={14} /> Inspect
+                                                                </Link>
+                                                                <button
+                                                                    className="button button-sm"
+                                                                    onClick={() => setSelectedItem({ type: 'plugin', data: fullPlugin })}
+                                                                >
+                                                                    Readiness
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </section>
                 </div>
             ) : (
                 <div className="scroll-x">
