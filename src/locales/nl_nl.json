@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "Beoordelaar"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "Concept maken & beheren ->",
       "status_draft": "Offline (Concept)",
       "status_published": "Gepubliceerd",
-      "btn_publish_store": "Publiceren in winkel",
+      "btn_publish_store": "Indienen voor beoordeling",
       "btn_unpublish_store": "Offline halen",
       "publish_checklist_title": "Publiceren op marktplaats",
       "publish_checklist_desc": "Controleer de vereisten voordat je je plug-in uitbrengt op Pumpkin Market.",
-      "publish_ready_banner": "Aan alle vereisten is voldaan! Je plug-in is klaar voor publicatie.",
+      "publish_ready_banner": "Aan alle vereisten is voldaan! Klaar om in te dienen voor beoordeling.",
       "publish_missing_banner": "Voldoe aan de ontbrekende vereisten voordat je publiceert.",
-      "btn_confirm_publish": "Bevestigen & in winkel uitbrengen",
+      "btn_confirm_publish": "Indienen voor beoordeling",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "Conceptwijzigingen zijn privé. Voltooi je winkelvermelding, screenshots en binaire build en dien in voor beoordeling.",
+      "readiness_hint": "Bekijk welke vereisten nog ontbreken voor indiening",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "Plugin ingediend voor beoordeling! Ons team zal je inzending spoedig bekijken.",
+        "publish_failed": "Indienen van plugin voor beoordeling mislukt",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "Een menselijke beoordelaar zal je plugin inspecteren voordat deze live gaat op de marktplaats.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "In afwachting van beoordeling",
+      "status_rejected": "Wijzigingen vereist",
+      "under_review_desc": "Je plugin is ingediend en wacht momenteel op handmatige beoordeling door een teamlid.",
+      "rejected_desc": "Feedback van beoordelaar: Pas de gevraagde wijzigingen aan in je winkelvermelding of build en dien opnieuw in.",
+      "rejected_feedback_desc": "Feedback van beoordelaar: {{reason}}",
+      "btn_cancel_review": "Beoordeling annuleren",
+      "btn_resubmit_review": "Opnieuw indienen voor beoordeling",
+      "submitting": "Indienen…",
+      "cancelling": "Annuleren…"
     },
     "upload": {
       "title": "Nieuwe Plugin Publiceren",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 Minimale functionaliteit:</strong> Plugins moeten een zinvolle uitbreiding bieden aan de serverervaring. Triviale wrappers met één commando, lege plugins of niet-nagekeken AI-scripts van lage kwaliteit worden afgewezen.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots moeten de werkelijke in-game interface, webpanelen of effecten nauwkeurig weergeven. Gebruik geen willekeurige stockfoto's of misleidende AI-afbeeldingen.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 Originaliteit:</strong> Concurrerende plugins in bestaande categorieën zijn welkom mits ze zinvolle verbeteringen bieden (betere prestaties, uitgebreidere configuratie, database-ondersteuning of actief onderhoud). Eenvoudige duplicaten met minder functionaliteit worden afgewezen.",
+          "spam": "<strong>4.1.2 Spam:</strong> Upload niet meerdere vrijwel identieke plugins of massa-gegenereerde AI-inzendingen. Voeg functies samen in één hoogwaardige plugin met configuratieopties."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "Plugins ({{count}} in behandeling)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "Alle statussen",
+      "pending_review": "In afwachting van beoordeling",
+      "published": "Gepubliceerd",
+      "rejected": "Afgewezen",
+      "draft": "Concept",
+      "filter_by_status": "Filteren op status",
+      "approve_plugin": "Plugin goedkeuren",
+      "reject_plugin": "Plugin afwijzen"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "Gepubliceerd",
+      "in_review": "In beoordeling (@{{name}})",
+      "waiting_for_review": "Wachten op beoordeling",
+      "rejected": "Afgewezen",
+      "draft": "Concept",
+      "claimed_tooltip": "Geclaimd voor beoordeling (60 min lease)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "Beoordelaar"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "Versie",
+      "source_link": "Broncode-link",
+      "review_status": "Beoordelingsstatus",
+      "claimed_by": "Geclaimd door",
+      "rejection_reason": "Reden van afwijzing"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "Inspecteren",
+      "inspect_tooltip": "Pluginpagina inspecteren",
+      "details": "Details",
+      "claim_review": "Beoordeling claimen",
+      "approve": "Goedkeuren",
+      "reject": "Afwijzen",
+      "unclaim": "Vrijgeven",
+      "unapprove": "Goedkeuring intrekken"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "Deze plugin goedkeuren en live publiceren op PumpkinMarket?",
+      "reject_feedback": "Voer feedback van afwijzing in voor de ontwikkelaar (bijv. minimale functionaliteit, ontbrekende config/documentatie):"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "Goedkeuren van plugin mislukt",
+      "reject_plugin_failed": "Afwijzen van plugin mislukt",
+      "claim_plugin_failed": "Claimen van plugin mislukt",
+      "unclaim_plugin_failed": "Vrijgeven van plugin mislukt"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "Geen",
+    "unknown": "Onbekend"
   }
 }

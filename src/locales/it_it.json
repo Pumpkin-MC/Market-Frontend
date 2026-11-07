@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "Revisore"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "Crea bozza e gestisci ->",
       "status_draft": "Offline (Bozza)",
       "status_published": "Pubblicato",
-      "btn_publish_store": "Pubblica sullo Store",
+      "btn_publish_store": "Invia per revisione",
       "btn_unpublish_store": "Metti offline",
       "publish_checklist_title": "Pubblica sul Marketplace",
       "publish_checklist_desc": "Verifica i requisiti prima di rilasciare il plugin su Pumpkin Market.",
-      "publish_ready_banner": "Tutti i requisiti sono soddisfatti! Il tuo plugin è pronto per la pubblicazione.",
+      "publish_ready_banner": "Tutti i requisiti sono soddisfatti! Pronto per l'invio alla revisione.",
       "publish_missing_banner": "Completa i requisiti mancanti prima di pubblicare.",
-      "btn_confirm_publish": "Conferma e pubblica sullo Store",
+      "btn_confirm_publish": "Invia per revisione",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "Le bozze sono private. Completa la scheda del negozio, gli screenshot e la build binaria, quindi invialo per la revisione.",
+      "readiness_hint": "Controlla i requisiti mancanti prima di inviare per la revisione",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "Plugin inviato per la revisione! Il nostro team lo esaminerà a breve.",
+        "publish_failed": "Invio per la revisione non riuscito",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "Un revisore umano esaminerà il tuo plugin prima che diventi pubblico sul marketplace.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "In attesa di revisione",
+      "status_rejected": "Modifiche richieste",
+      "under_review_desc": "Il tuo plugin è stato inviato ed è attualmente in attesa di revisione da parte di un revisore umano.",
+      "rejected_desc": "Feedback del revisore: applica le modifiche richieste nella scheda o build prima di inviarlo nuovamente.",
+      "rejected_feedback_desc": "Feedback del revisore: {{reason}}",
+      "btn_cancel_review": "Annulla revisione",
+      "btn_resubmit_review": "Invia nuovamente per revisione",
+      "submitting": "Invio in corso…",
+      "cancelling": "Annullamento in corso…"
     },
     "upload": {
       "title": "Pubblica un Nuovo Plugin",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 Funzionalità minima:</strong> i plugin devono fornire un'estensione significativa all'esperienza del server. Wrapper di un solo comando, plugin vuoti o script generati da IA non verificati verranno rifiutati.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 Screenshot:</strong> gli screenshot devono rispecchiare fedelmente l'interfaccia, i pannelli web o gli effetti in-game. Non utilizzare immagini stock generiche o illustrazioni IA ingannevoli al posto di veri screenshot.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 Originalità:</strong> i plugin concorrenti in categorie esistenti sono benvenuti se offrono miglioramenti significativi (prestazioni migliori, configurazione più ricca, supporto database o manutenzione attiva). I cloni privi di valore aggiunto verranno rifiutati.",
+          "spam": "<strong>4.1.2 Spam:</strong> non caricare più plugin quasi identici o invii massivi generati da IA. Raggruppa le funzionalità in un unico plugin di qualità con opzioni di configurazione."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "Plugin ({{count}} in attesa)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "Tutti gli stati",
+      "pending_review": "In attesa di revisione",
+      "published": "Pubblicato",
+      "rejected": "Rifiutato",
+      "draft": "Bozza",
+      "filter_by_status": "Filtra per stato",
+      "approve_plugin": "Approva plugin",
+      "reject_plugin": "Rifiuta plugin"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "Pubblicato",
+      "in_review": "In revisione (@{{name}})",
+      "waiting_for_review": "In attesa di revisione",
+      "rejected": "Rifiutato",
+      "draft": "Bozza",
+      "claimed_tooltip": "Assegnato per revisione (blocco 60 min)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "Revisore"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "Versione",
+      "source_link": "Link sorgente",
+      "review_status": "Stato revisione",
+      "claimed_by": "Assegnato a",
+      "rejection_reason": "Motivo rifiuto"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "Ispeziona",
+      "inspect_tooltip": "Ispeziona pagina del plugin",
+      "details": "Dettagli",
+      "claim_review": "Assegna revisione",
+      "approve": "Approva",
+      "reject": "Rifiuta",
+      "unclaim": "Rilascia",
+      "unapprove": "Disapprova"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "Approvare questo plugin e pubblicarlo su PumpkinMarket?",
+      "reject_feedback": "Inserisci il feedback di rifiuto per lo sviluppatore (es. funzionalità minima, configurazione/documentazione mancante):"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "Approvazione del plugin non riuscita",
+      "reject_plugin_failed": "Rifiuto del plugin non riuscito",
+      "claim_plugin_failed": "Assegnazione della revisione non riuscita",
+      "unclaim_plugin_failed": "Rilascio della revisione non riuscito"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "Nessuno",
+    "unknown": "Sconosciuto"
   }
 }

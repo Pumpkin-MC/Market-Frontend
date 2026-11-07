@@ -41,6 +41,102 @@
   color: var(--fg-2);
 }
 
+/* Markdown inside the clamped hero teaser: keep it compact and inline-ish. */
+.sf-md > * {
+  margin: 0 0 0.25em;
+}
+
+.sf-md > :last-child {
+  margin-bottom: 0;
+}
+
+.sf-md h1,
+.sf-md h2,
+.sf-md h3,
+.sf-md h4,
+.sf-md h5,
+.sf-md h6 {
+  font-size: inherit;
+  font-weight: 700;
+  line-height: inherit;
+  color: var(--fg);
+}
+
+.sf-md strong {
+  font-weight: 700;
+  color: var(--fg);
+}
+
+.sf-md em {
+  font-style: italic;
+}
+
+.sf-md del {
+  text-decoration: line-through;
+}
+
+.sf-md ul,
+.sf-md ol {
+  padding-left: 1.25em;
+}
+
+.sf-md ul {
+  list-style: disc;
+}
+
+.sf-md ol {
+  list-style: decimal;
+}
+
+.sf-md blockquote {
+  padding-left: 0.75em;
+  border-left: 3px solid var(--line);
+}
+
+.sf-md code {
+  font-family: var(--font-mono, 'JetBrains Mono Variable', monospace);
+  font-size: 0.9em;
+  padding: 0 0.3em;
+  border: 1px solid var(--line);
+}
+
+.sf-md pre {
+  overflow: hidden;
+  white-space: pre-wrap;
+}
+
+.sf-md pre code {
+  padding: 0;
+  border: 0;
+}
+
+.sf-md hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.sf-md table {
+  border-collapse: collapse;
+}
+
+.sf-md th,
+.sf-md td {
+  padding: 0 0.5em;
+  border: 1px solid var(--line);
+}
+
+.sf-md-link {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.sf-md-img {
+  display: inline-block;
+  max-width: 100%;
+  max-height: 1.5em;
+  vertical-align: middle;
+}
+
 .sf-thumbs {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

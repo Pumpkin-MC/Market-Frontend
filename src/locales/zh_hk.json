@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "系統管理員",
-      "moderator": "社區版主"
+      "moderator": "社區版主",
+      "reviewer": "審核員"
     },
     "recovery": {
       "remaining": "您還有 <remaining /> 個（共 <total /> 個）恢復代碼可用",
@@ -810,13 +811,13 @@
       "btn_create_draft": "建立草稿並管理 ->",
       "status_draft": "離線 (草稿)",
       "status_published": "已發佈",
-      "btn_publish_store": "發佈至商店",
+      "btn_publish_store": "提交審核",
       "btn_unpublish_store": "下架離線",
       "publish_checklist_title": "發佈至市場",
       "publish_checklist_desc": "在將插件發佈到 Pumpkin Market 前檢查所有發佈要求。",
-      "publish_ready_banner": "所有要求均已達成！您的插件已準備好上線發佈。",
+      "publish_ready_banner": "所有條件均已符合！隨時可提交審核。",
       "publish_missing_banner": "請在發佈前完善所有缺失的要求。",
-      "btn_confirm_publish": "確認並正式發佈至商店",
+      "btn_confirm_publish": "提交審核",
       "accept_failed": "接受轉讓請求失敗。",
       "decline_confirm": "您確定要拒絕此轉讓請求嗎？",
       "decline_failed": "拒絕轉讓請求失敗。",
@@ -857,8 +858,8 @@
       "unpublish_failed": "下架插件失敗。",
       "loading_plugin": "正在加載插件…",
       "published_desc": "此插件目前處於公開上線狀態。您可以發佈版本更新或管理商店詳情。",
-      "draft_desc": "草稿變更目前僅自己可見。完善商店介紹與上傳構建包後即可正式發佈。",
-      "readiness_hint": "查看正式發佈前還需滿足哪些條件",
+      "draft_desc": "草稿變更僅您可見。請完善商店資料、實機截圖及二進制建置後提交審核。",
+      "readiness_hint": "查看提交審核前還缺少哪些必要條件",
       "check_readiness": "檢查發佈就緒狀態",
       "view_on_store": "在商店中查看",
       "unpublishing": "正在下架…",
@@ -868,8 +869,8 @@
         "missing_count_one": "發佈前還有 {{count}} 項要求需要完善。",
         "missing_count_other": "發佈前還有 {{count}} 項要求需要完善。",
         "check_failed": "檢查發佈就緒狀態失敗",
-        "publish_success": "插件發佈成功，現已正式在商店上線！",
-        "publish_failed": "發佈插件失敗",
+        "publish_success": "外掛已成功提交審核！我們的審核團隊將盡快審查您的作品。",
+        "publish_failed": "提交審核失敗",
         "name_title": "插件名稱與公開標識",
         "name_missing": "缺少插件名稱或名稱為空",
         "fix_in_listing": "在商店頁面中完善",
@@ -894,9 +895,18 @@
         "error": "錯誤",
         "live": "已上線",
         "checking": "正在檢查商店發佈要求…",
-        "ready_description": "您的商店頁面、素材文件與 WebAssembly 二進制包已全部通過校驗。",
+        "ready_description": "外掛將在通過人工審核團隊的審查後正式於市場上線。",
         "missing": "未完成"
-      }
+      },
+      "status_under_review": "審核中",
+      "status_rejected": "需要修改",
+      "under_review_desc": "您的外掛已提交，目前正在等待人工審核團隊審查。",
+      "rejected_desc": "審核員反饋：請根據意見修改商店資料或程式建置後重新提交審核。",
+      "rejected_feedback_desc": "審核員反饋：{{reason}}",
+      "btn_cancel_review": "取消審核",
+      "btn_resubmit_review": "重新提交審核",
+      "submitting": "正在提交…",
+      "cancelling": "正在取消…"
     },
     "upload": {
       "title": "發佈新插件",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 插件完整性",
           "intro": "PumpkinMarket 將拒絕尚未完成的半成品插件。我們不接受“佔位符”插件或無法正常運行的殘缺版本。",
-          "minimum": "<strong>2.1.1 具備基本核心功能：</strong> 插件必須為伺服器遊戲體驗帶來實質性的增強與擴展。純粹的“空插件”或僅在控制台列印一條訊息的示例插件將被直接駁回。",
+          "minimum": "<strong>2.1.1 具備基本核心功能：</strong> 外掛必須為伺服器體驗帶來實質的增強與擴展。純粹的單指令簡單包裝、純「空外掛」或未經審核的低質 AI 產生腳本將被直接駁回。",
           "stability": "<strong>2.1.2 運行穩定性：</strong> 在常規生產環境中運行期間會導致伺服器崩潰、死鎖或卡死的插件將被立即下架。"
         },
         "metadata": {
           "title": "2.2 準確真實的元數據",
           "intro": "您提供的關於插件的所有資訊必須真實、準確且誠實。",
-          "screenshots": "<strong>2.2.1 實機截圖：</strong> 截圖必須真實反映插件在遊戲內的實際界面或效果。不得使用無關的寬泛圖片或網絡庫存素材敷衍。",
+          "screenshots": "<strong>2.2.1 實機截圖：</strong> 截圖必須真實反映外掛在遊戲內的實際介面、自訂 UI/Web 面板或實際效果。嚴禁使用無關的圖庫素材或具誤導性的 AI 產生插圖代替真實實機截圖。",
           "categorization": "<strong>2.2.2 正確分類：</strong> 插件必須歸入最相關的分類中。嚴禁為了蹭曝光而惡意錯選分類。",
           "descriptions": "<strong>2.2.3 描述與關鍵詞：</strong> 不得在描述中堆砌無關熱門關鍵詞或進行“標籤轟炸”以操縱搜索排名結果。"
         },
@@ -1736,8 +1746,8 @@
         "lead": "一款優秀的插件不僅僅是精良的代碼，其展示方式與玩家服主的交互體驗同樣至關重要。",
         "copycats": {
           "title": "4.1 抄襲模仿與垃圾氾濫",
-          "originality": "<strong>4.1.1 原創價值：</strong> 不要簡單地全盤克隆現有流行插件。雖然允許提供類似的遊戲機制，但您的插件應當具備獨特的亮點、創新玩法或截然不同的優質實現。",
-          "spam": "<strong>4.1.2 避免海量上傳近似插件：</strong> 請勿將細微拆分的多個近乎相同的插件分散上傳。請將功能整合為一個提供豐富配置選項的高品質插件。"
+          "originality": "<strong>4.1.1 原創價值：</strong> 我們歡迎在現有分類中展開良性競爭，前提是外掛能帶來實質改進（如更佳的效能、更豐富的設定選項、資料庫支援或積極的長期維護）。對於功能簡陋、範本級複製且實際功能不如既有成熟外掛的作品，將被直接駁回。",
+          "spam": "<strong>4.1.2 避免垃圾氾濫：</strong> 請勿上傳多個近乎相同的微調外掛或批量產生的 AI 提交。請將相關特性整合為一個提供豐富設定選項的高品質外掛。"
         },
         "ux": {
           "title": "4.2 用戶交互體驗 (UX)",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "用戶",
       "plugins": "插件",
-      "logs": "審計日誌"
+      "logs": "審計日誌",
+      "plugins_pending": "外掛 ({{count}} 項待審)"
     },
     "search_users": "搜索用戶...",
     "search_plugins": "搜索插件...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "軟刪除",
       "role_change": "權限變更",
       "all_moderators": "所有版主",
-      "role": "身份角色"
+      "role": "身份角色",
+      "all_statuses": "所有狀態",
+      "pending_review": "待審核",
+      "published": "已發布",
+      "rejected": "已拒絕",
+      "draft": "草稿",
+      "filter_by_status": "按狀態篩選",
+      "approve_plugin": "批准外掛",
+      "reject_plugin": "駁回外掛"
     },
     "status": {
       "active": "正常",
-      "deleted": "已刪除"
+      "deleted": "已刪除",
+      "published": "已發布",
+      "in_review": "審核中 (@{{name}})",
+      "waiting_for_review": "等待審核",
+      "rejected": "已駁回",
+      "draft": "草稿",
+      "claimed_tooltip": "已認領審核（60 分鐘鎖定）"
     },
     "roles": {
       "user": "普通用戶",
       "moderator": "版主",
-      "admin": "管理員"
+      "admin": "管理員",
+      "reviewer": "審核員"
     },
     "entity": {
       "user": "用戶",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe 已就緒",
       "tfa_enabled": "2FA 已啓用",
       "deleted_at": "刪除於 {{date}}",
-      "no_reason": "未提供原因"
+      "no_reason": "未提供原因",
+      "version": "版本",
+      "source_link": "源碼連結",
+      "review_status": "審核狀態",
+      "claimed_by": "認領人",
+      "rejection_reason": "駁回原因"
     },
     "actions": {
       "view": "查看",
-      "delete": "刪除"
+      "delete": "刪除",
+      "inspect": "審查頁面",
+      "inspect_tooltip": "在新分頁開啟外掛詳情頁",
+      "details": "詳細資訊",
+      "claim_review": "認領審核",
+      "approve": "批准",
+      "reject": "駁回",
+      "unclaim": "放棄認領",
+      "unapprove": "取消批准"
     },
     "prompts": {
       "deactivation_reason": "請輸入停用賬號的原因：",
       "role_reason": "請輸入將角色更改為 {{role}} 的原因（可選）：",
-      "removal_reason": "請輸入移除的原因："
+      "removal_reason": "請輸入移除的原因：",
+      "approve_confirm": "確定批准此外掛並公開發布到 PumpkinMarket 嗎？",
+      "reject_feedback": "請輸入給開發者的駁回反饋（例如：功能不足、缺少必要設定/文檔等）："
     },
     "messages": {
       "fetch_failed": "獲取數據失敗",
       "delete_user_failed": "刪除用戶失敗",
       "role_updated": "角色更新成功",
       "role_update_failed": "更新角色失敗",
-      "delete_plugin_failed": "刪除插件失敗"
+      "delete_plugin_failed": "刪除插件失敗",
+      "approve_plugin_failed": "批准外掛失敗",
+      "reject_plugin_failed": "駁回外掛失敗",
+      "claim_plugin_failed": "認領外掛失敗",
+      "unclaim_plugin_failed": "取消認領失敗"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "已複製！",
     "save_preferences": "儲存偏好設定",
     "yes": "是",
-    "no": "否"
+    "no": "否",
+    "none": "無",
+    "unknown": "未知"
   }
 }

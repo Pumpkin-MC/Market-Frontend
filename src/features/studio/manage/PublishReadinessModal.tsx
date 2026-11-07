@@ -70,14 +70,14 @@ export const PublishReadinessModal: React.FC<Props> = ({
         setPublishing(true);
         setError(null);
         try {
-            await api.post(`/plugins/${pluginId}/publish`);
-            setSuccessMsg(t('developer.dashboard.readiness.publish_success'));
+            const res = await api.post(`/plugins/${pluginId}/publish`);
+            setSuccessMsg(res.data?.message || t('developer.dashboard.readiness.publish_success', 'Plugin submitted for review! Our review team will inspect your submission shortly.'));
             onPublished();
             setTimeout(() => {
                 onClose();
             }, 1800);
         } catch (err: any) {
-            setError(translateApiMessage(t, err.response?.data?.error || err.response?.data?.message, t('developer.dashboard.readiness.publish_failed')));
+            setError(translateApiMessage(t, err.response?.data?.error || err.response?.data?.message || err.response?.data, t('developer.dashboard.readiness.publish_failed', 'Failed to submit plugin for review')));
         } finally {
             setPublishing(false);
         }
@@ -130,7 +130,9 @@ export const PublishReadinessModal: React.FC<Props> = ({
                                 <div className="notice notice-success">
                                     <span className="sticker sticker-sm sticker-success">{t('developer.dashboard.readiness.ready')}</span>
                                     <p className="notice-text">
-                                        <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Your plugin is ready to go live.')}</strong>{' '}{t('developer.dashboard.readiness.ready_description')}</p>
+                                        <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Ready to submit for review.')}</strong>{' '}
+                                        {t('developer.dashboard.readiness.ready_description', 'A human reviewer will inspect your plugin before it goes live on the marketplace.')}
+                                    </p>
                                 </div>
                             ) : (
                                 <div className="notice notice-warning">
@@ -171,7 +173,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                         onClick={handlePublish}
                     >
                         <Rocket />
-                        {publishing ? t('developer.dashboard.publishing') : t('developer.dashboard.btn_confirm_publish', 'Confirm & Release to Store')}
+                        {publishing ? t('developer.dashboard.submitting', 'Submitting…') : t('developer.dashboard.btn_confirm_publish', 'Submit for Review')}
                     </button>
                 </div>
             </div>

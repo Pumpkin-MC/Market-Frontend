@@ -110,7 +110,7 @@ export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
 
 export const StaffRoute = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
-  if (!user || (user.role !== 'admin' && user.role !== 'moderator')) {
+  if (!user || (user.role !== 'admin' && user.role !== 'moderator' && user.role !== 'reviewer')) {
     return <Navigate to="/" />;
   }
   return children;

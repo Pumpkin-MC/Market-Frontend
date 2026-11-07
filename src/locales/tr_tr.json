@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "İncelemeci"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "Taslak Oluştur & Yönet ->",
       "status_draft": "Çevrimdışı (Taslak)",
       "status_published": "Yayınlandı",
-      "btn_publish_store": "Mağazada Yayınla",
+      "btn_publish_store": "İncelemeye Gönder",
       "btn_unpublish_store": "Yayından Kaldır",
       "publish_checklist_title": "Pazaryerinde Yayınla",
       "publish_checklist_desc": "Eklentinizi Pumpkin Market'te yayınlamadan önce gereksinimleri kontrol edin.",
-      "publish_ready_banner": "Tüm gereksinimler karşılandı! Eklentiniz yayına hazır.",
+      "publish_ready_banner": "Tüm gereksinimler karşılandı! İncelemeye gönderilmeye hazır.",
       "publish_missing_banner": "Lütfen yayınlamadan önce eksik gereksinimleri tamamlayın.",
-      "btn_confirm_publish": "Onayla ve Mağazada Yayınla",
+      "btn_confirm_publish": "İncelemeye Gönder",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "Taslak değişiklikleri gizlidir. Mağaza sayfanızı, ekran görüntülerini ve ikili derlemeyi tamamlayıp incelemeye gönderin.",
+      "readiness_hint": "İncelemeye göndermeden önce eksik gereksinimleri kontrol edin",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "Eklenti incelemeye gönderildi! İnceleme ekibimiz başvurunuzu kısa süre içinde kontrol edecektir.",
+        "publish_failed": "Eklenti incelemeye gönderilemedi",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "Eklentiniz pazarda yayına girmeden önce bir incelemeci tarafından denetlenecektir.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "İnceleme Bekliyor",
+      "status_rejected": "Değişiklik İstendi",
+      "under_review_desc": "Eklentiniz gönderildi ve şu anda bir incelemeci tarafından incelenmeyi bekliyor.",
+      "rejected_desc": "İncelemeci geri bildirimi: Lütfen mağaza sayfasındaki veya derlemedeki eksikleri giderip tekrar incelemeye gönderin.",
+      "rejected_feedback_desc": "İncelemeci geri bildirimi: {{reason}}",
+      "btn_cancel_review": "İncelemeyi İptal Et",
+      "btn_resubmit_review": "Tekrar İncelemeye Gönder",
+      "submitting": "Gönderiliyor…",
+      "cancelling": "İptal ediliyor…"
     },
     "upload": {
       "title": "Yeni Eklenti Yayınla",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 Asgari İşlevsellik:</strong> Eklentiler sunucu deneyimine anlamlı bir katkı sağlamalıdır. Basit tek komutlu sarmalayıcılar, boş eklentiler veya denetlenmemiş düşük kaliteli yapay zeka betikleri reddedilir.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 Ekran Görüntüleri:</strong> Ekran görüntüleri, eklentinin oyun içi arayüzünü, web panelini veya efektlerini doğru şekilde yansıtmalıdır. Gerçek ekran görüntüleri yerine ilgisiz stok görseller veya yanıltıcı yapay zeka çizimleri kullanmayın.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 Özgünlük:</strong> Mevcut kategorilerdeki rakip eklentiler, anlamlı iyileştirmeler sağladığı sürece (daha iyi performans, zengin yapılandırma, veritabanı desteği veya aktif bakım) memnuniyetle karşılanır. Daha az işlev sunan basit kopyalar reddedilir.",
+          "spam": "<strong>4.1.2 İstenmeyen Gönderim (Spam):</strong> Birbirine çok benzeyen birden fazla eklenti veya seri yapay zeka çıktısı yüklemeyin. Özellikleri yapılandırma seçeneklerine sahip tek ve kaliteli bir eklentide birleştirin."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "Eklentiler ({{count}} Beklemede)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "Tüm Durumlar",
+      "pending_review": "İnceleme Bekliyor",
+      "published": "Yayınlandı",
+      "rejected": "Reddedildi",
+      "draft": "Taslak",
+      "filter_by_status": "Duruma Göre Filtrele",
+      "approve_plugin": "Eklentiyi Onayla",
+      "reject_plugin": "Eklentiyi Reddet"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "Yayınlandı",
+      "in_review": "İnceleniyor (@{{name}})",
+      "waiting_for_review": "İnceleme Bekliyor",
+      "rejected": "Reddedildi",
+      "draft": "Taslak",
+      "claimed_tooltip": "İnceleme için üstlenildi (60 dk kilit)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "İncelemeci"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "Sürüm",
+      "source_link": "Kaynak Bağlantısı",
+      "review_status": "İnceleme Durumu",
+      "claimed_by": "Üstlenen",
+      "rejection_reason": "Ret Nedeni"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "İncele",
+      "inspect_tooltip": "Eklenti sayfasını incele",
+      "details": "Detaylar",
+      "claim_review": "İncelemeyi Üstlen",
+      "approve": "Onayla",
+      "reject": "Reddet",
+      "unclaim": "Bırak",
+      "unapprove": "Onayı Kaldır"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "Bu eklentiyi onaylayıp PumpkinMarket'te canlı olarak yayınlamak istiyor musunuz?",
+      "reject_feedback": "Geliştirici için ret gerekçesi girin (örn. Yetersiz İşlevsellik, eksik yapılandırma/belgeler):"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "Eklenti onaylanamadı",
+      "reject_plugin_failed": "Eklenti reddedilemedi",
+      "claim_plugin_failed": "İnceleme üstlenilemedi",
+      "unclaim_plugin_failed": "İnceleme bırakılamadı"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "Yok",
+    "unknown": "Bilinmiyor"
   }
 }

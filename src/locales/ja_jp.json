@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "審査員"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "下書きを作成して管理 ->",
       "status_draft": "オフライン (下書き)",
       "status_published": "公開済み",
-      "btn_publish_store": "ストアに公開",
+      "btn_publish_store": "審査に提出",
       "btn_unpublish_store": "非公開にする",
       "publish_checklist_title": "マーケットプレイスに公開",
       "publish_checklist_desc": "Pumpkin Market にプラグインをリリースする前に必須要件を確認してください。",
-      "publish_ready_banner": "すべての要件を満たしています！プラグインを公開する準備が整いました。",
+      "publish_ready_banner": "すべての要件を満たしています！審査に提出可能です。",
       "publish_missing_banner": "公開する前に未完了の要件を完了してください。",
-      "btn_confirm_publish": "確認してストアに公開",
+      "btn_confirm_publish": "審査に提出",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "下書きの変更は非公開です。ストア情報、スクリーンショット、バイナリを整えて審査に提出してください。",
+      "readiness_hint": "審査提出前に必要な未完了項目を確認",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "プラグインが審査に提出されました！審査チームがまもなく確認します。",
+        "publish_failed": "プラグインの審査提出に失敗しました",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "マーケットプレイスに公開される前に、人間の審査員がプラグインを検査します。",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "審査待ち",
+      "status_rejected": "修正リクエスト",
+      "under_review_desc": "プラグインが提出され、現在人間の審査チームによる審査を待っています。",
+      "rejected_desc": "審査員フィードバック: ストア掲載情報またはビルドを修正のうえ、再度審査に提出してください。",
+      "rejected_feedback_desc": "審査員フィードバック: {{reason}}",
+      "btn_cancel_review": "審査をキャンセル",
+      "btn_resubmit_review": "審査に再提出",
+      "submitting": "提出中…",
+      "cancelling": "キャンセル中…"
     },
     "upload": {
       "title": "新しいプラグインの公開",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 最小限の機能要件:</strong> プラグインはサーバー体験に有意義な拡張を提供する必要があります。単純な1コマンドラッパー、空のプラグイン、または未精査の粗悪なAI生成スクリプトは却下されます。",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 スクリーンショット:</strong> スクリーンショットは実際のゲーム内UI、Webパネル、または効果を正確に反映する必要があります。無関係なストック画像や誤解を招くAI生成画像を代わりに使用しないでください。",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 オリジナリティ:</strong> 既存カテゴリでの競合プラグインも、有意義な改善（パフォーマンス向上、豊富な設定、データベース対応、継続的な保守など）を提供する場合は歓迎されます。既存プラグインより機能が劣る安易なクローンやテンプレートのコピーは却下されます。",
+          "spam": "<strong>4.1.2 スパム行為の禁止:</strong> ほぼ同一のプラグインを複数投稿したり、大量のAI生成物を乱発したりしないでください。設定オプションを備えた高品質な1つのプラグインに統合してください。"
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "プラグイン ({{count}} 件審査待ち)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "すべてのステータス",
+      "pending_review": "審査待ち",
+      "published": "公開済み",
+      "rejected": "却下済み",
+      "draft": "下書き",
+      "filter_by_status": "ステータスで絞り込み",
+      "approve_plugin": "プラグインを承認",
+      "reject_plugin": "プラグインを却下"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "公開済み",
+      "in_review": "審査中 (@{{name}})",
+      "waiting_for_review": "審査待ち",
+      "rejected": "却下済み",
+      "draft": "下書き",
+      "claimed_tooltip": "審査担当割り当て済み (60分間ロック)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "審査員"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "バージョン",
+      "source_link": "ソースリンク",
+      "review_status": "審査ステータス",
+      "claimed_by": "審査担当者",
+      "rejection_reason": "却下理由"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "ページを確認",
+      "inspect_tooltip": "プラグイン詳細ページを確認",
+      "details": "詳細",
+      "claim_review": "審査を担当",
+      "approve": "承認",
+      "reject": "却下",
+      "unclaim": "担当解除",
+      "unapprove": "承認取り消し"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "このプラグインを承認し、PumpkinMarket に公開しますか？",
+      "reject_feedback": "開発者への却下フィードバックを入力してください（例: 最小限の機能不足、設定/ドキュメントの欠落など）:"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "プラグインの承認に失敗しました",
+      "reject_plugin_failed": "プラグインの却下に失敗しました",
+      "claim_plugin_failed": "プラグインの担当割り当てに失敗しました",
+      "unclaim_plugin_failed": "担当解除に失敗しました"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "なし",
+    "unknown": "不明"
   }
 }

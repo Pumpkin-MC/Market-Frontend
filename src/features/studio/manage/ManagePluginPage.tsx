@@ -109,7 +109,15 @@ const ManagePluginPage = () => {
     if (!plugin) return null;
 
     const isLive = plugin.status === 'published';
-    const statusLabel = isLive ? t('developer.dashboard.status_published', 'Published') : t('developer.dashboard.status_draft', 'Offline (Draft)');
+    const isUnderReview = plugin.status === 'under_review';
+    const isRejected = plugin.status === 'rejected';
+    const statusLabel = isLive
+        ? t('developer.dashboard.status_published', 'Published')
+        : isUnderReview
+        ? t('developer.dashboard.status_under_review', 'Pending Review')
+        : isRejected
+        ? t('developer.dashboard.status_rejected', 'Changes Requested')
+        : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
     return (
         <div className="page page-wide st-page">
@@ -129,27 +137,47 @@ const ManagePluginPage = () => {
                 </div>
             </header>
 
-            <div className={`notice ${isLive ? 'notice-success' : 'notice-plain'}`}>
-                <span className={`sticker ${isLive ? 'sticker-success' : 'sticker-fg'}`}>{statusLabel}</span>
+            <div className={`notice ${isLive ? 'notice-success' : isRejected ? 'notice-danger' : isUnderReview ? 'notice-warning' : 'notice-plain'}`}>
+                <span className={`sticker ${isLive ? 'sticker-success' : isRejected ? 'sticker-danger' : isUnderReview ? 'sticker-warning' : 'sticker-fg'}`}>{statusLabel}</span>
                 <p className="notice-text">
                     {isLive
-                        ? t('developer.dashboard.published_desc')
-                        : t('developer.dashboard.draft_desc')}
+                        ? t('developer.dashboard.published_desc', 'This plugin is public. You can publish updates or manage store details.')
+                        : isUnderReview
+                        ? t('developer.dashboard.under_review_desc', 'Your plugin has been submitted and is currently awaiting review by a human reviewer.')
+                        : isRejected
+                        ? (plugin.rejection_reason
+                            ? t('developer.dashboard.rejected_feedback_desc', { reason: plugin.rejection_reason, defaultValue: `Reviewer feedback: ${plugin.rejection_reason}` })
+                            : t('developer.dashboard.rejected_desc', 'Reviewer feedback: Please address the requested changes in your store listing or build, then resubmit for review.'))
+                        : t('developer.dashboard.draft_desc', 'Draft changes are private. Complete your store listing, screenshots & binary build, then submit for review.')}
                 </p>
                 <div className="row">
-                    {!isLive ? (
+                    {isUnderReview ? (
+                        <button
+                            className="button button-sm"
+                            disabled={unpublishing}
+                            aria-busy={unpublishing}
+                            onClick={handleUnpublish}
+                        >
+                            <PowerOff />
+                            {unpublishing ? t('developer.dashboard.cancelling', 'Cancelling…') : t('developer.dashboard.btn_cancel_review', 'Cancel Review')}
+                        </button>
+                    ) : !isLive ? (
                         <>
                             <button
                                 className="button button-sm"
                                 onClick={() => setIsPublishModalOpen(true)}
-                                title={t('developer.dashboard.readiness_hint')}
-                            >{t('developer.dashboard.check_readiness')}</button>
+                                title={t('developer.dashboard.readiness_hint', 'Check what requirements remain before submitting for review')}
+                            >
+                                {t('developer.dashboard.check_readiness', 'Check Readiness')}
+                            </button>
                             <button
                                 className="button button-primary button-sm"
                                 onClick={() => setIsPublishModalOpen(true)}
                             >
                                 <Rocket />
-                                {t('developer.dashboard.btn_publish_store', 'Publish to Store')}
+                                {isRejected
+                                    ? t('developer.dashboard.btn_resubmit_review', 'Resubmit for Review')
+                                    : t('developer.dashboard.btn_publish_store', 'Submit for Review')}
                             </button>
                         </>
                     ) : (

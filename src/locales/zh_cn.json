@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "系统管理员",
-      "moderator": "社区版主"
+      "moderator": "社区版主",
+      "reviewer": "审核员"
     },
     "recovery": {
       "remaining": "您还有 <remaining /> 个（共 <total /> 个）恢复代码可用",
@@ -810,13 +811,13 @@
       "btn_create_draft": "创建草稿并管理 ->",
       "status_draft": "离线 (草稿)",
       "status_published": "已发布",
-      "btn_publish_store": "发布至商店",
+      "btn_publish_store": "提交审核",
       "btn_unpublish_store": "下架离线",
       "publish_checklist_title": "发布至市场",
       "publish_checklist_desc": "在将插件发布到 Pumpkin Market 前检查所有发布要求。",
-      "publish_ready_banner": "所有要求均已达成！您的插件已准备好上线发布。",
+      "publish_ready_banner": "所有要求均已满足！随时可提交审核。",
       "publish_missing_banner": "请在发布前完善所有缺失的要求。",
-      "btn_confirm_publish": "确认并正式发布至商店",
+      "btn_confirm_publish": "提交审核",
       "accept_failed": "接受转让请求失败。",
       "decline_confirm": "您确定要拒绝此转让请求吗？",
       "decline_failed": "拒绝转让请求失败。",
@@ -857,8 +858,8 @@
       "unpublish_failed": "下架插件失败。",
       "loading_plugin": "正在加载插件…",
       "published_desc": "此插件目前处于公开上线状态。您可以发布版本更新或管理商店详情。",
-      "draft_desc": "草稿变更目前仅自己可见。完善商店介绍与上传构建包后即可正式发布。",
-      "readiness_hint": "查看正式发布前还需满足哪些条件",
+      "draft_desc": "草稿变更仅您可见。请完善商店信息、实机截图及二进制构建后提交审核。",
+      "readiness_hint": "查看提交审核前还缺少哪些必要要求",
       "check_readiness": "检查发布就绪状态",
       "view_on_store": "在商店中查看",
       "unpublishing": "正在下架…",
@@ -868,8 +869,8 @@
         "missing_count_one": "发布前还有 {{count}} 项要求需要完善。",
         "missing_count_other": "发布前还有 {{count}} 项要求需要完善。",
         "check_failed": "检查发布就绪状态失败",
-        "publish_success": "插件发布成功，现已正式在商店上线！",
-        "publish_failed": "发布插件失败",
+        "publish_success": "插件已成功提交审核！我们的审核团队将尽快审查您的作品。",
+        "publish_failed": "提交审核失败",
         "name_title": "插件名称与公开标识",
         "name_missing": "缺少插件名称或名称为空",
         "fix_in_listing": "在商店页面中完善",
@@ -894,9 +895,18 @@
         "error": "错误",
         "live": "已上线",
         "checking": "正在检查商店发布要求…",
-        "ready_description": "您的商店页面、素材文件与 WebAssembly 二进制包已全部通过校验。",
+        "ready_description": "插件将在通过人工审核团队的检查后正式上线市场。",
         "missing": "未完成"
-      }
+      },
+      "status_under_review": "审核中",
+      "status_rejected": "需要修改",
+      "under_review_desc": "您的插件已提交，目前正在等待人工审核团队审核。",
+      "rejected_desc": "审核员反馈：请根据意见修改商店资料或程序构建后重新提交审核。",
+      "rejected_feedback_desc": "审核员反馈：{{reason}}",
+      "btn_cancel_review": "取消审核",
+      "btn_resubmit_review": "重新提交审核",
+      "submitting": "正在提交…",
+      "cancelling": "正在取消…"
     },
     "upload": {
       "title": "发布新插件",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 插件完整性",
           "intro": "PumpkinMarket 将拒绝尚未完成的半成品插件。我们不接受“占位符”插件或无法正常运行的残缺版本。",
-          "minimum": "<strong>2.1.1 具备基本核心功能：</strong> 插件必须为服务器游戏体验带来实质性的增强与扩展。纯粹的“空插件”或仅在控制台打印一条消息的示例插件将被直接驳回。",
+          "minimum": "<strong>2.1.1 具备基本核心功能：</strong> 插件必须为服务器游戏体验带来实质性的增强与扩展。纯粹的单命令简单包装、纯“空插件”或未经人工校验的低质 AI 生成脚本将被直接驳回。",
           "stability": "<strong>2.1.2 运行稳定性：</strong> 在常规生产环境中运行期间会导致服务器崩溃、死锁或卡死的插件将被立即下架。"
         },
         "metadata": {
           "title": "2.2 准确真实的元数据",
           "intro": "您提供的关于插件的所有信息必须真实、准确且诚实。",
-          "screenshots": "<strong>2.2.1 实机截图：</strong> 截图必须真实反映插件在游戏内的实际界面或效果。不得使用无关的宽泛图片或网络库存素材敷衍。",
+          "screenshots": "<strong>2.2.1 实机截图：</strong> 截图必须真实反映插件在游戏内的实际界面、自定义 UI/Web 面板或实际效果。严禁使用无关的网络图库素材或具有误导性的 AI 生成插画代替真实实机截图。",
           "categorization": "<strong>2.2.2 正确分类：</strong> 插件必须归入最相关的分类中。严禁为了蹭曝光而恶意错选分类。",
           "descriptions": "<strong>2.2.3 描述与关键词：</strong> 不得在描述中堆砌无关热门关键词或进行“标签轰炸”以操纵搜索排名结果。"
         },
@@ -1736,8 +1746,8 @@
         "lead": "一款优秀的插件不仅仅是精良的代码，其展示方式与玩家服主的交互体验同样至关重要。",
         "copycats": {
           "title": "4.1 抄袭模仿与垃圾泛滥",
-          "originality": "<strong>4.1.1 原创价值：</strong> 不要简单地全盘克隆现有流行插件。虽然允许提供类似的游戏机制，但您的插件应当具备独特的亮点、创新玩法或截然不同的优质实现。",
-          "spam": "<strong>4.1.2 避免海量上传近似插件：</strong> 请勿将细微拆分的多个近乎相同的插件分散上传。请将功能整合为一个提供丰富配置选项的高品质插件。"
+          "originality": "<strong>4.1.1 原创价值：</strong> 我们欢迎在现有分类中展开良性竞争，前提是插件能带来实质性改进（如更佳的性能、更丰富的配置选项、数据库支持或积极的长期维护）。对于功能简陋、模板级复制且实际功能不如已有成熟插件的作品，将被直接驳回。",
+          "spam": "<strong>4.1.2 避免垃圾泛滥：</strong> 请勿上传多个近乎相同的微调插件或批量生成的 AI 提交。请将相关特性整合为一个提供丰富配置选项的高品质插件。"
         },
         "ux": {
           "title": "4.2 用户交互体验 (UX)",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "用户",
       "plugins": "插件",
-      "logs": "审计日志"
+      "logs": "审计日志",
+      "plugins_pending": "插件 ({{count}} 项待审)"
     },
     "search_users": "搜索用户...",
     "search_plugins": "搜索插件...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "软删除",
       "role_change": "权限变更",
       "all_moderators": "所有版主",
-      "role": "身份角色"
+      "role": "身份角色",
+      "all_statuses": "所有状态",
+      "pending_review": "待审核",
+      "published": "已发布",
+      "rejected": "已拒绝",
+      "draft": "草稿",
+      "filter_by_status": "按状态筛选",
+      "approve_plugin": "通过插件审核",
+      "reject_plugin": "驳回插件审核"
     },
     "status": {
       "active": "正常",
-      "deleted": "已删除"
+      "deleted": "已删除",
+      "published": "已发布",
+      "in_review": "审核中 (@{{name}})",
+      "waiting_for_review": "等待审核",
+      "rejected": "已驳回",
+      "draft": "草稿",
+      "claimed_tooltip": "已认领审核（60 分钟锁定期）"
     },
     "roles": {
       "user": "普通用户",
       "moderator": "版主",
-      "admin": "管理员"
+      "admin": "管理员",
+      "reviewer": "审核员"
     },
     "entity": {
       "user": "用户",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe 已就绪",
       "tfa_enabled": "2FA 已启用",
       "deleted_at": "删除于 {{date}}",
-      "no_reason": "未提供原因"
+      "no_reason": "未提供原因",
+      "version": "版本",
+      "source_link": "源码链接",
+      "review_status": "审核状态",
+      "claimed_by": "认领人",
+      "rejection_reason": "驳回原因"
     },
     "actions": {
       "view": "查看",
-      "delete": "删除"
+      "delete": "删除",
+      "inspect": "审查页面",
+      "inspect_tooltip": "在新标签页查看插件详情页",
+      "details": "详情",
+      "claim_review": "认领审核",
+      "approve": "通过",
+      "reject": "驳回",
+      "unclaim": "放弃认领",
+      "unapprove": "取消通过"
     },
     "prompts": {
       "deactivation_reason": "请输入停用账号的原因：",
       "role_reason": "请输入将角色更改为 {{role}} 的原因（可选）：",
-      "removal_reason": "请输入移除的原因："
+      "removal_reason": "请输入移除的原因：",
+      "approve_confirm": "确定批准此插件并将其公开发布到 PumpkinMarket 吗？",
+      "reject_feedback": "请输入给开发者的驳回反馈（例如：功能不足、缺少必要配置/文档等）："
     },
     "messages": {
       "fetch_failed": "获取数据失败",
       "delete_user_failed": "删除用户失败",
       "role_updated": "角色更新成功",
       "role_update_failed": "更新角色失败",
-      "delete_plugin_failed": "删除插件失败"
+      "delete_plugin_failed": "删除插件失败",
+      "approve_plugin_failed": "批准插件失败",
+      "reject_plugin_failed": "驳回插件失败",
+      "claim_plugin_failed": "认领插件失败",
+      "unclaim_plugin_failed": "取消认领失败"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "已复制！",
     "save_preferences": "保存偏好设置",
     "yes": "是",
-    "no": "否"
+    "no": "否",
+    "none": "无",
+    "unknown": "未知"
   }
 }

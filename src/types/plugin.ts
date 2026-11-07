@@ -66,6 +66,7 @@ export interface Plugin {
   preorder_release_date?: string | null;
   youtube_video_url?: string | null;
   status?: PluginStatus | string | null;
+  rejection_reason?: string | null;
   deleted_at?: string | null;
   commands?: PluginCommand[];
   screenshots?: PluginScreenshot[];

@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "Рецензент"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "Создать черновик и перейти ->",
       "status_draft": "Оффлайн (Черновик)",
       "status_published": "Опубликован",
-      "btn_publish_store": "Опубликовать в магазине",
+      "btn_publish_store": "Отправить на проверку",
       "btn_unpublish_store": "Снять с публикации",
       "publish_checklist_title": "Публикация на торговой площадке",
       "publish_checklist_desc": "Проверьте требования перед выпуском плагина в Pumpkin Market.",
-      "publish_ready_banner": "Все требования выполнены! Ваш плагин готов к публикации.",
+      "publish_ready_banner": "Все требования выполнены! Готово к отправке на проверку.",
       "publish_missing_banner": "Пожалуйста, выполните недостающие требования перед публикацией.",
-      "btn_confirm_publish": "Подтвердить и выпустить в магазин",
+      "btn_confirm_publish": "Отправить на проверку",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "Черновик виден только вам. Заполните страницу, прикрепите скриншоты и бинарный файл, затем отправьте на проверку.",
+      "readiness_hint": "Проверьте, какие требования не выполнены перед отправкой на проверку",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "Плагин отправлен на проверку! Наша команда скоро проверит его.",
+        "publish_failed": "Не удалось отправить плагин на проверку",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "Модератор проверит плагин перед его публикацией на торговой площадке.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "Ожидает проверки",
+      "status_rejected": "Требуются правки",
+      "under_review_desc": "Ваш плагин отправлен и в данный момент ожидает ручной проверки модератором.",
+      "rejected_desc": "Отзыв модератора: внесите запрошенные изменения в карточку или сборку и отправьте на проверку повторно.",
+      "rejected_feedback_desc": "Отзыв модератора: {{reason}}",
+      "btn_cancel_review": "Отменить проверку",
+      "btn_resubmit_review": "Отправить повторно",
+      "submitting": "Отправка…",
+      "cancelling": "Отмена…"
     },
     "upload": {
       "title": "Публикация нового плагина",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 Минимальная функциональность:</strong> плагины должны вносить заметный вклад в работу сервера. Простые обертки над одной командой, пустые плагины или непроверенные скрипты от ИИ низкого качества будут отклонены.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 Скриншоты:</strong> скриншоты должны точно отражать реальный интерфейс, веб-панели или эффекты в игре. Не используйте сторонние стоковые изображения или сгенерированные ИИ арты вместо реальных скриншотов.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 Оригинальность:</strong> конкурирующие плагины в существующих категориях приветствуются, если они несут значительные улучшения (лучшая производительность, больше настроек, поддержка БД или активная поддержка). Примитивные клоны с меньшим функционалом будут отклоняться.",
+          "spam": "<strong>4.1.2 Спам:</strong> не загружайте множество почти одинаковых плагинов и массово сгенерированные с помощью ИИ работы. Объединяйте возможности в один качественный плагин с опциями настройки."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "Плагины (ожидают: {{count}})"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "Все статусы",
+      "pending_review": "Ожидают проверки",
+      "published": "Опубликовано",
+      "rejected": "Отклонено",
+      "draft": "Черновик",
+      "filter_by_status": "Фильтр по статусу",
+      "approve_plugin": "Одобрить плагин",
+      "reject_plugin": "Отклонить плагин"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "Опубликовано",
+      "in_review": "На проверке (@{{name}})",
+      "waiting_for_review": "Ожидает проверки",
+      "rejected": "Отклонено",
+      "draft": "Черновик",
+      "claimed_tooltip": "Взят на проверку (блокировка на 60 мин)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "Рецензент"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "Версия",
+      "source_link": "Ссылка на исходный код",
+      "review_status": "Статус проверки",
+      "claimed_by": "Проверяющий",
+      "rejection_reason": "Причина отклонения"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "Осмотреть",
+      "inspect_tooltip": "Открыть страницу плагина",
+      "details": "Детали",
+      "claim_review": "Взять на проверку",
+      "approve": "Одобрить",
+      "reject": "Отклонить",
+      "unclaim": "Освободить",
+      "unapprove": "Снять одобрение"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "Одобрить этот плагин и опубликовать его в PumpkinMarket?",
+      "reject_feedback": "Введите причину отклонения для разработчика (например: недостаточный функционал, нет конфигурации/документации):"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "Не удалось одобрить плагин",
+      "reject_plugin_failed": "Не удалось отклонить плагин",
+      "claim_plugin_failed": "Не удалось взять плагин на проверку",
+      "unclaim_plugin_failed": "Не удалось освободить плагин"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "Нет",
+    "unknown": "Неизвестно"
   }
 }

@@ -1329,11 +1329,11 @@ const SettingsPage = () => {
                       <span className="mark-box mark-box-success"><Check /></span>
                       <span><Trans t={t} i18nKey="profile.security.enabled_message" components={{ strong: <strong /> }} /></span>
                     </p>
-                    {user?.role === 'admin' || user?.role === 'moderator' ? (
+                    {user?.role === 'admin' || user?.role === 'moderator' || user?.role === 'reviewer' ? (
                       <p className="status">
                         <span className="mark-box mark-box-warning"><Shield /></span>
                         <span>
-                          {t('profile.security.staff_requirement', { role: user.role === 'admin' ? t('profile.roles.admin') : t('profile.roles.moderator') })}
+                          {t('profile.security.staff_requirement', { role: user.role === 'admin' ? t('profile.roles.admin') : user.role === 'moderator' ? t('profile.roles.moderator') : t('profile.roles.reviewer') })}
                         </span>
                       </p>
                     ) : (

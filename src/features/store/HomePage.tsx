@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useMemo, type ReactNode, type Ref } from '
 import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import api from '../../lib/api';
 import { getLocalizedText } from '../../lib/locale';
 import SEO from '../../components/SEO';
@@ -13,6 +15,16 @@ import { getPluginUrl } from '../../lib/url';
 import '../../styles/store.css';
 
 const PAGE_SIZE = 12;
+
+// The hero card is itself a <Link>, so markdown links must not render nested
+// anchors; they keep their styling but the whole card stays the click target.
+const heroMarkdownComponents = {
+    a: ({ children }: { children?: ReactNode }) => <span className="sf-md-link">{children}</span>,
+    img: ({ src, alt }: { src?: string | Blob; alt?: string }) => {
+        const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
+        return isSafe ? <img src={src} alt={alt || 'Plugin illustration'} loading="lazy" decoding="async" className="sf-md-img" /> : null;
+    },
+};
 
 const markFirst = (text: string): ReactNode => {
     const i = text.trim().indexOf(' ');
@@ -254,7 +266,11 @@ const HomePage = () => {
                                     })}
                                 </div>
 
-                                <p className="sf-feature-desc">{getDesc(activeFeatured.translated_descriptions)}</p>
+                                <div className="sf-feature-desc sf-md">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={heroMarkdownComponents}>
+                                        {getDesc(activeFeatured.translated_descriptions)}
+                                    </ReactMarkdown>
+                                </div>
 
                                 <dl className="specs">
                                     <dt>{t('plugin.downloads')}</dt><dd>{(activeFeatured.downloads || 0).toLocaleString()}</dd>

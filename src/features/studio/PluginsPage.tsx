@@ -296,7 +296,16 @@ const PluginsPage = () => {
                                 const isPaid = pluginType === 'paid' || (p.priceCents && p.priceCents > 0);
                                 const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : t('plugin.free');
                                 const initial = (p.name || '?').charAt(0).toUpperCase();
-                                const isDraft = p.status === 'draft';
+                                const isPublished = p.status === 'published';
+                                const isUnderReview = p.status === 'under_review';
+                                const isRejected = p.status === 'rejected';
+                                const statusLabel = isPublished
+                                    ? t('developer.dashboard.status_published', 'Published')
+                                    : isUnderReview
+                                    ? t('developer.dashboard.status_under_review', 'Pending Review')
+                                    : isRejected
+                                    ? t('developer.dashboard.status_rejected', 'Changes Requested')
+                                    : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
                                 return (
                                     <tr key={p.id}>
@@ -358,8 +367,8 @@ const PluginsPage = () => {
                                         <td data-label={t('developer.dashboard.visibility')}>
                                             <div className="stack st-plugins-vis">
                                                 <span className="status">
-                                                    {isDraft ? <span className="dot" /> : <span className="mark-box mark-box-success"><Check /></span>}
-                                                    {isDraft ? t('developer.dashboard.status_draft', 'Offline (Draft)') : t('developer.dashboard.status_published', 'Published')}
+                                                    {isPublished ? <span className="mark-box mark-box-success"><Check /></span> : <span className="dot" />}
+                                                    {statusLabel}
                                                 </span>
                                                 <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : t('plugin.free')}</span>
                                             </div>

@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "심사관"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "초안 생성 및 관리 ->",
       "status_draft": "오프라인 (초안)",
       "status_published": "게시됨",
-      "btn_publish_store": "스토어에 게시",
+      "btn_publish_store": "심사 제출",
       "btn_unpublish_store": "게시 취소 (오프라인)",
       "publish_checklist_title": "마켓플레이스에 게시",
       "publish_checklist_desc": "Pumpkin Market에 플러그인을 출시하기 전에 요구사항을 검토하세요.",
-      "publish_ready_banner": "모든 요구사항을 충족했습니다! 플러그인을 출시할 준비가 완료되었습니다.",
+      "publish_ready_banner": "모든 요건이 충족되었습니다! 심사에 제출할 준비가 되었습니다.",
       "publish_missing_banner": "게시하기 전에 누락된 요구사항을 완료해 주세요.",
-      "btn_confirm_publish": "확인 및 스토어에 출시",
+      "btn_confirm_publish": "심사 제출",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "초안 변경 사항은 비공개입니다. 스토어 정보, 스크린샷, 바이너리를 완료한 후 심사를 제출하세요.",
+      "readiness_hint": "심사 제출 전 충족해야 하는 필수 요건 확인",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "플러그인이 심사에 제출되었습니다! 심사팀이 곧 확인할 예정입니다.",
+        "publish_failed": "심사 제출 실패",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "마켓플레이스에 공개되기 전에 심사관이 플러그인을 직접 검토합니다.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "심사 대기 중",
+      "status_rejected": "수정 요청됨",
+      "under_review_desc": "플러그인이 제출되었으며 현재 전담 심사관의 검토를 기다리고 있습니다.",
+      "rejected_desc": "심사관 피드백: 스토어 정보 또는 빌드를 수정한 후 다시 심사를 제출해 주세요.",
+      "rejected_feedback_desc": "심사관 피드백: {{reason}}",
+      "btn_cancel_review": "심사 취소",
+      "btn_resubmit_review": "심사 재제출",
+      "submitting": "제출 중…",
+      "cancelling": "취소 중…"
     },
     "upload": {
       "title": "새 플러그인 출시",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 최소 기능 요건:</strong> 플러그인은 서버 경험에 실질적인 확장을 제공해야 합니다. 단순 단일 명령어 래퍼, 빈 플러그인 또는 검증되지 않은 저품질 AI 생성 스크립트는 반려됩니다.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 스크린샷:</strong> 스크린샷은 실제 인게임 인터페이스, 웹 패널 또는 효과를 정확히 반영해야 합니다. 실제 스크린샷 대신 관련 없는 스톡 이미지나 기만적인 AI 생성 이미지를 사용하지 마세요.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 독창성:</strong> 의미 있는 개선(성능 향상, 풍부한 구성, 데이터베이스 지원, 지속적인 유지보수 등)을 제공하는 경우 기존 카테고리 내 경쟁 플러그인을 환영합니다. 기존 플러그인보다 기능이 부족한 단순 클론이나 템플릿 복제본은 반려됩니다.",
+          "spam": "<strong>4.1.2 스팸 금지:</strong> 거의 동일한 플러그인을 여러 개 업로드하거나 대량의 AI 생성물을 제출하지 마세요. 설정 옵션을 갖춘 하나의 고품질 플러그인으로 통합하세요."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "플러그인 ({{count}}건 대기 중)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "모든 상태",
+      "pending_review": "심사 대기 중",
+      "published": "게시됨",
+      "rejected": "반려됨",
+      "draft": "초안",
+      "filter_by_status": "상태별 필터",
+      "approve_plugin": "플러그인 승인",
+      "reject_plugin": "플러그인 반려"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "게시됨",
+      "in_review": "심사 중 (@{{name}})",
+      "waiting_for_review": "심사 대기 중",
+      "rejected": "반려됨",
+      "draft": "초안",
+      "claimed_tooltip": "심사 배정됨 (60분 잠금)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "심사관"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "버전",
+      "source_link": "소스 링크",
+      "review_status": "심사 상태",
+      "claimed_by": "심사 담당자",
+      "rejection_reason": "반려 사유"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "페이지 검토",
+      "inspect_tooltip": "새 탭에서 플러그인 페이지 확인",
+      "details": "상세 정보",
+      "claim_review": "심사 배정",
+      "approve": "승인",
+      "reject": "반려",
+      "unclaim": "배정 해제",
+      "unapprove": "승인 취소"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "이 플러그인을 승인하고 PumpkinMarket에 라이브로 게시하시겠습니까?",
+      "reject_feedback": "개발자에게 전달할 반려 피드백을 입력하세요 (예: 최소 기능 부족, 설정/문서 누락 등):"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "플러그인 승인 실패",
+      "reject_plugin_failed": "플러그인 반려 실패",
+      "claim_plugin_failed": "플러그인 심사 배정 실패",
+      "unclaim_plugin_failed": "배정 해제 실패"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "없음",
+    "unknown": "알 수 없음"
   }
 }

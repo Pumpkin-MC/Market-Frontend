@@ -525,7 +525,8 @@
     },
     "roles": {
       "admin": "Administrator",
-      "moderator": "Moderator"
+      "moderator": "Moderator",
+      "reviewer": "Réviseur"
     },
     "recovery": {
       "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
@@ -810,13 +811,13 @@
       "btn_create_draft": "Créer le brouillon & gérer ->",
       "status_draft": "Hors ligne (Brouillon)",
       "status_published": "Publié",
-      "btn_publish_store": "Publier sur le Store",
+      "btn_publish_store": "Soumettre pour examen",
       "btn_unpublish_store": "Mettre hors ligne",
       "publish_checklist_title": "Publier sur le marché",
       "publish_checklist_desc": "Vérifiez les prérequis avant de publier votre plugin sur Pumpkin Market.",
-      "publish_ready_banner": "Tous les prérequis sont validés ! Votre plugin est prêt à être publié.",
+      "publish_ready_banner": "Toutes les conditions sont remplies ! Prêt à être soumis pour examen.",
       "publish_missing_banner": "Veuillez compléter les prérequis manquants avant de publier.",
-      "btn_confirm_publish": "Confirmer & publier sur le Store",
+      "btn_confirm_publish": "Soumettre pour examen",
       "accept_failed": "Failed to accept transfer request.",
       "decline_confirm": "Are you sure you want to decline this transfer request?",
       "decline_failed": "Failed to decline transfer request.",
@@ -857,8 +858,8 @@
       "unpublish_failed": "Failed to unpublish plugin.",
       "loading_plugin": "Loading plugin…",
       "published_desc": "This plugin is public. You can publish updates or manage store details.",
-      "draft_desc": "Draft changes are private. Complete your store listing & binary build, then publish.",
-      "readiness_hint": "Check what requirements remain before publishing",
+      "draft_desc": "Les modifications de brouillon sont privées. Complétez votre fiche, captures d'écran et binaire, puis soumettez pour examen.",
+      "readiness_hint": "Vérifier les conditions requises avant de soumettre à l'examen",
       "check_readiness": "Check Readiness",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
@@ -868,8 +869,8 @@
         "missing_count_one": "{{count}} item needs attention before release.",
         "missing_count_other": "{{count}} items need attention before release.",
         "check_failed": "Failed to check publish readiness",
-        "publish_success": "Plugin published successfully and is now live!",
-        "publish_failed": "Failed to publish plugin",
+        "publish_success": "Plugin soumis pour examen ! Notre équipe va inspecter votre soumission sous peu.",
+        "publish_failed": "Échec de la soumission du plugin pour examen",
         "name_title": "Plugin Name & Identity",
         "name_missing": "Plugin name is missing or empty",
         "fix_in_listing": "Fix in Listing",
@@ -894,9 +895,18 @@
         "error": "Error",
         "live": "Live",
         "checking": "Checking store requirements…",
-        "ready_description": "Your store page, assets, and WebAssembly binary are all validated.",
+        "ready_description": "Un réviseur humain examinera votre plugin avant sa mise en ligne sur le marché.",
         "missing": "Missing"
-      }
+      },
+      "status_under_review": "En attente d'examen",
+      "status_rejected": "Modifications demandées",
+      "under_review_desc": "Votre plugin a été soumis et attend actuellement l'examen par un réviseur humain.",
+      "rejected_desc": "Commentaires du réviseur : veuillez appliquer les modifications demandées à votre fiche ou version avant de la soumettre à nouveau.",
+      "rejected_feedback_desc": "Commentaires du réviseur : {{reason}}",
+      "btn_cancel_review": "Annuler l'examen",
+      "btn_resubmit_review": "Resoumettre pour examen",
+      "submitting": "Soumission…",
+      "cancelling": "Annulation…"
     },
     "upload": {
       "title": "Publier un nouveau plugin",
@@ -1701,13 +1711,13 @@
         "completeness": {
           "title": "2.1 Plugin Completeness",
           "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
-          "minimum": "<strong>2.1.1 Minimum Functionality:</strong> Plugins must provide a meaningful extension to the server experience. \"Empty\" plugins or those that only print a message to the console will be rejected.",
+          "minimum": "<strong>2.1.1 Fonctionnalité minimale :</strong> les plugins doivent apporter une réelle plus-value à l'expérience du serveur. Les simples wrappers mono-commande, les plugins vides ou les scripts générés par IA non vérifiés seront rejetés.",
           "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed."
         },
         "metadata": {
           "title": "2.2 Accurate Metadata",
           "intro": "The information you provide about your plugin must be accurate and honest.",
-          "screenshots": "<strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's interface or effects in-game. Do not use generic or \"stock\" images that are unrelated.",
+          "screenshots": "<strong>2.2.1 Captures d'écran :</strong> les captures doivent refléter fidèlement l'interface réelle, les panneaux web ou les effets en jeu. N'utilisez pas d'images génériques ou d'illustrations IA trompeuses à la place de véritables captures.",
           "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
           "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results."
         },
@@ -1736,8 +1746,8 @@
         "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
         "copycats": {
           "title": "4.1 Copycats and Spam",
-          "originality": "<strong>4.1.1 Originality:</strong> Do not simply \"clone\" another popular plugin. While similar features are allowed, your plugin should offer unique value or a different implementation.",
-          "spam": "<strong>4.1.2 Spam:</strong> Do not upload multiple near-identical plugins. Consolidate features into a single, high-quality plugin with configuration options."
+          "originality": "<strong>4.1.1 Originalité :</strong> les plugins concurrents dans des catégories existantes sont les bienvenus s'ils offrent des améliorations substantielles (meilleures performances, configuration plus poussée, support de base de données ou maintenance active). Les clones rudimentaires offrant moins de fonctionnalités seront rejetés.",
+          "spam": "<strong>4.1.2 Spam :</strong> ne téléversez pas plusieurs plugins quasi identiques ou des créations IA générées en masse. Regroupez les fonctionnalités dans un unique plugin de qualité avec des options de configuration."
         },
         "ux": {
           "title": "4.2 User Experience",
@@ -1768,7 +1778,8 @@
     "tabs": {
       "users": "Users",
       "plugins": "Plugins",
-      "logs": "Logs"
+      "logs": "Logs",
+      "plugins_pending": "Plugins ({{count}} en attente)"
     },
     "search_users": "Search users...",
     "search_plugins": "Search plugins...",
@@ -1778,16 +1789,31 @@
       "soft_delete": "Soft Delete",
       "role_change": "Role Change",
       "all_moderators": "All Moderators",
-      "role": "Role"
+      "role": "Role",
+      "all_statuses": "Tous les statuts",
+      "pending_review": "En attente d'examen",
+      "published": "Publié",
+      "rejected": "Rejeté",
+      "draft": "Brouillon",
+      "filter_by_status": "Filtrer par statut",
+      "approve_plugin": "Approuver le plugin",
+      "reject_plugin": "Rejeter le plugin"
     },
     "status": {
       "active": "Active",
-      "deleted": "Deleted"
+      "deleted": "Deleted",
+      "published": "Publié",
+      "in_review": "En cours d'examen (@{{name}})",
+      "waiting_for_review": "En attente d'examen",
+      "rejected": "Rejeté",
+      "draft": "Brouillon",
+      "claimed_tooltip": "Pris en charge pour examen (bail de 60 min)"
     },
     "roles": {
       "user": "User",
       "moderator": "Moderator",
-      "admin": "Admin"
+      "admin": "Admin",
+      "reviewer": "Réviseur"
     },
     "entity": {
       "user": "User",
@@ -1819,23 +1845,42 @@
       "stripe_ready": "Stripe Ready",
       "tfa_enabled": "2FA Enabled",
       "deleted_at": "Deleted at {{date}}",
-      "no_reason": "No reason provided"
+      "no_reason": "No reason provided",
+      "version": "Version",
+      "source_link": "Lien du code source",
+      "review_status": "Statut d'examen",
+      "claimed_by": "Pris en charge par",
+      "rejection_reason": "Motif du refus"
     },
     "actions": {
       "view": "View",
-      "delete": "Delete"
+      "delete": "Delete",
+      "inspect": "Inspecter",
+      "inspect_tooltip": "Inspecter la page du plugin",
+      "details": "Détails",
+      "claim_review": "Prendre en charge",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "unclaim": "Libérer",
+      "unapprove": "Désapprouver"
     },
     "prompts": {
       "deactivation_reason": "Enter reason for deactivation:",
       "role_reason": "Enter reason for changing role to {{role}} (Optional):",
-      "removal_reason": "Enter reason for removal:"
+      "removal_reason": "Enter reason for removal:",
+      "approve_confirm": "Approuver ce plugin et le publier en ligne sur PumpkinMarket ?",
+      "reject_feedback": "Saisissez un retour de refus pour le développeur (ex. : fonctionnalité minimale, config/doc manquante) :"
     },
     "messages": {
       "fetch_failed": "Failed to fetch data",
       "delete_user_failed": "Failed to delete user",
       "role_updated": "Role updated successfully",
       "role_update_failed": "Failed to update role",
-      "delete_plugin_failed": "Failed to delete plugin"
+      "delete_plugin_failed": "Failed to delete plugin",
+      "approve_plugin_failed": "Échec de l'approbation du plugin",
+      "reject_plugin_failed": "Échec du rejet du plugin",
+      "claim_plugin_failed": "Échec de la prise en charge de l'examen",
+      "unclaim_plugin_failed": "Échec de la libération de l'examen"
     }
   },
   "audience": {
@@ -1912,6 +1957,8 @@
     "copied": "Copied!",
     "save_preferences": "Save Preferences",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "none": "Aucun",
+    "unknown": "Inconnu"
   }
 }
