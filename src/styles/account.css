@@ -321,6 +321,38 @@
   font-weight: 800;
 }
 
+.ac-avatar-trigger {
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+}
+
+.ac-avatar-trigger .ac-avatar-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s var(--ease);
+}
+
+.ac-avatar-trigger:hover .ac-avatar-overlay,
+.ac-avatar-trigger:focus-visible .ac-avatar-overlay {
+  opacity: 1;
+}
+
+.ac-avatar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-4);
+  padding-bottom: var(--s-4);
+  margin-bottom: var(--s-2);
+  border-bottom: 2px solid var(--line);
+}
+
 .ac-sidenav a[data-danger] {
   color: var(--danger);
 }

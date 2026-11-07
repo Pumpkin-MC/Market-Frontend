@@ -36,6 +36,8 @@ const App = () => (
           <Route path="/" element={<HomePage />} />
           <Route path="plugin/:id" element={<PluginPage />} />
           <Route path="plugin/:id-:slug" element={<PluginPage />} />
+          <Route path="plugins/:id" element={<PluginPage />} />
+          <Route path="plugins/:id-:slug" element={<PluginPage />} />
           <Route path="profile/:username" element={<AuthorPage />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="terms" element={<TermsOfServicePage />} />

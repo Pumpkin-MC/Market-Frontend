@@ -88,7 +88,7 @@ const GuidelinesPage = () => {
                     <p>The information you provide about your plugin must be accurate and honest.</p>
                     <ul>
                         <li><strong>2.2.1 Screenshots:</strong> Screenshots must accurately reflect the plugin's actual interface, custom UI/web panel, or effects in-game. Do not use unrelated stock images or deceptive AI-generated artwork in place of real screenshots.</li>
-                        <li><strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.</li>
+                        <li><strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Miscategorizing to gain visibility is a violation.</li>
                         <li><strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or "tag spam" in your description to manipulate search results.</li>
                     </ul>
                 </div>

@@ -340,8 +340,32 @@
 .pd-versions {
   display: grid;
   padding: 0;
+  margin: 0 0 0 6px;
   list-style: none;
   border-left: var(--border) solid var(--line);
+}
+
+.pd-versions-sheet {
+  width: min(720px, calc(100% - 32px));
+  max-height: calc(100vh - 64px);
+  display: flex;
+  flex-direction: column;
+}
+
+.pd-versions-sheet .sheet-head {
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 18px;
+  border-bottom: var(--border) solid var(--line);
+}
+
+.pd-versions-sheet .sheet-body {
+  overflow-y: auto;
+  padding: 24px;
+}
+
+.pd-version-history-btn {
+  justify-content: space-between;
 }
 
 .pd-version {
@@ -384,6 +408,16 @@
 .pd-reviews {
   display: grid;
   gap: var(--s-6);
+  padding-top: var(--s-6);
+  border-top: var(--border) solid var(--line);
+  scroll-margin-top: calc(70px + var(--s-4));
+}
+
+.pd-reviews-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
 }
 
 .pd-ratings {
@@ -1021,6 +1055,117 @@
   .pd-meta {
     order: 4;
   }
+
+  .pd-reviews {
+    order: 5;
+  }
+
+  .pd-safety-card {
+    order: 3;
+  }
+}
+
+/* ── WASM Capability & Permission Inspector (Data Safety / App Privacy style) ── */
+.pd-safety-card {
+  display: grid;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--fg);
+  background: var(--surface);
+  box-shadow: 4px 4px 0 var(--fg);
+}
+
+.pd-safety-list {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.pd-safety-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: var(--t-13);
+  line-height: 1.35;
+}
+
+.pd-safety-item > svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  color: var(--pumpkin);
+  stroke-width: 2.5;
+}
+
+.pd-safety-item strong {
+  display: block;
+  color: var(--fg);
+  font-size: var(--t-13);
+}
+
+.pd-safety-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--s-4);
+}
+
+.pd-cap-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-4) var(--s-5);
+  border: var(--border) solid var(--line);
+  background: var(--surface);
+}
+
+.pd-cap-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+}
+
+.pd-cap-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  color: var(--fg);
+}
+
+.pd-cap-title svg {
+  width: 18px;
+  height: 18px;
+  color: var(--pumpkin);
+  stroke-width: 2.5;
+}
+
+.pd-wit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pd-hash-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  padding: 8px 10px;
+  border: 2px solid var(--line-2);
+  background: var(--sunk);
+  font-family: var(--mono);
+  font-size: var(--t-12);
+  overflow: hidden;
+}
+
+.pd-hash-box code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 @media (max-width: 600px) {

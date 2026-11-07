@@ -18,9 +18,10 @@ import {
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
   ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
   Fingerprint, Plus, ShieldAlert, RefreshCw, Copy, Check, Terminal,
-  Cloud, Pencil, X
+  Cloud, Pencil, X, Camera, Upload
 } from 'lucide-react';
 import { getDevicePasskeyName } from '../../lib/deviceInfo';
+import { validateAndSanitizeImage } from '../../lib/fileValidation';
 import { Select } from '../../components/Select';
 import '../../styles/account.css';
 
@@ -907,6 +908,77 @@ const SettingsPage = () => {
   };
 
   const [isExporting, setIsExporting] = useState(false);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>, isDevEndpoint = false) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setAvatarBusy(true);
+    try {
+      const validation = await validateAndSanitizeImage(file, {
+        maxWidth: 512,
+        maxHeight: 512,
+        minWidth: 32,
+        minHeight: 32,
+        quality: 0.88,
+      });
+      if (!validation.valid || !validation.file) {
+        showToast(validation.error || 'Invalid image file.', 'error');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('avatar', validation.file);
+      const endpoint = isDevEndpoint ? '/user/developer/avatar' : '/user/avatar';
+      const res = await api.post(endpoint, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      if (res.data?.token) {
+        login(res.data.token);
+      }
+      if (res.data?.profile) {
+        setDevProfile(res.data.profile);
+      }
+      refreshUser?.();
+      showToast('Profile picture updated successfully!');
+    } catch (err: any) {
+      const msg = typeof err.response?.data === 'string'
+        ? err.response.data
+        : err.response?.data?.error || 'Failed to upload profile picture.';
+      showToast(msg, 'error');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleAvatarRemove = async (isDevEndpoint = false) => {
+    setAvatarBusy(true);
+    try {
+      const endpoint = isDevEndpoint ? '/user/developer/avatar' : '/user/avatar';
+      const res = await api.delete(endpoint);
+      if (res.data?.token) {
+        login(res.data.token);
+      }
+      if (res.data?.profile) {
+        setDevProfile(res.data.profile);
+      } else if (devProfile) {
+        setDevProfile({ ...devProfile, avatar_url: null, avatar_path: null });
+      }
+      refreshUser?.();
+      showToast('Profile picture removed.');
+    } catch (err: any) {
+      const msg = typeof err.response?.data === 'string'
+        ? err.response.data
+        : err.response?.data?.error || 'Failed to remove profile picture.';
+      showToast(msg, 'error');
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   const handleExportData = async () => {
     setIsExporting(true);
@@ -991,6 +1063,14 @@ const SettingsPage = () => {
         <h1 className="display-2">Account <span className="mark">Settings</span></h1>
       </header>
 
+      <input
+        ref={avatarInputRef}
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        onChange={e => handleAvatarUpload(e, activeTab === 'developer' && Boolean(user?.is_developer))}
+        style={{ display: 'none' }}
+      />
+
       {toast && (
         <div className="toast ac-toast" data-type={toast.type} role="status">
           <span className="mark-box">
@@ -1023,9 +1103,21 @@ const SettingsPage = () => {
       <div className="ac-layout">
         <aside className="ac-aside">
           <div className="ac-user">
-            <span className="avatar">
-              {user?.username?.charAt(0).toUpperCase() ?? '?'}
-            </span>
+            <button
+              type="button"
+              className="avatar ac-avatar-trigger"
+              onClick={() => avatarInputRef.current?.click()}
+              disabled={avatarBusy}
+              title="Change profile picture"
+              aria-label="Change profile picture"
+            >
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt={user.username || ''} />
+              ) : (
+                user?.username?.charAt(0).toUpperCase() ?? '?'
+              )}
+              <span className="ac-avatar-overlay"><Camera size={14} /></span>
+            </button>
             <div>
               <strong>{user?.username}</strong>
               <span className="small">{user?.email}</span>
@@ -1063,6 +1155,42 @@ const SettingsPage = () => {
               <SectionHead lead="Account" rest="Details" />
 
               <SettingsCard title="Account Profile" icon={User}>
+                <div className="ac-avatar-row">
+                  <span className="avatar avatar-xl">
+                    {user?.avatar_url ? (
+                      <img src={user.avatar_url} alt={user.username || ''} />
+                    ) : (
+                      user?.username?.charAt(0).toUpperCase() ?? '?'
+                    )}
+                  </span>
+                  <div className="stack ac-tight">
+                    <span className="field-label">Profile Picture</span>
+                    <span className="field-hint">PNG, JPEG, or WebP. Max 2 MB. Recommended 512×512px.</span>
+                    <div className="row" style={{ marginTop: 4 }}>
+                      <button
+                        type="button"
+                        className="button button-sm"
+                        onClick={() => avatarInputRef.current?.click()}
+                        disabled={avatarBusy}
+                      >
+                        <Upload size={14} />
+                        {avatarBusy ? 'Uploading…' : user?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                      </button>
+                      {user?.avatar_url && (
+                        <button
+                          type="button"
+                          className="button button-ghost button-sm"
+                          onClick={() => handleAvatarRemove(false)}
+                          disabled={avatarBusy}
+                        >
+                          <Trash2 size={14} />
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 <form className="stack" onSubmit={handleSaveAccountInfo}>
                   <div className="fields ac-fields-2">
                     <Field label="Username">
@@ -1801,6 +1929,42 @@ const SettingsPage = () => {
                   {devProfile && (
                     <SettingsCard title="Developer Identity" icon={Building2}
                       description="Your public developer information shown on plugin pages.">
+                      <div className="ac-avatar-row">
+                        <span className="avatar avatar-xl">
+                          {(devProfile.avatar_url || user?.avatar_url) ? (
+                            <img src={devProfile.avatar_url || user?.avatar_url} alt={devProfile.display_name || user?.username || ''} />
+                          ) : (
+                            (devProfile.display_name || user?.username || '?').charAt(0).toUpperCase()
+                          )}
+                        </span>
+                        <div className="stack ac-tight">
+                          <span className="field-label">Developer Profile Picture</span>
+                          <span className="field-hint">Displayed on your public developer profile and plugin pages. PNG, JPEG, or WebP (max 2 MB).</span>
+                          <div className="row" style={{ marginTop: 4 }}>
+                            <button
+                              type="button"
+                              className="button button-sm"
+                              onClick={() => avatarInputRef.current?.click()}
+                              disabled={avatarBusy}
+                            >
+                              <Upload size={14} />
+                              {avatarBusy ? 'Uploading…' : (devProfile.avatar_url || user?.avatar_url) ? 'Change Picture' : 'Upload Picture'}
+                            </button>
+                            {(devProfile.avatar_url || user?.avatar_url) && (
+                              <button
+                                type="button"
+                                className="button button-ghost button-sm"
+                                onClick={() => handleAvatarRemove(true)}
+                                disabled={avatarBusy}
+                              >
+                                <Trash2 size={14} />
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
                       <form className="fields ac-fields-2" onSubmit={handleUpdateDevProfile}>
                         <Field label="Entity Type">
                           <span className="control">

@@ -3,10 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { getCodeList } from 'country-list';
 import {
   Check, CheckCircle2, ChevronRight,
-  AlertCircle, CreditCard, Gift, User, Building2, X,
+  AlertCircle, CreditCard, Gift, User, Building2, X, Upload, Trash2,
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
+import { validateAndSanitizeImage } from '../../lib/fileValidation';
 import { SecuritySetupCards } from '../../components/SecuritySetupCards';
 import { Select } from '../../components/Select';
 import '../../styles/studio.css';
@@ -49,6 +50,66 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setAvatarBusy(true);
+    setError(null);
+    try {
+      const validation = await validateAndSanitizeImage(file, {
+        maxWidth: 512,
+        maxHeight: 512,
+        minWidth: 32,
+        minHeight: 32,
+        quality: 0.88,
+      });
+      if (!validation.valid || !validation.file) {
+        setError(validation.error || 'Invalid image file.');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('avatar', validation.file);
+      const res = await api.post('/user/avatar', fd, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      if (res.data?.token) {
+        login(res.data.token);
+      }
+      refreshUser?.();
+    } catch (err: any) {
+      const msg = typeof err.response?.data === 'string'
+        ? err.response.data
+        : err.response?.data?.error || 'Failed to upload profile picture.';
+      setError(msg);
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    setAvatarBusy(true);
+    setError(null);
+    try {
+      const res = await api.delete('/user/avatar');
+      if (res.data?.token) {
+        login(res.data.token);
+      }
+      refreshUser?.();
+    } catch (err: any) {
+      const msg = typeof err.response?.data === 'string'
+        ? err.response.data
+        : err.response?.data?.error || 'Failed to remove profile picture.';
+      setError(msg);
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   useEffect(() => {
     const trimmed = displayName.trim();
@@ -292,6 +353,49 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
             <div className="st-tab-head">
               <h3 className="h3">{t('developer.onboarding.dev_name_title')}</h3>
               <p className="small">{t('developer.onboarding.dev_name_desc')}</p>
+            </div>
+
+            <div className="row" style={{ gap: 'var(--s-4)', alignItems: 'center' }}>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarUpload}
+                style={{ display: 'none' }}
+              />
+              <span className="avatar avatar-xl">
+                {user?.avatar_url ? (
+                  <img src={user.avatar_url} alt={displayName || user?.username || ''} />
+                ) : (
+                  (displayName || user?.username || '?').charAt(0).toUpperCase()
+                )}
+              </span>
+              <div className="stack" style={{ gap: 4 }}>
+                <span className="field-label">Developer Profile Picture (Optional)</span>
+                <span className="field-hint">PNG, JPEG, or WebP. Max 2 MB.</span>
+                <div className="row" style={{ marginTop: 4 }}>
+                  <button
+                    type="button"
+                    className="button button-sm"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarBusy}
+                  >
+                    <Upload size={14} />
+                    {avatarBusy ? 'Uploading…' : user?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                  </button>
+                  {user?.avatar_url && (
+                    <button
+                      type="button"
+                      className="button button-ghost button-sm"
+                      onClick={handleAvatarRemove}
+                      disabled={avatarBusy}
+                    >
+                      <Trash2 size={14} />
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
 
             <label className="field">

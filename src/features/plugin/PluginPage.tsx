@@ -8,7 +8,7 @@ import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../../components/SEO';
 import { PluginVideoPlayer } from './PluginVideoPlayer';
-import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X } from 'lucide-react';
+import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X, ShieldCheck, AlertTriangle, Lock, Cpu, Globe, HardDrive, Terminal, Fingerprint } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../../types/plugin';
 import '../../styles/plugin.css';
 
@@ -344,7 +344,10 @@ const PluginPage = () => {
   const [reportCustom, setReportCustom] = useState('');
   const [reportSubmitting, setReportSubmitting] = useState(false);
   const [reportDone, setReportDone] = useState(false);
-  const [tab, setTab] = useState<'overview' | 'versions' | 'reviews' | 'commands'>('overview');
+  const [tab, setTab] = useState<'overview' | 'commands' | 'security'>('overview');
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [copiedHash, setCopiedHash] = useState(false);
+  const [copiedPerm, setCopiedPerm] = useState<string | null>(null);
 
   // Review Report State
   const [reviewReportOpen, setReviewReportOpen] = useState<number | null>(null);
@@ -357,6 +360,11 @@ const PluginPage = () => {
   const [replySubmitting, setReplySubmitting] = useState(false);
 
   const isOwner = user && plugin && user.id === plugin.dev_id;
+  const isStaff = user?.role === 'admin' || user?.role === 'moderator';
+  const canReview = isStaff || user?.role === 'reviewer';
+  const [staffBusy, setStaffBusy] = useState(false);
+  const [staffRejectOpen, setStaffRejectOpen] = useState(false);
+  const [staffRejectReason, setStaffRejectReason] = useState('');
   const [reportedReviews, setReportedReviews] = useState<Set<number>>(new Set());
 
   // ── Detect ?payment=success and strip from URL ───────────────────────────
@@ -412,27 +420,40 @@ const PluginPage = () => {
 
   // ── Translations ─────────────────────────────────────────────────────────
   const currentDescription = useMemo(() => {
+    const extractText = (val: unknown): string => {
+      if (typeof val === 'string') return val;
+      if (val && typeof val === 'object') {
+        const obj = val as Record<string, unknown>;
+        if (typeof obj.description === 'string') return obj.description;
+        if (typeof obj.shortDescription === 'string') return obj.shortDescription;
+      }
+      return '';
+    };
+
     if (plugin?.translated_descriptions) {
       try {
         const translations = typeof plugin.translated_descriptions === 'string'
           ? JSON.parse(plugin.translated_descriptions)
           : plugin.translated_descriptions;
-        const fullLang = i18n.language || 'en-US';
-        const activeLang = fullLang.slice(0, 2);
-        return (
-          translations[fullLang] ||
-          translations[activeLang] ||
-          translations['en-US'] ||
-          translations['en'] ||
-          translations['en-GB'] ||
-          (Object.values(translations)[0] as string) ||
-          ''
-        );
+        if (typeof translations === 'string') return translations;
+        if (translations && typeof translations === 'object') {
+          const fullLang = i18n.language || 'en-US';
+          const activeLang = fullLang.slice(0, 2);
+          const candidate =
+            translations[fullLang] ??
+            translations[activeLang] ??
+            translations['en-US'] ??
+            translations['en'] ??
+            translations['en-GB'] ??
+            Object.values(translations)[0];
+          const extracted = extractText(candidate);
+          if (extracted) return extracted;
+        }
       } catch {
-        return 'Description not available.';
+        return typeof plugin.description === 'string' ? plugin.description : '';
       }
     }
-    return plugin?.description || '';
+    return typeof plugin?.description === 'string' ? plugin.description : '';
   }, [plugin, i18n.language]);
 
   // ── Lightbox helpers ─────────────────────────────────────────────────────
@@ -492,17 +513,21 @@ const PluginPage = () => {
 
   const closeLightbox = () => setLightboxImage(null);
 
-  // ── Keyboard navigation for lightbox ────────────────────────────────────
+  // ── Keyboard navigation for lightbox & version history modal ────────────
   useEffect(() => {
-    if (!lightboxImage) return;
+    if (!lightboxImage && !versionsOpen) return;
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft' && isScreenshotInGallery) lightboxPrev();
-      else if (e.key === 'ArrowRight' && isScreenshotInGallery) lightboxNext();
-      else if (e.key === 'Escape') closeLightbox();
+      if (lightboxImage) {
+        if (e.key === 'ArrowLeft' && isScreenshotInGallery) lightboxPrev();
+        else if (e.key === 'ArrowRight' && isScreenshotInGallery) lightboxNext();
+        else if (e.key === 'Escape') closeLightbox();
+      } else if (versionsOpen && e.key === 'Escape') {
+        setVersionsOpen(false);
+      }
     };
-      window.addEventListener('keydown', handleKey);
-      return () => window.removeEventListener('keydown', handleKey);
-  }, [lightboxImage, lightboxIndex, screenshots, isScreenshotInGallery]);
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [lightboxImage, lightboxIndex, screenshots, isScreenshotInGallery, versionsOpen]);
 
   const hasReviewed = useMemo(() => {
     if (!user || !plugin?.reviews || !Array.isArray(plugin.reviews)) return false;
@@ -538,7 +563,7 @@ const PluginPage = () => {
     if (!plugin) return;
 
     if (plugin.type === 'paid') {
-      if (!user) return navigate('/login', { state: { from: `/plugins/${id}` } });
+      if (!user) return navigate('/login', { state: { from: `/plugin/${id}` } });
 
       // Already owns it — download directly, no checkout
       if (ownsPlugin) {
@@ -710,7 +735,71 @@ const PluginPage = () => {
     );
   }
 
+  const hasBinary = Boolean(plugin.file_size && plugin.file_size > 0);
+  const isDraft = !plugin.status || plugin.status === 'draft';
+  const isUnderReview = plugin.status === 'under_review';
+  const isRejected = plugin.status === 'rejected';
+  const isSuspended = plugin.status === 'suspended';
+
+  const handleStaffClaim = async () => {
+    if (!plugin) return;
+    setStaffBusy(true);
+    try {
+      await api.post(`/admin/plugins/${plugin.id}/claim`);
+      fetchPlugin();
+    } catch (err: any) {
+      alert(err?.response?.data || 'Failed to claim plugin for review.');
+    } finally {
+      setStaffBusy(false);
+    }
+  };
+
+  const handleStaffUnclaim = async () => {
+    if (!plugin) return;
+    setStaffBusy(true);
+    try {
+      await api.post(`/admin/plugins/${plugin.id}/unclaim`);
+      fetchPlugin();
+    } catch (err: any) {
+      alert(err?.response?.data || 'Failed to release review claim.');
+    } finally {
+      setStaffBusy(false);
+    }
+  };
+
+  const handleStaffApprove = async () => {
+    if (!plugin) return;
+    setStaffBusy(true);
+    try {
+      await api.post(`/admin/plugins/${plugin.id}/approve`, { reason: 'Approved during page inspection' });
+      fetchPlugin();
+    } catch (err: any) {
+      alert(err?.response?.data || 'Failed to approve plugin.');
+    } finally {
+      setStaffBusy(false);
+    }
+  };
+
+  const handleStaffReject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!plugin || !staffRejectReason.trim()) return;
+    setStaffBusy(true);
+    try {
+      await api.post(`/admin/plugins/${plugin.id}/reject`, { reason: staffRejectReason.trim() });
+      setStaffRejectOpen(false);
+      setStaffRejectReason('');
+      fetchPlugin();
+    } catch (err: any) {
+      alert(err?.response?.data || 'Failed to request changes.');
+    } finally {
+      setStaffBusy(false);
+    }
+  };
+
   const downloadLabel = (() => {
+    if (!hasBinary && !plugin.is_preorder) {
+      return 'No Binary Uploaded Yet';
+    }
     const sizeStr = plugin?.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
     if (plugin.type === 'paid') {
@@ -813,9 +902,8 @@ const PluginPage = () => {
 
   const tabList: [typeof tab, string, number?][] = [
     ['overview', 'Overview'],
-    ...(versions.length > 0 ? [['versions', 'Versions', versions.length] as [typeof tab, string, number]] : []),
-    ['reviews', 'Reviews', reviews.length],
     ...(commandCount > 0 ? [['commands', t('plugin.commands.title', 'Commands'), commandCount] as [typeof tab, string, number]] : []),
+    ['security', 'Security & Capabilities'],
   ];
 
   const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
@@ -916,8 +1004,143 @@ const PluginPage = () => {
         <span aria-current="page">{plugin.name}</span>
       </nav>
 
-      {(showPaymentSuccess || plugin.is_preorder || plugin.is_early_access) && (
+      {(isDraft || isUnderReview || isRejected || isSuspended || showPaymentSuccess || plugin.is_preorder || plugin.is_early_access) && (
         <div className="pd-notices">
+          {isDraft && (
+            <div className="notice notice-warning" role="status">
+              <span className="sticker sticker-warning"><Lock /> Draft Mode</span>
+              <div className="notice-text pd-notice-body">
+                <p>
+                  <strong>This plugin is currently in Draft mode and is not publicly listed on PumpkinMarket.</strong>{' '}
+                  Only the plugin developer, moderators, and administrators can view this page.
+                </p>
+              </div>
+              <div className="row">
+                {isOwner && (
+                  <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-primary button-sm">
+                    Manage Draft
+                  </Link>
+                )}
+                {isStaff && (
+                  <Link to="/staff" className="button button-ghost button-sm">
+                    Staff Dashboard
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isUnderReview && (
+            <div className="notice notice-pumpkin" role="status">
+              <span className="sticker"><ShieldCheck /> Under Review</span>
+              <div className="notice-text pd-notice-body">
+                <p>
+                  <strong>This plugin is awaiting review by the PumpkinMarket Staff &amp; Review Team.</strong>{' '}
+                  It is hidden from the public store until approved.
+                  {plugin.claimed_by_name && (
+                    <> Currently claimed by <strong>@{plugin.claimed_by_name}</strong>.</>
+                  )}
+                </p>
+                {canReview && staffRejectOpen && (
+                  <form onSubmit={handleStaffReject} className="row" style={{ marginTop: 8, width: '100%' }}>
+                    <input
+                      type="text"
+                      className="input"
+                      placeholder="Explain what changes are required before publishing…"
+                      value={staffRejectReason}
+                      onChange={e => setStaffRejectReason(e.target.value)}
+                      required
+                      style={{ flex: 1 }}
+                    />
+                    <button type="submit" className="button button-danger button-sm" disabled={staffBusy || !staffRejectReason.trim()}>
+                      Send Feedback
+                    </button>
+                    <button type="button" className="button button-ghost button-sm" onClick={() => setStaffRejectOpen(false)}>
+                      Cancel
+                    </button>
+                  </form>
+                )}
+              </div>
+              <div className="row">
+                {canReview && (
+                  <>
+                    {!plugin.claimed_by_id ? (
+                      <button type="button" className="button button-sm" onClick={handleStaffClaim} disabled={staffBusy}>
+                        Claim Review
+                      </button>
+                    ) : plugin.claimed_by_id === user?.id || user?.role === 'admin' ? (
+                      <>
+                        <button type="button" className="button button-primary button-sm" onClick={handleStaffApprove} disabled={staffBusy}>
+                          <Check /> Approve
+                        </button>
+                        <button type="button" className="button button-danger button-sm" onClick={() => setStaffRejectOpen(v => !v)} disabled={staffBusy}>
+                          Request Changes
+                        </button>
+                        <button type="button" className="button button-ghost button-sm" onClick={handleStaffUnclaim} disabled={staffBusy}>
+                          Release
+                        </button>
+                      </>
+                    ) : null}
+                    <Link to="/staff" className="button button-ghost button-sm">
+                      Staff Queue
+                    </Link>
+                  </>
+                )}
+                {isOwner && (
+                  <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-ghost button-sm">
+                    Manage Plugin
+                  </Link>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isRejected && (
+            <div className="notice notice-danger" role="status">
+              <span className="sticker sticker-danger"><AlertTriangle /> Changes Requested</span>
+              <div className="notice-text pd-notice-body">
+                <p>
+                  <strong>This submission requires changes before it can be published.</strong>
+                  {plugin.rejection_reason && <> Reviewer feedback: <em>{plugin.rejection_reason}</em></>}
+                </p>
+              </div>
+              <div className="row">
+                {isOwner && (
+                  <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-primary button-sm">
+                    Fix &amp; Resubmit
+                  </Link>
+                )}
+                {canReview && (
+                  <>
+                    <button type="button" className="button button-sm" onClick={handleStaffApprove} disabled={staffBusy}>
+                      <Check /> Approve Now
+                    </button>
+                    <Link to="/staff" className="button button-ghost button-sm">
+                      Staff Queue
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isSuspended && (
+            <div className="notice notice-danger" role="status">
+              <span className="sticker sticker-danger"><AlertTriangle /> Suspended</span>
+              <div className="notice-text pd-notice-body">
+                <p>
+                  <strong>This plugin has been suspended by moderation and is hidden from the public store.</strong>
+                  {plugin.rejection_reason && <> Reason: <em>{plugin.rejection_reason}</em></>}
+                </p>
+              </div>
+              {isStaff && (
+                <Link to="/staff" className="button button-ghost button-sm">
+                  Staff Dashboard
+                </Link>
+              )}
+            </div>
+          )}
+
           {showPaymentSuccess && (
             <div className="notice notice-success" role="status">
               <span className="sticker sticker-success">Purchase successful!</span>
@@ -972,6 +1195,7 @@ const PluginPage = () => {
               <h1 className="display-2">{plugin.name}</h1>
               <div className="row">
                 <span className="entry-by">by <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
+                {plugin.dev_verified && <span className="tag tag-info" title="Verified PumpkinMarket Developer"><ShieldCheck size={12} /> Verified</span>}
                 {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
                 {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
                 {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
@@ -1048,10 +1272,11 @@ const PluginPage = () => {
                           <Sparkles className="pumpkin" />
                           <h2 className="h3">What's New</h2>
                           <span className="tag tag-pumpkin">v{latest.version}</span>
+                          {latest.api_version && <span className="tag tag-fg">API v{latest.api_version}</span>}
                           {latest.created_at && <span className="small">{formatDate(latest.created_at)}</span>}
                           <span className="spacer" />
                           {versions.length > 1 && (
-                            <button type="button" className="button button-flat button-sm" onClick={() => openTab('versions')}>
+                            <button type="button" className="button button-flat button-sm" onClick={() => setVersionsOpen(true)}>
                               <History />
                               Version History ({versions.length})
                             </button>
@@ -1068,7 +1293,7 @@ const PluginPage = () => {
                         </div>
                         {isLong && (
                           <div className="panel-foot">
-                            <button type="button" className="button button-ghost button-sm" onClick={() => openTab('versions')}>
+                            <button type="button" className="button button-ghost button-sm" onClick={() => setVersionsOpen(true)}>
                               View More
                               <ChevronRight />
                             </button>
@@ -1079,220 +1304,486 @@ const PluginPage = () => {
                   })()}
 
                   <div className="pd-prose">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
+                    {currentDescription.trim() ? (
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
+                    ) : (
+                      <p className="muted">No description has been written for this plugin yet.</p>
+                    )}
                   </div>
                 </>
               )}
 
-              {activeTab === 'versions' && (
-                <ol className="pd-versions">
-                  {versions.map((v: any) => (
-                    <li key={v.id} className="pd-version">
-                      <div className="row">
-                        <span className="pd-version-num">v{v.version}</span>
-                        {v.track && <span className={`tag tag-solid ${trackTone[v.track] ?? 'tag-fg'}`}>{v.track}</span>}
-                        <span className="small">Released {formatDate(v.created_at)}</span>
-                      </div>
-                      <div className="pd-prose">
-                        {v.release_notes ? (
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
-                        ) : (
-                          <p className="muted">No specific release notes for this update.</p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              )}
+              {activeTab === 'commands' && <PluginCommands commands={plugin.commands} />}
 
-              {activeTab === 'reviews' && (
-                <section className="pd-reviews" aria-label="Ratings & Reviews">
-                  {stats ? (
-                    <div className="pd-ratings">
-                      <div className="pd-avg">
-                        <span className="stat-value">{stats.avg}</span>
-                        <Stars value={Number(stats.avg)} />
-                        <span className="small">{stats.total.toLocaleString()} Ratings</span>
-                      </div>
-                      <div className="pd-bars">
-                        {[5, 4, 3, 2, 1].map(num => (
-                          <div key={num}>
-                            <span className="small num">{num}</span>
-                            <div className="meter meter-pumpkin">
-                              <span style={{ width: `${(stats.distribution[num as keyof typeof stats.distribution] / stats.total) * 100}%` }} />
-                            </div>
-                            <span className="small num">{stats.distribution[num as keyof typeof stats.distribution]}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="blank">
-                      <p className="h3">No reviews yet. Be the first to leave one!</p>
-                    </div>
-                  )}
-
-                  {reviews.length > 0 && (
-                    <ul className="pd-review-list">
-                      {reviews.map((r: any) => (
-                        <li key={r.id} className="pd-review">
-                          <div className="pd-review-top">
-                            <span className={`avatar ${getAvatarClass(r.username)}`}>{getInitials(r.username)}</span>
-                            <div className="pd-review-meta">
-                              <strong>{r.username}</strong>
-                              <span className="small">{formatDate(r.created_at)}</span>
-                            </div>
-                            <Stars value={r.rating} />
-                          </div>
-                          <ExpandableText className="pd-review-body" text={r.comment} limit={400} />
-
-                          {r.developer_reply && (
-                            <div className="pd-reply">
-                              <div className="row">
-                                <span className="label pumpkin">Developer Response</span>
-                                <span className="small">{formatDate(r.replied_at)}</span>
-                              </div>
-                              <ExpandableText text={r.developer_reply} limit={300} />
-                            </div>
-                          )}
-
-                          <div className="pd-review-actions">
-                            {reportedReviews.has(r.id) ? (
-                              <p className="small pd-ok">
-                                <Check /> Report submitted
-                              </p>
-                            ) : reviewReportOpen === r.id ? (
-                              <form onSubmit={(e) => submitReviewReport(e, r.id)} className="pd-form">
-                                <span className="field-label">Reason for reporting this review</span>
-                                {reasonPicker(REVIEW_REPORT_REASONS, reviewReportSelected, reason => { setReviewReportSelected(reason); setReviewReportCustom(''); })}
-                                {reviewReportSelected === 'Other' && (
-                                  <div className="control">
-                                    <textarea
-                                      className="input"
-                                      placeholder="Describe the issue…"
-                                      value={reviewReportCustom}
-                                      onChange={e => setReviewReportCustom(e.target.value)}
-                                      rows={2}
-                                      autoFocus
-                                    />
-                                  </div>
-                                )}
-                                <div className="row">
-                                  <button type="button" className="button button-ghost button-sm" onClick={resetReviewReport}>
-                                    Cancel
-                                  </button>
-                                  <button
-                                    type="submit"
-                                    className="button button-primary button-sm"
-                                    disabled={
-                                      reviewReportSubmitting ||
-                                      !reviewReportSelected ||
-                                      (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
-                                    }
-                                  >
-                                    {reviewReportSubmitting ? 'Sending…' : 'Submit'}
-                                  </button>
-                                </div>
-                              </form>
-                            ) : replyOpen === r.id ? (
-                              <form onSubmit={(e) => submitReply(e, r.id)} className="pd-form">
-                                <div className="control">
-                                  <textarea
-                                    className="input"
-                                    placeholder="Write your response to this review..."
-                                    value={replyText}
-                                    onChange={e => setReplyText(e.target.value)}
-                                    rows={3}
-                                    autoFocus
-                                  />
-                                </div>
-                                <div className="row">
-                                  <button type="button" className="button button-ghost button-sm" onClick={() => { setReplyOpen(null); setReplyText(''); }}>
-                                    Cancel
-                                  </button>
-                                  <button type="submit" className="button button-primary button-sm" disabled={replySubmitting || !replyText.trim()}>
-                                    {replySubmitting ? 'Replying...' : 'Post Reply'}
-                                  </button>
-                                </div>
-                              </form>
-                            ) : (
-                              <>
-                                {user && user.username === r.username ? (
-                                  <button type="button" className="button button-ghost button-sm pd-danger" onClick={deleteReview}>
-                                    <Trash2 /> Delete my review
-                                  </button>
-                                ) : user && (
-                                  <button type="button" className="button button-ghost button-sm" onClick={() => setReviewReportOpen(r.id)}>
-                                    <Flag /> Report review
-                                  </button>
-                                )}
-
-                                {isOwner && !r.developer_reply && !replyOpen && (
-                                  <button type="button" className="button button-ghost button-sm pd-accent" onClick={() => setReplyOpen(r.id)}>
-                                    <MessageSquare /> Reply as developer
-                                  </button>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-
-                  {user ? (
-                    hasReviewed ? (
-                      <div className="notice notice-success">
-                        <span className="mark-box"><Check /></span>
-                        <p className="notice-text">
-                          <strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!
-                        </p>
-                        <button type="button" className="button button-danger button-sm" onClick={deleteReview}>
-                          Delete Review
-                        </button>
-                      </div>
-                    ) : (
-                      <form onSubmit={submitReview} className="panel">
-                        <div className="panel-head">
-                          <h3 className="h3">Leave a Review</h3>
-                        </div>
-                        <div className="panel-body fields">
-                          <div className="field">
-                            <span className="field-label">Your Rating</span>
-                            <Stars value={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
-                          </div>
-                          <label className="field">
-                            <span className="field-label">Your Experience</span>
-                            <span className="control">
-                              <textarea
-                                className="input"
-                                placeholder="What did you like? What could be better?"
-                                value={reviewForm.comment}
-                                maxLength={MAX_REVIEW_LENGTH}
-                                onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                                required
-                              />
-                            </span>
-                          </label>
-                        </div>
-                        <div className="panel-foot">
-                          <button className="button button-primary" type="submit">Post Review</button>
-                        </div>
-                      </form>
-                    )
-                  ) : (
+              {activeTab === 'security' && (() => {
+                const sec = plugin.wasm_security;
+                const runtimePerms = sec?.runtime_permissions ?? [];
+                const cmdPerms = sec?.command_permissions ?? [];
+                const deps = sec?.dependencies ?? sec?.plugin_metadata?.dependencies ?? [];
+                const metaAuthors = sec?.authors ?? sec?.plugin_metadata?.authors ?? [];
+                const imports = sec?.imported_interfaces ?? [];
+                const exportsList = sec?.exported_interfaces ?? [];
+                return (
+                  <section className="stack" aria-label="WASM Capability & Permission Inspector">
                     <div className="notice notice-plain">
+                      <span className="sticker sticker-success"><ShieldCheck /> WIT Metadata &amp; Sandbox</span>
                       <p className="notice-text">
-                        Please <Link className="link link-pumpkin" to="/login">login</Link> to rate this plugin.
+                        Automatically extracted from the plugin's <code>pumpkin:plugin/metadata#get-metadata</code> WIT export inside a fuel-limited WebAssembly sandbox, combined with cryptographic provenance and server command permission nodes.
                       </p>
                     </div>
-                  )}
-                </section>
-              )}
 
-              {activeTab === 'commands' && <PluginCommands commands={plugin.commands} />}
+                    <div className="pd-safety-grid">
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><Cpu /> Sandbox &amp; Memory</span>
+                          <span className="tag tag-success">Enforced</span>
+                        </div>
+                        <p className="small muted">
+                          Executes inside an isolated Wasmtime linear memory sandbox. Host resources are denied by default unless explicitly requested in <code>PluginMetadata.permissions</code>.
+                        </p>
+                      </div>
+
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><Fingerprint /> Ed25519 Signature</span>
+                          <span className={`tag ${sec?.ed25519_signed ? 'tag-success' : 'tag-warning'}`}>
+                            {sec?.ed25519_signed ? 'Verified' : 'Pending Build'}
+                          </span>
+                        </div>
+                        <p className="small muted">
+                          {sec?.ed25519_signed
+                            ? 'Cryptographically signed by PumpkinMarket on download using W3C wasm_signature (Ed25519) + pumpkin.metadata.'
+                            : 'No WASM binary uploaded yet. Binary will be signed automatically once uploaded.'}
+                        </p>
+                      </div>
+
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><Globe /> Network Access</span>
+                          <span className={`tag ${sec?.network_access ? 'tag-warning' : 'tag-success'}`}>
+                            {sec?.network_access ? 'Requested' : 'No Network'}
+                          </span>
+                        </div>
+                        <p className="small muted">
+                          {sec?.network_access
+                            ? 'Requests network.* or http.outbound in PluginMetadata.permissions. Can be restricted via blocked_permissions.'
+                            : 'Does not request any network.dns, network.tcp, network.udp, or http.outbound permissions.'}
+                        </p>
+                      </div>
+
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><HardDrive /> Filesystem Access</span>
+                          <span className={`tag ${sec?.filesystem_access ? 'tag-warning' : 'tag-success'}`}>
+                            {sec?.filesystem_access ? 'Scoped Data Folder' : 'Isolated'}
+                          </span>
+                        </div>
+                        <p className="small muted">
+                          {sec?.filesystem_access
+                            ? 'Requests fs.read.data / fs.write.data scoped strictly to plugins/data/<name>/.'
+                            : 'Does not request fs.read.data or fs.write.data; no host directories are preopened.'}
+                        </p>
+                      </div>
+
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><Terminal /> System &amp; Commands</span>
+                          <span className={`tag ${sec?.system_access ? 'tag-warning' : 'tag-fg'}`}>
+                            {sec?.system_access ? 'Host Env / Info' : `${commandCount} Cmd${commandCount === 1 ? '' : 's'}`}
+                          </span>
+                        </div>
+                        <p className="small muted">
+                          {sec?.system_access
+                            ? 'Requests sys.env or sys.info host telemetry in PluginMetadata.permissions.'
+                            : commandCount > 0
+                              ? `Registers ${commandCount} in-game command(s) with ${cmdPerms.length} player permission node(s). No sys.env access.`
+                              : 'No host environment variable (sys.env) or system telemetry (sys.info) permissions requested.'}
+                        </p>
+                      </div>
+
+                      <div className="pd-cap-card">
+                        <div className="pd-cap-head">
+                          <span className="pd-cap-title"><Package /> Binary Format &amp; ABI</span>
+                          <span className="tag tag-pumpkin">
+                            {sec?.is_component ? 'Component (WIT)' : 'Core WASM'}
+                          </span>
+                        </div>
+                        <p className="small muted">
+                          {sec?.binary_format || 'WebAssembly Module'}
+                          {plugin.api_version ? ` targeting Pumpkin API v${plugin.api_version}.` : '.'}
+                          {deps.length > 0 ? ` Depends on ${deps.length} plugin(s).` : ' Zero external plugin dependencies.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="panel">
+                      <div className="panel-head" style={{ justifyContent: 'space-between' }}>
+                        <div className="row" style={{ gap: 8 }}>
+                          <ShieldCheck className="pumpkin" />
+                          <h3 className="h3">Permissions</h3>
+                        </div>
+                        <span className={`tag ${runtimePerms.length > 0 ? 'tag-warning' : 'tag-success'}`}>
+                          {runtimePerms.length === 0
+                            ? '0 Requested (Strict Sandbox)'
+                            : `${runtimePerms.length} Permission${runtimePerms.length === 1 ? '' : 's'}`}
+                        </span>
+                      </div>
+                      <div className="panel-body stack">
+                        {runtimePerms.length === 0 ? (
+                          <p className="small muted">
+                            This plugin declares no permissions (<code>permissions = []</code>). All DNS lookups, TCP/UDP sockets, outbound HTTP requests, filesystem preopens, and environment variables are blocked by default.
+                          </p>
+                        ) : (
+                          <>
+                            <p className="small muted">
+                              Permissions declared by this plugin. Server administrators can block any of these in <code>advanced_config.plugins.blocked_permissions</code>:
+                            </p>
+                            <div className="stack" style={{ gap: 8 }}>
+                              {runtimePerms.map(rp => {
+                                const riskTone = rp.risk === 'high' ? 'tag-danger' : rp.risk === 'medium' ? 'tag-warning' : 'tag-fg';
+                                return (
+                                  <div
+                                    key={rp.id}
+                                    className="pd-cap-card"
+                                    style={{ display: 'flex', flexDirection: 'column', gap: 6 }}
+                                  >
+                                    <div className="pd-cap-head">
+                                      <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
+                                        <strong>{rp.label}</strong>
+                                        <code className="pd-chip">{rp.id}</code>
+                                      </div>
+                                      <div className="row" style={{ gap: 6 }}>
+                                        <span className={`tag ${riskTone}`}>{rp.risk.toUpperCase()}</span>
+                                        <button
+                                          type="button"
+                                          className={`pd-iconbtn${copiedPerm === rp.id ? ' pd-ok' : ''}`}
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(rp.id);
+                                            setCopiedPerm(rp.id);
+                                            setTimeout(() => setCopiedPerm(null), 2000);
+                                          }}
+                                          title="Copy permission constant"
+                                        >
+                                          {copiedPerm === rp.id ? <Check /> : <Copy />}
+                                        </button>
+                                      </div>
+                                    </div>
+                                    <p className="small muted">{rp.description}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
+
+                        {(deps.length > 0 || metaAuthors.length > 0) && (
+                          <div className="row" style={{ gap: 16, flexWrap: 'wrap', paddingTop: 4 }}>
+                            {deps.length > 0 && (
+                              <div className="field" style={{ flex: 1, minWidth: 220 }}>
+                                <span className="field-label">Dependencies</span>
+                                <div className="pd-wit-list">
+                                  {deps.map(dep => (
+                                    <code key={dep} className="pd-chip">{dep}</code>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {metaAuthors.length > 0 && (
+                              <div className="field" style={{ flex: 1, minWidth: 220 }}>
+                                <span className="field-label">Authors</span>
+                                <div className="pd-wit-list">
+                                  {metaAuthors.map(author => (
+                                    <span key={author} className="tag tag-fg">{author}</span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {cmdPerms.length > 0 && (
+                      <div className="panel">
+                        <div className="panel-head">
+                          <Key className="pumpkin" />
+                          <h3 className="h3">In-Game Command Permission Nodes ({cmdPerms.length})</h3>
+                        </div>
+                        <div className="panel-body stack">
+                          <p className="small muted">
+                            Grant these permission nodes in your Pumpkin server configuration to control which players can invoke this plugin's slash commands:
+                          </p>
+                          <div className="pd-wit-list">
+                            {cmdPerms.map(perm => (
+                              <div key={perm} className="pd-perm" style={{ border: '1.5px solid var(--line-2)', padding: '4px 8px', background: 'var(--sunk)' }}>
+                                <Key />
+                                <code>{perm}</code>
+                                <button
+                                  type="button"
+                                  className={`pd-iconbtn${copiedPerm === perm ? ' pd-ok' : ''}`}
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(perm);
+                                    setCopiedPerm(perm);
+                                    setTimeout(() => setCopiedPerm(null), 2000);
+                                  }}
+                                  title="Copy permission node"
+                                >
+                                  {copiedPerm === perm ? <Check /> : <Copy />}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="panel">
+                      <div className="panel-head">
+                        <Fingerprint className="pumpkin" />
+                        <h3 className="h3">WASM Binary Provenance &amp; WIT Interfaces</h3>
+                      </div>
+                      <div className="panel-body stack">
+                        {sec?.sha256 && (
+                          <div className="field">
+                            <span className="field-label">SHA-256 Binary Checksum</span>
+                            <div className="pd-hash-box">
+                              <code>{sec.sha256}</code>
+                              <button
+                                type="button"
+                                className="button button-flat button-sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(sec.sha256!);
+                                  setCopiedHash(true);
+                                  setTimeout(() => setCopiedHash(false), 2000);
+                                }}
+                              >
+                                {copiedHash ? <Check /> : <Copy />}
+                                {copiedHash ? 'Copied' : 'Copy SHA-256'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {imports.length > 0 && (
+                          <div className="field">
+                            <span className="field-label">Imported Host Interfaces (WIT / WASI)</span>
+                            <div className="pd-wit-list">
+                              {imports.map(imp => (
+                                <code key={imp} className="pd-chip">{imp}</code>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {exportsList.length > 0 && (
+                          <div className="field">
+                            <span className="field-label">Exported Guest Entrypoints</span>
+                            <div className="pd-wit-list">
+                              {exportsList.map(exp => (
+                                <code key={exp} className="pd-chip">{exp}</code>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                );
+              })()}
             </div>
           </div>
+
+          <section className="pd-reviews" id="pd-reviews" aria-label="Ratings & Reviews">
+            <div className="pd-reviews-head">
+              <h2 className="h2">Ratings &amp; Reviews</h2>
+              {reviews.length > 0 && (
+                <span className="tag tag-fg">{reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}</span>
+              )}
+            </div>
+
+            {stats ? (
+              <div className="pd-ratings">
+                <div className="pd-avg">
+                  <span className="stat-value">{stats.avg}</span>
+                  <Stars value={Number(stats.avg)} />
+                  <span className="small">{stats.total.toLocaleString()} Ratings</span>
+                </div>
+                <div className="pd-bars">
+                  {[5, 4, 3, 2, 1].map(num => (
+                    <div key={num}>
+                      <span className="small num">{num}</span>
+                      <div className="meter meter-pumpkin">
+                        <span style={{ width: `${(stats.distribution[num as keyof typeof stats.distribution] / stats.total) * 100}%` }} />
+                      </div>
+                      <span className="small num">{stats.distribution[num as keyof typeof stats.distribution]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="blank">
+                <p className="h3">No reviews yet. Be the first to leave one!</p>
+              </div>
+            )}
+
+            {reviews.length > 0 && (
+              <ul className="pd-review-list">
+                {reviews.map((r: any) => (
+                  <li key={r.id} className="pd-review">
+                    <div className="pd-review-top">
+                      <span className={`avatar ${getAvatarClass(r.username)}`}>
+                        {r.avatar_url ? <img src={r.avatar_url} alt={r.username} /> : getInitials(r.username)}
+                      </span>
+                      <div className="pd-review-meta">
+                        <strong>{r.username}</strong>
+                        <span className="small">{formatDate(r.created_at)}</span>
+                      </div>
+                      <Stars value={r.rating} />
+                    </div>
+                    <ExpandableText className="pd-review-body" text={r.comment} limit={400} />
+
+                    {r.developer_reply && (
+                      <div className="pd-reply">
+                        <div className="row">
+                          <span className="label pumpkin">Developer Response</span>
+                          <span className="small">{formatDate(r.replied_at)}</span>
+                        </div>
+                        <ExpandableText text={r.developer_reply} limit={300} />
+                      </div>
+                    )}
+
+                    <div className="pd-review-actions">
+                      {reportedReviews.has(r.id) ? (
+                        <p className="small pd-ok">
+                          <Check /> Report submitted
+                        </p>
+                      ) : reviewReportOpen === r.id ? (
+                        <form onSubmit={(e) => submitReviewReport(e, r.id)} className="pd-form">
+                          <span className="field-label">Reason for reporting this review</span>
+                          {reasonPicker(REVIEW_REPORT_REASONS, reviewReportSelected, reason => { setReviewReportSelected(reason); setReviewReportCustom(''); })}
+                          {reviewReportSelected === 'Other' && (
+                            <div className="control">
+                              <textarea
+                                className="input"
+                                placeholder="Describe the issue…"
+                                value={reviewReportCustom}
+                                onChange={e => setReviewReportCustom(e.target.value)}
+                                rows={2}
+                                autoFocus
+                              />
+                            </div>
+                          )}
+                          <div className="row">
+                            <button type="button" className="button button-ghost button-sm" onClick={resetReviewReport}>
+                              Cancel
+                            </button>
+                            <button
+                              type="submit"
+                              className="button button-primary button-sm"
+                              disabled={
+                                reviewReportSubmitting ||
+                                !reviewReportSelected ||
+                                (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
+                              }
+                            >
+                              {reviewReportSubmitting ? 'Sending…' : 'Submit'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : replyOpen === r.id ? (
+                        <form onSubmit={(e) => submitReply(e, r.id)} className="pd-form">
+                          <div className="control">
+                            <textarea
+                              className="input"
+                              placeholder="Write your response to this review..."
+                              value={replyText}
+                              onChange={e => setReplyText(e.target.value)}
+                              rows={3}
+                              autoFocus
+                            />
+                          </div>
+                          <div className="row">
+                            <button type="button" className="button button-ghost button-sm" onClick={() => { setReplyOpen(null); setReplyText(''); }}>
+                              Cancel
+                            </button>
+                            <button type="submit" className="button button-primary button-sm" disabled={replySubmitting || !replyText.trim()}>
+                              {replySubmitting ? 'Replying...' : 'Post Reply'}
+                            </button>
+                          </div>
+                        </form>
+                      ) : (
+                        <>
+                          {user && user.username === r.username ? (
+                            <button type="button" className="button button-ghost button-sm pd-danger" onClick={deleteReview}>
+                              <Trash2 /> Delete my review
+                            </button>
+                          ) : user && (
+                            <button type="button" className="button button-ghost button-sm" onClick={() => setReviewReportOpen(r.id)}>
+                              <Flag /> Report review
+                            </button>
+                          )}
+
+                          {isOwner && !r.developer_reply && !replyOpen && (
+                            <button type="button" className="button button-ghost button-sm pd-accent" onClick={() => setReplyOpen(r.id)}>
+                              <MessageSquare /> Reply as developer
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {user ? (
+              hasReviewed ? (
+                <div className="notice notice-success">
+                  <span className="mark-box"><Check /></span>
+                  <p className="notice-text">
+                    <strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!
+                  </p>
+                  <button type="button" className="button button-danger button-sm" onClick={deleteReview}>
+                    Delete Review
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={submitReview} className="panel">
+                  <div className="panel-head">
+                    <h3 className="h3">Leave a Review</h3>
+                  </div>
+                  <div className="panel-body fields">
+                    <div className="field">
+                      <span className="field-label">Your Rating</span>
+                      <Stars value={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
+                    </div>
+                    <label className="field">
+                      <span className="field-label">Your Experience</span>
+                      <span className="control">
+                        <textarea
+                          className="input"
+                          placeholder="What did you like? What could be better?"
+                          value={reviewForm.comment}
+                          maxLength={MAX_REVIEW_LENGTH}
+                          onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                          required
+                        />
+                      </span>
+                    </label>
+                  </div>
+                  <div className="panel-foot">
+                    <button className="button button-primary" type="submit">Post Review</button>
+                  </div>
+                </form>
+              )
+            ) : (
+              <div className="notice notice-plain">
+                <p className="notice-text">
+                  Please <Link className="link link-pumpkin" to="/login">login</Link> to rate this plugin.
+                </p>
+              </div>
+            )}
+          </section>
         </div>
 
         <aside className="pd-aside">
@@ -1360,7 +1851,7 @@ const PluginPage = () => {
                 type="button"
                 className="button button-primary button-lg button-block"
                 onClick={handleDownload}
-                disabled={plugin.type === 'paid' && !ownershipChecked}
+                disabled={(!hasBinary && !plugin.is_preorder) || (plugin.type === 'paid' && !ownershipChecked)}
               >
                 {downloadLabel}
               </button>
@@ -1385,6 +1876,73 @@ const PluginPage = () => {
             </div>
           </div>
 
+          <div className="pd-safety-card" aria-label="WASM Safety & Permissions Summary">
+            <div className="row" style={{ justifyContent: 'space-between' }}>
+              <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <ShieldCheck size={15} className="pumpkin" /> Safety &amp; Permissions
+              </span>
+              <span className={`tag ${plugin.wasm_security?.sandbox_level === 'elevated' ? 'tag-warning' : 'tag-success'}`}>
+                {plugin.wasm_security?.sandbox_level === 'elevated' ? 'Host Capabilities' : 'Strict Sandbox'}
+              </span>
+            </div>
+
+            <ul className="pd-safety-list">
+              <li className="pd-safety-item">
+                <Cpu />
+                <div>
+                  <strong>{plugin.wasm_security?.binary_format || 'WASM Sandbox'}</strong>
+                  <span className="muted">Isolated linear memory{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
+                </div>
+              </li>
+              <li className="pd-safety-item">
+                <Fingerprint />
+                <div>
+                  <strong>{plugin.wasm_security?.ed25519_signed ? 'Ed25519 Signed Binary' : 'Awaiting Binary Upload'}</strong>
+                  <span className="muted">
+                    {plugin.wasm_security?.sha256
+                      ? `SHA-256: ${plugin.wasm_security.sha256.slice(0, 10)}…${plugin.wasm_security.sha256.slice(-6)}`
+                      : 'Verified via W3C wasm_signature'}
+                  </span>
+                </div>
+              </li>
+              <li className="pd-safety-item">
+                <Globe />
+                <div>
+                  <strong>{plugin.wasm_security?.network_access ? 'Requests Network Access' : 'No Outbound Network'}</strong>
+                  <span className="muted">
+                    {plugin.wasm_security?.filesystem_access ? 'Uses scoped filesystem storage' : 'No raw filesystem access'}
+                  </span>
+                </div>
+              </li>
+              <li className="pd-safety-item">
+                <Key />
+                <div>
+                  <strong>
+                    {(plugin.wasm_security?.runtime_permissions?.length ?? 0) === 0
+                      ? '0 Permissions'
+                      : `${plugin.wasm_security?.runtime_permissions?.length} Permission${plugin.wasm_security?.runtime_permissions?.length === 1 ? '' : 's'}`}
+                  </strong>
+                  <span className="muted">
+                    {commandCount} command{commandCount === 1 ? '' : 's'}
+                    {(plugin.wasm_security?.dependencies?.length ?? 0) > 0
+                      ? ` · ${plugin.wasm_security?.dependencies?.length} ${plugin.wasm_security?.dependencies?.length === 1 ? 'dependency' : 'dependencies'}`
+                      : ' · 0 dependencies'}
+                  </span>
+                </div>
+              </li>
+            </ul>
+
+            <button
+              type="button"
+              className="button button-ghost button-sm button-block"
+              style={{ justifyContent: 'space-between' }}
+              onClick={() => openTab('security')}
+            >
+              <span>Inspect Capabilities &amp; Hashes</span>
+              <ChevronRight size={14} />
+            </button>
+          </div>
+
           <div className="pd-meta">
             <dl className="specs">
               {plugin.version && (
@@ -1394,10 +1952,16 @@ const PluginPage = () => {
                     <span className="pd-spec-version">
                       <span className="mono">{plugin.version}</span>
                       {versions.length > 0 && (
-                        <button type="button" className="pd-textbtn" onClick={() => openTab('versions')}>Update History</button>
+                        <button type="button" className="pd-textbtn" onClick={() => setVersionsOpen(true)}>Update History</button>
                       )}
                     </span>
                   </dd>
+                </>
+              )}
+              {plugin.api_version && (
+                <>
+                  <dt>Pumpkin API</dt>
+                  <dd><span className="mono">v{plugin.api_version}</span></dd>
                 </>
               )}
               <dt>Downloads</dt>
@@ -1419,6 +1983,19 @@ const PluginPage = () => {
                 </>
               )}
             </dl>
+
+            <button
+              type="button"
+              className="button button-ghost button-sm button-block pd-version-history-btn"
+              onClick={() => setVersionsOpen(true)}
+            >
+              <span className="row" style={{ gap: 8 }}>
+                <History size={15} />
+                <span>Version History</span>
+                {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
+              </span>
+              <ChevronRight size={14} />
+            </button>
 
             {user && !reportDone && (
               !reportOpen ? (
@@ -1468,6 +2045,64 @@ const PluginPage = () => {
           </div>
         </aside>
       </div>
+
+      {versionsOpen && (
+        <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label="Version History">
+          <div className="sheet pd-versions-sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-head">
+              <div className="row" style={{ gap: 10 }}>
+                <History className="pumpkin" size={20} />
+                <h2 className="h2">Version History</h2>
+                {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
+              </div>
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setVersionsOpen(false)} aria-label="Close">
+                <X />
+              </button>
+            </div>
+            <div className="sheet-body">
+              {versions.length > 0 ? (
+                <ol className="pd-versions">
+                  {versions.map((v: any) => (
+                    <li key={v.id} className="pd-version">
+                      <div className="row">
+                        <span className="pd-version-num">v{v.version}</span>
+                        {v.track && <span className={`tag tag-solid ${trackTone[v.track] ?? 'tag-fg'}`}>{v.track}</span>}
+                        {v.api_version && <span className="tag tag-fg">API v{v.api_version}</span>}
+                        <span className="small">Released {formatDate(v.created_at)}</span>
+                      </div>
+                      <div className="pd-prose">
+                        {v.release_notes ? (
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
+                        ) : (
+                          <p className="muted">No specific release notes for this update.</p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              ) : plugin.version ? (
+                <ol className="pd-versions">
+                  <li className="pd-version">
+                    <div className="row">
+                      <span className="pd-version-num">v{plugin.version}</span>
+                      <span className="tag tag-solid tag-success">stable</span>
+                      {plugin.api_version && <span className="tag tag-fg">API v{plugin.api_version}</span>}
+                      {plugin.created_at && <span className="small">Released {formatDate(plugin.created_at)}</span>}
+                    </div>
+                    <div className="pd-prose">
+                      <p className="muted">Initial release.</p>
+                    </div>
+                  </li>
+                </ol>
+              ) : (
+                <div className="blank">
+                  <p className="h3">No version history available yet.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {lightboxImage && (
         <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label="Expanded view">

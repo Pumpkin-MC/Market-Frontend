@@ -13,6 +13,7 @@ interface Review {
     replied_at?: string | null;
     created_at: string;
     username: string;
+    avatar_url?: string | null;
 }
 
 type Props = {
@@ -143,7 +144,13 @@ const Reviews = ({ plugin }: Props) => {
                                     <article key={rev.id} className="panel">
                                         <div className="panel-body stack">
                                             <div className="row">
-                                                <span className="avatar st-rv-avatar">{rev.username.charAt(0).toUpperCase()}</span>
+                                                <span className="avatar st-rv-avatar">
+                                                    {rev.avatar_url ? (
+                                                        <img src={rev.avatar_url} alt={rev.username} />
+                                                    ) : (
+                                                        rev.username.charAt(0).toUpperCase()
+                                                    )}
+                                                </span>
                                                 <div className="stack st-rv-who">
                                                     <strong>{rev.username}</strong>
                                                     {renderStars(rev.rating)}

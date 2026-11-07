@@ -19,7 +19,7 @@ const AuthorPage = () => {
     api.get(`/user/public/${username}`)
       .then(res => {
         setAuthor(res.data);
-        return api.get('/plugins', { params: { dev_name: username, sort: 'newest' } });
+        return api.get('/plugins', { params: { dev_name: res.data?.username || username, sort: 'newest' } });
       })
       .then(res => {
         setPlugins(Array.isArray(res.data) ? res.data : []);
@@ -49,9 +49,15 @@ const AuthorPage = () => {
 
       <section className="sf-hero">
         <div className="page row sf-profile">
-          <span className="avatar">{author.username.charAt(0).toUpperCase()}</span>
+          <span className="avatar">
+            {author.avatar_url ? (
+              <img src={author.avatar_url} alt={author.display_name || author.username} />
+            ) : (
+              (author.display_name || author.username || '?').charAt(0).toUpperCase()
+            )}
+          </span>
           <div className="stack">
-            <h1 className="display-1 sf-profile-name">{author.username}</h1>
+            <h1 className="display-1 sf-profile-name">{author.display_name || author.username}</h1>
             <p className="small">
               Member since {author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A'}
             </p>
@@ -62,7 +68,7 @@ const AuthorPage = () => {
 
       <section className="band band-surface">
         <div className="page sect">
-          <h2 className="sect-title">Plugins by <span className="mark">{author.username}</span></h2>
+          <h2 className="sect-title">Plugins by <span className="mark">{author.display_name || author.username}</span></h2>
           {plugins.length > 0 ? (
             <div className="catalogue">
               {plugins.map((plugin) => (

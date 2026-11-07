@@ -64,7 +64,7 @@ const ManagePluginPage = () => {
         try {
             const res = await api.get(`/plugins/${id}`);
             const data = res.data;
-            if (!user || (data.dev_id !== user.id && user.role !== 'admin')) {
+            if (!user || data.dev_id !== user.id) {
                 navigate('/dashboard/plugins', { replace: true });
                 return;
             }
@@ -125,7 +125,11 @@ const ManagePluginPage = () => {
                         {plugin.preview_path ? <img src={plugin.preview_path} alt="" /> : plugin.name.charAt(0).toUpperCase()}
                     </span>
                     <div className="st-head-text">
-                        <span className="label mono st-case">ID: {id}{plugin.version && ` · v${plugin.version}`}</span>
+                        <span className="label mono st-case">
+                            ID: {id}
+                            {plugin.version && ` · v${plugin.version}`}
+                            {plugin.api_version && ` · API v${plugin.api_version}`}
+                        </span>
                         <h1 className="display-2 st-mp-name">{plugin.name}</h1>
                         <span className="status">
                             {isLive ? <span className="mark-box mark-box-success"><Check /></span> : <span className="dot" />}
@@ -147,6 +151,17 @@ const ManagePluginPage = () => {
                         : 'Draft changes are private. Complete your store listing, screenshots & binary build, then submit for review.'}
                 </p>
                 <div className="row">
+                    {!isLive && (
+                        <Link
+                            to={getPluginUrl(plugin)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="button button-ghost button-sm"
+                        >
+                            <Eye />
+                            Preview Draft Page
+                        </Link>
+                    )}
                     {isUnderReview ? (
                         <button
                             className="button button-sm"

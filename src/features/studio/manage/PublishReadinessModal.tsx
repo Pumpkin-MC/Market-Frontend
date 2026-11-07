@@ -14,6 +14,7 @@ export interface PublishReadiness {
     screenshotsCount: number;
     binaryReady: boolean;
     binaryVersion: string | null;
+    apiVersion: string | null;
     pricingReady: boolean;
     securityReady: boolean;
     canPublish: boolean;
@@ -89,7 +90,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
         { ready: readiness.categoryReady, title: 'Category', ok: 'Valid category selected', missing: 'No category selected', tab: 'listing', fix: 'Fix in Listing' },
         { ready: readiness.descriptionReady, title: 'Store Description', ok: 'Description provided in at least 1 language', missing: 'Missing store description', tab: 'listing', fix: 'Fix in Listing' },
         { ready: readiness.previewReady, title: 'Store Icon / Avatar', ok: 'Icon uploaded', missing: 'Store icon image is required', tab: 'listing', fix: 'Upload Icon' },
-        { ready: readiness.binaryReady, title: 'WebAssembly Binary (.wasm)', ok: `Valid binary uploaded (${readiness.binaryVersion ? `v${readiness.binaryVersion}` : 'Ready'})`, missing: 'No .wasm binary uploaded yet', tab: 'update', fix: 'Upload Binary' },
+        { ready: readiness.binaryReady, title: 'WebAssembly Binary (.wasm)', ok: `Valid binary uploaded (${[readiness.binaryVersion ? `v${readiness.binaryVersion}` : 'Ready', readiness.apiVersion ? `API v${readiness.apiVersion}` : null].filter(Boolean).join(' · ')})`, missing: 'No .wasm binary uploaded yet', tab: 'update', fix: 'Upload Binary' },
         { ready: readiness.pricingReady, title: 'Pricing & Payouts', ok: 'Valid pricing configuration', missing: 'Paid plugin requires price > 0 and connected payout account', tab: 'pricing', fix: 'Configure Price' },
         { ready: readiness.securityReady, title: 'Account Security', ok: '2FA or Passkey verified', missing: '2FA or Passkey required in user settings' },
     ] : [];

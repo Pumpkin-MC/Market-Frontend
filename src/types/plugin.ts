@@ -24,6 +24,7 @@ export interface PluginVersion {
   id: number;
   plugin_id: number;
   version: string;
+  api_version?: string | null;
   release_notes?: string;
   track: ReleaseTrack;
   created_at: string;
@@ -45,6 +46,7 @@ export interface Plugin {
   public_id?: string;
   name: string;
   version?: string | null;
+  api_version?: string | null;
   file_size?: number;
   dev_id?: number;
   price_cents?: number;
@@ -74,7 +76,54 @@ export interface Plugin {
   reviews?: PluginReview[];
 }
 
+export interface RuntimePermissionDetail {
+  id: string;
+  category: 'network' | 'filesystem' | 'system' | 'custom' | string;
+  label: string;
+  description: string;
+  risk: 'low' | 'medium' | 'high' | string;
+}
+
+export interface WasmSecurityReport {
+  has_binary: boolean;
+  binary_format: string;
+  is_component: boolean;
+  api_version?: string | null;
+  file_size?: number;
+  sha256?: string | null;
+  ed25519_signed: boolean;
+  signature_standard: string;
+  sandbox_level: 'strict' | 'elevated' | 'pending' | string;
+  network_access: boolean;
+  filesystem_access: boolean;
+  system_access?: boolean;
+  world_access: boolean;
+  player_access: boolean;
+  capabilities: string[];
+  metadata_extracted?: boolean;
+  plugin_metadata?: {
+    name: string;
+    version: string;
+    authors: string[];
+    description?: string | null;
+    dependencies: string[];
+    permissions: string[];
+  };
+  runtime_permissions?: RuntimePermissionDetail[];
+  command_permissions?: string[];
+  declared_permissions: string[];
+  dependencies?: string[];
+  authors?: string[];
+  commands_count: number;
+  imported_interfaces: string[];
+  exported_interfaces: string[];
+}
+
 export interface PluginDetail extends Plugin {
   dev_name: string;
+  dev_verified?: boolean;
   owned?: boolean | null;
+  claimed_by_id?: number | null;
+  claimed_by_name?: string | null;
+  wasm_security?: WasmSecurityReport;
 }

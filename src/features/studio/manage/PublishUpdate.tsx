@@ -20,6 +20,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     const [wasmFile, setWasmFile] = useState<File | null>(null);
     const [wasmValidationErr, setWasmValidationErr] = useState<string | null>(null);
     const [wasmFormatInfo, setWasmFormatInfo]       = useState<string | null>(null);
+    const [detectedApiVersion, setDetectedApiVersion] = useState<string | null>(null);
     const [validatingWasm, setValidatingWasm]       = useState(false);
     const [version, setVersion] = useState('');
     const [track, setTrack] = useState<'stable' | 'beta' | 'alpha'>('stable');
@@ -34,6 +35,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             setWasmFile(null);
             setWasmValidationErr(null);
             setWasmFormatInfo(null);
+            setDetectedApiVersion(null);
             return;
         }
         setValidatingWasm(true);
@@ -44,15 +46,21 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
                 setWasmFile(null);
                 setWasmFormatInfo(null);
+                setDetectedApiVersion(null);
                 return;
             }
             setWasmFile(file);
             setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
+            setDetectedApiVersion(res.details?.apiVersion || null);
+            if (res.details?.pluginVersion && !version.trim()) {
+                setVersion(res.details.pluginVersion);
+            }
             setWasmValidationErr(null);
         } catch (err: any) {
             setWasmValidationErr(err.message || 'Failed to inspect file.');
             setWasmFile(null);
             setWasmFormatInfo(null);
+            setDetectedApiVersion(null);
         } finally {
             setValidatingWasm(false);
         }
@@ -85,6 +93,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             setTimeout(() => {
                 setPublished(false);
                 setWasmFile(null);
+                setDetectedApiVersion(null);
                 setVersion('');
                 setReleaseNotes('');
             }, 3000);
@@ -237,7 +246,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                                 <><strong>Drag & drop your .wasm file</strong> or click to browse</>
                             )}
                         </p>
-                        <span className="small">.wasm only · max 5 MB · validated on drop</span>
+                        <span className="small">.wasm only · max 5 MB · API version auto-detected from binary</span>
                         <input
                             id="wasm-upload-input"
                             type="file"
@@ -255,6 +264,11 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                             <span className="mark-box mark-box-success"><CheckCircle /></span>
                             <strong className="st-file-name">{wasmFile.name}</strong>
                             <span className="tag tag-success">Verified {wasmFormatInfo || '.wasm'}</span>
+                            {detectedApiVersion && (
+                                <span className="tag tag-pumpkin" title="Auto-detected from WebAssembly imports / metadata">
+                                    Pumpkin API v{detectedApiVersion}
+                                </span>
+                            )}
                             <span className="spacer" />
                             <span className="mono small">{(wasmFile.size / 1024).toFixed(1)} KB</span>
                         </div>

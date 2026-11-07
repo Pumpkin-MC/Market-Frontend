@@ -41,7 +41,13 @@ const isStaff = (user: any) => user && (user.role === 'admin' || user.role === '
 
 const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) => (
   <NavLink to="/settings" className="user-chip" onClick={onNavigate}>
-    <span className="avatar">{(user.username || '?').charAt(0).toUpperCase()}</span>
+    <span className="avatar">
+      {user.avatar_url ? (
+        <img src={user.avatar_url} alt={user.username || ''} />
+      ) : (
+        (user.username || '?').charAt(0).toUpperCase()
+      )}
+    </span>
     <span className="user-chip-name">{user.username}</span>
   </NavLink>
 );
@@ -65,7 +71,7 @@ const Masthead = ({ user }: any) => {
   const links = (
     <>
       <NavLink to="/search" onClick={menu.close}>{t('nav.browse')}</NavLink>
-      {user && (user.plugin_count > 0 || isStaff(user)) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
+      {user && (user.plugin_count > 0 || user.is_developer) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
       {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>Publish</NavLink>}
       {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>Staff</NavLink>}
     </>
