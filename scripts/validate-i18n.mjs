@@ -40,8 +40,8 @@ for (const file of localeFiles) {
   }
 }
 
-if (!locales.en) {
-  logError('Reference locale en.json not found!');
+if (!locales.en_us) {
+  logError('Reference locale en_us.json not found!');
   process.exit(1);
 }
 
@@ -74,15 +74,15 @@ function getNestedValue(obj, keyPath) {
   return current;
 }
 
-const enFlat = flattenKeys(locales.en);
+const enFlat = flattenKeys(locales.en_us);
 const enLeafKeys = Object.keys(enFlat).filter(k => enFlat[k].type === 'string');
 
-logSuccess(`Reference locale en.json has ${enLeafKeys.length} string keys.`);
+logSuccess(`Reference locale en_us.json has ${enLeafKeys.length} string keys.`);
 
-// 2. Check parity of all other locales against en.json
+// 2. Check parity of all other locales against en_us.json
 logInfo('Checking translation parity across all locales...');
 for (const [lang, data] of Object.entries(locales)) {
-  if (lang === 'en') continue;
+  if (lang === 'en_us') continue;
   const langFlat = flattenKeys(data);
 
   for (const key of enLeafKeys) {
@@ -97,14 +97,14 @@ for (const [lang, data] of Object.entries(locales)) {
 
   for (const key of Object.keys(langFlat)) {
     if (langFlat[key].type === 'string' && !enFlat[key]) {
-      logError(`[${lang}.json] Extraneous translation key not in en.json: "${key}"`);
+      logError(`[${lang}.json] Extraneous translation key not in en_us.json: "${key}"`);
     }
   }
 }
 
-// 3. Scan source code for t('...') usages
-logInfo('Scanning source code for t(...) translation calls...');
-const tRegex = /\bt\(\s*['"`]([^'"`]+)['"`]/g;
+// 3. Scan literal keys in t('...') calls and <Trans i18nKey="..." />.
+logInfo('Scanning source code for t(...) and Trans translation keys...');
+const tRegex = /(?:\bt\(\s*|\bi18nKey\s*=\s*)['"`]([^'"`]+)['"`]/g;
 
 function scanDir(dir) {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -129,11 +129,19 @@ function scanDir(dir) {
           const key = match[1];
           const lineNum = lineIndex + 1;
 
-          // Check if key exists in en.json
-          const value = getNestedValue(locales.en, key);
+          // Check if key exists in en_us.json
+          const value = getNestedValue(locales.en_us, key);
 
           if (value === undefined) {
-            logError(`${relPath}:${lineNum} - Translation key "${key}" does not exist in en.json`);
+            // English plural keys are stored as key_one/key_other and called
+            // using the unsuffixed key with a count option.
+            if (
+              typeof getNestedValue(locales.en_us, `${key}_one`) === 'string' &&
+              typeof getNestedValue(locales.en_us, `${key}_other`) === 'string'
+            ) {
+              continue;
+            }
+            logError(`${relPath}:${lineNum} - Translation key "${key}" does not exist in en_us.json`);
           } else if (typeof value === 'object' && value !== null) {
             logError(
               `${relPath}:${lineNum} - Translation key "${key}" returned an object instead of string! Did you mean a nested key like "${key}.${Object.keys(value)[0]}"?`

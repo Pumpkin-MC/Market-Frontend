@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 interface SEOProps {
   title?: string;
@@ -24,20 +25,23 @@ const SITE_ORIGIN = 'https://market.pumpkinmc.org';
 const SEO = ({
   title,
   ogTitle,
-  description = "Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.",
+  description,
   ogDescription,
-  keywords = "minecraft, plugins, wasm, marketplace, mc plugins, development",
+  keywords,
   canonical,
-  ogType = "website",
-  ogImage = "/icon.png",
-  twitterCard = "summary_large_image",
+  ogType = 'website',
+  ogImage = '/icon.png',
+  twitterCard = 'summary_large_image',
   twitterLabels,
 }: SEOProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
-  const siteName = "Pumpkin Market";
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const siteName = t('seo.site_name');
+  const resolvedDescription = description ?? t('seo.default_description');
+  const resolvedKeywords = keywords ?? t('seo.keywords');
+  const fullTitle = title ? t('seo.title_suffix', { title, site: siteName }) : t('seo.home_title');
   const resolvedOgTitle = ogTitle || fullTitle;
-  const resolvedOgDesc = ogDescription || description;
+  const resolvedOgDesc = ogDescription || resolvedDescription;
   const url = canonical || `${SITE_ORIGIN}${location.pathname}`;
   const resolvedOgImage =
     ogImage.startsWith('http://') || ogImage.startsWith('https://')
@@ -55,7 +59,7 @@ const SEO = ({
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', description);
+    metaDescription.setAttribute('content', resolvedDescription);
 
     // Update Meta Keywords
     let metaKeywords = document.querySelector('meta[name="keywords"]');
@@ -64,7 +68,7 @@ const SEO = ({
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', keywords);
+    metaKeywords.setAttribute('content', resolvedKeywords);
 
     // Update Canonical
     let linkCanonical = document.querySelector('link[rel="canonical"]');
@@ -120,9 +124,9 @@ const SEO = ({
   }, [
     fullTitle,
     resolvedOgTitle,
-    description,
+    resolvedDescription,
     resolvedOgDesc,
-    keywords,
+    resolvedKeywords,
     url,
     ogType,
     resolvedOgImage,
@@ -131,6 +135,7 @@ const SEO = ({
     twitterLabels?.data1,
     twitterLabels?.label2,
     twitterLabels?.data2,
+    siteName,
   ]);
 
   return null;

@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ChevronDown } from 'lucide-react';
 
 type Option = { value: string; label: string };
@@ -15,7 +16,8 @@ type SelectProps = {
 
 const normalize = (o: Option | string): Option => (typeof o === 'string' ? { value: o, label: o } : o);
 
-export const Select = ({ options, value, onChange, placeholder = 'Select', className = '', ...aria }: SelectProps) => {
+export const Select = ({ options, value, onChange, placeholder, className = '', ...aria }: SelectProps) => {
+  const { t } = useTranslation();
   const items = options.map(normalize);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -88,7 +90,7 @@ export const Select = ({ options, value, onChange, placeholder = 'Select', class
         onKeyDown={onKeyDown}
         {...aria}
       >
-        <span className={selected < 0 ? 'dropdown-placeholder' : undefined}>{selected < 0 ? placeholder : items[selected].label}</span>
+        <span className={selected < 0 ? 'dropdown-placeholder' : undefined}>{selected < 0 ? (placeholder ?? t('common.select')) : items[selected].label}</span>
         <ChevronDown />
       </button>
       {open && (

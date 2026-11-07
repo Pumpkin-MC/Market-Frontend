@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { toLanguageTag } from './locale';
 
 const API_URL = '/api';
 
@@ -13,7 +14,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const lang = localStorage.getItem('i18nextLng') || (typeof navigator !== 'undefined' ? navigator.language : 'en');
   if (lang) {
-    config.headers['Accept-Language'] = lang;
+    config.headers['Accept-Language'] = toLanguageTag(lang);
   }
   return config;
 });

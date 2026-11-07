@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { getCodeList } from 'country-list';
 import {
   Check, CheckCircle2, ChevronRight,
@@ -84,7 +84,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
   const handleCompleteOnboarding = async (connectStripe: boolean) => {
     if (!acceptedTerms) {
-      setError('You must accept the Developer Distribution Agreement to continue.');
+      setError(t('developer.onboarding.agreement_required'));
       return;
     }
     setLoading(true);
@@ -121,7 +121,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       onSuccess?.();
       onClose?.();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to complete developer onboarding');
+      setError(err.response?.data?.error || t('developer.onboarding.failed'));
     } finally {
       setLoading(false);
     }
@@ -148,7 +148,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       setNameError(null);
       nextStep();
     } catch (err: any) {
-      setNameError(err.response?.data?.error || 'Failed to verify developer name');
+      setNameError(err.response?.data?.error || t('developer.onboarding.name_check_failed'));
     } finally {
       setNameChecking(false);
     }
@@ -176,10 +176,10 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   ];
 
   const orgOptions = [
-    { value: 'company', label: 'Company / Studio' },
-    { value: 'nonprofit', label: 'Non-profit / Open Source' },
-    { value: 'education', label: 'Educational Institution' },
-    { value: 'other', label: 'Other entity' },
+    { value: 'company', label: t('developer.onboarding.company') },
+    { value: 'nonprofit', label: t('developer.onboarding.nonprofit') },
+    { value: 'education', label: t('developer.onboarding.education') },
+    { value: 'other', label: t('developer.onboarding.other_entity') },
   ];
 
   const countryOptions = Object.entries(getCodeList()).map(([code, name]) => ({ value: code, label: name }));
@@ -196,7 +196,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </p>
         </div>
         {!embedded && onClose && (
-          <button type="button" className="button button-ghost button-icon" onClick={onClose} aria-label="Close modal"><X /></button>
+          <button type="button" className="button button-ghost button-icon" onClick={onClose} aria-label={t('developer.onboarding.close')}><X /></button>
         )}
       </div>
 
@@ -303,7 +303,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   type="text"
                   className="input"
                   aria-invalid={nameError ? true : undefined}
-                  placeholder={entityType === 'organization' ? 'e.g. PixelCraft Studios' : t('developer.onboarding.display_name_placeholder')}
+                  placeholder={entityType === 'organization' ? t('developer.onboarding.studio_placeholder') : t('developer.onboarding.display_name_placeholder')}
                   value={displayName}
                   onChange={e => {
                     setDisplayName(e.target.value);
@@ -332,7 +332,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 disabled={!isStep2Valid}
                 onClick={handleStep2Next}
               >
-                {nameChecking ? 'Checking...' : t('developer.onboarding.btn_continue')}<ChevronRight />
+                {nameChecking ? t('developer.onboarding.checking') : t('developer.onboarding.btn_continue')}<ChevronRight />
               </button>
             </div>
           </div>
@@ -382,7 +382,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={legalName}
                       onChange={e => setLegalName(e.target.value)}
-                      placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                      placeholder={entityType === 'individual' ? t('developer.onboarding.person_name_placeholder') : t('developer.onboarding.company_name_placeholder')}
                       autoComplete="name"
                       required
                     />
@@ -399,7 +399,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={streetAddress}
                       onChange={e => setStreetAddress(e.target.value)}
-                      placeholder="123 Main St, Suite 400"
+                      placeholder={t('developer.onboarding.street_placeholder')}
                       autoComplete="street-address"
                       required
                     />
@@ -416,7 +416,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={city}
                       onChange={e => setCity(e.target.value)}
-                      placeholder="City"
+                      placeholder={t('developer.onboarding.city_placeholder')}
                       autoComplete="address-level2"
                       required
                     />
@@ -446,7 +446,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     options={countryOptions}
                     value={country}
                     onChange={setCountry}
-                    placeholder="Select country..."
+                    placeholder={t('developer.onboarding.select_country')}
                     aria-labelledby="onboardingCountry"
                   />
                 </div>
@@ -461,7 +461,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={vatId}
                       onChange={e => setVatId(e.target.value)}
-                      placeholder="EU123456789 or Tax ID"
+                      placeholder={t('developer.onboarding.tax_placeholder')}
                       autoComplete="off"
                     />
                   </span>
@@ -499,7 +499,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     className="input"
                     value={supportEmail}
                     onChange={e => setSupportEmail(e.target.value)}
-                    placeholder="support@yourdomain.com"
+                    placeholder={t('developer.onboarding.email_placeholder')}
                     autoComplete="email"
                     required
                   />
@@ -516,7 +516,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     className="input"
                     value={websiteUrl}
                     onChange={e => setWebsiteUrl(e.target.value)}
-                    placeholder="https://yourwebsite.com"
+                    placeholder={t('developer.onboarding.website_placeholder')}
                     autoComplete="url"
                   />
                 </span>
@@ -532,7 +532,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     className="input"
                     value={githubUrl}
                     onChange={e => setGithubUrl(e.target.value)}
-                    placeholder="https://github.com/yourname"
+                    placeholder={t('developer.onboarding.github_placeholder')}
                     autoComplete="url"
                   />
                 </span>
@@ -558,24 +558,24 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           <div className="stack">
             <div className={`notice ${isSellingPaid ? 'notice-pumpkin' : 'notice-success'}`}>
               <span className={`sticker sticker-sm ${isSellingPaid ? '' : 'sticker-success'}`}>
-                {!isSellingPaid ? 'Free Uploads' : 'Paid Plugins'}
+                {!isSellingPaid ? t('developer.onboarding.free_uploads') : t('developer.onboarding.paid_plugins')}
               </span>
               <p className="notice-text">
-                <strong>{!isSellingPaid ? 'Free Creator Profile' : 'Commercial Seller Profile'}</strong>
-                <span className="st-onb-meta">Display: <strong>{displayName}</strong> • Email: <strong>{supportEmail}</strong></span>
+                <strong>{!isSellingPaid ? t('developer.onboarding.free_profile') : t('developer.onboarding.seller_profile')}</strong>
+                <span className="st-onb-meta"><Trans t={t} i18nKey="developer.onboarding.summary" components={{ name: <strong>{displayName}</strong>, email: <strong>{supportEmail}</strong> }} /></span>
               </p>
             </div>
 
             {hasSecureAuth ? (
               <div className="notice notice-plain">
                 <span className="mark-box mark-box-success"><CheckCircle2 /></span>
-                <p className="notice-text"><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</p>
+                <p className="notice-text"><Trans t={t} i18nKey="developer.onboarding.security_verified" components={{ strong: <strong /> }} /></p>
               </div>
             ) : (
               <SecuritySetupCards
                 compact={true}
-                title="Developer Security Requirement"
-                description="To publish plugins, set up Passkey or 2FA Authenticator before finishing."
+                title={t('developer.onboarding.security_title')}
+                description={t('developer.onboarding.security_description')}
                 isRequired={true}
                 onComplete={async () => {
                   if (refreshUser) await refreshUser();
@@ -591,7 +591,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 onChange={e => setAcceptedTerms(e.target.checked)}
               />
               <span className="small">
-                I agree to the <a className="link link-pumpkin" href="/developer-terms" target="_blank" rel="noopener noreferrer">Developer Distribution Agreement</a>, <a className="link link-pumpkin" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>, and <a className="link link-pumpkin" href="/guidelines" target="_blank" rel="noopener noreferrer">Review Guidelines</a>. I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.
+                <Trans t={t} i18nKey="developer.onboarding.agreement" components={{ developer: <a className="link link-pumpkin" href="/developer-terms" target="_blank" rel="noopener noreferrer" />, terms: <a className="link link-pumpkin" href="/terms" target="_blank" rel="noopener noreferrer" />, guidelines: <a className="link link-pumpkin" href="/guidelines" target="_blank" rel="noopener noreferrer" /> }} />
               </span>
             </label>
 
@@ -616,7 +616,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     disabled={loading || !acceptedTerms || !hasSecureAuth}
                     onClick={() => handleCompleteOnboarding(true)}
                   >
-                    <CreditCard />{loading ? 'Connecting Payouts...' : t('developer.onboarding.btn_connect_stripe')}
+                    <CreditCard />{loading ? t('developer.onboarding.connecting_payouts') : t('developer.onboarding.btn_connect_stripe')}
                   </button>
                 </>
               ) : (
@@ -626,7 +626,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   disabled={loading || !acceptedTerms || !hasSecureAuth}
                   onClick={() => handleCompleteOnboarding(false)}
                 >
-                  {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                  {loading ? t('developer.onboarding.completing') : t('developer.onboarding.btn_complete')}
                 </button>
               )}
             </div>

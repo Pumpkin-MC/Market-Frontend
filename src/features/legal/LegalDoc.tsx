@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
 import '../../styles/legal.css';
 
 interface LegalDocProps {
@@ -12,6 +13,7 @@ interface LegalDocProps {
 }
 
 const LegalDoc = ({ kicker, title, lede, updated, toc, children, footer }: LegalDocProps) => {
+  const { t } = useTranslation();
   const [active, setActive] = useState<string | null>(null);
 
   return (
@@ -25,8 +27,8 @@ const LegalDoc = ({ kicker, title, lede, updated, toc, children, footer }: Legal
 
       <div className={`lg-layout${toc ? '' : ' lg-solo'}`}>
         {toc && (
-          <nav className="lg-toc" aria-label="On this page">
-            <span className="label">On this page</span>
+          <nav className="lg-toc" aria-label={t('legal.on_this_page')}>
+            <span className="label">{t('legal.on_this_page')}</span>
             <ol>
               {toc.map(s => (
                 <li key={s.id}>
