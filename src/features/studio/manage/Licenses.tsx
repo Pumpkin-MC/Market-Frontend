@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Key, Plus, Trash2, ShieldAlert, ShieldCheck, Copy, Check, UserCheck } from 'lucide-react';
 import api from '../../../lib/api';
 import type { PluginData } from './ManagePluginPage';
@@ -17,6 +18,7 @@ interface PluginLicense {
 type Props = { plugin: PluginData };
 
 const Licenses = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const [licenses, setLicenses] = useState<PluginLicense[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -59,7 +61,7 @@ const Licenses = ({ plugin }: Props) => {
 
     const handleToggleRevoke = async (licenseId: number, currentRevoked: boolean) => {
         const action = currentRevoked ? 'unrevoke' : 'revoke';
-        if (!window.confirm(`Are you sure you want to ${action} this license key?`)) return;
+        if (!window.confirm(currentRevoked ? t('studio.licenses.confirm_unrevoke') : t('studio.licenses.confirm_revoke'))) return;
 
         try {
             await api.put(`/plugins/${plugin.id}/licenses/${licenseId}/revoke`, {
@@ -74,7 +76,7 @@ const Licenses = ({ plugin }: Props) => {
     };
 
     const handleDelete = async (licenseId: number) => {
-        if (!window.confirm('Are you sure you want to permanently delete this license key record?')) return;
+        if (!window.confirm(t('studio.licenses.confirm_delete'))) return;
 
         try {
             await api.delete(`/plugins/${plugin.id}/licenses/${licenseId}`);
@@ -93,29 +95,29 @@ const Licenses = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">License Key Management</h2>
-                <p className="small">View, grant, revoke, and manage license keys for your paid plugin buyers and testers.</p>
+                <h2 className="h1">{t('studio.licenses.title')}</h2>
+                <p className="small">{t('studio.licenses.subtitle')}</p>
             </header>
 
             <form className="panel" onSubmit={handleGrantLicense}>
                 <div className="panel-head">
                     <Plus size={16} className="pumpkin" />
-                    <h3 className="h3">Grant Manual License</h3>
+                    <h3 className="h3">{t('studio.licenses.grant_title')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <p className="small">
-                        Issue a valid license key to a user by entering their username, email address, or account ID.
+                        {t('studio.licenses.grant_desc')}
                     </p>
                     <div className="st-inline-form">
                         <label className="field">
-                            <span className="field-label">User (Username, Email, or User ID)</span>
+                            <span className="field-label">{t('studio.licenses.user_label')}</span>
                             <span className="control">
                                 <input
                                     id="licenseUserIdentifier"
                                     name="userIdentifier"
                                     type="text"
                                     className="input"
-                                    placeholder="e.g. alex or alex@example.com"
+                                    placeholder={t('studio.licenses.user_placeholder')}
                                     value={userIdentifier}
                                     onChange={e => setUserIdentifier(e.target.value)}
                                     autoComplete="off"
@@ -131,33 +133,33 @@ const Licenses = ({ plugin }: Props) => {
                             aria-busy={submitting}
                         >
                             <Key />
-                            {submitting ? 'Granting...' : 'Issue License Key'}
+                            {submitting ? t('studio.licenses.granting') : t('studio.licenses.issue_btn')}
                         </button>
                     </div>
                 </div>
             </form>
 
             <section className="stack">
-                <h3 className="h2">Active &amp; Issued Licenses <span className="mark num">{licenses.length}</span></h3>
+                <h3 className="h2">{t('studio.licenses.issued_title')} <span className="mark num">{licenses.length}</span></h3>
 
                 {loading ? (
-                    <span className="row small"><span className="loading" />Loading licenses…</span>
+                    <span className="row small"><span className="loading" />{t('studio.licenses.loading')}</span>
                 ) : licenses.length === 0 ? (
                     <div className="blank">
                         <Key size={32} className="pumpkin" />
-                        <p className="h3">No license keys issued yet for this plugin.</p>
-                        <p className="small">Licenses will automatically appear here when customers purchase your plugin.</p>
+                        <p className="h3">{t('studio.licenses.empty_title')}</p>
+                        <p className="small">{t('studio.licenses.empty_desc')}</p>
                     </div>
                 ) : (
                     <div className="scroll-x">
                         <table className="ledger st-ledger">
                             <thead>
                                 <tr>
-                                    <th>User</th>
-                                    <th>License Key</th>
-                                    <th>Issued Date</th>
-                                    <th>Status</th>
-                                    <th className="end">Actions</th>
+                                    <th>{t('studio.licenses.col_user')}</th>
+                                    <th>{t('studio.licenses.col_key')}</th>
+                                    <th>{t('studio.licenses.col_date')}</th>
+                                    <th>{t('studio.licenses.col_status')}</th>
+                                    <th className="end">{t('studio.licenses.col_actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -177,8 +179,8 @@ const Licenses = ({ plugin }: Props) => {
                                                     type="button"
                                                     className="button button-ghost button-sm button-icon"
                                                     onClick={() => handleCopyKey(lic.license_key)}
-                                                    title="Copy license key"
-                                                    aria-label="Copy license key"
+                                                    title={t('studio.licenses.col_key')}
+                                                    aria-label={t('studio.licenses.col_key')}
                                                 >
                                                     {copiedKey === lic.license_key ? <Check className="st-pos" /> : <Copy />}
                                                 </button>
@@ -189,9 +191,9 @@ const Licenses = ({ plugin }: Props) => {
                                         </td>
                                         <td>
                                             {lic.revoked ? (
-                                                <span className="tag tag-danger"><ShieldAlert />Revoked</span>
+                                                <span className="tag tag-danger"><ShieldAlert />{t('studio.licenses.status_revoked')}</span>
                                             ) : (
-                                                <span className="tag tag-success"><ShieldCheck />Active</span>
+                                                <span className="tag tag-success"><ShieldCheck />{t('studio.licenses.status_active')}</span>
                                             )}
                                         </td>
                                         <td className="end">
@@ -201,14 +203,14 @@ const Licenses = ({ plugin }: Props) => {
                                                     onClick={() => handleToggleRevoke(lic.id, lic.revoked)}
                                                     className={`button button-sm ${lic.revoked ? 'button-primary' : 'button-danger'}`}
                                                 >
-                                                    {lic.revoked ? 'Unrevoke' : 'Revoke'}
+                                                    {lic.revoked ? t('studio.licenses.unrevoke') : t('studio.licenses.revoke')}
                                                 </button>
                                                 <button
                                                     type="button"
                                                     className="button button-ghost button-sm button-icon"
                                                     onClick={() => handleDelete(lic.id)}
-                                                    title="Delete License"
-                                                    aria-label="Delete License"
+                                                    title={t('studio.licenses.confirm_delete')}
+                                                    aria-label={t('studio.licenses.confirm_delete')}
                                                 >
                                                     <Trash2 />
                                                 </button>

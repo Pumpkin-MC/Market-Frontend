@@ -875,11 +875,11 @@ textarea.input {
 }
 
 .segmented {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  width: max-content;
   max-width: 100%;
+  min-width: 0;
 }
 
 .segmented button {
@@ -2345,4 +2345,168 @@ textarea.input {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* ── Review Guidelines Catalog Picker & Developer Feedback ── */
+.gl-picker {
+  --gap: var(--s-3);
+}
+
+.gl-section-tabs button {
+  height: 32px;
+  padding-inline: 10px;
+  font-size: var(--t-12);
+}
+
+.gl-catalog {
+  display: grid;
+  gap: var(--s-4);
+  max-height: 360px;
+  overflow-y: auto;
+  padding: var(--s-3);
+  border: var(--border) solid var(--line-2);
+  background: var(--sunk);
+}
+
+.gl-empty {
+  padding: var(--s-4);
+  text-align: center;
+}
+
+.gl-section {
+  display: grid;
+  gap: var(--s-2);
+}
+
+.gl-section-head {
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--line);
+  font-size: var(--t-14);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pumpkin);
+}
+
+.gl-groups {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.gl-group {
+  display: grid;
+  gap: 6px;
+}
+
+.gl-group-title {
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.gl-items {
+  display: grid;
+  gap: 6px;
+}
+
+.gl-item,
+.gl-other-choice {
+  padding: 10px 12px;
+  border: 1.5px solid var(--line-2);
+  background: var(--surface);
+  transition: border-color var(--fast) var(--ease), background-color var(--fast) var(--ease), box-shadow var(--fast) var(--ease);
+}
+
+.gl-item:hover,
+.gl-other-choice:hover {
+  border-color: var(--muted);
+}
+
+.gl-item[data-checked="true"],
+.gl-other-box[data-checked="true"] > .gl-other-choice {
+  border-color: var(--pumpkin);
+  background: var(--ink);
+  box-shadow: 3px 3px 0 var(--pumpkin);
+}
+
+.gl-item > input.check,
+.gl-other-choice > input.check {
+  margin-top: 2px;
+}
+
+.gl-item-body {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.gl-item-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-14);
+}
+
+.gl-code-badge {
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.gl-other-box {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.gl-other-field {
+  padding: var(--s-3);
+  border: 1.5px solid var(--pumpkin);
+  background: var(--sunk);
+}
+
+.gl-notice-rejected {
+  align-items: flex-start;
+}
+
+.gl-notice-body {
+  display: grid;
+  gap: 10px;
+}
+
+.gl-feedback-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.gl-feedback-item {
+  display: grid;
+  gap: 4px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--danger);
+  background: var(--sunk);
+}
+
+.gl-feedback-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--t-14);
+}
+
+.gl-feedback-badge {
+  text-decoration: none;
+}
+
+a.gl-feedback-badge:hover {
+  filter: brightness(1.1);
+}
+
+.gl-feedback-desc {
+  margin: 0;
+  font-size: var(--t-13);
+  color: var(--fg-2);
+  line-height: 1.5;
 }

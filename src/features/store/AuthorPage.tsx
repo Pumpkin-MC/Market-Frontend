@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 import SEO from '../../components/SEO';
 import PluginCard from '../../components/PluginCard';
 import '../../styles/store.css';
 
 const AuthorPage = () => {
+  const { t } = useTranslation();
   const { username } = useParams();
   const [author, setAuthor] = useState<any>(null);
   const [plugins, setPlugins] = useState<any[]>([]);
@@ -59,16 +61,21 @@ const AuthorPage = () => {
           <div className="stack">
             <h1 className="display-1 sf-profile-name">{author.display_name || author.username}</h1>
             <p className="small">
-              Member since {author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A'}
+              {t('studio.author_page.member_since', {
+                date: author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A',
+                defaultValue: 'Member since {{date}}',
+              })}
             </p>
-            <span className="sticker sticker-fg"><span className="num">{plugins.length}</span> Plugins Published</span>
+            <span className="sticker sticker-fg">
+              {t('studio.author_page.plugins_published', { count: plugins.length, defaultValue: '{{count}} Plugins Published' })}
+            </span>
           </div>
         </div>
       </section>
 
       <section className="band band-surface">
         <div className="page sect">
-          <h2 className="sect-title">Plugins by <span className="mark">{author.display_name || author.username}</span></h2>
+          <h2 className="sect-title">{t('studio.author_page.plugins_by', 'Plugins by')} <span className="mark">{author.display_name || author.username}</span></h2>
           {plugins.length > 0 ? (
             <div className="catalogue">
               {plugins.map((plugin) => (
@@ -77,7 +84,7 @@ const AuthorPage = () => {
             </div>
           ) : (
             <div className="blank">
-              <p className="small">This author hasn't published any plugins yet.</p>
+              <p className="small">{t('studio.author_page.no_plugins', "This author hasn't published any plugins yet.")}</p>
             </div>
           )}
         </div>

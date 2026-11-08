@@ -19,6 +19,7 @@ import TransferOwnership from './TransferOwnership';
 import DangerZone from './DangerZone';
 import Analytics from './Analytics';
 import PublishReadinessModal from './PublishReadinessModal';
+import { RejectionReasonsList } from '../../../components/GuidelineRejectionPicker';
 import { getPluginUrl } from '../../../lib/url';
 import '../../../styles/studio.css';
 
@@ -28,16 +29,16 @@ export type PluginCommandItem = PluginCommand;
 export type PluginData = Plugin;
 
 const NAV_ITEMS = [
-    { key: 'listing',   label: 'Store Listing',    icon: LayoutGrid       },
-    { key: 'update',    label: 'Publish Update',   icon: Upload           },
-    { key: 'analytics', label: 'Analytics',        icon: BarChart3        },
-    { key: 'reviews',   label: 'Reviews',          icon: Star             },
-    { key: 'pricing',   label: 'Pricing',          icon: DollarSign       },
-    { key: 'licenses',  label: 'Licenses',         icon: Key              },
-    { key: 'coupons',   label: 'Coupons',          icon: Tag              },
-    { key: 'transfer',  label: 'Transfer',         icon: ArrowRightLeft   },
-    { key: 'danger',    label: 'Danger Zone',      icon: Trash2           },
-];
+    { key: 'listing',   labelKey: 'studio.manage.nav_listing',   icon: LayoutGrid       },
+    { key: 'update',    labelKey: 'studio.manage.nav_update',    icon: Upload           },
+    { key: 'analytics', labelKey: 'studio.manage.nav_analytics', icon: BarChart3        },
+    { key: 'reviews',   labelKey: 'studio.manage.nav_reviews',   icon: Star             },
+    { key: 'pricing',   labelKey: 'studio.manage.nav_pricing',   icon: DollarSign       },
+    { key: 'licenses',  labelKey: 'studio.manage.nav_licenses',  icon: Key              },
+    { key: 'coupons',   labelKey: 'studio.manage.nav_coupons',   icon: Tag              },
+    { key: 'transfer',  labelKey: 'studio.manage.nav_transfer',  icon: ArrowRightLeft   },
+    { key: 'danger',    labelKey: 'studio.manage.nav_danger',    icon: Trash2           },
+] as const;
 
 const ManagePluginPage = () => {
     const { t } = useTranslation();
@@ -81,7 +82,7 @@ const ManagePluginPage = () => {
     const handleUnpublish = async () => {
         if (!plugin) return;
         const confirm = window.confirm(
-            `Take "${plugin.name}" offline?\n\nThis will remove the plugin from marketplace search and category browsing until you publish it again.`
+            t('studio.manage.confirm_unpublish', { name: plugin.name })
         );
         if (!confirm) return;
 
@@ -99,7 +100,7 @@ const ManagePluginPage = () => {
     if (loading) {
         return (
             <div className="page-loader">
-                <span className="row"><span className="loading" />Loading plugin…</span>
+                <span className="row"><span className="loading" />{t('studio.manage.loading')}</span>
             </div>
         );
     }
@@ -112,9 +113,9 @@ const ManagePluginPage = () => {
     const statusLabel = isLive
         ? t('developer.dashboard.status_published', 'Published')
         : isUnderReview
-        ? 'Pending Review'
+        ? t('developer.dashboard.status_under_review', 'Pending Review')
         : isRejected
-        ? 'Changes Requested'
+        ? t('guidelines.changes_requested', 'Changes Requested')
         : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
     return (
@@ -139,17 +140,29 @@ const ManagePluginPage = () => {
                 </div>
             </header>
 
-            <div className={`notice ${isLive ? 'notice-success' : isRejected ? 'notice-danger' : isUnderReview ? 'notice-warning' : 'notice-plain'}`}>
+            <div className={`notice ${isLive ? 'notice-success' : isRejected ? 'notice-danger gl-notice-rejected' : isUnderReview ? 'notice-warning' : 'notice-plain'}`}>
                 <span className={`sticker ${isLive ? 'sticker-success' : isRejected ? 'sticker-danger' : isUnderReview ? 'sticker-warning' : 'sticker-fg'}`}>{statusLabel}</span>
-                <p className="notice-text">
-                    {isLive
-                        ? 'This plugin is public. You can publish updates or manage store details.'
-                        : isUnderReview
-                        ? 'Your plugin has been submitted and is currently awaiting review by a human reviewer.'
-                        : isRejected
-                        ? `Reviewer feedback: ${plugin.rejection_reason || 'Please address the requested changes in your store listing or build, then resubmit for review.'}`
-                        : 'Draft changes are private. Complete your store listing, screenshots & binary build, then submit for review.'}
-                </p>
+                {isRejected ? (
+                    <div className="notice-text gl-notice-body">
+                        <p>
+                            <strong>
+                                {t(
+                                    'guidelines.changes_requested_intro',
+                                    'Your submission requires changes before it can be published:'
+                                )}
+                            </strong>
+                        </p>
+                        <RejectionReasonsList rejectionReason={plugin.rejection_reason} />
+                    </div>
+                ) : (
+                    <p className="notice-text">
+                        {isLive
+                            ? t('studio.manage.notice_live')
+                            : isUnderReview
+                            ? t('studio.manage.notice_under_review')
+                            : t('studio.manage.notice_draft')}
+                    </p>
+                )}
                 <div className="row">
                     {!isLive && (
                         <Link
@@ -159,7 +172,7 @@ const ManagePluginPage = () => {
                             className="button button-ghost button-sm"
                         >
                             <Eye />
-                            Preview Draft Page
+                            {t('studio.manage.preview_draft')}
                         </Link>
                     )}
                     {isUnderReview ? (
@@ -170,16 +183,15 @@ const ManagePluginPage = () => {
                             onClick={handleUnpublish}
                         >
                             <PowerOff />
-                            {unpublishing ? 'Cancelling…' : 'Cancel Review'}
+                            {unpublishing ? t('studio.manage.cancelling') : t('studio.manage.cancel_review')}
                         </button>
                     ) : !isLive ? (
                         <>
                             <button
                                 className="button button-sm"
                                 onClick={() => setIsPublishModalOpen(true)}
-                                title="Check what requirements remain before submitting for review"
                             >
-                                Check Readiness
+                                {t('studio.manage.check_readiness')}
                             </button>
                             <button
                                 className="button button-primary button-sm"
@@ -187,8 +199,8 @@ const ManagePluginPage = () => {
                             >
                                 <Rocket />
                                 {isRejected
-                                    ? 'Resubmit for Review'
-                                    : t('developer.dashboard.btn_publish_store', 'Submit for Review')}
+                                    ? t('studio.manage.resubmit_review')
+                                    : t('developer.dashboard.btn_publish_store', t('studio.manage.submit_review'))}
                             </button>
                         </>
                     ) : (
@@ -200,7 +212,7 @@ const ManagePluginPage = () => {
                                 className="button button-sm"
                             >
                                 <Eye />
-                                View on Store
+                                {t('studio.manage.view_on_store')}
                             </Link>
                             <button
                                 className="button button-danger button-sm"
@@ -209,7 +221,7 @@ const ManagePluginPage = () => {
                                 onClick={handleUnpublish}
                             >
                                 <PowerOff />
-                                {unpublishing ? 'Unpublishing…' : t('developer.dashboard.btn_unpublish_store', 'Take Offline')}
+                                {unpublishing ? t('studio.manage.unpublishing') : t('developer.dashboard.btn_unpublish_store', 'Take Offline')}
                             </button>
                         </>
                     )}
@@ -217,10 +229,10 @@ const ManagePluginPage = () => {
             </div>
 
             <div className="tabs st-mp-tabs" role="tablist">
-                {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+                {NAV_ITEMS.map(({ key, labelKey, icon: Icon }) => (
                     <button key={key} role="tab" aria-selected={activeTab === key} onClick={() => setActiveTab(key)}>
                         <Icon size={16} />
-                        {label}
+                        {t(labelKey)}
                     </button>
                 ))}
             </div>
@@ -228,7 +240,7 @@ const ManagePluginPage = () => {
             <div className="st-mp">
                 <nav className="sidenav st-mp-nav" aria-label={plugin.name}>
                     <span className="sidenav-group label">{plugin.name}</span>
-                    {NAV_ITEMS.map(({ key, label, icon: Icon }) => (
+                    {NAV_ITEMS.map(({ key, labelKey, icon: Icon }) => (
                         <button
                             key={key}
                             className={key === 'danger' ? 'st-mp-danger' : undefined}
@@ -236,7 +248,7 @@ const ManagePluginPage = () => {
                             onClick={() => setActiveTab(key)}
                         >
                             <Icon />
-                            {label}
+                            {t(labelKey)}
                         </button>
                     ))}
                 </nav>

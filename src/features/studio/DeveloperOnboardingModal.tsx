@@ -237,10 +237,10 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
   ];
 
   const orgOptions = [
-    { value: 'company', label: 'Company / Studio' },
-    { value: 'nonprofit', label: 'Non-profit / Open Source' },
-    { value: 'education', label: 'Educational Institution' },
-    { value: 'other', label: 'Other entity' },
+    { value: 'company', label: t('studio.onboarding.org_company') },
+    { value: 'nonprofit', label: t('studio.onboarding.org_nonprofit') },
+    { value: 'education', label: t('studio.onboarding.org_education') },
+    { value: 'other', label: t('studio.onboarding.org_other') },
   ];
 
   const countryOptions = Object.entries(getCodeList()).map(([code, name]) => ({ value: code, label: name }));
@@ -371,8 +371,8 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 )}
               </span>
               <div className="stack" style={{ gap: 4 }}>
-                <span className="field-label">Developer Profile Picture (Optional)</span>
-                <span className="field-hint">PNG, JPEG, or WebP. Max 2 MB.</span>
+                <span className="field-label">{t('studio.onboarding.avatar_label')}</span>
+                <span className="field-hint">{t('studio.onboarding.avatar_hint')}</span>
                 <div className="row" style={{ marginTop: 4 }}>
                   <button
                     type="button"
@@ -381,7 +381,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     disabled={avatarBusy}
                   >
                     <Upload size={14} />
-                    {avatarBusy ? 'Uploading…' : user?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                    {avatarBusy ? t('studio.onboarding.uploading') : user?.avatar_url ? t('studio.onboarding.change_picture') : t('studio.onboarding.upload_picture')}
                   </button>
                   {user?.avatar_url && (
                     <button
@@ -391,7 +391,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       disabled={avatarBusy}
                     >
                       <Trash2 size={14} />
-                      Remove
+                      {t('studio.onboarding.remove_picture')}
                     </button>
                   )}
                 </div>
@@ -436,7 +436,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 disabled={!isStep2Valid}
                 onClick={handleStep2Next}
               >
-                {nameChecking ? 'Checking...' : t('developer.onboarding.btn_continue')}<ChevronRight />
+                {nameChecking ? t('studio.onboarding.checking') : t('developer.onboarding.btn_continue')}<ChevronRight />
               </button>
             </div>
           </div>
@@ -550,7 +550,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     options={countryOptions}
                     value={country}
                     onChange={setCountry}
-                    placeholder="Select country..."
+                    placeholder={t('studio.onboarding.select_country')}
                     aria-labelledby="onboardingCountry"
                   />
                 </div>
@@ -662,24 +662,24 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           <div className="stack">
             <div className={`notice ${isSellingPaid ? 'notice-pumpkin' : 'notice-success'}`}>
               <span className={`sticker sticker-sm ${isSellingPaid ? '' : 'sticker-success'}`}>
-                {!isSellingPaid ? 'Free Uploads' : 'Paid Plugins'}
+                {!isSellingPaid ? t('studio.onboarding.badge_free') : t('studio.onboarding.badge_paid')}
               </span>
               <p className="notice-text">
-                <strong>{!isSellingPaid ? 'Free Creator Profile' : 'Commercial Seller Profile'}</strong>
-                <span className="st-onb-meta">Display: <strong>{displayName}</strong> • Email: <strong>{supportEmail}</strong></span>
+                <strong>{!isSellingPaid ? t('studio.onboarding.profile_free') : t('studio.onboarding.profile_paid')}</strong>
+                <span className="st-onb-meta">{t('studio.onboarding.meta_display')} <strong>{displayName}</strong> • {t('studio.onboarding.meta_email')} <strong>{supportEmail}</strong></span>
               </p>
             </div>
 
             {hasSecureAuth ? (
               <div className="notice notice-plain">
                 <span className="mark-box mark-box-success"><CheckCircle2 /></span>
-                <p className="notice-text"><strong>Security Verified:</strong> 2FA / Passkey protection is active on your account.</p>
+                <p className="notice-text"><strong>{t('studio.onboarding.security_verified_title')}</strong> {t('studio.onboarding.security_verified_desc')}</p>
               </div>
             ) : (
               <SecuritySetupCards
                 compact={true}
-                title="Developer Security Requirement"
-                description="To publish plugins, set up Passkey or 2FA Authenticator before finishing."
+                title={t('studio.onboarding.security_req_title')}
+                description={t('studio.onboarding.security_req_desc')}
                 isRequired={true}
                 onComplete={async () => {
                   if (refreshUser) await refreshUser();
@@ -695,7 +695,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                 onChange={e => setAcceptedTerms(e.target.checked)}
               />
               <span className="small">
-                I agree to the <a className="link link-pumpkin" href="/developer-terms" target="_blank" rel="noopener noreferrer">Developer Distribution Agreement</a>, <a className="link link-pumpkin" href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a>, and <a className="link link-pumpkin" href="/guidelines" target="_blank" rel="noopener noreferrer">Review Guidelines</a>. I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.
+                {t('studio.onboarding.terms_prefix')} <a className="link link-pumpkin" href="/developer-terms" target="_blank" rel="noopener noreferrer">{t('studio.onboarding.terms_dda')}</a>, <a className="link link-pumpkin" href="/terms" target="_blank" rel="noopener noreferrer">{t('studio.onboarding.terms_tos')}</a>, {t('studio.onboarding.terms_and')} <a className="link link-pumpkin" href="/guidelines" target="_blank" rel="noopener noreferrer">{t('studio.onboarding.terms_guidelines')}</a>. {t('studio.onboarding.terms_suffix')}
               </span>
             </label>
 
@@ -720,7 +720,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     disabled={loading || !acceptedTerms || !hasSecureAuth}
                     onClick={() => handleCompleteOnboarding(true)}
                   >
-                    <CreditCard />{loading ? 'Connecting Payouts...' : t('developer.onboarding.btn_connect_stripe')}
+                    <CreditCard />{loading ? t('studio.onboarding.connecting_payouts') : t('developer.onboarding.btn_connect_stripe')}
                   </button>
                 </>
               ) : (
@@ -730,7 +730,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                   disabled={loading || !acceptedTerms || !hasSecureAuth}
                   onClick={() => handleCompleteOnboarding(false)}
                 >
-                  {loading ? 'Completing registration...' : t('developer.onboarding.btn_complete')}
+                  {loading ? t('studio.onboarding.completing_registration') : t('developer.onboarding.btn_complete')}
                 </button>
               )}
             </div>

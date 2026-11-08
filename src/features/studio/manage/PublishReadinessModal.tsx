@@ -86,13 +86,13 @@ export const PublishReadinessModal: React.FC<Props> = ({
     if (!isOpen) return null;
 
     const checks = readiness ? [
-        { ready: readiness.nameReady, title: 'Plugin Name & Identity', ok: pluginName, missing: 'Plugin name is missing or empty', tab: 'listing', fix: 'Fix in Listing' },
-        { ready: readiness.categoryReady, title: 'Category', ok: 'Valid category selected', missing: 'No category selected', tab: 'listing', fix: 'Fix in Listing' },
-        { ready: readiness.descriptionReady, title: 'Store Description', ok: 'Description provided in at least 1 language', missing: 'Missing store description', tab: 'listing', fix: 'Fix in Listing' },
-        { ready: readiness.previewReady, title: 'Store Icon / Avatar', ok: 'Icon uploaded', missing: 'Store icon image is required', tab: 'listing', fix: 'Upload Icon' },
-        { ready: readiness.binaryReady, title: 'WebAssembly Binary (.wasm)', ok: `Valid binary uploaded (${[readiness.binaryVersion ? `v${readiness.binaryVersion}` : 'Ready', readiness.apiVersion ? `API v${readiness.apiVersion}` : null].filter(Boolean).join(' · ')})`, missing: 'No .wasm binary uploaded yet', tab: 'update', fix: 'Upload Binary' },
-        { ready: readiness.pricingReady, title: 'Pricing & Payouts', ok: 'Valid pricing configuration', missing: 'Paid plugin requires price > 0 and connected payout account', tab: 'pricing', fix: 'Configure Price' },
-        { ready: readiness.securityReady, title: 'Account Security', ok: '2FA or Passkey verified', missing: '2FA or Passkey required in user settings' },
+        { ready: readiness.nameReady, title: t('studio.readiness.check_name_title'), ok: pluginName, missing: t('studio.readiness.check_name_missing'), tab: 'listing', fix: t('studio.readiness.fix_listing') },
+        { ready: readiness.categoryReady, title: t('studio.readiness.check_category_title'), ok: t('studio.readiness.check_category_ok'), missing: t('studio.readiness.check_category_missing'), tab: 'listing', fix: t('studio.readiness.fix_listing') },
+        { ready: readiness.descriptionReady, title: t('studio.readiness.check_desc_title'), ok: t('studio.readiness.check_desc_ok'), missing: t('studio.readiness.check_desc_missing'), tab: 'listing', fix: t('studio.readiness.fix_listing') },
+        { ready: readiness.previewReady, title: t('studio.readiness.check_icon_title'), ok: t('studio.readiness.check_icon_ok'), missing: t('studio.readiness.check_icon_missing'), tab: 'listing', fix: t('studio.readiness.fix_icon') },
+        { ready: readiness.binaryReady, title: t('studio.readiness.check_wasm_title'), ok: t('studio.readiness.check_wasm_ok', { info: [readiness.binaryVersion ? `v${readiness.binaryVersion}` : t('studio.readiness.badge_ready'), readiness.apiVersion ? `API v${readiness.apiVersion}` : null].filter(Boolean).join(' · ') }), missing: t('studio.readiness.check_wasm_missing'), tab: 'update', fix: t('studio.readiness.fix_binary') },
+        { ready: readiness.pricingReady, title: t('studio.readiness.check_pricing_title'), ok: t('studio.readiness.check_pricing_ok'), missing: t('studio.readiness.check_pricing_missing'), tab: 'pricing', fix: t('studio.readiness.fix_pricing') },
+        { ready: readiness.securityReady, title: t('studio.readiness.check_security_title'), ok: t('studio.readiness.check_security_ok'), missing: t('studio.readiness.check_security_missing') },
     ] : [];
 
     return (
@@ -100,46 +100,46 @@ export const PublishReadinessModal: React.FC<Props> = ({
             <div ref={dialog} tabIndex={-1} className="sheet st-sheet" role="dialog" aria-modal="true" aria-labelledby="st-ready-title" onClick={e => e.stopPropagation()}>
                 <div className="sheet-head">
                     <div className="stack st-ready-head">
-                        <span className="sticker sticker-sm">Publish</span>
+                        <span className="sticker sticker-sm">{t('studio.readiness.badge_publish')}</span>
                         <h3 className="h1" id="st-ready-title">{t('developer.dashboard.publish_checklist_title', 'Publish to Marketplace')}</h3>
                         <p className="small">{t('developer.dashboard.publish_checklist_desc', 'Review requirements before releasing your plugin to the Pumpkin Market.')}</p>
                     </div>
-                    <button className="button button-ghost button-icon" onClick={onClose} aria-label="Close"><X /></button>
+                    <button className="button button-ghost button-icon" onClick={onClose} aria-label={t('common.close', 'Close')}><X /></button>
                 </div>
 
                 <div className="sheet-body">
                     {error && (
                         <div className="notice notice-danger">
-                            <span className="sticker sticker-sm sticker-danger">Error</span>
+                            <span className="sticker sticker-sm sticker-danger">{t('studio.readiness.badge_error')}</span>
                             <p className="notice-text">{error}</p>
                         </div>
                     )}
 
                     {successMsg && (
                         <div className="notice notice-success">
-                            <span className="sticker sticker-sm sticker-success">Live</span>
+                            <span className="sticker sticker-sm sticker-success">{t('studio.readiness.badge_live')}</span>
                             <p className="notice-text"><strong>{successMsg}</strong></p>
                         </div>
                     )}
 
                     {loading ? (
-                        <div className="row small"><span className="loading" />Checking store requirements…</div>
+                        <div className="row small"><span className="loading" />{t('studio.readiness.checking')}</div>
                     ) : readiness ? (
                         <>
                             {readiness.canPublish ? (
                                 <div className="notice notice-success">
-                                    <span className="sticker sticker-sm sticker-success">Ready</span>
+                                    <span className="sticker sticker-sm sticker-success">{t('studio.readiness.badge_ready')}</span>
                                     <p className="notice-text">
                                         <strong>{t('developer.dashboard.publish_ready_banner', 'All requirements are met! Ready to submit for review.')}</strong>{' '}
-                                        A human reviewer will inspect your plugin before it goes live on the marketplace.
+                                        {t('studio.readiness.ready_desc')}
                                     </p>
                                 </div>
                             ) : (
                                 <div className="notice notice-warning">
-                                    <span className="sticker sticker-sm sticker-warning">Missing</span>
+                                    <span className="sticker sticker-sm sticker-warning">{t('studio.readiness.badge_missing')}</span>
                                     <p className="notice-text">
                                         <strong>{t('developer.dashboard.publish_missing_banner', 'Please complete the missing requirements before publishing.')}</strong>{' '}
-                                        {readiness.missingRequirements.length} item(s) need attention before release.
+                                        {t('studio.readiness.missing_count', { count: readiness.missingRequirements.length })}
                                     </p>
                                 </div>
                             )}
@@ -165,7 +165,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                 </div>
 
                 <div className="sheet-foot">
-                    <button className="button button-ghost" onClick={onClose}>Close</button>
+                    <button className="button button-ghost" onClick={onClose}>{t('common.close', 'Close')}</button>
                     <button
                         className="button button-primary"
                         disabled={!readiness?.canPublish || publishing || Boolean(successMsg)}
@@ -173,7 +173,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
                         onClick={handlePublish}
                     >
                         <Rocket />
-                        {publishing ? 'Submitting…' : t('developer.dashboard.btn_confirm_publish', 'Submit for Review')}
+                        {publishing ? t('studio.readiness.submitting') : t('developer.dashboard.btn_confirm_publish', t('studio.readiness.submit_for_review'))}
                     </button>
                 </div>
             </div>

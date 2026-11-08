@@ -1437,7 +1437,10 @@ const SettingsPage = () => {
                       <p className="status">
                         <span className="mark-box mark-box-warning"><Shield /></span>
                         <span>
-                          Staff members ({user.role === 'admin' ? 'Administrator' : user.role === 'moderator' ? 'Moderator' : 'Reviewer'}) are required to keep 2FA enabled for platform security.
+                          {t('studio.settings.staff_mfa_required', {
+                            role: user.role === 'admin' ? t('staff.roles.admin', 'Administrator') : user.role === 'moderator' ? t('staff.roles.moderator', 'Moderator') : t('staff.roles.reviewer', 'Reviewer'),
+                            defaultValue: 'Staff members ({{role}}) are required to keep 2FA enabled for platform security.',
+                          })}
                         </span>
                       </p>
                     ) : (
@@ -1905,30 +1908,34 @@ const SettingsPage = () => {
 
           {activeTab === 'developer' && (
             <>
-              <SectionHead lead="Developer" rest="Account & Payouts" sub="Manage your creator identity, support information, and payout settings." />
+              <SectionHead
+                lead={t('studio.settings.lead', 'Developer')}
+                rest={t('studio.settings.rest', 'Account & Payouts')}
+                sub={t('studio.settings.sub', 'Manage your creator identity, support information, and payout settings.')}
+              />
 
               {!user?.is_developer ? (
-                <SettingsCard title="Become a Developer" icon={Sparkles}
-                  description="Unlock developer features to publish free or paid plugins to PumpkinMarket.">
+                <SettingsCard title={t('studio.settings.become_dev_title', 'Become a Developer')} icon={Sparkles}
+                  description={t('studio.settings.become_dev_desc', 'Unlock developer features to publish free or paid plugins to PumpkinMarket.')}>
                   <div className="blank">
                     <span className="ac-badge"><Code /></span>
-                    <p className="h3">You haven't set up a Developer Profile yet.</p>
+                    <p className="h3">{t('studio.settings.no_profile_title', "You haven't set up a Developer Profile yet.")}</p>
                     <p className="small">
-                      Individual creators and organizations can publish plugins for $0. Start your onboarding now!
+                      {t('studio.settings.no_profile_desc', 'Individual creators and organizations can publish plugins for $0. Start your onboarding now!')}
                     </p>
                     <button
                       className="button button-primary"
                       onClick={() => setIsDevModalOpen(true)}
                     >
-                      <Sparkles /> Complete Developer Onboarding
+                      <Sparkles /> {t('studio.settings.complete_onboarding_btn', 'Complete Developer Onboarding')}
                     </button>
                   </div>
                 </SettingsCard>
               ) : (
                 <>
                   {devProfile && (
-                    <SettingsCard title="Developer Identity" icon={Building2}
-                      description="Your public developer information shown on plugin pages.">
+                    <SettingsCard title={t('studio.settings.identity_title', 'Developer Identity')} icon={Building2}
+                      description={t('studio.settings.identity_desc', 'Your public developer information shown on plugin pages.')}>
                       <div className="ac-avatar-row">
                         <span className="avatar avatar-xl">
                           {(devProfile.avatar_url || user?.avatar_url) ? (
@@ -1938,8 +1945,8 @@ const SettingsPage = () => {
                           )}
                         </span>
                         <div className="stack ac-tight">
-                          <span className="field-label">Developer Profile Picture</span>
-                          <span className="field-hint">Displayed on your public developer profile and plugin pages. PNG, JPEG, or WebP (max 2 MB).</span>
+                          <span className="field-label">{t('studio.settings.avatar_label', 'Developer Profile Picture')}</span>
+                          <span className="field-hint">{t('studio.settings.avatar_hint', 'Displayed on your public developer profile and plugin pages. PNG, JPEG, or WebP (max 2 MB).')}</span>
                           <div className="row" style={{ marginTop: 4 }}>
                             <button
                               type="button"
@@ -1948,7 +1955,11 @@ const SettingsPage = () => {
                               disabled={avatarBusy}
                             >
                               <Upload size={14} />
-                              {avatarBusy ? 'Uploading…' : (devProfile.avatar_url || user?.avatar_url) ? 'Change Picture' : 'Upload Picture'}
+                              {avatarBusy
+                                ? t('studio.onboarding.uploading', 'Uploading…')
+                                : (devProfile.avatar_url || user?.avatar_url)
+                                  ? t('studio.onboarding.change_picture', 'Change Picture')
+                                  : t('studio.onboarding.upload_picture', 'Upload Picture')}
                             </button>
                             {(devProfile.avatar_url || user?.avatar_url) && (
                               <button
@@ -1958,7 +1969,7 @@ const SettingsPage = () => {
                                 disabled={avatarBusy}
                               >
                                 <Trash2 size={14} />
-                                Remove
+                                {t('studio.onboarding.remove_picture', 'Remove')}
                               </button>
                             )}
                           </div>
@@ -1966,18 +1977,18 @@ const SettingsPage = () => {
                       </div>
 
                       <form className="fields ac-fields-2" onSubmit={handleUpdateDevProfile}>
-                        <Field label="Entity Type">
+                        <Field label={t('studio.settings.entity_type', 'Entity Type')}>
                           <span className="control">
                             <input
                               className="input"
                               type="text"
-                              value={devProfile.entity_type === 'organization' ? 'Organization / Studio' : 'Individual Developer'}
+                              value={devProfile.entity_type === 'organization' ? t('studio.settings.entity_org', 'Organization / Studio') : t('studio.settings.entity_ind', 'Individual Developer')}
                               disabled
                             />
                           </span>
                         </Field>
 
-                        <Field label="Public Display Name" hint="Shown on your public developer profile and plugin listings.">
+                        <Field label={t('studio.settings.public_display_name', 'Public Display Name')} hint={t('studio.settings.public_display_hint', 'Shown on your public developer profile and plugin listings.')}>
                           <span className={`control${devNameAvailable && !devNameChecking && !devNameError ? ' ac-valid' : ''}`}>
                             <input
                               id="devDisplayName"
@@ -1993,17 +2004,17 @@ const SettingsPage = () => {
                             {devNameChecking && <span className="loading" />}
                           </span>
                           {devNameChecking && (
-                            <span className="field-hint">Checking availability…</span>
+                            <span className="field-hint">{t('studio.settings.checking_availability', 'Checking availability…')}</span>
                           )}
                           {devNameError && (
                             <span className="field-error"><AlertCircle size={14} />{devNameError}</span>
                           )}
                           {devNameAvailable && !devNameChecking && !devNameError && (
-                            <span className="field-hint ac-hint-ok">Developer name is available</span>
+                            <span className="field-hint ac-hint-ok">{t('studio.settings.name_available', 'Developer name is available')}</span>
                           )}
                         </Field>
 
-                        <Field label="Legal Full Name / Business Name" hint="Used for internal verification & tax compliance">
+                        <Field label={t('studio.settings.legal_name', 'Legal Full Name / Business Name')} hint={t('studio.settings.legal_name_hint', 'Used for internal verification & tax compliance')}>
                           <span className="control">
                             <input
                               id="devLegalName"
@@ -2017,7 +2028,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="Street Address">
+                        <Field label={t('studio.settings.street_address', 'Street Address')}>
                           <span className="control">
                             <input
                               id="devStreetAddress"
@@ -2032,7 +2043,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="City">
+                        <Field label={t('studio.settings.city', 'City')}>
                           <span className="control">
                             <input
                               id="devCity"
@@ -2046,7 +2057,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="Postal / ZIP Code">
+                        <Field label={t('studio.settings.postal_code', 'Postal / ZIP Code')}>
                           <span className="control">
                             <input
                               id="devPostalCode"
@@ -2060,7 +2071,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="VAT / Tax ID" hint="Optional for businesses">
+                        <Field label={t('studio.settings.vat_id', 'VAT / Tax ID')} hint={t('studio.settings.vat_id_hint', 'Optional for businesses')}>
                           <span className="control">
                             <input
                               id="devVatId"
@@ -2075,7 +2086,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="Support Email" hint="Public email for plugin buyers to contact you">
+                        <Field label={t('studio.settings.support_email', 'Support Email')} hint={t('studio.settings.support_email_hint', 'Public email for plugin buyers to contact you')}>
                           <span className="control">
                             <input
                               id="devSupportEmail"
@@ -2090,7 +2101,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="Website URL">
+                        <Field label={t('studio.settings.website_url', 'Website URL')}>
                           <span className="control">
                             <input
                               id="devWebsiteUrl"
@@ -2105,7 +2116,7 @@ const SettingsPage = () => {
                           </span>
                         </Field>
 
-                        <Field label="GitHub Profile">
+                        <Field label={t('studio.settings.github_profile', 'GitHub Profile')}>
                           <span className="control">
                             <input
                               id="devGithubUrl"
@@ -2121,26 +2132,26 @@ const SettingsPage = () => {
                         </Field>
 
                         <div className="row ac-span">
-                          <SaveBtn isSaving={saving['devProfile']} disabled={Boolean(devNameError) || devNameChecking} label="Save Developer Info" />
+                          <SaveBtn isSaving={saving['devProfile']} disabled={Boolean(devNameError) || devNameChecking} label={t('studio.settings.save_dev_info', 'Save Developer Info')} />
                         </div>
                       </form>
                     </SettingsCard>
                   )}
 
-                  <SettingsCard title="Developer Payouts (Paid Plugins)" icon={CreditCard}
-                    description="Connect your payout account to receive earnings from paid plugin sales. Optional for free plugins.">
+                  <SettingsCard title={t('studio.settings.payouts_title', 'Developer Payouts (Paid Plugins)')} icon={CreditCard}
+                    description={t('studio.settings.payouts_desc', 'Connect your payout account to receive earnings from paid plugin sales. Optional for free plugins.')}>
                     {user?.stripe_ready ? (
                       <>
                         <div className="status ac-status-block">
                           <span className="mark-box mark-box-success"><Check /></span>
                           <div>
-                            <strong>Payout account connected</strong>
-                            <p className="small">Your payouts are active and ready to receive funds from paid plugin sales.</p>
+                            <strong>{t('studio.settings.payout_connected', 'Payout account connected')}</strong>
+                            <p className="small">{t('studio.settings.payout_connected_desc', 'Your payouts are active and ready to receive funds from paid plugin sales.')}</p>
                           </div>
                         </div>
                         <div className="row">
                           <button className="button" onClick={handleGoToStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
-                            {isStripeLoading ? 'Opening…' : 'Go to Payout Dashboard →'}
+                            {isStripeLoading ? t('studio.settings.opening', 'Opening…') : t('studio.settings.go_to_payout_dashboard', 'Go to Payout Dashboard →')}
                           </button>
                         </div>
                       </>
@@ -2149,13 +2160,13 @@ const SettingsPage = () => {
                         <div className="status ac-status-block">
                           <span className="mark-box mark-box-warning"><AlertCircle /></span>
                           <div>
-                            <strong>Payout onboarding incomplete</strong>
-                            <p className="small">Your account was created but hasn't been fully activated yet.</p>
+                            <strong>{t('studio.settings.payout_incomplete', 'Payout onboarding incomplete')}</strong>
+                            <p className="small">{t('studio.settings.payout_incomplete_desc', "Your account was created but hasn't been fully activated yet.")}</p>
                           </div>
                         </div>
                         <div className="row">
                           <button className="button button-primary" onClick={handleConnectStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
-                            {isStripeLoading ? 'Redirecting…' : 'Continue Payout Setup →'}
+                            {isStripeLoading ? t('studio.settings.redirecting', 'Redirecting…') : t('studio.settings.continue_payout_setup', 'Continue Payout Setup →')}
                           </button>
                         </div>
                       </>
@@ -2163,24 +2174,24 @@ const SettingsPage = () => {
                       <>
                         <p className="status">
                           <span className="dot" />
-                          <span className="muted">No payout account linked yet. Free plugin uploads are fully enabled.</span>
+                          <span className="muted">{t('studio.settings.no_payout_linked', 'No payout account linked yet. Free plugin uploads are fully enabled.')}</span>
                         </p>
                         <div className="row">
                           <button className="button button-primary" onClick={handleConnectStripe} disabled={isStripeLoading} aria-busy={isStripeLoading}>
                             <CreditCard />
-                            {isStripeLoading ? 'Connecting…' : 'Connect Payout Account for Paid Sales'}
+                            {isStripeLoading ? t('studio.settings.connecting', 'Connecting…') : t('studio.settings.connect_payout_btn', 'Connect Payout Account for Paid Sales')}
                           </button>
                         </div>
                       </>
                     )}
                   </SettingsCard>
 
-                  <SettingsCard title="Payout FAQ" icon={Lock}>
+                  <SettingsCard title={t('studio.settings.faq_title', 'Payout FAQ')} icon={Lock}>
                     <div className="ac-faq">
                       {[
-                        { q: 'Can I upload free plugins without a payout account?', a: 'Yes! A payout account is only required if you want to sell paid plugins.' },
-                        { q: 'When do I get paid for sales?', a: 'Earnings are transferred automatically within 2–7 business days according to your payout schedule.' },
-                        { q: 'What platform fee applies?', a: 'PumpkinMarket takes a platform commission per sale. Standard payment processing fees apply.' },
+                        { q: t('studio.settings.faq_q1', 'Can I upload free plugins without a payout account?'), a: t('studio.settings.faq_a1', 'Yes! A payout account is only required if you want to sell paid plugins.') },
+                        { q: t('studio.settings.faq_q2', 'When do I get paid for sales?'), a: t('studio.settings.faq_a2', 'Earnings are transferred automatically within 2–7 business days according to your payout schedule.') },
+                        { q: t('studio.settings.faq_q3', 'What platform fee applies?'), a: t('studio.settings.faq_a3', 'PumpkinMarket takes a platform commission per sale. Standard payment processing fees apply.') },
                       ].map(({ q, a }) => (
                         <div key={q}>
                           <p className="h3">{q}</p>

@@ -8,6 +8,8 @@ import remarkGfm from 'remark-gfm';
 import { useNavigate } from 'react-router-dom';
 import SEO from '../../components/SEO';
 import { PluginVideoPlayer } from './PluginVideoPlayer';
+import { GuidelineRejectionPicker, RejectionReasonsList } from '../../components/GuidelineRejectionPicker';
+import { serializeRejectionReason } from '../../lib/guidelines';
 import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X, ShieldCheck, AlertTriangle, Lock, Cpu, Globe, HardDrive, Terminal, Fingerprint } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../../types/plugin';
 import '../../styles/plugin.css';
@@ -364,6 +366,8 @@ const PluginPage = () => {
   const canReview = isStaff || user?.role === 'reviewer';
   const [staffBusy, setStaffBusy] = useState(false);
   const [staffRejectOpen, setStaffRejectOpen] = useState(false);
+  const [staffRejectCodes, setStaffRejectCodes] = useState<string[]>([]);
+  const [staffRejectOtherChecked, setStaffRejectOtherChecked] = useState(false);
   const [staffRejectReason, setStaffRejectReason] = useState('');
   const [reportedReviews, setReportedReviews] = useState<Set<number>>(new Set());
 
@@ -780,13 +784,30 @@ const PluginPage = () => {
     }
   };
 
+  const canSubmitStaffReject =
+    staffRejectCodes.length > 0
+      ? !staffRejectOtherChecked || Boolean(staffRejectReason.trim())
+      : staffRejectOtherChecked && Boolean(staffRejectReason.trim());
+
+  const toggleStaffRejectCode = (code: string) => {
+    setStaffRejectCodes(prev =>
+      prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+    );
+  };
+
   const handleStaffReject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!plugin || !staffRejectReason.trim()) return;
+    if (!plugin || !canSubmitStaffReject) return;
     setStaffBusy(true);
     try {
-      await api.post(`/admin/plugins/${plugin.id}/reject`, { reason: staffRejectReason.trim() });
+      const reason = serializeRejectionReason(
+        staffRejectCodes,
+        staffRejectOtherChecked ? staffRejectReason : ''
+      );
+      await api.post(`/admin/plugins/${plugin.id}/reject`, { reason });
       setStaffRejectOpen(false);
+      setStaffRejectCodes([]);
+      setStaffRejectOtherChecked(false);
       setStaffRejectReason('');
       fetchPlugin();
     } catch (err: any) {
@@ -1008,22 +1029,22 @@ const PluginPage = () => {
         <div className="pd-notices">
           {isDraft && (
             <div className="notice notice-warning" role="status">
-              <span className="sticker sticker-warning"><Lock /> Draft Mode</span>
+              <span className="sticker sticker-warning"><Lock /> {t('staff.banners.draft_badge', 'Draft Mode')}</span>
               <div className="notice-text pd-notice-body">
                 <p>
-                  <strong>This plugin is currently in Draft mode and is not publicly listed on PumpkinMarket.</strong>{' '}
-                  Only the plugin developer, moderators, and administrators can view this page.
+                  <strong>{t('staff.banners.draft_title', 'This plugin is currently in Draft mode and is not publicly listed on PumpkinMarket.')}</strong>{' '}
+                  {t('staff.banners.draft_desc', 'Only the plugin developer, moderators, and administrators can view this page.')}
                 </p>
               </div>
               <div className="row">
                 {isOwner && (
                   <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-primary button-sm">
-                    Manage Draft
+                    {t('staff.actions.manage_draft', 'Manage Draft')}
                   </Link>
                 )}
                 {isStaff && (
                   <Link to="/staff" className="button button-ghost button-sm">
-                    Staff Dashboard
+                    {t('staff.actions.staff_dashboard', 'Staff Dashboard')}
                   </Link>
                 )}
               </div>
@@ -1032,63 +1053,44 @@ const PluginPage = () => {
 
           {isUnderReview && (
             <div className="notice notice-pumpkin" role="status">
-              <span className="sticker"><ShieldCheck /> Under Review</span>
+              <span className="sticker"><ShieldCheck /> {t('staff.banners.under_review_badge', 'Under Review')}</span>
               <div className="notice-text pd-notice-body">
                 <p>
-                  <strong>This plugin is awaiting review by the PumpkinMarket Staff &amp; Review Team.</strong>{' '}
-                  It is hidden from the public store until approved.
+                  <strong>{t('staff.banners.under_review_title', 'This plugin is awaiting review by the PumpkinMarket Staff & Review Team.')}</strong>{' '}
+                  {t('staff.banners.under_review_desc', 'It is hidden from the public store until approved.')}
                   {plugin.claimed_by_name && (
-                    <> Currently claimed by <strong>@{plugin.claimed_by_name}</strong>.</>
+                    <> {t('staff.banners.claimed_by', { name: plugin.claimed_by_name, defaultValue: 'Currently claimed by @{{name}}.' })}</>
                   )}
                 </p>
-                {canReview && staffRejectOpen && (
-                  <form onSubmit={handleStaffReject} className="row" style={{ marginTop: 8, width: '100%' }}>
-                    <input
-                      type="text"
-                      className="input"
-                      placeholder="Explain what changes are required before publishing…"
-                      value={staffRejectReason}
-                      onChange={e => setStaffRejectReason(e.target.value)}
-                      required
-                      style={{ flex: 1 }}
-                    />
-                    <button type="submit" className="button button-danger button-sm" disabled={staffBusy || !staffRejectReason.trim()}>
-                      Send Feedback
-                    </button>
-                    <button type="button" className="button button-ghost button-sm" onClick={() => setStaffRejectOpen(false)}>
-                      Cancel
-                    </button>
-                  </form>
-                )}
               </div>
               <div className="row">
                 {canReview && (
                   <>
                     {!plugin.claimed_by_id ? (
                       <button type="button" className="button button-sm" onClick={handleStaffClaim} disabled={staffBusy}>
-                        Claim Review
+                        {t('staff.actions.claim_review', 'Claim Review')}
                       </button>
                     ) : plugin.claimed_by_id === user?.id || user?.role === 'admin' ? (
                       <>
                         <button type="button" className="button button-primary button-sm" onClick={handleStaffApprove} disabled={staffBusy}>
-                          <Check /> Approve
+                          <Check /> {t('staff.actions.approve', 'Approve')}
                         </button>
-                        <button type="button" className="button button-danger button-sm" onClick={() => setStaffRejectOpen(v => !v)} disabled={staffBusy}>
-                          Request Changes
+                        <button type="button" className="button button-danger button-sm" onClick={() => setStaffRejectOpen(true)} disabled={staffBusy}>
+                          {t('staff.actions.request_changes', 'Request Changes')}
                         </button>
                         <button type="button" className="button button-ghost button-sm" onClick={handleStaffUnclaim} disabled={staffBusy}>
-                          Release
+                          {t('staff.actions.release', 'Release')}
                         </button>
                       </>
                     ) : null}
                     <Link to="/staff" className="button button-ghost button-sm">
-                      Staff Queue
+                      {t('staff.actions.staff_queue', 'Staff Queue')}
                     </Link>
                   </>
                 )}
                 {isOwner && (
                   <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-ghost button-sm">
-                    Manage Plugin
+                    {t('staff.actions.manage_plugin', 'Manage Plugin')}
                   </Link>
                 )}
               </div>
@@ -1096,27 +1098,27 @@ const PluginPage = () => {
           )}
 
           {isRejected && (
-            <div className="notice notice-danger" role="status">
-              <span className="sticker sticker-danger"><AlertTriangle /> Changes Requested</span>
-              <div className="notice-text pd-notice-body">
+            <div className="notice notice-danger gl-notice-rejected" role="status">
+              <span className="sticker sticker-danger"><AlertTriangle /> {t('guidelines.changes_requested', 'Changes Requested')}</span>
+              <div className="notice-text pd-notice-body gl-notice-body">
                 <p>
-                  <strong>This submission requires changes before it can be published.</strong>
-                  {plugin.rejection_reason && <> Reviewer feedback: <em>{plugin.rejection_reason}</em></>}
+                  <strong>{t('guidelines.changes_requested_intro', 'Your submission requires changes before it can be published:')}</strong>
                 </p>
+                <RejectionReasonsList rejectionReason={plugin.rejection_reason} />
               </div>
               <div className="row">
                 {isOwner && (
                   <Link to={`/dashboard/manage-plugin/${plugin.public_id || plugin.id}`} className="button button-primary button-sm">
-                    Fix &amp; Resubmit
+                    {t('staff.actions.fix_resubmit', 'Fix & Resubmit')}
                   </Link>
                 )}
                 {canReview && (
                   <>
                     <button type="button" className="button button-sm" onClick={handleStaffApprove} disabled={staffBusy}>
-                      <Check /> Approve Now
+                      <Check /> {t('staff.actions.approve_now', 'Approve Now')}
                     </button>
                     <Link to="/staff" className="button button-ghost button-sm">
-                      Staff Queue
+                      {t('staff.actions.staff_queue', 'Staff Queue')}
                     </Link>
                   </>
                 )}
@@ -1125,17 +1127,17 @@ const PluginPage = () => {
           )}
 
           {isSuspended && (
-            <div className="notice notice-danger" role="status">
-              <span className="sticker sticker-danger"><AlertTriangle /> Suspended</span>
-              <div className="notice-text pd-notice-body">
+            <div className="notice notice-danger gl-notice-rejected" role="status">
+              <span className="sticker sticker-danger"><AlertTriangle /> {t('staff.banners.suspended_badge', 'Suspended')}</span>
+              <div className="notice-text pd-notice-body gl-notice-body">
                 <p>
-                  <strong>This plugin has been suspended by moderation and is hidden from the public store.</strong>
-                  {plugin.rejection_reason && <> Reason: <em>{plugin.rejection_reason}</em></>}
+                  <strong>{t('staff.banners.suspended_title', 'This plugin has been suspended by moderation and is hidden from the public store.')}</strong>
                 </p>
+                {plugin.rejection_reason && <RejectionReasonsList rejectionReason={plugin.rejection_reason} />}
               </div>
               {isStaff && (
                 <Link to="/staff" className="button button-ghost button-sm">
-                  Staff Dashboard
+                  {t('staff.actions.staff_dashboard', 'Staff Dashboard')}
                 </Link>
               )}
             </div>
@@ -1645,7 +1647,7 @@ const PluginPage = () => {
                     {r.developer_reply && (
                       <div className="pd-reply">
                         <div className="row">
-                          <span className="label pumpkin">Developer Response</span>
+                          <span className="label pumpkin">{t('plugin.reviews.dev_reply', 'Developer Reply')}</span>
                           <span className="small">{formatDate(r.replied_at)}</span>
                         </div>
                         <ExpandableText text={r.developer_reply} limit={300} />
@@ -1695,7 +1697,7 @@ const PluginPage = () => {
                           <div className="control">
                             <textarea
                               className="input"
-                              placeholder="Write your response to this review..."
+                              placeholder={t('plugin.reviews.reply_placeholder', 'Write your response to this review...')}
                               value={replyText}
                               onChange={e => setReplyText(e.target.value)}
                               rows={3}
@@ -1704,10 +1706,10 @@ const PluginPage = () => {
                           </div>
                           <div className="row">
                             <button type="button" className="button button-ghost button-sm" onClick={() => { setReplyOpen(null); setReplyText(''); }}>
-                              Cancel
+                              {t('common.cancel', 'Cancel')}
                             </button>
                             <button type="submit" className="button button-primary button-sm" disabled={replySubmitting || !replyText.trim()}>
-                              {replySubmitting ? 'Replying...' : 'Post Reply'}
+                              {replySubmitting ? t('studio.reviews.posting', 'Posting…') : t('plugin.reviews.reply_submit', 'Post Reply')}
                             </button>
                           </div>
                         </form>
@@ -1715,17 +1717,17 @@ const PluginPage = () => {
                         <>
                           {user && user.username === r.username ? (
                             <button type="button" className="button button-ghost button-sm pd-danger" onClick={deleteReview}>
-                              <Trash2 /> Delete my review
+                              <Trash2 /> {t('plugin.reviews.delete_review', 'Delete')}
                             </button>
                           ) : user && (
                             <button type="button" className="button button-ghost button-sm" onClick={() => setReviewReportOpen(r.id)}>
-                              <Flag /> Report review
+                              <Flag /> {t('plugin.report.report_review', 'Report Review')}
                             </button>
                           )}
 
                           {isOwner && !r.developer_reply && !replyOpen && (
                             <button type="button" className="button button-ghost button-sm pd-accent" onClick={() => setReplyOpen(r.id)}>
-                              <MessageSquare /> Reply as developer
+                              <MessageSquare /> {t('plugin.reviews.reply_btn', 'Reply')}
                             </button>
                           )}
                         </>
@@ -2045,6 +2047,45 @@ const PluginPage = () => {
           </div>
         </aside>
       </div>
+
+      {canReview && staffRejectOpen && (
+        <div className="overlay sf-modal" onClick={() => !staffBusy && setStaffRejectOpen(false)} role="dialog" aria-modal="true" aria-label={t('staff.actions.request_changes', 'Request Changes')}>
+          <div className="sheet" onClick={e => e.stopPropagation()}>
+            <div className="sheet-head">
+              <div className="stack">
+                <span className="sticker sticker-sm sticker-warning">
+                  <AlertTriangle size={12} /> {t('staff.modal.badge', 'Policy & Review Resolution')}
+                </span>
+                <h2 className="h2">{t('staff.modal.title_reject', { name: plugin.name, defaultValue: 'Request Changes — {{name}}' })}</h2>
+              </div>
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setStaffRejectOpen(false)} aria-label={t('common.close', 'Close')} disabled={staffBusy}>
+                <X />
+              </button>
+            </div>
+            <form onSubmit={handleStaffReject} className="sheet-body stack">
+              <GuidelineRejectionPicker
+                selectedCodes={staffRejectCodes}
+                onToggleCode={toggleStaffRejectCode}
+                otherChecked={staffRejectOtherChecked}
+                onToggleOther={checked => {
+                  setStaffRejectOtherChecked(checked);
+                  if (!checked) setStaffRejectReason('');
+                }}
+                customReason={staffRejectReason}
+                onChangeCustomReason={setStaffRejectReason}
+              />
+              <div className="row" style={{ justifyContent: 'flex-end' }}>
+                <button type="button" className="button button-ghost" onClick={() => setStaffRejectOpen(false)} disabled={staffBusy}>
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button type="submit" className="button button-danger" disabled={staffBusy || !canSubmitStaffReject}>
+                  {staffBusy ? t('staff.modal.processing', 'Processing…') : t('staff.modal.btn_send_reject', 'Send Feedback & Reject')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {versionsOpen && (
         <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label="Version History">

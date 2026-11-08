@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Trash2, AlertTriangle, Lock, ShieldAlert, ShieldCheck } from 'lucide-react';
 import api from '../../../lib/api';
 import { useAuth } from '../../../app/auth';
@@ -8,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 type Props = { plugin: PluginData };
 
 const DangerZone = ({ plugin }: Props) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [deleteConfirm, setDeleteConfirm] = useState('');
@@ -38,22 +40,20 @@ const DangerZone = ({ plugin }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Danger Zone</h2>
-                <p className="small">Irreversible actions live here. Proceed carefully.</p>
+                <h2 className="h1">{t('studio.danger.title')}</h2>
+                <p className="small">{t('studio.danger.subtitle')}</p>
             </header>
 
             <section className="panel st-danger">
                 <div className="panel-head">
                     <Trash2 size={16} className="st-neg" />
-                    <h3 className="h3 st-neg">Delete Plugin</h3>
+                    <h3 className="h3 st-neg">{t('studio.danger.delete_title')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div className="notice notice-danger">
                         <span className="mark-box mark-box-danger"><AlertTriangle /></span>
                         <p className="notice-text">
-                            <strong>This is permanent and cannot be undone.</strong> All user installs,
-                            purchase records, screenshots, and binaries will be erased. Active subscribers
-                            will be refunded automatically.
+                            {t('studio.danger.delete_warning')}
                         </p>
                     </div>
 
@@ -61,21 +61,21 @@ const DangerZone = ({ plugin }: Props) => {
                         <div className="notice notice-warning">
                             <span className="mark-box mark-box-warning"><ShieldAlert /></span>
                             <p className="notice-text">
-                                <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
-                                To protect against accidental or unauthorized deletion of published plugins, you must enable 2FA on your account before deleting.
+                                <strong>{t('studio.update.tfa_required_title')}</strong>{' '}
+                                {t('studio.danger.tfa_required_desc')}
                             </p>
                             <button
                                 type="button"
                                 className="button button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck /> Enable 2FA →
+                                <ShieldCheck /> {t('studio.listing.enable_tfa')}
                             </button>
                         </div>
                     ) : (
                         <>
                             <label className="field">
-                                <span className="field-label">1. Type the plugin name <em className="mono">{plugin.name}</em> to confirm:</span>
+                                <span className="field-label">{t('studio.danger.step_1_label', { name: plugin.name })}</span>
                                 <span className="control">
                                     <input
                                         id="deleteConfirmInput"
@@ -92,7 +92,7 @@ const DangerZone = ({ plugin }: Props) => {
                             </label>
 
                             <label className="field">
-                                <span className="field-label">2. Enter your 6-digit Two-Factor Authentication (2FA) code:</span>
+                                <span className="field-label">{t('studio.danger.step_2_label')}</span>
                                 <span className="control st-narrow">
                                     <Lock size={15} className="muted" />
                                     <input
@@ -126,7 +126,7 @@ const DangerZone = ({ plugin }: Props) => {
                             aria-busy={deleting}
                         >
                             <Trash2 />
-                            {deleting ? 'Deleting…' : 'Delete Forever with 2FA'}
+                            {deleting ? t('studio.danger.deleting') : t('studio.danger.delete_btn')}
                         </button>
                     </div>
                 )}

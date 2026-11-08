@@ -164,8 +164,10 @@
 
 .pd-meta {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-4);
   justify-items: start;
+  min-width: 0;
 }
 
 .pd-meta .specs {
@@ -221,16 +223,25 @@
 
 .pd-form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s-3);
   width: 100%;
   max-width: 560px;
+  min-width: 0;
+}
+
+.pd-reasons {
+  width: 100%;
+  min-width: 0;
 }
 
 .pd-reasons button {
-  height: 32px;
-  padding-inline: 10px;
+  height: auto;
+  min-height: 32px;
+  padding: 5px 10px;
   border-width: 2px;
   font-size: var(--t-13);
+  text-align: left;
 }
 
 .pd-media {

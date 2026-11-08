@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { DollarSign, ExternalLink, Save, Zap, Lock, Percent, Tag, AlertTriangle, CheckCircle, ShieldCheck } from 'lucide-react';
 import api from '../../../lib/api';
@@ -8,24 +9,24 @@ import { useAuth } from '../../../app/auth';
 type LicenseType = 'free' | 'paid';
 type Props = { plugin: PluginData; onSaved: () => void };
 
-const PRICING_OPTIONS: { key: LicenseType; label: string; icon: React.ReactNode; desc: string }[] = [
-    {
-        key: 'free',
-        label: 'Free',
-        icon: <Zap size={18} />,
-        desc: 'Anyone can install with no payment required. Maximises reach.',
-    },
-    {
-        key: 'paid',
-        label: 'Paid',
-        icon: <Lock size={18} />,
-        desc: 'One-time purchase. Requires a connected payout account.',
-    },
-];
-
 const Pricing = ({ plugin, onSaved }: Props) => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { user }  = useAuth();
+    const PRICING_OPTIONS: { key: LicenseType; label: string; icon: React.ReactNode; desc: string }[] = [
+        {
+            key: 'free',
+            label: t('studio.pricing.free_label'),
+            icon: <Zap size={18} />,
+            desc: t('studio.pricing.free_desc'),
+        },
+        {
+            key: 'paid',
+            label: t('studio.pricing.paid_label'),
+            icon: <Lock size={18} />,
+            desc: t('studio.pricing.paid_desc'),
+        },
+    ];
     const [saving, setSaving] = useState(false);
     const [pricingSuccess, setPricingSuccess] = useState(false);
     const [pricingError, setPricingError] = useState<string | null>(null);
@@ -100,15 +101,15 @@ const Pricing = ({ plugin, onSaved }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Pricing</h2>
-                <p className="small">Manage your plugin's price and run manual sales.</p>
+                <h2 className="h1">{t('studio.pricing.title')}</h2>
+                <p className="small">{t('studio.pricing.subtitle')}</p>
             </header>
 
             <form className="stack st-pr" onSubmit={handleSave}>
                 <section className="panel">
                     <div className="panel-head">
                         <DollarSign size={16} className="pumpkin" />
-                        <h3 className="h3">Pricing Model</h3>
+                        <h3 className="h3">{t('studio.pricing.model_title')}</h3>
                     </div>
                     <div className="panel-body stack">
                         <div className="st-pick">
@@ -133,7 +134,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                                 className="button button-primary button-sm st-pr-unlock"
                                                 onClick={() => navigate('/settings?tab=developer')}
                                             >
-                                                <ExternalLink /> Unlock
+                                                <ExternalLink /> {t('studio.pricing.unlock')}
                                             </button>
                                         )}
                                     </div>
@@ -144,7 +145,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                         {licenseType === 'paid' && !stripeConnected && (
                             <p className="status small">
                                 <span className="mark-box mark-box-warning"><Lock /></span>
-                                Connect your payout account before configuring paid pricing.
+                                {t('studio.pricing.connect_payout_hint')}
                             </p>
                         )}
                     </div>
@@ -155,11 +156,11 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                         <section className="panel">
                             <div className="panel-head">
                                 <DollarSign size={16} className="pumpkin" />
-                                <h3 className="h3">Base Price</h3>
+                                <h3 className="h3">{t('studio.pricing.base_price')}</h3>
                             </div>
                             <div className="panel-body st-grid-2">
                                 <label className="field">
-                                    <span className="field-label">Price (EUR)</span>
+                                    <span className="field-label">{t('studio.pricing.price_eur')}</span>
                                     <span className="control st-narrow">
                                         <span className="affix">€</span>
                                         <input
@@ -177,16 +178,16 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                         />
                                     </span>
                                     {priceTooLow && (
-                                        <span className="field-error"><AlertTriangle size={14} />Minimum price is €0.99.</span>
+                                        <span className="field-error"><AlertTriangle size={14} />{t('studio.pricing.min_price_error')}</span>
                                     )}
                                 </label>
 
                                 <dl className="specs">
-                                    <dt>Platform fee (30%)</dt>
+                                    <dt>{t('studio.pricing.platform_fee')}</dt>
                                     <dd className="st-neg">-€{fmt(Math.round(priceCents * 0.30))}</dd>
-                                    <dt>Payment processing fee (1.5% + €0.25)</dt>
+                                    <dt>{t('studio.pricing.processing_fee')}</dt>
                                     <dd className="st-neg">-€{fmt(Math.ceil(priceCents * 0.015 + 25))}</dd>
-                                    <dt className="label-fg">Your earnings</dt>
+                                    <dt className="label-fg">{t('studio.pricing.your_earnings')}</dt>
                                     <dd className={`st-pr-total ${baseEarnings > 0 ? 'st-pos' : 'st-neg'}`}>+€{fmt(baseEarnings)}</dd>
                                 </dl>
                             </div>
@@ -195,13 +196,13 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                         <section className={`panel${isSaleActive ? ' panel-pumpkin' : ''}`}>
                             <div className="panel-head">
                                 <Tag size={16} className="pumpkin" />
-                                <h3 className="h3">Sale</h3>
+                                <h3 className="h3">{t('studio.pricing.sale_title')}</h3>
                                 <span className="spacer" />
-                                {isSaleActive && <span className="sticker sticker-sm">Sale is live — {discountPercent}% off</span>}
+                                {isSaleActive && <span className="sticker sticker-sm">{t('studio.pricing.sale_live_badge', { percent: discountPercent })}</span>}
                             </div>
                             <div className="panel-body st-grid-2">
                                 <label className="field">
-                                    <span className="field-label">Discount</span>
+                                    <span className="field-label">{t('studio.pricing.discount')}</span>
                                     <span className="control st-narrow">
                                         <input
                                             id="pluginDiscountPercent"
@@ -224,9 +225,9 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                         <span className="cost cost-sale cost-lg"><s>€{price.toFixed(2)}</s>€{salePriceDisplay}</span>
                                         <span className="sticker sticker-sm">-{discountPercent}%</span>
                                     </span>
-                                    <span className="small">Save €{savingsDisplay}</span>
+                                    <span className="small">{t('studio.pricing.save_amount', { amount: savingsDisplay })}</span>
                                     <dl className="specs">
-                                        <dt>Your earnings at sale price</dt>
+                                        <dt>{t('studio.pricing.earnings_at_sale')}</dt>
                                         <dd className={saleEarnings > 0 ? 'st-pos' : 'st-neg'}>+€{fmt(saleEarnings)}</dd>
                                     </dl>
                                 </div>
@@ -239,7 +240,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                         onClick={() => setIsSaleActive(true)}
                                     >
                                         <Percent />
-                                        Start Sale at -{discountPercent}%
+                                        {t('studio.pricing.start_sale', { percent: discountPercent })}
                                     </button>
                                 ) : (
                                     <button
@@ -247,7 +248,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                         onClick={() => setIsSaleActive(false)}
                                         className="button button-danger"
                                     >
-                                        End Sale
+                                        {t('studio.pricing.end_sale')}
                                     </button>
                                 )}
                             </div>
@@ -256,14 +257,14 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                         <section className="panel">
                             <div className="panel-head">
                                 <Tag size={16} className="pumpkin" />
-                                <h3 className="h3">Pre-Order Mode</h3>
+                                <h3 className="h3">{t('studio.pricing.preorder_title')}</h3>
                             </div>
                             <div className="panel-body stack">
                                 <label className="st-switch">
                                     <span>
-                                        Accept Pre-Orders
+                                        {t('studio.pricing.accept_preorders')}
                                         <span className="small">
-                                            Mark this plugin as available for pre-order. When you publish the first release or disable pre-order, all pre-order buyers will be emailed automatically.
+                                            {t('studio.pricing.accept_preorders_desc')}
                                         </span>
                                     </span>
                                     <input
@@ -279,7 +280,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
 
                                 {isPreorder && (
                                     <label className="field">
-                                        <span className="field-label">Expected Release Date <em>(Optional)</em></span>
+                                        <span className="field-label">{t('studio.pricing.expected_release_date')} <em>{t('studio.listing.optional')}</em></span>
                                         <span className="control st-narrow">
                                             <input
                                                 id="pricingPreorderReleaseDate"
@@ -291,7 +292,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                                 onChange={e => setPreorderReleaseDate(e.target.value)}
                                             />
                                         </span>
-                                        <span className="field-hint">Displayed on the store page so buyers know when to expect the release.</span>
+                                        <span className="field-hint">{t('studio.pricing.expected_release_hint')}</span>
                                     </label>
                                 )}
                             </div>
@@ -303,7 +304,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                     <div className="notice notice-danger">
                         <span className="mark-box mark-box-danger"><Lock /></span>
                         <p className="notice-text">
-                            <strong>{twoFaError ? 'Two-Factor Authentication Required' : 'Pricing Error'}</strong>
+                            <strong>{twoFaError ? t('studio.listing.tfa_required') : t('studio.pricing.pricing_error')}</strong>
                             <span className="ledger-sub">{pricingError}</span>
                         </p>
                         {(twoFaError || !user?.totp_enabled) && (
@@ -312,7 +313,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                                 className="button button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck /> Enable 2FA →
+                                <ShieldCheck /> {t('studio.listing.enable_tfa')}
                             </button>
                         )}
                     </div>
@@ -321,7 +322,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                 {pricingSuccess && (
                     <div className="notice notice-success">
                         <span className="mark-box mark-box-success"><CheckCircle /></span>
-                        <p className="notice-text"><strong>Pricing settings saved successfully!</strong></p>
+                        <p className="notice-text"><strong>{t('studio.pricing.save_success')}</strong></p>
                     </div>
                 )}
 
@@ -334,7 +335,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
                         aria-busy={saving}
                     >
                         <Save />
-                        {saving ? 'Saving…' : 'Save Pricing'}
+                        {saving ? t('studio.pricing.saving') : t('studio.pricing.save_pricing')}
                     </button>
                 </div>
             </form>

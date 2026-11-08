@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Check, CircleAlert, ImageIcon, Plus, Save, Search, X, ShieldCheck, Lock, Trash2 } from 'lucide-react';
 import api from '../../../lib/api';
@@ -50,6 +51,7 @@ type PickerProps = {
 };
 
 const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
+    const { t } = useTranslation();
     const [search, setSearch] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
     const ref = useRef<HTMLDivElement>(null);
@@ -78,12 +80,12 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
                     className="input"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    placeholder="Search language…"
+                    placeholder={t('studio.listing.search_language')}
                 />
             </label>
             <div className="st-listing-picker-list">
                 {filtered.length === 0 ? (
-                    <p className="small st-listing-picker-empty">No languages found</p>
+                    <p className="small st-listing-picker-empty">{t('studio.listing.no_languages')}</p>
                 ) : filtered.map(l => (
                     <button
                         key={l.code}
@@ -102,6 +104,7 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
 type Props = { plugin: PluginData; onSaved: () => void };
 
 const StoreListing = ({ plugin, onSaved }: Props) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
     const [saving, setSaving] = useState(false);
@@ -321,7 +324,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     };
 
     const deleteScreenshot = async (screenId: number) => {
-        if (!window.confirm('Delete this screenshot?')) return;
+        if (!window.confirm(t('studio.listing.confirm_delete_screenshot'))) return;
         try {
             await api.delete(`/plugins/screenshots/${screenId}`);
             setScreenshots(prev => prev.filter(s => s.id !== screenId));
@@ -372,16 +375,16 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Store Listing</h2>
-                <p className="small">Manage what users see on your plugin's store page — name, description, screenshots, and discoverability.</p>
+                <h2 className="h1">{t('studio.listing.title')}</h2>
+                <p className="small">{t('studio.listing.subtitle')}</p>
             </header>
 
             <form className="st-tab" onSubmit={handleSave}>
                 <section className="panel">
-                    <div className="panel-head"><h3 className="h3">General Details</h3></div>
+                    <div className="panel-head"><h3 className="h3">{t('studio.listing.general_details')}</h3></div>
                     <div className="panel-body stack">
                         <div className="field">
-                            <span className="field-label">Plugin Icon</span>
+                            <span className="field-label">{t('studio.listing.plugin_icon')}</span>
                             <div className="row">
                                 <span className="avatar avatar-ghost st-listing-icon">
                                     {iconPreview ? <img src={iconPreview} alt="" /> : name.charAt(0).toUpperCase()}
@@ -389,7 +392,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                 <div className="stack st-listing-icon-meta">
                                     <label className="button button-sm" aria-disabled={processingImage || undefined}>
                                         <ImageIcon />
-                                        {processingImage ? 'Validating & Sanitizing…' : 'Change Icon'}
+                                        {processingImage ? t('studio.listing.validating_image') : t('studio.listing.change_icon')}
                                         <input
                                             id="icon-upload-input"
                                             type="file"
@@ -399,7 +402,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                             disabled={processingImage}
                                         />
                                     </label>
-                                    <span className="field-hint">Square image recommended (PNG, JPEG, WebP). Max 2MB. Validated on selection.</span>
+                                    <span className="field-hint">{t('studio.listing.icon_hint')}</span>
                                 </div>
                             </div>
                             {iconValidationErr && (
@@ -409,7 +412,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
                         <div className="fields st-cols-2">
                             <label className="field st-span">
-                                <span className="field-label">Plugin Name</span>
+                                <span className="field-label">{t('studio.listing.plugin_name')}</span>
                                 <span className="control">
                                     <input
                                         id="listingPluginName"
@@ -425,12 +428,12 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                             </label>
 
                             <div className="field">
-                                <span className="field-label" id="listingPluginCategory">Category</span>
+                                <span className="field-label" id="listingPluginCategory">{t('studio.listing.category')}</span>
                                 <Select options={PLUGIN_CATEGORIES} value={category} onChange={setCategory} aria-labelledby="listingPluginCategory" />
                             </div>
 
                             <label className="field">
-                                <span className="field-label">Source Link</span>
+                                <span className="field-label">{t('studio.listing.source_link')}</span>
                                 <span className="control">
                                     <input
                                         id="listingPluginSourceLink"
@@ -446,7 +449,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                             </label>
 
                             <label className="field">
-                                <span className="field-label">Keywords <em>(comma-separated)</em></span>
+                                <span className="field-label">{t('studio.listing.keywords')} <em>{t('studio.listing.comma_separated')}</em></span>
                                 <span className="control">
                                     <input
                                         id="listingPluginKeywords"
@@ -462,7 +465,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                             </label>
 
                             <label className="field">
-                                <span className="field-label">YouTube Video URL <em>(optional)</em></span>
+                                <span className="field-label">{t('studio.listing.youtube_url')} <em>{t('studio.listing.optional')}</em></span>
                                 <span className="control">
                                     <input
                                         id="listingPluginYoutubeUrl"
@@ -487,28 +490,28 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                 checked={isEarlyAccess}
                                 onChange={e => setIsEarlyAccess(e.target.checked)}
                             />
-                            <span>Early Access<span className="small">Flag this plugin as incomplete or in active development.</span></span>
+                            <span>{t('studio.listing.early_access')}<span className="small">{t('studio.listing.early_access_desc')}</span></span>
                         </label>
                     </div>
                 </section>
 
                 <section className="panel">
-                    <div className="panel-head"><h3 className="h3">Descriptions</h3></div>
+                    <div className="panel-head"><h3 className="h3">{t('studio.listing.descriptions')}</h3></div>
                     <div className="panel-body stack">
                         <div className="st-listing-langs">
                             {usedCodes.map(code => (
                                 <span key={code} className="st-listing-lang" data-active={activeLocale === code || undefined}>
                                     <button type="button" onClick={() => setActiveLocale(code)}>
                                         {getLocaleName(code)}
-                                        {code === DEFAULT_LOCALE && <span className="st-listing-default">default</span>}
+                                        {code === DEFAULT_LOCALE && <span className="st-listing-default">{t('studio.listing.default_badge')}</span>}
                                     </button>
                                     {code !== DEFAULT_LOCALE && (
                                         <button
                                             type="button"
                                             className="st-listing-lang-x"
                                             onClick={() => removeLanguage(code)}
-                                            title={`Remove ${getLocaleName(code)}`}
-                                            aria-label={`Remove ${getLocaleName(code)}`}
+                                            title={getLocaleName(code)}
+                                            aria-label={getLocaleName(code)}
                                         >
                                             <X />
                                         </button>
@@ -523,7 +526,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                     onClick={() => setPickerOpen(v => !v)}
                                 >
                                     <Plus />
-                                    Add language
+                                    {t('studio.listing.add_language')}
                                 </button>
                                 {pickerOpen && (
                                     <LangPicker
@@ -542,13 +545,13 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                     rows={8}
                                     value={descriptions[activeLocale] ?? ''}
                                     onChange={e => setDescriptions(prev => ({ ...prev, [activeLocale]: e.target.value }))}
-                                    placeholder={`Write your plugin description in ${getLocaleName(activeLocale)}…`}
-                                    aria-label={`Description (${getLocaleName(activeLocale)})`}
+                                    placeholder={t('studio.listing.desc_placeholder', { lang: getLocaleName(activeLocale) })}
+                                    aria-label={t('studio.listing.cmd_desc_label', { lang: getLocaleName(activeLocale) })}
                                 />
                             </span>
                             <span className="field-hint">
-                                Editing: <span className="mono label-fg">{activeLocale}</span>
-                                {activeLocale === DEFAULT_LOCALE && ' · This is the default language shown when no translation is available.'}
+                                {t('studio.listing.editing_locale')} <span className="mono label-fg">{activeLocale}</span>
+                                {activeLocale === DEFAULT_LOCALE && ` · ${t('studio.listing.default_locale_hint')}`}
                             </span>
                         </div>
                     </div>
@@ -556,27 +559,27 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
                 <section className="panel">
                     <div className="panel-head">
-                        <h3 className="h3">Commands</h3>
+                        <h3 className="h3">{t('studio.listing.commands_title')}</h3>
                         <span className="spacer" />
                         <button type="button" className="button button-sm" onClick={addCommand}>
-                            <Plus />Add Command
+                            <Plus />{t('studio.listing.add_command')}
                         </button>
                     </div>
                     <div className="panel-body stack">
                         <p className="small">
-                            List commands registered by your plugin along with their permissions and descriptions. Descriptions are localized to the currently selected language tab (<span className="mono label-fg">{getLocaleName(activeLocale)}</span>).
+                            {t('studio.listing.commands_desc', { lang: getLocaleName(activeLocale) })}
                         </p>
 
                         {commands.length === 0 ? (
                             <div className="blank st-listing-blank">
-                                <p className="small">No commands added yet. Click <strong>"Add Command"</strong> above to register commands.</p>
+                                <p className="small">{t('studio.listing.no_commands')}</p>
                             </div>
                         ) : (
                             commands.map((cmd, idx) => (
                                 <div key={idx} className="st-listing-cmd">
                                     <div className="st-listing-cmd-grid">
                                         <label className="field">
-                                            <span className="field-label">Command <em>*</em></span>
+                                            <span className="field-label">{t('studio.listing.command_label')} <em>*</em></span>
                                             <span className="control">
                                                 <input
                                                     className="input mono"
@@ -589,7 +592,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                             </span>
                                         </label>
                                         <label className="field">
-                                            <span className="field-label">Aliases <em>(optional, comma-separated)</em></span>
+                                            <span className="field-label">{t('studio.listing.aliases_label')} <em>{t('studio.listing.aliases_hint')}</em></span>
                                             <span className="control">
                                                 <input
                                                     className="input mono"
@@ -601,7 +604,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                             </span>
                                         </label>
                                         <label className="field">
-                                            <span className="field-label">Permission Node <em>(optional)</em></span>
+                                            <span className="field-label">{t('studio.listing.permission_label')} <em>{t('studio.listing.optional')}</em></span>
                                             <span className="control">
                                                 <input
                                                     className="input mono"
@@ -616,25 +619,25 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                             type="button"
                                             className="button button-danger button-icon st-listing-cmd-del"
                                             onClick={() => removeCommand(idx)}
-                                            title="Remove Command"
-                                            aria-label="Remove Command"
+                                            title={t('studio.listing.remove_command')}
+                                            aria-label={t('studio.listing.remove_command')}
                                         >
                                             <Trash2 />
                                         </button>
                                     </div>
 
                                     <label className="field">
-                                        <span className="field-label">Description ({getLocaleName(activeLocale)})</span>
+                                        <span className="field-label">{t('studio.listing.cmd_desc_label', { lang: getLocaleName(activeLocale) })}</span>
                                         <span className="control">
                                             <input
                                                 className="input"
-                                                placeholder={`What does this command do? (${getLocaleName(activeLocale)})`}
+                                                placeholder={t('studio.listing.cmd_desc_placeholder', { lang: getLocaleName(activeLocale) })}
                                                 value={cmd.descriptions[activeLocale] ?? ''}
                                                 onChange={e => updateCommandDescription(idx, activeLocale, e.target.value)}
                                             />
                                         </span>
                                         {activeLocale !== DEFAULT_LOCALE && !cmd.descriptions[activeLocale] && (
-                                            <span className="field-hint">Falls back to: <em>{cmd.descriptions[DEFAULT_LOCALE] || 'English default'}</em></span>
+                                            <span className="field-hint">{t('studio.listing.falls_back_to')} <em>{cmd.descriptions[DEFAULT_LOCALE] || t('studio.listing.english_default')}</em></span>
                                         )}
                                     </label>
                                 </div>
@@ -647,7 +650,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     <div className="notice notice-danger">
                         <span className="mark-box mark-box-danger"><Lock /></span>
                         <p className="notice-text">
-                            <strong>{needs2fa(saveError) ? 'Two-Factor Authentication Required' : 'Save Error'}</strong> {saveError}
+                            <strong>{needs2fa(saveError) ? t('studio.listing.tfa_required') : t('studio.listing.save_error')}</strong> {saveError}
                         </p>
                         {(needs2fa(saveError) || !user?.totp_enabled) && (
                             <button
@@ -655,7 +658,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                 className="button button-primary button-sm"
                                 onClick={() => navigate('/settings?tab=security')}
                             >
-                                <ShieldCheck /> Enable 2FA →
+                                <ShieldCheck /> {t('studio.listing.enable_tfa')}
                             </button>
                         )}
                     </div>
@@ -664,7 +667,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                 {saveSuccess && (
                     <div className="notice notice-success">
                         <span className="mark-box mark-box-success"><Check /></span>
-                        <p className="notice-text"><strong>Listing details saved successfully!</strong></p>
+                        <p className="notice-text"><strong>{t('studio.listing.save_success')}</strong></p>
                     </div>
                 )}
 
@@ -672,18 +675,18 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     <span className="spacer" />
                     <button type="submit" className="button button-primary" disabled={saving}>
                         <Save />
-                        {saving ? 'Saving…' : 'Save Listing'}
+                        {saving ? t('studio.listing.saving') : t('studio.listing.save_listing')}
                     </button>
                 </div>
             </form>
 
             <section className="panel">
                 <div className="panel-head">
-                    <h3 className="h3">Screenshots</h3>
-                    <span className="small">(optional)</span>
+                    <h3 className="h3">{t('studio.listing.screenshots_title')}</h3>
+                    <span className="small">{t('studio.listing.optional')}</span>
                 </div>
                 <div className="panel-body stack">
-                    <p className="small">Optional. You can also embed images and GIFs directly into your Markdown description.</p>
+                    <p className="small">{t('studio.listing.screenshots_desc')}</p>
                     <div className="st-listing-shots">
                         {screenshots.map(s => (
                             <div key={s.id} className="st-listing-shot">
@@ -691,7 +694,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                 <button
                                     className="button button-danger button-sm button-icon"
                                     type="button"
-                                    aria-label="Delete screenshot"
+                                    aria-label={t('studio.listing.confirm_delete_screenshot')}
                                     onClick={() => deleteScreenshot(s.id)}
                                 >
                                     <X />
@@ -701,14 +704,14 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
                         <label className="st-drop st-listing-shot-add">
                             <Plus />
-                            <span className="label label-fg">Add</span>
+                            <span className="label label-fg">{t('studio.listing.add_screenshot')}</span>
                             <input id="screenshot-upload" type="file" accept="image/*" multiple onChange={handleScreenshotUpload} />
                         </label>
                     </div>
                     {screenshotValidationErr && (
                         <span className="field-error"><CircleAlert size={14} />{screenshotValidationErr}</span>
                     )}
-                    <span className="field-hint">Recommended: 16:9 aspect ratio, min 1280×720px. PNG, JPEG, or WebP. Validated on selection.</span>
+                    <span className="field-hint">{t('studio.listing.screenshots_hint')}</span>
                 </div>
             </section>
         </div>

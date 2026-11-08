@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ComposableMap, Geographies, Geography } from "@vnedyalk0v/react19-simple-maps";
 import { Server, Users, Globe, Activity } from 'lucide-react';
 import { useAnalytics } from './useAnalytics';
@@ -12,6 +13,7 @@ const shade = (val: number, max: number) =>
   `color-mix(in srgb, var(--pumpkin) ${Math.round(20 + Math.min(val / max, 1) * 80)}%, var(--surface))`;
 
 const AudiencePage = () => {
+  const { t } = useTranslation();
   const { mapData, telemetry, loading } = useAnalytics();
   const [mapFilter, setMapFilter] = useState<'servers' | 'players' | 'visitors' | 'free_downloads'>('servers');
   const [hoveredInfo, setHoveredInfo] = useState<{ name: string; servers: number; players: number; visitors: number } | null>(null);
@@ -19,7 +21,7 @@ const AudiencePage = () => {
   if (loading || !mapData) {
     return (
       <div className="page-loader">
-        <span className="status"><span className="loading" />Analyzing Global Telemetry & Distribution...</span>
+        <span className="status"><span className="loading" />{t('studio.audience.loading')}</span>
       </div>
     );
   }
@@ -28,41 +30,41 @@ const AudiencePage = () => {
     <div className="page page-wide st-page">
       <header className="st-head">
         <div className="st-head-text">
-          <span className="sticker sticker-success">Real-Time Heartbeats</span>
-          <h1 className="display-2">Plugin <span className="mark">Audience</span> & Server Geography</h1>
-          <p className="lede">Visualizing active Minecraft servers and player reach reported via telemetry</p>
+          <span className="sticker sticker-success">{t('studio.audience.badge')}</span>
+          <h1 className="display-2">{t('studio.audience.title_lead')} <span className="mark">{t('studio.audience.title_mark')}</span> {t('studio.audience.title_rest')}</h1>
+          <p className="lede">{t('studio.audience.subtitle')}</p>
         </div>
       </header>
 
       <div className="stats">
         <div className="stat">
-          <span className="label st-an-label"><Server />Live Game Servers (24h)</span>
+          <span className="label st-an-label"><Server />{t('studio.audience.live_servers_24h')}</span>
           <span className="stat-value st-an-value">{telemetry?.activeServers24h?.toLocaleString() ?? 0}</span>
-          <span className="small">{telemetry?.activeServers7d ?? 0} active past 7 days</span>
+          <span className="small">{t('studio.audience.active_past_7d', { count: telemetry?.activeServers7d ?? 0 })}</span>
         </div>
         <div className="stat">
-          <span className="label st-an-label"><Users />Online Player Reach</span>
+          <span className="label st-an-label"><Users />{t('studio.audience.online_player_reach')}</span>
           <span className="stat-value st-an-value">{telemetry?.totalPlayersOnline?.toLocaleString() ?? 0}</span>
-          <span className="small">Concurrent players on servers running your plugins</span>
+          <span className="small">{t('studio.audience.concurrent_players_desc')}</span>
         </div>
         <div className="stat">
-          <span className="label st-an-label"><Activity />Peak 24h Players</span>
+          <span className="label st-an-label"><Activity />{t('studio.audience.peak_24h_players')}</span>
           <span className="stat-value st-an-value">{telemetry?.peakPlayers24h?.toLocaleString() ?? 0}</span>
-          <span className="small">Max player concurrency</span>
+          <span className="small">{t('studio.audience.max_concurrency_desc')}</span>
         </div>
         <div className="stat">
-          <span className="label st-an-label"><Globe />Server Locations</span>
+          <span className="label st-an-label"><Globe />{t('studio.audience.server_locations')}</span>
           <span className="stat-value st-an-value pumpkin">{telemetry?.countries?.length ?? mapData.length}</span>
-          <span className="small">Countries with deployed servers</span>
+          <span className="small">{t('studio.audience.countries_deployed_desc')}</span>
         </div>
       </div>
 
       <section className="panel">
         <div className="panel-head st-an-head">
-          <div className="segmented" role="group" aria-label="Map layer">
+          <div className="segmented" role="group" aria-label={t('studio.audience.server_locations')}>
             {(['servers', 'players', 'visitors', 'free_downloads'] as const).map(type => (
               <button key={type} type="button" className="st-an-cap" aria-pressed={mapFilter === type} onClick={() => setMapFilter(type)}>
-                {type === 'servers' ? 'Live Servers' : type === 'players' ? 'Online Players' : type.replace('_', ' ')}
+                {t(`studio.audience.layer_${type}`)}
               </button>
             ))}
           </div>
@@ -72,9 +74,9 @@ const AudiencePage = () => {
             {hoveredInfo && (
               <div className="st-tip st-an-map-tip">
                 <span className="label label-fg">{hoveredInfo.name}</span>
-                <span className="st-tip-row"><span className="dot dot-pumpkin" />{hoveredInfo.servers} active servers</span>
-                <span className="st-tip-row"><span className="dot st-an-dot-fg" />{hoveredInfo.players} online players</span>
-                <span className="st-tip-row muted"><span className="dot" />{hoveredInfo.visitors} web views</span>
+                <span className="st-tip-row"><span className="dot dot-pumpkin" />{t('studio.audience.tip_active_servers', { count: hoveredInfo.servers })}</span>
+                <span className="st-tip-row"><span className="dot st-an-dot-fg" />{t('studio.audience.tip_online_players', { count: hoveredInfo.players })}</span>
+                <span className="st-tip-row muted"><span className="dot" />{t('studio.audience.tip_web_views', { count: hoveredInfo.visitors })}</span>
               </div>
             )}
 
@@ -114,22 +116,22 @@ const AudiencePage = () => {
             </ComposableMap>
 
             {mapData.length === 0 && (
-              <p className="small st-an-empty">No server telemetry or geographic data captured yet.</p>
+              <p className="small st-an-empty">{t('studio.audience.empty_telemetry')}</p>
             )}
           </div>
 
           {mapData.length > 0 && (
             <>
-              <h4 className="h3">Country Telemetry Breakdown</h4>
+              <h4 className="h3">{t('studio.audience.breakdown_title')}</h4>
               <div className="scroll-x">
                 <table className="ledger">
                   <thead>
                     <tr>
-                      <th>Country</th>
-                      <th className="end">Game Servers</th>
-                      <th className="end">Online Players</th>
-                      <th className="end">Web Visitors</th>
-                      <th className="end">Downloads</th>
+                      <th>{t('studio.audience.col_country')}</th>
+                      <th className="end">{t('studio.audience.col_servers')}</th>
+                      <th className="end">{t('studio.audience.col_players')}</th>
+                      <th className="end">{t('studio.audience.col_visitors')}</th>
+                      <th className="end">{t('studio.audience.col_downloads')}</th>
                     </tr>
                   </thead>
                   <tbody>

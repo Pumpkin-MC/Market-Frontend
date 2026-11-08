@@ -35,9 +35,16 @@ import {
     Layers,
     Star,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
 import { Select } from '../../components/Select';
+import { GuidelineRejectionPicker, RejectionReasonsList } from '../../components/GuidelineRejectionPicker';
+import {
+    serializeRejectionReason,
+    parseRejectionReason,
+    formatRejectionReasonSummary,
+} from '../../lib/guidelines';
 import { getPluginUrl } from '../../lib/url';
 import '../../styles/store.css';
 import '../../styles/studio.css';
@@ -53,23 +60,6 @@ const formatBytes = (bytes?: number) => {
     if (bytes >= 1048576) return `${(bytes / 1048576).toFixed(2)} MB`;
     if (bytes >= 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${bytes} B`;
-};
-
-const formatRelativeTime = (iso?: string | null) => {
-    if (!iso) return '—';
-    const dt = new Date(iso);
-    const diffMs = Date.now() - dt.getTime();
-    if (Number.isNaN(diffMs)) return '—';
-    const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins}m ago`;
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    const diffDays = Math.floor(diffHours / 24);
-    if (diffDays < 30) return `${diffDays}d ago`;
-    const diffMonths = Math.floor(diffDays / 30);
-    if (diffMonths < 12) return `${diffMonths}mo ago`;
-    return `${Math.floor(diffMonths / 12)}y ago`;
 };
 
 const CHART_AXIS = { axisLine: false, tickLine: false, tick: { fill: 'var(--muted)', fontSize: 12 } } as const;
@@ -91,58 +81,6 @@ const StaffChartTip = ({ active, payload, label }: any) => {
     );
 };
 
-const REJECTION_POLICY_PRESETS = [
-    {
-        code: 'Guideline 2.1 — Binary Completeness',
-        label: '2.1 Binary / Crash',
-        text: 'Guideline 2.1 (Binary Completeness): Your plugin WASM binary failed to initialize or is missing required exports for the declared Pumpkin API version. Please verify the build and resubmit.',
-    },
-    {
-        code: 'Guideline 2.3 — Accurate Metadata',
-        label: '2.3 Store Listing & Docs',
-        text: 'Guideline 2.3 (Accurate Store Metadata): Please provide a clear plugin description, installation/configuration instructions, and accurate command documentation before publishing.',
-    },
-    {
-        code: 'Guideline 4.2 — Minimum Functionality',
-        label: '4.2 Minimum Functionality',
-        text: 'Guideline 4.2 (Minimum Functionality): Your submission appears to be a placeholder, empty test build, or lacks sufficient user-facing functionality for the public marketplace.',
-    },
-    {
-        code: 'Policy 5.1 — Security & Safety',
-        label: '5.1 Security / Safety',
-        text: 'Policy 5.1 (Security & Trust): This build contains unsafe, obfuscated, or unauthorized network/filesystem behavior that violates PumpkinMarket safety guidelines.',
-    },
-    {
-        code: 'Policy 5.2 — Intellectual Property',
-        label: '5.2 Copyright / IP',
-        text: 'Policy 5.2 (Intellectual Property): Please provide proof of authorship or an open-source repository link demonstrating permission to distribute this plugin.',
-    },
-    {
-        code: 'Pricing & Monetization Policy',
-        label: 'Monetization / Stripe',
-        text: 'Monetization Policy: Paid plugins must clearly list all included features in the store description and have an active, verified Stripe Connect payout account.',
-    },
-];
-
-const REMOVAL_POLICY_PRESETS = [
-    {
-        label: 'Malware / Malicious WASM',
-        text: 'Removed for violating PumpkinMarket Security Policy (malicious or harmful binary).',
-    },
-    {
-        label: 'DMCA / Stolen Content',
-        text: 'Removed due to unauthorized redistribution / copyright infringement.',
-    },
-    {
-        label: 'Spam / Duplicate Listing',
-        text: 'Removed as spam or duplicate marketplace listing.',
-    },
-    {
-        label: 'Developer Requested Removal',
-        text: 'Removed at the request of the plugin author.',
-    },
-];
-
 type StaffTab = 'queue' | 'plugins' | 'reports' | 'users' | 'logs' | 'analytics';
 type AnalyticsTimeframe = '7d' | '30d' | '365d';
 
@@ -154,6 +92,7 @@ interface ActionModalState {
 }
 
 const StaffPage = () => {
+    const { t } = useTranslation();
     const { user: currentUser } = useAuth();
     const isAdmin = currentUser?.role === 'admin';
     const isStaff = currentUser?.role === 'admin' || currentUser?.role === 'moderator';
@@ -162,6 +101,42 @@ const StaffPage = () => {
         currentUser?.has_passkey ||
         (typeof currentUser?.passkey_count === 'number' && currentUser.passkey_count > 0)
     );
+
+    const formatRelativeTime = (iso?: string | null) => {
+        if (!iso) return '—';
+        const dt = new Date(iso);
+        const diffMs = Date.now() - dt.getTime();
+        if (Number.isNaN(diffMs)) return '—';
+        const diffMins = Math.floor(diffMs / 60000);
+        if (diffMins < 1) return t('staff.time_just_now');
+        if (diffMins < 60) return t('staff.time_m_ago', { count: diffMins });
+        const diffHours = Math.floor(diffMins / 60);
+        if (diffHours < 24) return t('staff.time_h_ago', { count: diffHours });
+        const diffDays = Math.floor(diffHours / 24);
+        if (diffDays < 30) return t('staff.time_d_ago', { count: diffDays });
+        const diffMonths = Math.floor(diffDays / 30);
+        if (diffMonths < 12) return t('staff.time_mo_ago', { count: diffMonths });
+        return t('staff.time_y_ago', { count: Math.floor(diffMonths / 12) });
+    };
+
+    const REMOVAL_POLICY_PRESETS = [
+        {
+            label: t('staff.modal.preset_malware_label'),
+            text: t('staff.modal.preset_malware_text'),
+        },
+        {
+            label: t('staff.modal.preset_dmca_label'),
+            text: t('staff.modal.preset_dmca_text'),
+        },
+        {
+            label: t('staff.modal.preset_spam_label'),
+            text: t('staff.modal.preset_spam_text'),
+        },
+        {
+            label: t('staff.modal.preset_dev_label'),
+            text: t('staff.modal.preset_dev_text'),
+        },
+    ];
 
     const [activeTab, setActiveTab] = useState<StaffTab>('queue');
     const [users, setUsers] = useState<any[]>([]);
@@ -189,6 +164,8 @@ const StaffPage = () => {
     const [actionModal, setActionModal] = useState<ActionModalState | null>(null);
     const [actionReason, setActionReason] = useState('');
     const [actionPreset, setActionPreset] = useState('');
+    const [rejectGuidelineCodes, setRejectGuidelineCodes] = useState<string[]>([]);
+    const [rejectOtherChecked, setRejectOtherChecked] = useState(false);
     const [actionDeleteReview, setActionDeleteReview] = useState(false);
     const [actionResolutionStatus, setActionResolutionStatus] = useState<'resolved' | 'dismissed'>('resolved');
     const [actionBusy, setActionBusy] = useState(false);
@@ -204,7 +181,7 @@ const StaffPage = () => {
             const res = await api.post('/admin/plugins/rescan-wasm', { force_all: true });
             const scanned = res.data?.scanned ?? 0;
             const updated = res.data?.updated ?? 0;
-            setRescanNotice(`Rescanned ${scanned} plugin binaries (${updated} updated with WIT metadata).`);
+            setRescanNotice(t('staff.rescan_notice', { scanned, updated }));
             await fetchAllOverviewData();
         } catch (err: any) {
             setError(extractErrorMessage(err, 'Failed to rescan plugin WASM metadata'));
@@ -289,10 +266,19 @@ const StaffPage = () => {
 
     const openActionModal = (state: ActionModalState, defaultReason = '') => {
         setActionModal(state);
-        setActionReason(defaultReason);
         setActionPreset('');
         setActionDeleteReview(false);
         setActionResolutionStatus('resolved');
+        if (state.kind === 'reject_plugin') {
+            const parsed = parseRejectionReason(state.extra?.rejection_reason || defaultReason);
+            setRejectGuidelineCodes(parsed.guidelines);
+            setRejectOtherChecked(Boolean(parsed.custom));
+            setActionReason(parsed.custom);
+        } else {
+            setRejectGuidelineCodes([]);
+            setRejectOtherChecked(false);
+            setActionReason(defaultReason);
+        }
     };
 
     const closeActionModal = () => {
@@ -300,7 +286,20 @@ const StaffPage = () => {
         setActionModal(null);
         setActionReason('');
         setActionPreset('');
+        setRejectGuidelineCodes([]);
+        setRejectOtherChecked(false);
     };
+
+    const toggleRejectGuidelineCode = (code: string) => {
+        setRejectGuidelineCodes(prev =>
+            prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+        );
+    };
+
+    const canSubmitRejectPlugin =
+        rejectGuidelineCodes.length > 0
+            ? !rejectOtherChecked || Boolean(actionReason.trim())
+            : rejectOtherChecked && Boolean(actionReason.trim());
 
     const handleSubmitActionModal = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -309,8 +308,11 @@ const StaffPage = () => {
         setActionBusy(true);
         try {
             if (actionModal.kind === 'reject_plugin') {
-                const reason = actionReason.trim();
-                if (!reason) return;
+                if (!canSubmitRejectPlugin) return;
+                const reason = serializeRejectionReason(
+                    rejectGuidelineCodes,
+                    rejectOtherChecked ? actionReason : ''
+                );
                 await api.post(`/admin/plugins/${actionModal.targetId}/reject`, { reason });
                 setPlugins(prev =>
                     prev.map(p =>
@@ -560,11 +562,14 @@ const StaffPage = () => {
     });
 
     const filteredLogs = logs.filter(l => {
+        const q = searchQuery.toLowerCase();
+        const formattedReason = formatRejectionReasonSummary(l.reason, t).toLowerCase();
         const matchesSearch =
-            l.moderator_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            l.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            l.target_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            l.reason?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            l.moderator_name.toLowerCase().includes(q) ||
+            l.action.toLowerCase().includes(q) ||
+            l.target_type.toLowerCase().includes(q) ||
+            l.reason?.toLowerCase().includes(q) ||
+            formattedReason.includes(q) ||
             l.target_id.toString().includes(searchQuery);
 
         const matchesAction = logFilterAction === 'all' || l.action === logFilterAction;
@@ -614,14 +619,14 @@ const StaffPage = () => {
                 <span className="mark-box mark-box-danger">
                     <X />
                 </span>
-                Deleted
+                {t('staff.status.deleted')}
             </span>
         ) : (
             <span className="status">
                 <span className="mark-box mark-box-success">
                     <Check />
                 </span>
-                Active
+                {t('staff.status.active')}
             </span>
         );
 
@@ -632,7 +637,7 @@ const StaffPage = () => {
                     <span className="mark-box mark-box-danger">
                         <X />
                     </span>
-                    Deleted
+                    {t('staff.status.deleted')}
                 </span>
             );
         }
@@ -643,27 +648,27 @@ const StaffPage = () => {
                         <span className="mark-box mark-box-success">
                             <Check />
                         </span>
-                        Published
+                        {t('staff.status.published')}
                     </span>
                 );
             case 'under_review':
                 return p.claimed_by_name ? (
-                    <span className="tag tag-info" title="Claimed for review (60 min lease)">
-                        In Review (@{p.claimed_by_name})
+                    <span className="tag tag-info">
+                        {t('staff.status.in_review', { name: p.claimed_by_name })}
                     </span>
                 ) : (
-                    <span className="tag tag-warning">Pending Review</span>
+                    <span className="tag tag-warning">{t('staff.status.pending_review')}</span>
                 );
             case 'rejected':
-                return <span className="tag tag-danger">Changes Requested</span>;
+                return <span className="tag tag-danger">{t('staff.status.changes_requested')}</span>;
             case 'draft':
                 return (
                     <span className="tag tag-fg">
-                        <Lock size={12} /> Draft
+                        <Lock size={12} /> {t('staff.status.draft')}
                     </span>
                 );
             default:
-                return <span className="tag tag-fg">{p.status || 'Draft'}</span>;
+                return <span className="tag tag-fg">{p.status || t('staff.status.draft')}</span>;
         }
     };
 
@@ -674,18 +679,18 @@ const StaffPage = () => {
         const hasMedia = (p.screenshots_count || 0) > 0;
 
         return (
-            <div className="sf-checks" title={`Binary: ${formatBytes(p.file_size)} • Screenshots: ${p.screenshots_count || 0} • Commands: ${p.commands_count || 0}`}>
+            <div className="sf-checks" title={`${formatBytes(p.file_size)} • ${p.screenshots_count || 0} • ${p.commands_count || 0}`}>
                 <span className={`sf-check-pill ${hasBin ? 'sf-check-ok' : 'sf-check-warn'}`}>
-                    {hasBin ? <Check /> : <X />} WASM
+                    {hasBin ? <Check /> : <X />} {t('staff.checks.wasm')}
                 </span>
                 <span className={`sf-check-pill ${hasDesc ? 'sf-check-ok' : 'sf-check-warn'}`}>
-                    {hasDesc ? <Check /> : <X />} Docs
+                    {hasDesc ? <Check /> : <X />} {t('staff.checks.docs')}
                 </span>
                 <span className={`sf-check-pill ${hasIcon ? 'sf-check-ok' : 'sf-check-warn'}`}>
-                    {hasIcon ? <Check /> : <X />} Icon
+                    {hasIcon ? <Check /> : <X />} {t('staff.checks.icon')}
                 </span>
                 <span className={`sf-check-pill ${hasMedia ? 'sf-check-ok' : 'sf-check-warn'}`}>
-                    {hasMedia ? <Check /> : <X />} Media
+                    {hasMedia ? <Check /> : <X />} {t('staff.checks.media')}
                 </span>
             </div>
         );
@@ -707,113 +712,122 @@ const StaffPage = () => {
         ? []
         : selectedItem.type === 'user'
           ? [
-                ['ID', selectedItem.data.id],
-                ['Username', selectedItem.data.username],
-                ['Email', selectedItem.data.email],
-                ['Role', selectedItem.data.role],
-                ['Developer Account', selectedItem.data.is_developer ? 'Yes' : 'No'],
-                ['Verified Badge', selectedItem.data.is_verified ? 'Verified' : 'Standard'],
-                ['Published / Total Plugins', selectedItem.data.plugin_count ?? 0],
-                ...(isAdmin ? [['Stripe Ready', selectedItem.data.stripe_ready ? 'Yes' : 'No'] as [string, any]] : []),
-                ['2FA Enabled', selectedItem.data.totp_enabled ? 'Yes' : 'No'],
-                ['Passkey Enabled', selectedItem.data.has_passkey ? 'Yes' : 'No'],
-                ['Created', new Date(selectedItem.data.created_at).toLocaleString()],
-                ['Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : 'Active'],
+                [t('staff.inspection.fields.id'), selectedItem.data.id],
+                [t('staff.inspection.fields.username'), selectedItem.data.username],
+                [t('staff.inspection.fields.email'), selectedItem.data.email],
+                [t('staff.inspection.fields.role'), selectedItem.data.role],
+                [t('staff.inspection.fields.dev_account'), selectedItem.data.is_developer ? t('staff.inspection.yes') : t('staff.inspection.no')],
+                [t('staff.inspection.fields.verified_badge'), selectedItem.data.is_verified ? t('staff.table.verified') : t('staff.inspection.fields.standard_badge')],
+                [t('staff.inspection.fields.published_total_plugins'), selectedItem.data.plugin_count ?? 0],
+                ...(isAdmin ? [[t('staff.inspection.fields.stripe_ready'), selectedItem.data.stripe_ready ? t('staff.inspection.yes') : t('staff.inspection.no')] as [string, any]] : []),
+                [t('staff.inspection.fields.totp_enabled'), selectedItem.data.totp_enabled ? t('staff.inspection.yes') : t('staff.inspection.no')],
+                [t('staff.inspection.fields.passkey_enabled'), selectedItem.data.has_passkey ? t('staff.inspection.yes') : t('staff.inspection.no')],
+                [t('staff.inspection.fields.created'), new Date(selectedItem.data.created_at).toLocaleString()],
+                [t('staff.inspection.fields.status'), selectedItem.data.deleted_at ? t('staff.inspection.deleted_at', { date: new Date(selectedItem.data.deleted_at).toLocaleString() }) : t('staff.status.active')],
             ]
           : selectedItem.type === 'plugin'
             ? [
-                  ['ID / Public ID', `${selectedItem.data.id} (${selectedItem.data.public_id || '—'})`],
-                  ['Name', selectedItem.data.name],
-                  ['Version', selectedItem.data.version ? `v${selectedItem.data.version}` : '—'],
-                  ['Pumpkin API Target', selectedItem.data.api_version ? `v${selectedItem.data.api_version}` : '—'],
-                  ['Binary File Size', formatBytes(selectedItem.data.file_size)],
-                  ['SHA-256 Digest', selectedItem.data.sha256 ? <code className="mono">{selectedItem.data.sha256}</code> : 'No binary uploaded'],
+                  [t('staff.inspection.fields.id_public_id'), `${selectedItem.data.id} (${selectedItem.data.public_id || '—'})`],
+                  [t('staff.inspection.fields.name'), selectedItem.data.name],
+                  [t('staff.inspection.fields.version'), selectedItem.data.version ? `v${selectedItem.data.version}` : '—'],
+                  [t('staff.inspection.fields.api_target'), selectedItem.data.api_version ? `v${selectedItem.data.api_version}` : '—'],
+                  [t('staff.inspection.fields.file_size'), formatBytes(selectedItem.data.file_size)],
+                  [t('staff.inspection.fields.sha256'), selectedItem.data.sha256 ? <code className="mono">{selectedItem.data.sha256}</code> : t('staff.inspection.no_binary')],
                   [
-                      'Permissions',
+                      t('staff.inspection.fields.permissions'),
                       selectedItem.data.wasm_capabilities?.permissions?.length
                           ? selectedItem.data.wasm_capabilities.permissions.join(', ')
                           : selectedItem.data.has_binary
-                            ? 'None'
+                            ? t('staff.inspection.none')
                             : '—',
                   ],
                   [
-                      'Dependencies',
+                      t('staff.inspection.fields.dependencies'),
                       selectedItem.data.wasm_capabilities?.dependencies?.length
                           ? selectedItem.data.wasm_capabilities.dependencies.join(', ')
-                          : 'None',
+                          : t('staff.inspection.none'),
                   ],
                   [
-                      'WASM Capabilities',
+                      t('staff.inspection.fields.wasm_capabilities'),
                       selectedItem.data.wasm_capabilities?.capabilities?.length
                           ? selectedItem.data.wasm_capabilities.capabilities.join(', ')
                           : selectedItem.data.has_binary
-                            ? 'Standard Sandbox (events, commands)'
+                            ? t('staff.inspection.standard_sandbox')
                             : '—',
                   ],
-                  ['Developer', `@${selectedItem.data.dev_name}${selectedItem.data.dev_verified ? ' (Verified)' : ''}`],
-                  ['Developer Security', selectedItem.data.dev_secure_auth ? '2FA / Passkey Enabled' : 'No 2FA / Passkey'],
-                  ['License & Pricing', `${selectedItem.data.type} (€${((selectedItem.data.price_cents || 0) / 100).toFixed(2)})`],
-                  ['Category', selectedItem.data.category || '—'],
+                  [t('staff.inspection.fields.developer'), `@${selectedItem.data.dev_name}${selectedItem.data.dev_verified ? ` (${t('staff.table.verified')})` : ''}`],
+                  [t('staff.inspection.fields.dev_security'), selectedItem.data.dev_secure_auth ? t('staff.inspection.mfa_active') : t('staff.inspection.mfa_none')],
+                  [t('staff.inspection.fields.license_pricing'), `${selectedItem.data.type} (€${((selectedItem.data.price_cents || 0) / 100).toFixed(2)})`],
+                  [t('staff.inspection.fields.category'), selectedItem.data.category || '—'],
                   [
-                      'Source Repository',
+                      t('staff.inspection.fields.source_repo'),
                       selectedItem.data.source_link ? (
                           <a href={selectedItem.data.source_link} target="_blank" rel="noreferrer" className="link">
                               {selectedItem.data.source_link}
                           </a>
                       ) : (
-                          'Not provided'
+                          t('staff.inspection.not_provided')
                       ),
                   ],
-                  ['Downloads', (selectedItem.data.downloads ?? 0).toLocaleString()],
-                  ['Created / Uploaded', selectedItem.data.created_at ? new Date(selectedItem.data.created_at).toLocaleString() : '—'],
-                  ['Last Updated', selectedItem.data.updated_at ? new Date(selectedItem.data.updated_at).toLocaleString() : '—'],
-                  ['Review Status', selectedItem.data.deleted_at ? `Deleted at ${new Date(selectedItem.data.deleted_at).toLocaleString()}` : selectedItem.data.status || 'draft'],
-                  ...(selectedItem.data.claimed_by_name ? [['Claimed By', `@${selectedItem.data.claimed_by_name}`] as [string, any]] : []),
-                  ...(selectedItem.data.rejection_reason ? [['Reviewer Feedback', selectedItem.data.rejection_reason] as [string, any]] : []),
+                  [t('staff.inspection.fields.downloads'), (selectedItem.data.downloads ?? 0).toLocaleString()],
+                  [t('staff.inspection.fields.created_uploaded'), selectedItem.data.created_at ? new Date(selectedItem.data.created_at).toLocaleString() : '—'],
+                  [t('staff.inspection.fields.last_updated'), selectedItem.data.updated_at ? new Date(selectedItem.data.updated_at).toLocaleString() : '—'],
+                  [t('staff.inspection.fields.review_status'), selectedItem.data.deleted_at ? t('staff.inspection.deleted_at', { date: new Date(selectedItem.data.deleted_at).toLocaleString() }) : selectedItem.data.status || 'draft'],
+                  ...(selectedItem.data.claimed_by_name ? [[t('staff.inspection.fields.claimed_by'), `@${selectedItem.data.claimed_by_name}`] as [string, any]] : []),
+                  ...(selectedItem.data.rejection_reason
+                      ? [[t('staff.inspection.fields.reviewer_feedback'), <RejectionReasonsList rejectionReason={selectedItem.data.rejection_reason} />] as [string, any]]
+                      : []),
               ]
             : selectedItem.type === 'report'
               ? [
-                    ['Report ID', selectedItem.data.id],
-                    ['Target Type', selectedItem.data.target_type],
-                    ['Plugin', `${selectedItem.data.plugin_name} (${selectedItem.data.plugin_public_id})`],
-                    ['Reported By', `@${selectedItem.data.reporter_username}`],
-                    ['Reason', selectedItem.data.reason],
+                    [t('staff.inspection.fields.report_id'), selectedItem.data.id],
+                    [t('staff.inspection.fields.target_type'), selectedItem.data.target_type],
+                    [t('staff.inspection.fields.plugin'), `${selectedItem.data.plugin_name} (${selectedItem.data.plugin_public_id})`],
+                    [t('staff.inspection.fields.reported_by'), `@${selectedItem.data.reporter_username}`],
+                    [t('staff.inspection.fields.reason'), selectedItem.data.reason],
                     ...(selectedItem.data.review_comment
                         ? [
-                              ['Review Author', `@${selectedItem.data.review_author_username || 'Unknown'}`] as [string, any],
-                              ['Review Rating', `${selectedItem.data.review_rating} / 5`] as [string, any],
-                              ['Review Content', selectedItem.data.review_comment] as [string, any],
+                              [t('staff.inspection.fields.review_author'), `@${selectedItem.data.review_author_username || 'Unknown'}`] as [string, any],
+                              [t('staff.inspection.fields.review_rating'), `${selectedItem.data.review_rating} / 5`] as [string, any],
+                              [t('staff.inspection.fields.review_content'), selectedItem.data.review_comment] as [string, any],
                           ]
                         : []),
-                    ['Status', selectedItem.data.status],
-                    ['Submitted At', new Date(selectedItem.data.created_at).toLocaleString()],
+                    [t('staff.inspection.fields.status'), selectedItem.data.status],
+                    [t('staff.inspection.fields.submitted_at'), new Date(selectedItem.data.created_at).toLocaleString()],
                     ...(selectedItem.data.resolved_by_username
                         ? [
-                              ['Resolved By', `@${selectedItem.data.resolved_by_username}`] as [string, any],
-                              ['Resolution Note', selectedItem.data.resolution_note || '—'] as [string, any],
+                              [t('staff.inspection.fields.resolved_by'), `@${selectedItem.data.resolved_by_username}`] as [string, any],
+                              [t('staff.inspection.fields.resolution_note'), selectedItem.data.resolution_note || '—'] as [string, any],
                           ]
                         : []),
                 ]
               : [
-                    ['Date', new Date(selectedItem.data.created_at).toLocaleString()],
-                    ['Moderator', selectedItem.data.moderator_name],
-                    ['Action', selectedItem.data.action],
-                    ['Target Type', selectedItem.data.target_type],
-                    ['Target ID', selectedItem.data.target_id],
-                    ['Reason', selectedItem.data.reason || 'No reason provided'],
+                    [t('staff.inspection.fields.date'), new Date(selectedItem.data.created_at).toLocaleString()],
+                    [t('staff.inspection.fields.moderator'), selectedItem.data.moderator_name],
+                    [t('staff.inspection.fields.action'), selectedItem.data.action],
+                    [t('staff.inspection.fields.target_type'), selectedItem.data.target_type],
+                    [t('staff.inspection.fields.target_id'), selectedItem.data.target_id],
+                    [
+                        t('staff.inspection.fields.reason'),
+                        selectedItem.data.action === 'reject_plugin' && selectedItem.data.reason ? (
+                            <RejectionReasonsList rejectionReason={selectedItem.data.reason} />
+                        ) : (
+                            selectedItem.data.reason || t('staff.inspection.no_reason')
+                        ),
+                    ],
                 ];
 
     const tabs: [StaffTab, string][] = [
-        ['queue', kpis.pendingReview > 0 ? `Review Queue (${kpis.pendingReview} Pending)` : 'Review Queue'],
-        ['plugins', `All Plugins (${kpis.totalActivePlugins})`],
+        ['queue', kpis.pendingReview > 0 ? t('staff.tabs.queue_pending', { count: kpis.pendingReview }) : t('staff.tabs.queue')],
+        ['plugins', t('staff.tabs.plugins', { count: kpis.totalActivePlugins })],
         ...(isStaff
             ? [
-                  ['reports', kpis.openReports > 0 ? `User Reports (${kpis.openReports} Open)` : 'User Reports'] as [StaffTab, string],
-                  ['users', 'Users & Roles'] as [StaffTab, string],
+                  ['reports', kpis.openReports > 0 ? t('staff.tabs.reports_open', { count: kpis.openReports }) : t('staff.tabs.reports')] as [StaffTab, string],
+                  ['users', t('staff.tabs.users')] as [StaffTab, string],
               ]
             : []),
-        ['logs', 'Audit Logs'],
-        ...(isAdmin ? [['analytics', 'Platform Analytics'] as [StaffTab, string]] : []),
+        ['logs', t('staff.tabs.logs')],
+        ...(isAdmin ? [['analytics', t('staff.tabs.analytics')] as [StaffTab, string]] : []),
     ];
 
     const renderPluginActions = (p: any) => (
@@ -823,21 +837,16 @@ const StaffPage = () => {
                 to={getPluginUrl(p)}
                 target="_blank"
                 rel="noreferrer"
-                title={
-                    p.status === 'draft'
-                        ? 'Inspect private draft page (visible only to Admins, Moderators & Developer)'
-                        : 'Inspect plugin store page'
-                }
             >
                 <ExternalLink size={14} />
-                {p.status === 'draft' ? 'Inspect Draft' : 'Inspect'}
+                {p.status === 'draft' ? t('staff.actions.inspect_draft') : t('staff.actions.inspect')}
             </Link>
             <button className="button button-sm" onClick={() => setSelectedItem({ type: 'plugin', data: p })}>
-                Readiness
+                {t('staff.actions.readiness')}
             </button>
             {!p.deleted_at && p.status === 'under_review' && !p.claimed_by_id && (
                 <button className="button button-primary button-sm" onClick={() => claimPlugin(p.id)}>
-                    Claim Review
+                    {t('staff.actions.claim_review')}
                 </button>
             )}
             {!p.deleted_at &&
@@ -846,7 +855,7 @@ const StaffPage = () => {
                 (p.claimed_by_id === currentUser?.id || isAdmin) && (
                     <>
                         <button className="button button-primary button-sm" onClick={() => approvePlugin(p.id)}>
-                            Approve
+                            {t('staff.actions.approve')}
                         </button>
                         <button
                             className="button button-sm"
@@ -859,10 +868,10 @@ const StaffPage = () => {
                                 })
                             }
                         >
-                            Request Changes
+                            {t('staff.actions.request_changes')}
                         </button>
                         <button className="button button-ghost button-sm" onClick={() => unclaimPlugin(p.id)}>
-                            Release
+                            {t('staff.actions.release')}
                         </button>
                     </>
                 )}
@@ -878,7 +887,7 @@ const StaffPage = () => {
                         })
                     }
                 >
-                    Unapprove
+                    {t('staff.actions.unapprove')}
                 </button>
             )}
             {isStaff && !p.deleted_at && (
@@ -892,7 +901,7 @@ const StaffPage = () => {
                         })
                     }
                 >
-                    Remove
+                    {t('staff.actions.remove')}
                 </button>
             )}
         </div>
@@ -903,13 +912,13 @@ const StaffPage = () => {
             <table className="ledger">
                 <thead>
                     <tr>
-                        <th>Plugin</th>
-                        <th>Developer</th>
-                        <th>{mode === 'queue' ? 'Submitted / Updated' : 'Downloads & Updated'}</th>
-                        <th>Pre-Launch Checks</th>
-                        <th>License</th>
-                        <th>Status</th>
-                        <th className="end">Actions</th>
+                        <th>{t('staff.table.plugin')}</th>
+                        <th>{t('staff.table.developer')}</th>
+                        <th>{mode === 'queue' ? t('staff.table.submitted_updated') : t('staff.table.downloads_updated')}</th>
+                        <th>{t('staff.table.prelaunch_checks')}</th>
+                        <th>{t('staff.table.license')}</th>
+                        <th>{t('staff.table.status')}</th>
+                        <th className="end">{t('staff.table.actions')}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -925,13 +934,13 @@ const StaffPage = () => {
                                             <strong>{p.name}</strong>
                                             {p.category && <span className="tag tag-fg">{p.category}</span>}
                                             {(p.open_reports_count || 0) > 0 && (
-                                                <span className="tag tag-danger" title="Open user reports on this plugin">
+                                                <span className="tag tag-danger">
                                                     <Flag size={11} /> {p.open_reports_count}
                                                 </span>
                                             )}
                                         </div>
                                         <span className="small mono muted">
-                                            #{p.id} · {p.version ? `v${p.version}` : 'No build'}
+                                            #{p.id} · {p.version ? `v${p.version}` : t('staff.table.no_build')}
                                             {p.api_version ? ` · API v${p.api_version}` : ''}
                                             {p.file_size ? ` · ${formatBytes(p.file_size)}` : ''}
                                         </span>
@@ -945,14 +954,14 @@ const StaffPage = () => {
                                             @{p.dev_name}
                                         </Link>
                                         {p.dev_verified && (
-                                            <span className="tag tag-info" title="Verified Developer">
-                                                Verified
+                                            <span className="tag tag-info">
+                                                {t('staff.table.verified')}
                                             </span>
                                         )}
                                     </div>
                                     <span className="small muted">
-                                        {p.dev_secure_auth ? '2FA/Passkey OK' : 'No 2FA'}
-                                        {p.type === 'paid' ? (p.dev_stripe_ready ? ' · Stripe Ready' : ' · No Stripe') : ''}
+                                        {p.dev_secure_auth ? t('staff.table.mfa_ok') : t('staff.table.no_mfa')}
+                                        {p.type === 'paid' ? (p.dev_stripe_ready ? ` · ${t('staff.table.stripe_ready')}` : ` · ${t('staff.table.no_stripe')}`) : ''}
                                     </span>
                                 </div>
                             </td>
@@ -967,9 +976,9 @@ const StaffPage = () => {
                                     )}
                                     <span className="small muted" title={p.updated_at ? new Date(p.updated_at).toLocaleString() : undefined}>
                                         {mode === 'catalog'
-                                            ? `Updated ${formatRelativeTime(p.updated_at || p.created_at)}`
+                                            ? t('staff.table.updated_ago', { time: formatRelativeTime(p.updated_at || p.created_at) })
                                             : p.created_at
-                                              ? `Uploaded ${new Date(p.created_at).toLocaleDateString()}`
+                                              ? t('staff.table.uploaded_on', { date: new Date(p.created_at).toLocaleDateString() })
                                               : '—'}
                                     </span>
                                 </div>
@@ -991,13 +1000,13 @@ const StaffPage = () => {
     );
 
     return (
-        <div className="page stack sf-pad sf-staff">
+        <div className="page page-wide stack sf-pad sf-staff">
             <header className="stack">
                 <div className="row" style={{ justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap' }}>
                     <div className="stack" style={{ '--gap': '4px' } as React.CSSProperties}>
-                        <span className="label">Trust, Safety &amp; Release Operations</span>
+                        <span className="label">{t('staff.header_label')}</span>
                         <h1 className="display-2">
-                            Staff <span className="mark">Console</span>
+                            {t('staff.title_lead')} <span className="mark">{t('staff.title_mark')}</span>
                         </h1>
                     </div>
                     <div className="row" style={{ gap: '8px', flexWrap: 'wrap' }}>
@@ -1007,13 +1016,13 @@ const StaffPage = () => {
                                 className="button button-sm"
                                 onClick={handleRescanWasmMetadata}
                                 disabled={rescanBusy || loading}
-                                title="Re-run all existing plugin .wasm binaries through the sandboxed WIT get-metadata extractor"
+                                title={t('staff.rescan_wasm_tooltip')}
                             >
-                                <FileCode2 size={14} /> {rescanBusy ? 'Scanning WASM...' : 'Rescan WASM Metadata'}
+                                <FileCode2 size={14} /> {rescanBusy ? t('staff.scanning_wasm') : t('staff.rescan_wasm')}
                             </button>
                         )}
                         <button type="button" className="button button-sm" onClick={fetchAllOverviewData} disabled={loading}>
-                            <RefreshCw size={14} /> Refresh Console
+                            <RefreshCw size={14} /> {t('staff.refresh_console')}
                         </button>
                     </div>
                 </div>
@@ -1036,14 +1045,14 @@ const StaffPage = () => {
                         }}
                     >
                         <div className="sf-kpi-head">
-                            <span className="label">Review Queue</span>
+                            <span className="label">{t('staff.kpi.review_queue')}</span>
                             <ShieldCheck size={18} className="pumpkin" />
                         </div>
-                        <span className="sf-kpi-val">{kpis.pendingReview} Pending</span>
+                        <span className="sf-kpi-val">{t('staff.kpi.pending_count', { count: kpis.pendingReview })}</span>
                         <div className="sf-kpi-meta">
-                            <span>{kpis.claimedReview} Claimed</span>
+                            <span>{t('staff.kpi.claimed_count', { count: kpis.claimedReview })}</span>
                             <span>•</span>
-                            <span>{kpis.rejectedCount} Needs Changes</span>
+                            <span>{t('staff.kpi.needs_changes_count', { count: kpis.rejectedCount })}</span>
                         </div>
                     </button>
 
@@ -1057,18 +1066,18 @@ const StaffPage = () => {
                         }}
                     >
                         <div className="sf-kpi-head">
-                            <span className="label">All Plugins</span>
+                            <span className="label">{t('staff.kpi.all_plugins')}</span>
                             <Package size={18} className="pumpkin" />
                         </div>
-                        <span className="sf-kpi-val">{kpis.publishedCount} Live</span>
+                        <span className="sf-kpi-val">{t('staff.kpi.live_count', { count: kpis.publishedCount })}</span>
                         <div className="sf-kpi-meta">
                             {isStaff && (
                                 <>
-                                    <span>{kpis.draftCount} Drafts</span>
+                                    <span>{t('staff.kpi.drafts_count', { count: kpis.draftCount })}</span>
                                     <span>•</span>
                                 </>
                             )}
-                            <span>{kpis.totalActivePlugins} Total</span>
+                            <span>{t('staff.kpi.total_count', { count: kpis.totalActivePlugins })}</span>
                         </div>
                     </button>
 
@@ -1083,14 +1092,14 @@ const StaffPage = () => {
                             }}
                         >
                             <div className="sf-kpi-head">
-                                <span className="label">Flagged Content</span>
+                                <span className="label">{t('staff.kpi.flagged_content')}</span>
                                 <Flag size={18} className="pumpkin" />
                             </div>
-                            <span className="sf-kpi-val">{kpis.openReports} Open</span>
+                            <span className="sf-kpi-val">{t('staff.kpi.open_count', { count: kpis.openReports })}</span>
                             <div className="sf-kpi-meta">
-                                <span>{kpis.resolvedReports} Resolved</span>
+                                <span>{t('staff.kpi.resolved_count', { count: kpis.resolvedReports })}</span>
                                 <span>•</span>
-                                <span>Plugin &amp; Review Reports</span>
+                                <span>{t('staff.kpi.plugin_review_reports')}</span>
                             </div>
                         </button>
                     )}
@@ -1103,14 +1112,14 @@ const StaffPage = () => {
                             onClick={() => setActiveTab('users')}
                         >
                             <div className="sf-kpi-head">
-                                <span className="label">Users &amp; Security</span>
+                                <span className="label">{t('staff.kpi.users_security')}</span>
                                 <Users size={18} className="pumpkin" />
                             </div>
-                            <span className="sf-kpi-val">{kpis.activeUsersCount} Active</span>
+                            <span className="sf-kpi-val">{t('staff.kpi.active_count', { count: kpis.activeUsersCount })}</span>
                             <div className="sf-kpi-meta">
-                                <span>{kpis.verifiedDevs} Verified Devs</span>
+                                <span>{t('staff.kpi.verified_devs_count', { count: kpis.verifiedDevs })}</span>
                                 <span>•</span>
-                                <span>{kpis.mfaUsers} 2FA/Passkey</span>
+                                <span>{t('staff.kpi.mfa_users_count', { count: kpis.mfaUsers })}</span>
                             </div>
                         </button>
                     )}
@@ -1123,14 +1132,14 @@ const StaffPage = () => {
                             onClick={() => setActiveTab('analytics')}
                         >
                             <div className="sf-kpi-head">
-                                <span className="label">Platform Analytics</span>
+                                <span className="label">{t('staff.kpi.platform_analytics')}</span>
                                 <BarChart3 size={18} className="pumpkin" />
                             </div>
-                            <span className="sf-kpi-val">+{kpis.uploaded30d} (30d)</span>
+                            <span className="sf-kpi-val">{t('staff.kpi.uploaded_30d', { count: kpis.uploaded30d })}</span>
                             <div className="sf-kpi-meta">
-                                <span>{kpis.updated7d} Updated (7d)</span>
+                                <span>{t('staff.kpi.updated_7d', { count: kpis.updated7d })}</span>
                                 <span>•</span>
-                                <span>+{kpis.newUsers30d} Users (30d)</span>
+                                <span>{t('staff.kpi.new_users_30d', { count: kpis.newUsers30d })}</span>
                             </div>
                         </button>
                     )}
@@ -1153,13 +1162,7 @@ const StaffPage = () => {
                         name="adminSearch"
                         className="input"
                         type="search"
-                        placeholder={
-                            activeTab === 'queue'
-                                ? 'Search review queue by plugin, developer, or ID...'
-                                : activeTab === 'analytics'
-                                  ? 'Filter recently updated plugins...'
-                                  : `Search ${activeTab}...`
-                        }
+                        placeholder={t(`staff.search.${activeTab}`)}
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         autoComplete="off"
@@ -1169,105 +1172,105 @@ const StaffPage = () => {
                 {activeTab === 'queue' && (
                     <Select
                         options={[
-                            { value: 'under_review', label: `Pending Review (${kpis.pendingReview})` },
-                            { value: 'unclaimed', label: `Unclaimed (${kpis.unclaimedReview})` },
-                            { value: 'claimed_by_me', label: `Claimed by Me (${kpis.claimedByMe})` },
-                            { value: 'rejected', label: `Changes Requested (${kpis.rejectedCount})` },
-                            { value: 'all', label: `All Queue & Rejected (${kpis.pendingReview + kpis.rejectedCount})` },
+                            { value: 'under_review', label: t('staff.filters.pending_review', { count: kpis.pendingReview }) },
+                            { value: 'unclaimed', label: t('staff.filters.unclaimed', { count: kpis.unclaimedReview }) },
+                            { value: 'claimed_by_me', label: t('staff.filters.claimed_by_me', { count: kpis.claimedByMe }) },
+                            { value: 'rejected', label: t('staff.filters.changes_requested', { count: kpis.rejectedCount }) },
+                            { value: 'all', label: t('staff.filters.all_queue', { count: kpis.pendingReview + kpis.rejectedCount }) },
                         ]}
                         value={queueFilter}
                         onChange={setQueueFilter}
-                        aria-label="Filter Review Queue"
+                        aria-label={t('staff.kpi.review_queue')}
                     />
                 )}
                 {activeTab === 'plugins' && (
                     <>
                         <Select
                             options={[
-                                { value: 'all', label: `All Active (${kpis.totalActivePlugins})` },
-                                { value: 'published', label: `Published (${kpis.publishedCount})` },
-                                { value: 'under_review', label: `Pending Review (${kpis.pendingReview})` },
-                                { value: 'rejected', label: `Changes Requested (${kpis.rejectedCount})` },
-                                ...(isStaff ? [{ value: 'draft', label: `Drafts (${kpis.draftCount})` }] : []),
-                                { value: 'flagged', label: 'Flagged by Users' },
-                                { value: 'deleted', label: 'Deleted' },
+                                { value: 'all', label: t('staff.filters.all_active', { count: kpis.totalActivePlugins }) },
+                                { value: 'published', label: t('staff.filters.published', { count: kpis.publishedCount }) },
+                                { value: 'under_review', label: t('staff.filters.pending_review', { count: kpis.pendingReview }) },
+                                { value: 'rejected', label: t('staff.filters.changes_requested', { count: kpis.rejectedCount }) },
+                                ...(isStaff ? [{ value: 'draft', label: t('staff.filters.drafts', { count: kpis.draftCount }) }] : []),
+                                { value: 'flagged', label: t('staff.filters.flagged') },
+                                { value: 'deleted', label: t('staff.filters.deleted') },
                             ]}
                             value={pluginStatusFilter}
                             onChange={setPluginStatusFilter}
-                            aria-label="Filter by Status"
+                            aria-label={t('staff.table.status')}
                         />
                         <Select
                             options={[
-                                { value: 'recently_updated', label: 'Sort: Recently Updated' },
-                                { value: 'newest', label: 'Sort: Newest Uploaded' },
-                                { value: 'downloads', label: 'Sort: Most Downloads' },
-                                { value: 'name', label: 'Sort: Name (A–Z)' },
+                                { value: 'recently_updated', label: t('staff.filters.sort_recently_updated') },
+                                { value: 'newest', label: t('staff.filters.sort_newest') },
+                                { value: 'downloads', label: t('staff.filters.sort_downloads') },
+                                { value: 'name', label: t('staff.filters.sort_name') },
                             ]}
                             value={pluginSortBy}
                             onChange={setPluginSortBy}
-                            aria-label="Sort Plugins"
+                            aria-label={t('staff.kpi.all_plugins')}
                         />
                     </>
                 )}
                 {activeTab === 'reports' && (
                     <Select
                         options={[
-                            { value: 'open', label: `Open Reports (${kpis.openReports})` },
-                            { value: 'resolved', label: 'Resolved' },
-                            { value: 'dismissed', label: 'Dismissed' },
-                            { value: 'all', label: 'All Reports' },
+                            { value: 'open', label: t('staff.filters.open_reports', { count: kpis.openReports }) },
+                            { value: 'resolved', label: t('staff.filters.resolved') },
+                            { value: 'dismissed', label: t('staff.filters.dismissed') },
+                            { value: 'all', label: t('staff.filters.all_reports') },
                         ]}
                         value={reportStatusFilter}
                         onChange={setReportStatusFilter}
-                        aria-label="Filter Reports"
+                        aria-label={t('staff.tabs.reports')}
                     />
                 )}
                 {activeTab === 'logs' && (
                     <>
                         <Select
                             options={[
-                                { value: 'all', label: 'All Actions' },
-                                { value: 'approve_plugin', label: 'Approve Plugin' },
-                                { value: 'reject_plugin', label: 'Reject Plugin' },
-                                { value: 'resolve_report', label: 'Resolve Report' },
-                                { value: 'dismiss_report', label: 'Dismiss Report' },
-                                { value: 'soft_delete', label: 'Soft Delete' },
-                                { value: 'role_change', label: 'Role Change' },
+                                { value: 'all', label: t('staff.filters.all_actions') },
+                                { value: 'approve_plugin', label: t('staff.filters.action_approve_plugin') },
+                                { value: 'reject_plugin', label: t('staff.filters.action_reject_plugin') },
+                                { value: 'resolve_report', label: t('staff.filters.action_resolve_report') },
+                                { value: 'dismiss_report', label: t('staff.filters.action_dismiss_report') },
+                                { value: 'soft_delete', label: t('staff.filters.action_soft_delete') },
+                                { value: 'role_change', label: t('staff.filters.action_role_change') },
                             ]}
                             value={logFilterAction}
                             onChange={setLogFilterAction}
-                            aria-label="All Actions"
+                            aria-label={t('staff.filters.all_actions')}
                         />
                         <Select
-                            options={[{ value: 'all', label: 'All Moderators' }, ...uniqueModerators]}
+                            options={[{ value: 'all', label: t('staff.filters.all_moderators') }, ...uniqueModerators]}
                             value={logFilterModerator}
                             onChange={setLogFilterModerator}
-                            aria-label="All Moderators"
+                            aria-label={t('staff.filters.all_moderators')}
                         />
                     </>
                 )}
                 {activeTab === 'analytics' && isAdmin && (
-                    <div className="segmented" role="group" aria-label="Analytics Timeframe">
+                    <div className="segmented" role="group" aria-label={t('staff.kpi.platform_analytics')}>
                         <button
                             type="button"
                             aria-pressed={analyticsTimeframe === '7d'}
                             onClick={() => setAnalyticsTimeframe('7d')}
                         >
-                            Week (7d)
+                            {t('staff.filters.week_7d')}
                         </button>
                         <button
                             type="button"
                             aria-pressed={analyticsTimeframe === '30d'}
                             onClick={() => setAnalyticsTimeframe('30d')}
                         >
-                            Month (30d)
+                            {t('staff.filters.month_30d')}
                         </button>
                         <button
                             type="button"
                             aria-pressed={analyticsTimeframe === '365d'}
                             onClick={() => setAnalyticsTimeframe('365d')}
                         >
-                            Year (12m)
+                            {t('staff.filters.year_12m')}
                         </button>
                     </div>
                 )}
@@ -1279,10 +1282,10 @@ const StaffPage = () => {
                         <CircleAlert />
                     </span>
                     <p className="notice-text">
-                        Staff accounts require <strong>Two-Factor Authentication (2FA)</strong> or a <strong>Passkey</strong> to access moderation and admin endpoints.
+                        {t('staff.mfa_warning')}
                     </p>
                     <Link to="/settings" className="button button-primary button-sm">
-                        Enable 2FA / Passkey
+                        {t('staff.enable_mfa')}
                     </Link>
                 </div>
             )}
@@ -1299,25 +1302,25 @@ const StaffPage = () => {
             {loading ? (
                 <div className="sf-loader">
                     <span className="loading" />
-                    <p className="small">Loading staff console…</p>
+                    <p className="small">{t('staff.loading')}</p>
                 </div>
             ) : activeTab === 'queue' ? (
                 queuePlugins.length === 0 ? (
                     <div className="blank">
                         <p className="h3">
                             {queueFilter === 'under_review'
-                                ? 'Review queue is clear!'
-                                : 'No plugin submissions matching this queue filter.'}
+                                ? t('staff.empty.queue_clear_title')
+                                : t('staff.empty.queue_filter_title')}
                         </p>
                         <p className="small muted">
                             {queueFilter === 'under_review'
-                                ? 'All submitted plugins have been reviewed. You can inspect changes-requested submissions or browse the full catalog.'
-                                : 'Try switching the queue filter or searching the full plugin catalog.'}
+                                ? t('staff.empty.queue_clear_desc')
+                                : t('staff.empty.queue_filter_desc')}
                         </p>
                         <div className="row" style={{ justifyContent: 'center', marginTop: 12 }}>
                             {queueFilter !== 'all' && (
                                 <button type="button" className="button button-sm" onClick={() => setQueueFilter('all')}>
-                                    Show All Queue &amp; Rejected ({kpis.pendingReview + kpis.rejectedCount})
+                                    {t('staff.empty.show_all_queue', { count: kpis.pendingReview + kpis.rejectedCount })}
                                 </button>
                             )}
                             <button
@@ -1328,7 +1331,7 @@ const StaffPage = () => {
                                     setPluginStatusFilter('all');
                                 }}
                             >
-                                Browse All Plugins ({kpis.totalActivePlugins})
+                                {t('staff.empty.browse_all_plugins', { count: kpis.totalActivePlugins })}
                             </button>
                         </div>
                     </div>
@@ -1338,8 +1341,8 @@ const StaffPage = () => {
             ) : activeTab === 'plugins' ? (
                 filteredPlugins.length === 0 ? (
                     <div className="blank">
-                        <p className="h3">No plugins match your filter.</p>
-                        <p className="small muted">Try clearing your search query or selecting a different status filter.</p>
+                        <p className="h3">{t('staff.empty.no_plugins_title')}</p>
+                        <p className="small muted">{t('staff.empty.no_plugins_desc')}</p>
                     </div>
                 ) : (
                     renderPluginsTable(filteredPlugins, 'catalog')
@@ -1347,21 +1350,21 @@ const StaffPage = () => {
             ) : activeTab === 'reports' ? (
                 filteredReports.length === 0 ? (
                     <div className="blank">
-                        <p className="h3">No reports matching this filter.</p>
-                        <p className="small muted">All user-submitted plugin and review reports appear here for staff triage.</p>
+                        <p className="h3">{t('staff.empty.no_reports_title')}</p>
+                        <p className="small muted">{t('staff.empty.no_reports_desc')}</p>
                     </div>
                 ) : (
                     <div className="scroll-x">
                         <table className="ledger">
                             <thead>
                                 <tr>
-                                    <th>ID</th>
-                                    <th>Target</th>
-                                    <th>Plugin</th>
-                                    <th>Reason &amp; Evidence</th>
-                                    <th>Reporter</th>
-                                    <th>Status</th>
-                                    <th className="end">Actions</th>
+                                    <th>{t('staff.table.id')}</th>
+                                    <th>{t('staff.table.target')}</th>
+                                    <th>{t('staff.table.plugin')}</th>
+                                    <th>{t('staff.table.reason_evidence')}</th>
+                                    <th>{t('staff.table.reporter')}</th>
+                                    <th>{t('staff.table.status')}</th>
+                                    <th className="end">{t('staff.table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1386,22 +1389,22 @@ const StaffPage = () => {
                                                     <div className="sf-report-quote">
                                                         <span className="mono muted">@{r.review_author_username} ({r.review_rating}★): </span>
                                                         "{r.review_comment}"
-                                                        {r.review_deleted && <span className="tag tag-danger" style={{ marginLeft: 6 }}>Deleted</span>}
+                                                        {r.review_deleted && <span className="tag tag-danger" style={{ marginLeft: 6 }}>{t('staff.status.deleted')}</span>}
                                                     </div>
                                                 )}
                                                 {r.resolution_note && (
-                                                    <span className="small muted">Note: {r.resolution_note}</span>
+                                                    <span className="small muted">{t('staff.table.note_prefix', { note: r.resolution_note })}</span>
                                                 )}
                                             </div>
                                         </td>
                                         <td>@{r.reporter_username}</td>
                                         <td>
                                             {r.status === 'open' ? (
-                                                <span className="tag tag-warning">Open</span>
+                                                <span className="tag tag-warning">{t('staff.status.open')}</span>
                                             ) : r.status === 'resolved' ? (
-                                                <span className="tag tag-success">Resolved</span>
+                                                <span className="tag tag-success">{t('staff.status.resolved')}</span>
                                             ) : (
-                                                <span className="tag tag-fg">Dismissed</span>
+                                                <span className="tag tag-fg">{t('staff.status.dismissed')}</span>
                                             )}
                                         </td>
                                         <td>
@@ -1412,10 +1415,10 @@ const StaffPage = () => {
                                                     target="_blank"
                                                     rel="noreferrer"
                                                 >
-                                                    <ExternalLink size={14} /> Inspect Plugin
+                                                    <ExternalLink size={14} /> {t('staff.actions.inspect_plugin')}
                                                 </Link>
                                                 <button className="button button-sm" onClick={() => setSelectedItem({ type: 'report', data: r })}>
-                                                    Details
+                                                    {t('staff.actions.details')}
                                                 </button>
                                                 {r.status === 'open' && (
                                                     <button
@@ -1424,12 +1427,12 @@ const StaffPage = () => {
                                                             openActionModal({
                                                                 kind: 'resolve_report',
                                                                 targetId: r.id,
-                                                                targetName: `${r.target_type} report on ${r.plugin_name}`,
+                                                                targetName: `${r.target_type} — ${r.plugin_name}`,
                                                                 extra: r,
                                                             })
                                                         }
                                                     >
-                                                        Resolve / Triage
+                                                        {t('staff.actions.resolve_triage')}
                                                     </button>
                                                 )}
                                             </div>
@@ -1445,13 +1448,13 @@ const StaffPage = () => {
                     <table className="ledger">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>Security &amp; Dev</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th className="end">Actions</th>
+                                <th>{t('staff.table.id')}</th>
+                                <th>{t('staff.table.user')}</th>
+                                <th>{t('staff.table.email')}</th>
+                                <th>{t('staff.table.security_dev')}</th>
+                                <th>{t('staff.table.role')}</th>
+                                <th>{t('staff.table.status')}</th>
+                                <th className="end">{t('staff.table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -1462,9 +1465,9 @@ const StaffPage = () => {
                                         <div className="sf-plugin-meta">
                                             <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
                                                 <strong>{u.username}</strong>
-                                                {u.is_verified && <span className="tag tag-info">Verified</span>}
+                                                {u.is_verified && <span className="tag tag-info">{t('staff.table.verified')}</span>}
                                             </div>
-                                            {u.plugin_count > 0 && <span className="small muted">{u.plugin_count} plugin(s)</span>}
+                                            {u.plugin_count > 0 && <span className="small muted">{t('staff.table.plugins_count', { count: u.plugin_count })}</span>}
                                         </div>
                                     </td>
                                     <td>{u.email}</td>
@@ -1475,7 +1478,7 @@ const StaffPage = () => {
                                             </span>
                                             {u.is_developer && (
                                                 <span className="sf-check-pill sf-check-ok">
-                                                    <Check /> Dev
+                                                    <Check /> {t('staff.table.dev_badge')}
                                                 </span>
                                             )}
                                         </div>
@@ -1484,24 +1487,24 @@ const StaffPage = () => {
                                         {isAdmin && !u.deleted_at ? (
                                             <Select
                                                 options={[
-                                                    { value: 'user', label: 'User' },
-                                                    { value: 'reviewer', label: 'Reviewer' },
-                                                    { value: 'moderator', label: 'Moderator' },
-                                                    { value: 'admin', label: 'Admin' },
+                                                    { value: 'user', label: t('staff.roles.user') },
+                                                    { value: 'reviewer', label: t('staff.roles.reviewer') },
+                                                    { value: 'moderator', label: t('staff.roles.moderator') },
+                                                    { value: 'admin', label: t('staff.roles.admin') },
                                                 ]}
                                                 value={u.role}
                                                 onChange={role => role !== u.role && changeRole(u.id, role)}
-                                                aria-label="Role"
+                                                aria-label={t('staff.table.role')}
                                             />
                                         ) : (
-                                            <span className={`tag ${roleTone[u.role] || ''}`}>{u.role}</span>
+                                            <span className={`tag ${roleTone[u.role] || ''}`}>{t(`staff.roles.${u.role}`, u.role)}</span>
                                         )}
                                     </td>
                                     <td>{status(u.deleted_at)}</td>
                                     <td>
                                         <div className="row sf-actions">
                                             <button className="button button-sm" onClick={() => setSelectedItem({ type: 'user', data: u })}>
-                                                View
+                                                {t('staff.actions.view')}
                                             </button>
                                             {!u.deleted_at && (
                                                 <button
@@ -1514,7 +1517,7 @@ const StaffPage = () => {
                                                         })
                                                     }
                                                 >
-                                                    Deactivate
+                                                    {t('staff.actions.deactivate')}
                                                 </button>
                                             )}
                                         </div>
@@ -1530,7 +1533,7 @@ const StaffPage = () => {
                     <div className="sf-kpis">
                         <div className="sf-kpi">
                             <div className="sf-kpi-head">
-                                <span className="label">New Plugins Uploaded</span>
+                                <span className="label">{t('staff.analytics.new_plugins_uploaded')}</span>
                                 <Upload size={18} className="pumpkin" />
                             </div>
                             <span className="sf-kpi-val">
@@ -1542,20 +1545,20 @@ const StaffPage = () => {
                                           : (adminAnalytics?.plugins?.uploaded_365d ?? kpis.uploaded365d)
                                 }{' '}
                                 <span className="small muted">
-                                    ({analyticsTimeframe === '7d' ? 'This Week' : analyticsTimeframe === '30d' ? 'This Month' : 'This Year'})
+                                    ({analyticsTimeframe === '7d' ? t('staff.analytics.this_week') : analyticsTimeframe === '30d' ? t('staff.analytics.this_month') : t('staff.analytics.this_year')})
                                 </span>
                             </span>
                             <div className="sf-an-periods">
                                 <div className="sf-an-period">
-                                    <span className="small muted">Week (7d)</span>
+                                    <span className="small muted">{t('staff.analytics.week_7d')}</span>
                                     <strong className="num">{adminAnalytics?.plugins?.uploaded_7d ?? kpis.uploaded7d}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Month (30d)</span>
+                                    <span className="small muted">{t('staff.analytics.month_30d')}</span>
                                     <strong className="num">{adminAnalytics?.plugins?.uploaded_30d ?? kpis.uploaded30d}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Year (365d)</span>
+                                    <span className="small muted">{t('staff.analytics.year_365d')}</span>
                                     <strong className="num">{adminAnalytics?.plugins?.uploaded_365d ?? kpis.uploaded365d}</strong>
                                 </div>
                             </div>
@@ -1563,7 +1566,7 @@ const StaffPage = () => {
 
                         <div className="sf-kpi">
                             <div className="sf-kpi-head">
-                                <span className="label">Plugin Updates &amp; Releases</span>
+                                <span className="label">{t('staff.analytics.plugin_updates_releases')}</span>
                                 <Clock size={18} className="pumpkin" />
                             </div>
                             <span className="sf-kpi-val">
@@ -1574,23 +1577,23 @@ const StaffPage = () => {
                                           ? (adminAnalytics?.plugins?.updated_30d ?? kpis.updated30d)
                                           : (adminAnalytics?.plugins?.updated_365d ?? kpis.uploaded365d)
                                 }{' '}
-                                <span className="small muted">Updated</span>
+                                <span className="small muted">{t('staff.analytics.updated')}</span>
                             </span>
                             <div className="sf-an-periods">
                                 <div className="sf-an-period">
-                                    <span className="small muted">Week (7d)</span>
+                                    <span className="small muted">{t('staff.analytics.week_7d')}</span>
                                     <strong className="num">
                                         {adminAnalytics?.plugins?.updated_7d ?? kpis.updated7d}
                                     </strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Month (30d)</span>
+                                    <span className="small muted">{t('staff.analytics.month_30d')}</span>
                                     <strong className="num">
                                         {adminAnalytics?.plugins?.updated_30d ?? kpis.updated30d}
                                     </strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Year (365d)</span>
+                                    <span className="small muted">{t('staff.analytics.year_365d')}</span>
                                     <strong className="num">
                                         {adminAnalytics?.plugins?.updated_365d ?? kpis.uploaded365d}
                                     </strong>
@@ -1600,24 +1603,24 @@ const StaffPage = () => {
 
                         <div className="sf-kpi">
                             <div className="sf-kpi-head">
-                                <span className="label">Registered Users</span>
+                                <span className="label">{t('staff.analytics.registered_users')}</span>
                                 <Users size={18} className="pumpkin" />
                             </div>
                             <span className="sf-kpi-val">
                                 {(adminAnalytics?.users?.total_active ?? kpis.activeUsersCount).toLocaleString()}{' '}
-                                <span className="small muted">Total</span>
+                                <span className="small muted">{t('staff.analytics.total')}</span>
                             </span>
                             <div className="sf-an-periods">
                                 <div className="sf-an-period">
-                                    <span className="small muted">+Week (7d)</span>
+                                    <span className="small muted">+{t('staff.analytics.week_7d')}</span>
                                     <strong className="num">+{adminAnalytics?.users?.new_7d ?? 0}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">+Month (30d)</span>
+                                    <span className="small muted">+{t('staff.analytics.month_30d')}</span>
                                     <strong className="num">+{adminAnalytics?.users?.new_30d ?? kpis.newUsers30d}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">+Year (365d)</span>
+                                    <span className="small muted">+{t('staff.analytics.year_365d')}</span>
                                     <strong className="num">+{adminAnalytics?.users?.new_365d ?? kpis.activeUsersCount}</strong>
                                 </div>
                             </div>
@@ -1625,24 +1628,24 @@ const StaffPage = () => {
 
                         <div className="sf-kpi">
                             <div className="sf-kpi-head">
-                                <span className="label">Platform Downloads</span>
+                                <span className="label">{t('staff.analytics.platform_downloads')}</span>
                                 <Download size={18} className="pumpkin" />
                             </div>
                             <span className="sf-kpi-val">
                                 {(adminAnalytics?.activity?.total_downloads ?? 0).toLocaleString()}{' '}
-                                <span className="small muted">All-Time</span>
+                                <span className="small muted">{t('staff.analytics.all_time')}</span>
                             </span>
                             <div className="sf-an-periods">
                                 <div className="sf-an-period">
-                                    <span className="small muted">Week (7d)</span>
+                                    <span className="small muted">{t('staff.analytics.week_7d')}</span>
                                     <strong className="num">{adminAnalytics?.activity?.downloads_7d ?? 0}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Month (30d)</span>
+                                    <span className="small muted">{t('staff.analytics.month_30d')}</span>
                                     <strong className="num">{adminAnalytics?.activity?.downloads_30d ?? 0}</strong>
                                 </div>
                                 <div className="sf-an-period">
-                                    <span className="small muted">Year (365d)</span>
+                                    <span className="small muted">{t('staff.analytics.year_365d')}</span>
                                     <strong className="num">{adminAnalytics?.activity?.downloads_365d ?? 0}</strong>
                                 </div>
                             </div>
@@ -1655,14 +1658,16 @@ const StaffPage = () => {
                             <div className="panel-head st-an-head">
                                 <Upload className="st-an-icon" />
                                 <h3 className="h3">
-                                    Plugin Uploads &amp; Version Releases ({analyticsTimeframe === '7d' ? 'Past 7 Days' : analyticsTimeframe === '30d' ? 'Past 30 Days' : 'Past 12 Months'})
+                                    {t('staff.analytics.chart_uploads_title', {
+                                        period: analyticsTimeframe === '7d' ? t('staff.analytics.past_7_days') : analyticsTimeframe === '30d' ? t('staff.analytics.past_30_days') : t('staff.analytics.past_12_months'),
+                                    })}
                                 </h3>
                                 <span className="spacer" />
                                 <span className="status small">
-                                    <span className="dot dot-pumpkin" /> New Plugins
+                                    <span className="dot dot-pumpkin" /> {t('staff.analytics.new_plugins')}
                                 </span>
                                 <span className="status small">
-                                    <span className="dot st-an-dot-fg" /> Version Releases
+                                    <span className="dot st-an-dot-fg" /> {t('staff.analytics.version_releases')}
                                 </span>
                             </div>
                             <div className="panel-body">
@@ -1673,8 +1678,8 @@ const StaffPage = () => {
                                             <XAxis dataKey="label" {...CHART_AXIS} dy={8} />
                                             <YAxis allowDecimals={false} {...CHART_AXIS} />
                                             <Tooltip content={<StaffChartTip />} cursor={CHART_CURSOR} />
-                                            <Bar dataKey="plugins_uploaded" name="New Plugins" fill="var(--pumpkin)" radius={0} />
-                                            <Bar dataKey="plugin_updates" name="Version Releases" fill="var(--fg)" radius={0} />
+                                            <Bar dataKey="plugins_uploaded" name={t('staff.analytics.new_plugins')} fill="var(--pumpkin)" radius={0} />
+                                            <Bar dataKey="plugin_updates" name={t('staff.analytics.version_releases')} fill="var(--fg)" radius={0} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
@@ -1685,14 +1690,16 @@ const StaffPage = () => {
                             <div className="panel-head st-an-head">
                                 <TrendingUp className="st-an-icon" />
                                 <h3 className="h3">
-                                    User Signups &amp; Unique Downloads ({analyticsTimeframe === '7d' ? 'Past 7 Days' : analyticsTimeframe === '30d' ? 'Past 30 Days' : 'Past 12 Months'})
+                                    {t('staff.analytics.chart_users_title', {
+                                        period: analyticsTimeframe === '7d' ? t('staff.analytics.past_7_days') : analyticsTimeframe === '30d' ? t('staff.analytics.past_30_days') : t('staff.analytics.past_12_months'),
+                                    })}
                                 </h3>
                                 <span className="spacer" />
                                 <span className="status small">
-                                    <span className="dot dot-pumpkin" /> New Users
+                                    <span className="dot dot-pumpkin" /> {t('staff.analytics.new_users')}
                                 </span>
                                 <span className="status small">
-                                    <span className="dot st-an-dot-fg" /> Downloads
+                                    <span className="dot st-an-dot-fg" /> {t('staff.analytics.downloads')}
                                 </span>
                             </div>
                             <div className="panel-body">
@@ -1706,7 +1713,7 @@ const StaffPage = () => {
                                             <Area
                                                 type="linear"
                                                 dataKey="downloads"
-                                                name="Downloads"
+                                                name={t('staff.analytics.downloads')}
                                                 stroke="var(--fg)"
                                                 strokeWidth={2.5}
                                                 fill="var(--fg)"
@@ -1715,7 +1722,7 @@ const StaffPage = () => {
                                             <Area
                                                 type="linear"
                                                 dataKey="new_users"
-                                                name="New Users"
+                                                name={t('staff.analytics.new_users')}
                                                 stroke="var(--pumpkin)"
                                                 strokeWidth={2.5}
                                                 fill="var(--pumpkin)"
@@ -1733,43 +1740,43 @@ const StaffPage = () => {
                         <section className="panel">
                             <div className="panel-head st-an-head">
                                 <Users className="st-an-icon" />
-                                <h3 className="h3">User &amp; Developer Breakdown</h3>
+                                <h3 className="h3">{t('staff.analytics.user_dev_breakdown')}</h3>
                             </div>
                             <div className="panel-body stack">
                                 <dl className="specs">
-                                    <dt>Total Active Users</dt>
+                                    <dt>{t('staff.analytics.total_active_users')}</dt>
                                     <dd>
                                         <strong>{(adminAnalytics?.users?.total_active ?? kpis.activeUsersCount).toLocaleString()}</strong>
                                         {adminAnalytics?.users?.total_deleted > 0 && (
-                                            <span className="small muted"> ({adminAnalytics.users.total_deleted} deactivated)</span>
+                                            <span className="small muted"> {t('staff.analytics.deactivated_count', { count: adminAnalytics.users.total_deleted })}</span>
                                         )}
                                     </dd>
-                                    <dt>Onboarded Developers</dt>
+                                    <dt>{t('staff.analytics.onboarded_developers')}</dt>
                                     <dd>
                                         <strong>{adminAnalytics?.users?.developers_count ?? 0}</strong>
-                                        <span className="small muted"> ({adminAnalytics?.users?.verified_devs_count ?? kpis.verifiedDevs} verified)</span>
+                                        <span className="small muted"> {t('staff.analytics.verified_count', { count: adminAnalytics?.users?.verified_devs_count ?? kpis.verifiedDevs })}</span>
                                     </dd>
-                                    <dt>Stripe-Ready Sellers</dt>
+                                    <dt>{t('staff.analytics.stripe_ready_sellers')}</dt>
                                     <dd>
                                         <strong>{adminAnalytics?.users?.stripe_ready_devs_count ?? 0}</strong>
                                     </dd>
-                                    <dt>2FA / Passkey Secured</dt>
+                                    <dt>{t('staff.analytics.mfa_secured')}</dt>
                                     <dd>
                                         <strong>{adminAnalytics?.users?.mfa_enabled_count ?? kpis.mfaUsers}</strong>
                                         <span className="small muted">
                                             {' '}
-                                            (
-                                            {kpis.activeUsersCount > 0
-                                                ? Math.round(((adminAnalytics?.users?.mfa_enabled_count ?? kpis.mfaUsers) / kpis.activeUsersCount) * 100)
-                                                : 0}
-                                            % adoption)
+                                            {t('staff.analytics.adoption_pct', {
+                                                pct: kpis.activeUsersCount > 0
+                                                    ? Math.round(((adminAnalytics?.users?.mfa_enabled_count ?? kpis.mfaUsers) / kpis.activeUsersCount) * 100)
+                                                    : 0,
+                                            })}
                                         </span>
                                     </dd>
-                                    <dt>Staff &amp; Reviewers</dt>
+                                    <dt>{t('staff.analytics.staff_reviewers')}</dt>
                                     <dd className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
-                                        <span className="tag tag-pumpkin">{adminAnalytics?.users?.admins_count ?? 0} Admins</span>
-                                        <span className="tag tag-info">{adminAnalytics?.users?.moderators_count ?? 0} Mods</span>
-                                        <span className="tag tag-success">{adminAnalytics?.users?.reviewers_count ?? 0} Reviewers</span>
+                                        <span className="tag tag-pumpkin">{t('staff.analytics.admins_count', { count: adminAnalytics?.users?.admins_count ?? 0 })}</span>
+                                        <span className="tag tag-info">{t('staff.analytics.mods_count', { count: adminAnalytics?.users?.moderators_count ?? 0 })}</span>
+                                        <span className="tag tag-success">{t('staff.analytics.reviewers_count', { count: adminAnalytics?.users?.reviewers_count ?? 0 })}</span>
                                     </dd>
                                 </dl>
                             </div>
@@ -1778,27 +1785,27 @@ const StaffPage = () => {
                         <section className="panel">
                             <div className="panel-head st-an-head">
                                 <Layers className="st-an-icon" />
-                                <h3 className="h3">Catalog &amp; Category Distribution</h3>
+                                <h3 className="h3">{t('staff.analytics.catalog_distribution')}</h3>
                             </div>
                             <div className="panel-body stack">
                                 <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
                                     <span className="tag tag-success">
-                                        {adminAnalytics?.plugins?.total_published ?? kpis.publishedCount} Published
+                                        {t('staff.analytics.published_count', { count: adminAnalytics?.plugins?.total_published ?? kpis.publishedCount })}
                                     </span>
                                     <span className="tag tag-warning">
-                                        {adminAnalytics?.plugins?.total_under_review ?? kpis.pendingReview} In Queue
+                                        {t('staff.analytics.in_queue_count', { count: adminAnalytics?.plugins?.total_under_review ?? kpis.pendingReview })}
                                     </span>
                                     <span className="tag tag-danger">
-                                        {adminAnalytics?.plugins?.total_rejected ?? kpis.rejectedCount} Rejected
+                                        {t('staff.analytics.rejected_count', { count: adminAnalytics?.plugins?.total_rejected ?? kpis.rejectedCount })}
                                     </span>
                                     <span className="tag tag-fg">
-                                        {adminAnalytics?.plugins?.total_drafts ?? kpis.draftCount} Drafts
+                                        {t('staff.analytics.drafts_count', { count: adminAnalytics?.plugins?.total_drafts ?? kpis.draftCount })}
                                     </span>
                                     <span className="spacer" />
                                     <span className="small muted">
                                         <Star size={13} className="pumpkin" style={{ verticalAlign: '-2px' }} />{' '}
                                         {adminAnalytics?.activity?.avg_rating ? `${adminAnalytics.activity.avg_rating}★` : '—'} (
-                                        {adminAnalytics?.activity?.total_reviews ?? 0} reviews)
+                                        {t('staff.analytics.reviews_count', { count: adminAnalytics?.activity?.total_reviews ?? 0 })})
                                     </span>
                                 </div>
 
@@ -1813,7 +1820,7 @@ const StaffPage = () => {
                                                         <span>{cat.category}</span>
                                                         <span className="spacer" />
                                                         <span className="small num muted">
-                                                            {cat.count} {cat.count === 1 ? 'plugin' : 'plugins'} · {(cat.downloads || 0).toLocaleString()} dl
+                                                            {t('staff.table.plugins_count', { count: cat.count })} · {(cat.downloads || 0).toLocaleString()} dl
                                                         </span>
                                                     </div>
                                                     <div className="meter meter-pumpkin">
@@ -1824,7 +1831,7 @@ const StaffPage = () => {
                                         })}
                                     </div>
                                 ) : (
-                                    <p className="small muted">No category breakdown available yet.</p>
+                                    <p className="small muted">{t('staff.analytics.no_category_breakdown')}</p>
                                 )}
                             </div>
                         </section>
@@ -1834,48 +1841,48 @@ const StaffPage = () => {
                     <section className="panel">
                         <div className="panel-head st-an-head">
                             <Clock className="st-an-icon" />
-                            <h3 className="h3">Recently Updated &amp; Uploaded Plugins</h3>
+                            <h3 className="h3">{t('staff.analytics.recently_updated_title')}</h3>
                             <span className="spacer" />
-                            <div className="segmented" role="group" aria-label="Filter recent plugin activity">
+                            <div className="segmented" role="group" aria-label={t('staff.analytics.recently_updated_title')}>
                                 <button
                                     type="button"
                                     aria-pressed={recentActivityFilter === 'all'}
                                     onClick={() => setRecentActivityFilter('all')}
                                 >
-                                    All Activity
+                                    {t('staff.analytics.all_activity')}
                                 </button>
                                 <button
                                     type="button"
                                     aria-pressed={recentActivityFilter === 'updates'}
                                     onClick={() => setRecentActivityFilter('updates')}
                                 >
-                                    Updates Only
+                                    {t('staff.analytics.updates_only')}
                                 </button>
                                 <button
                                     type="button"
                                     aria-pressed={recentActivityFilter === 'uploads'}
                                     onClick={() => setRecentActivityFilter('uploads')}
                                 >
-                                    New Uploads
+                                    {t('staff.analytics.new_uploads')}
                                 </button>
                             </div>
                         </div>
                         <div className="panel-body" style={{ padding: 0 }}>
                             {recentlyUpdatedList.length === 0 ? (
                                 <div className="blank">
-                                    <p className="h3">No recent plugin activity matching this filter.</p>
+                                    <p className="h3">{t('staff.empty.no_recent_activity')}</p>
                                 </div>
                             ) : (
                                 <div className="scroll-x">
                                     <table className="ledger">
                                         <thead>
                                             <tr>
-                                                <th>Plugin</th>
-                                                <th>Update / Release Details</th>
-                                                <th>Developer</th>
-                                                <th>Status</th>
-                                                <th>When</th>
-                                                <th className="end">Actions</th>
+                                                <th>{t('staff.table.plugin')}</th>
+                                                <th>{t('staff.table.update_details')}</th>
+                                                <th>{t('staff.table.developer')}</th>
+                                                <th>{t('staff.table.status')}</th>
+                                                <th>{t('staff.table.when')}</th>
+                                                <th className="end">{t('staff.table.actions')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1911,10 +1918,10 @@ const StaffPage = () => {
                                                             <div className="sf-plugin-meta">
                                                                 <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
                                                                     <span className={`tag ${isUpdate ? 'tag-info' : 'tag-pumpkin'}`}>
-                                                                        {isUpdate ? 'UPDATED' : 'NEW UPLOAD'}
+                                                                        {isUpdate ? t('staff.analytics.badge_updated') : t('staff.analytics.badge_new_upload')}
                                                                     </span>
                                                                     <span className="mono">
-                                                                        {p.version ? `v${p.version}` : 'No build'}
+                                                                        {p.version ? `v${p.version}` : t('staff.table.no_build')}
                                                                     </span>
                                                                     {p.api_version && (
                                                                         <span className="small mono muted">API v{p.api_version}</span>
@@ -1925,7 +1932,7 @@ const StaffPage = () => {
                                                                         </span>
                                                                     )}
                                                                     <span className="small muted">
-                                                                        ({p.versions_count || 1} {p.versions_count === 1 ? 'release' : 'releases'})
+                                                                        ({t('staff.analytics.releases_count', { count: p.versions_count || 1 })})
                                                                     </span>
                                                                 </div>
                                                                 {p.latest_release_notes && (
@@ -1942,7 +1949,7 @@ const StaffPage = () => {
                                                                 <Link className="link" to={`/profile/${p.dev_name}`}>
                                                                     @{p.dev_name}
                                                                 </Link>
-                                                                {p.dev_verified && <span className="tag tag-info">Verified</span>}
+                                                                {p.dev_verified && <span className="tag tag-info">{t('staff.table.verified')}</span>}
                                                             </div>
                                                         </td>
                                                         <td>{pluginStatusBadge(p)}</td>
@@ -1966,13 +1973,13 @@ const StaffPage = () => {
                                                                     target="_blank"
                                                                     rel="noreferrer"
                                                                 >
-                                                                    <ExternalLink size={14} /> Inspect
+                                                                    <ExternalLink size={14} /> {t('staff.actions.inspect')}
                                                                 </Link>
                                                                 <button
                                                                     className="button button-sm"
                                                                     onClick={() => setSelectedItem({ type: 'plugin', data: fullPlugin })}
                                                                 >
-                                                                    Readiness
+                                                                    {t('staff.actions.readiness')}
                                                                 </button>
                                                             </div>
                                                         </td>
@@ -1991,12 +1998,12 @@ const StaffPage = () => {
                     <table className="ledger">
                         <thead>
                             <tr>
-                                <th>Date</th>
-                                <th>Moderator</th>
-                                <th>Action</th>
-                                <th>Target</th>
-                                <th>Reason / Policy Note</th>
-                                <th className="end">Actions</th>
+                                <th>{t('staff.table.date')}</th>
+                                <th>{t('staff.table.moderator')}</th>
+                                <th>{t('staff.table.action')}</th>
+                                <th>{t('staff.table.target')}</th>
+                                <th>{t('staff.table.reason_policy')}</th>
+                                <th className="end">{t('staff.table.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -2013,12 +2020,12 @@ const StaffPage = () => {
                                         {l.target_type} <span className="mono muted">({l.target_id})</span>
                                     </td>
                                     <td style={{ maxWidth: 320, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                        <span className="small">{l.reason || '—'}</span>
+                                        <span className="small">{formatRejectionReasonSummary(l.reason, t) || '—'}</span>
                                     </td>
                                     <td>
                                         <div className="row sf-actions">
                                             <button className="button button-sm" onClick={() => setSelectedItem({ type: 'log', data: l })}>
-                                                View
+                                                {t('staff.actions.view')}
                                             </button>
                                         </div>
                                     </td>
@@ -2043,56 +2050,63 @@ const StaffPage = () => {
                             <div className="stack">
                                 <span className="sticker sticker-sm">{selectedItem.type}</span>
                                 <h2 className="h1" id="sf-staff-details">
-                                    {selectedItem.type === 'plugin' ? `${selectedItem.data.name} — Inspection` : `${selectedItem.type.toUpperCase()} Details`}
+                                    {selectedItem.type === 'plugin'
+                                        ? t('staff.inspection.plugin_title', { name: selectedItem.data.name })
+                                        : t('staff.inspection.item_title', { type: selectedItem.type.toUpperCase() })}
                                 </h2>
                             </div>
-                            <button className="button button-ghost button-icon" aria-label="Close" onClick={() => setSelectedItem(null)}>
+                            <button className="button button-ghost button-icon" aria-label={t('common.close', 'Close')} onClick={() => setSelectedItem(null)}>
                                 <X />
                             </button>
                         </div>
                         <div className="sheet-body stack">
                             {selectedItem.type === 'plugin' && (
                                 <div className="stack" style={{ '--gap': '10px' } as React.CSSProperties}>
-                                    <span className="label">Automated Pre-Launch &amp; Policy Readiness</span>
+                                    <span className="label">{t('staff.inspection.prelaunch_heading')}</span>
                                     <div className="sf-checklist">
                                         <div className="sf-checklist-item">
                                             <FileCode2 size={16} className={selectedItem.data.has_binary ? 'pumpkin' : 'muted'} />
                                             <div>
-                                                <strong>WASM Binary</strong>
+                                                <strong>{t('staff.inspection.wasm_binary')}</strong>
                                                 <p className="small muted">
                                                     {selectedItem.data.has_binary
-                                                        ? `Uploaded (${formatBytes(selectedItem.data.file_size)}) · ${selectedItem.data.versions_count || 1} release(s)`
-                                                        : 'Missing WASM binary'}
+                                                        ? t('staff.inspection.wasm_uploaded', {
+                                                              size: formatBytes(selectedItem.data.file_size),
+                                                              count: selectedItem.data.versions_count || 1,
+                                                          })
+                                                        : t('staff.inspection.wasm_missing')}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="sf-checklist-item">
                                             <FileText size={16} className={selectedItem.data.has_description ? 'pumpkin' : 'muted'} />
                                             <div>
-                                                <strong>Store Documentation</strong>
+                                                <strong>{t('staff.inspection.store_docs')}</strong>
                                                 <p className="small muted">
                                                     {selectedItem.data.has_description
-                                                        ? `Description ready · ${selectedItem.data.commands_count || 0} command(s)`
-                                                        : 'Empty or missing description'}
+                                                        ? t('staff.inspection.docs_ready', { count: selectedItem.data.commands_count || 0 })
+                                                        : t('staff.inspection.docs_missing')}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="sf-checklist-item">
                                             <ImageIcon size={16} className={selectedItem.data.has_icon ? 'pumpkin' : 'muted'} />
                                             <div>
-                                                <strong>Visual Assets</strong>
+                                                <strong>{t('staff.inspection.visual_assets')}</strong>
                                                 <p className="small muted">
-                                                    {selectedItem.data.has_icon ? 'Store Icon OK' : 'No Store Icon'} · {selectedItem.data.screenshots_count || 0} screenshot(s)
+                                                    {selectedItem.data.has_icon ? t('staff.inspection.icon_ok') : t('staff.inspection.icon_missing')} · {t('staff.inspection.screenshots_count', { count: selectedItem.data.screenshots_count || 0 })}
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="sf-checklist-item">
                                             <ShieldCheck size={16} className={selectedItem.data.dev_secure_auth ? 'pumpkin' : 'muted'} />
                                             <div>
-                                                <strong>Developer Trust</strong>
+                                                <strong>{t('staff.inspection.dev_trust')}</strong>
                                                 <p className="small muted">
-                                                    {selectedItem.data.dev_secure_auth ? '2FA/Passkey Active' : 'No 2FA/Passkey'}
-                                                    {selectedItem.data.open_reports_count > 0 ? ` · ${selectedItem.data.open_reports_count} open report(s)` : ' · Clean report history'}
+                                                    {selectedItem.data.dev_secure_auth ? t('staff.inspection.mfa_active') : t('staff.inspection.mfa_none')}
+                                                    {selectedItem.data.open_reports_count > 0
+                                                        ? ` · ${t('staff.inspection.open_reports_count', { count: selectedItem.data.open_reports_count })}`
+                                                        : ` · ${t('staff.inspection.clean_reports')}`}
                                                 </p>
                                             </div>
                                         </div>
@@ -2117,7 +2131,7 @@ const StaffPage = () => {
                                         target="_blank"
                                         rel="noreferrer"
                                     >
-                                        <ExternalLink size={14} /> Open Full Store / Draft Page
+                                        <ExternalLink size={14} /> {t('staff.actions.open_full_page')}
                                     </Link>
                                 </div>
                             )}
@@ -2139,49 +2153,41 @@ const StaffPage = () => {
                         <div className="sheet-head">
                             <div className="stack">
                                 <span className="sticker sticker-sm sticker-warning">
-                                    <AlertTriangle size={12} /> Policy &amp; Review Resolution
+                                    <AlertTriangle size={12} /> {t('staff.modal.badge')}
                                 </span>
                                 <h2 className="h2" id="sf-moderation-modal-title">
                                     {actionModal.kind === 'reject_plugin'
-                                        ? `Request Changes — ${actionModal.targetName}`
+                                        ? t('staff.modal.title_reject', { name: actionModal.targetName })
                                         : actionModal.kind === 'delete_plugin'
-                                          ? `Remove Plugin — ${actionModal.targetName}`
+                                          ? t('staff.modal.title_delete_plugin', { name: actionModal.targetName })
                                           : actionModal.kind === 'delete_user'
-                                            ? `Deactivate Account — ${actionModal.targetName}`
-                                            : `Resolve Report — ${actionModal.targetName}`}
+                                            ? t('staff.modal.title_delete_user', { name: actionModal.targetName })
+                                            : t('staff.modal.title_resolve_report', { name: actionModal.targetName })}
                                 </h2>
                             </div>
-                            <button className="button button-ghost button-icon" aria-label="Close" onClick={closeActionModal}>
+                            <button className="button button-ghost button-icon" aria-label={t('common.close', 'Close')} onClick={closeActionModal}>
                                 <X />
                             </button>
                         </div>
 
                         <form onSubmit={handleSubmitActionModal} className="sheet-body stack">
                             {actionModal.kind === 'reject_plugin' && (
-                                <div className="field">
-                                    <span className="field-label">Select Guideline / Policy Preset (App Store &amp; Play Console Style)</span>
-                                    <div className="sf-presets">
-                                        {REJECTION_POLICY_PRESETS.map(p => (
-                                            <button
-                                                key={p.code}
-                                                type="button"
-                                                className="sf-preset-chip"
-                                                aria-pressed={actionPreset === p.code}
-                                                onClick={() => {
-                                                    setActionPreset(p.code);
-                                                    setActionReason(p.text);
-                                                }}
-                                            >
-                                                {p.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                                <GuidelineRejectionPicker
+                                    selectedCodes={rejectGuidelineCodes}
+                                    onToggleCode={toggleRejectGuidelineCode}
+                                    otherChecked={rejectOtherChecked}
+                                    onToggleOther={checked => {
+                                        setRejectOtherChecked(checked);
+                                        if (!checked) setActionReason('');
+                                    }}
+                                    customReason={actionReason}
+                                    onChangeCustomReason={setActionReason}
+                                />
                             )}
 
                             {actionModal.kind === 'delete_plugin' && (
                                 <div className="field">
-                                    <span className="field-label">Removal Policy Preset</span>
+                                    <span className="field-label">{t('staff.modal.preset_label')}</span>
                                     <div className="sf-presets">
                                         {REMOVAL_POLICY_PRESETS.map(p => (
                                             <button
@@ -2204,21 +2210,21 @@ const StaffPage = () => {
                             {actionModal.kind === 'resolve_report' && (
                                 <>
                                     <div className="field">
-                                        <span className="field-label">Resolution Outcome</span>
+                                        <span className="field-label">{t('staff.modal.resolution_outcome')}</span>
                                         <div className="segmented">
                                             <button
                                                 type="button"
                                                 aria-pressed={actionResolutionStatus === 'resolved'}
                                                 onClick={() => setActionResolutionStatus('resolved')}
                                             >
-                                                Mark Resolved (Action Taken)
+                                                {t('staff.modal.mark_resolved')}
                                             </button>
                                             <button
                                                 type="button"
                                                 aria-pressed={actionResolutionStatus === 'dismissed'}
                                                 onClick={() => setActionResolutionStatus('dismissed')}
                                             >
-                                                Dismiss (No Violation)
+                                                {t('staff.modal.mark_dismissed')}
                                             </button>
                                         </div>
                                     </div>
@@ -2230,52 +2236,53 @@ const StaffPage = () => {
                                                 checked={actionDeleteReview}
                                                 onChange={e => setActionDeleteReview(e.target.checked)}
                                             />
-                                            <span>Also remove the reported review from the plugin page</span>
+                                            <span>{t('staff.modal.also_remove_review')}</span>
                                         </label>
                                     )}
                                 </>
                             )}
 
-                            <label className="field">
-                                <span className="field-label">
-                                    {actionModal.kind === 'reject_plugin'
-                                        ? 'Developer Feedback (Sent via Email & Shown in Developer Studio)'
-                                        : actionModal.kind === 'resolve_report'
-                                          ? 'Moderator Resolution Note (Optional)'
-                                          : 'Moderation Reason (Logged in Audit Trail & Sent to User)'}
-                                </span>
-                                <span className="control">
-                                    <textarea
-                                        className="input"
-                                        rows={4}
-                                        placeholder={
-                                            actionModal.kind === 'reject_plugin'
-                                                ? 'Explain clearly what the developer needs to fix before resubmitting…'
-                                                : 'Provide a clear moderation reason…'
-                                        }
-                                        value={actionReason}
-                                        onChange={e => setActionReason(e.target.value)}
-                                        required={actionModal.kind !== 'resolve_report'}
-                                    />
-                                </span>
-                            </label>
+                            {actionModal.kind !== 'reject_plugin' && (
+                                <label className="field">
+                                    <span className="field-label">
+                                        {actionModal.kind === 'resolve_report'
+                                            ? t('staff.modal.resolution_note_label')
+                                            : t('staff.modal.moderation_reason_label')}
+                                    </span>
+                                    <span className="control">
+                                        <textarea
+                                            className="input"
+                                            rows={4}
+                                            placeholder={t('staff.modal.reason_placeholder')}
+                                            value={actionReason}
+                                            onChange={e => setActionReason(e.target.value)}
+                                            required={actionModal.kind !== 'resolve_report'}
+                                        />
+                                    </span>
+                                </label>
+                            )}
 
                             <div className="row" style={{ justifyContent: 'flex-end' }}>
                                 <button type="button" className="button button-ghost" onClick={closeActionModal} disabled={actionBusy}>
-                                    Cancel
+                                    {t('common.cancel', 'Cancel')}
                                 </button>
                                 <button
                                     type="submit"
                                     className={`button ${actionModal.kind === 'resolve_report' ? 'button-primary' : 'button-danger'}`}
-                                    disabled={actionBusy || (actionModal.kind !== 'resolve_report' && !actionReason.trim())}
+                                    disabled={
+                                        actionBusy ||
+                                        (actionModal.kind === 'reject_plugin'
+                                            ? !canSubmitRejectPlugin
+                                            : actionModal.kind !== 'resolve_report' && !actionReason.trim())
+                                    }
                                 >
                                     {actionBusy
-                                        ? 'Processing…'
+                                        ? t('staff.modal.processing')
                                         : actionModal.kind === 'reject_plugin'
-                                          ? 'Send Feedback & Reject'
+                                          ? t('staff.modal.btn_send_reject')
                                           : actionModal.kind === 'resolve_report'
-                                            ? 'Save Resolution'
-                                            : 'Confirm Action'}
+                                            ? t('staff.modal.btn_save_resolution')
+                                            : t('staff.modal.btn_confirm_action')}
                                 </button>
                             </div>
                         </form>

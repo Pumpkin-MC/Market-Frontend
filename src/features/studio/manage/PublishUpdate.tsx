@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Upload, FileCode, Send, CheckCircle, AlertTriangle, Clock, ShieldAlert, ShieldCheck, Lock } from 'lucide-react';
 import api from '../../../lib/api';
@@ -8,15 +9,15 @@ import { validateWasmFile } from '../../../lib/fileValidation';
 
 type Props = { plugin: PluginData; onSaved: () => void };
 
-const TRACKS = [
-    { key: 'stable', label: 'Production (Stable)', desc: 'Available to all users across the marketplace.' },
-    { key: 'beta',   label: 'Beta',               desc: 'Public beta release for community testing.' },
-    { key: 'alpha',  label: 'Alpha / Testing',    desc: 'Early access build for testers.' },
-] as const;
-
 const PublishUpdate = ({ plugin, onSaved }: Props) => {
+    const { t } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const TRACKS = [
+        { key: 'stable', label: t('studio.update.track_stable_label'), desc: t('studio.update.track_stable_desc') },
+        { key: 'beta',   label: t('studio.update.track_beta_label'),   desc: t('studio.update.track_beta_desc') },
+        { key: 'alpha',  label: t('studio.update.track_alpha_label'),  desc: t('studio.update.track_alpha_desc') },
+    ] as const;
     const [wasmFile, setWasmFile] = useState<File | null>(null);
     const [wasmValidationErr, setWasmValidationErr] = useState<string | null>(null);
     const [wasmFormatInfo, setWasmFormatInfo]       = useState<string | null>(null);
@@ -111,13 +112,13 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         return (
             <div className="st-tab">
                 <header className="st-tab-head">
-                    <h2 className="h1">Publish Update</h2>
+                    <h2 className="h1">{t('studio.update.title')}</h2>
                 </header>
                 <div className="blank">
                     <span className="mark-box mark-box-success st-mark-lg"><CheckCircle /></span>
-                    <p className="h2">Update Published!</p>
+                    <p className="h2">{t('studio.update.published_title')}</p>
                     <p className="small">
-                        Your new version has been published successfully to the <strong>{track}</strong> track.
+                        {t('studio.update.published_desc', { track })}
                     </p>
                 </div>
             </div>
@@ -127,23 +128,23 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
     return (
         <div className="st-tab">
             <header className="st-tab-head">
-                <h2 className="h1">Publish Update</h2>
-                <p className="small">Ship a new version of your plugin. Choose your release track, upload the binary, and add release notes.</p>
+                <h2 className="h1">{t('studio.update.title')}</h2>
+                <p className="small">{t('studio.update.subtitle')}</p>
             </header>
 
             {user && !user.totp_enabled && (
                 <div className="notice notice-warning">
                     <span className="mark-box mark-box-warning"><ShieldAlert /></span>
                     <p className="notice-text">
-                        <strong>Two-Factor Authentication (2FA) Required.</strong>{' '}
-                        To protect servers and prevent unauthorized plugin uploads, 2FA is required before publishing updates.
+                        <strong>{t('studio.update.tfa_required_title')}</strong>{' '}
+                        {t('studio.update.tfa_required_desc')}
                     </p>
                     <button
                         type="button"
                         className="button button-sm"
                         onClick={() => navigate('/settings?tab=security')}
                     >
-                        <ShieldCheck /> Enable 2FA →
+                        <ShieldCheck /> {t('studio.listing.enable_tfa')}
                     </button>
                 </div>
             )}
@@ -151,23 +152,23 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             <section className="panel">
                 <div className="panel-head">
                     <Send size={16} className="pumpkin" />
-                    <h3 className="h3">Release Track</h3>
+                    <h3 className="h3">{t('studio.update.release_track')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div className="st-pick">
-                        {TRACKS.map(t => (
+                        {TRACKS.map(tr => (
                             <button
-                                key={t.key}
+                                key={tr.key}
                                 type="button"
                                 className="st-option"
-                                aria-pressed={track === t.key}
-                                onClick={() => setTrack(t.key)}
+                                aria-pressed={track === tr.key}
+                                onClick={() => setTrack(tr.key)}
                             >
                                 <span className="row st-tight">
-                                    <strong>{t.label}</strong>
-                                    <span className={`tag ${t.key === 'stable' ? 'tag-success' : t.key === 'beta' ? 'tag-warning' : 'tag-pumpkin'}`}>{t.key}</span>
+                                    <strong>{tr.label}</strong>
+                                    <span className={`tag ${tr.key === 'stable' ? 'tag-success' : tr.key === 'beta' ? 'tag-warning' : 'tag-pumpkin'}`}>{tr.key}</span>
                                 </span>
-                                <span className="small">{t.desc}</span>
+                                <span className="small">{tr.desc}</span>
                             </button>
                         ))}
                     </div>
@@ -175,12 +176,12 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     {track === 'stable' ? (
                         <p className="status small">
                             <span className="mark-box mark-box-warning"><AlertTriangle /></span>
-                            Production releases are immediately visible to all users. Make sure your build is tested.
+                            {t('studio.update.stable_warning')}
                         </p>
                     ) : (
                         <p className="status small">
                             <span className="mark-box st-mark-info"><Clock /></span>
-                            Pre-release ({track}) tracks allow community testing before promoting to production.
+                            {t('studio.update.prerelease_notice', { track })}
                         </p>
                     )}
                 </div>
@@ -189,11 +190,11 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             <section className="panel">
                 <div className="panel-head">
                     <FileCode size={16} className="pumpkin" />
-                    <h3 className="h3">Version Details</h3>
+                    <h3 className="h3">{t('studio.update.version_details')}</h3>
                 </div>
                 <div className="panel-body fields">
                     <label className="field">
-                        <span className="field-label">Version Tag <em>(optional — e.g. 1.2.3)</em></span>
+                        <span className="field-label">{t('studio.update.version_tag')} <em>{t('studio.update.version_tag_hint')}</em></span>
                         <span className="control st-narrow">
                             <input
                                 id="pluginVersionTag"
@@ -209,14 +210,14 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         </span>
                     </label>
                     <label className="field">
-                        <span className="field-label">Release Notes</span>
+                        <span className="field-label">{t('studio.update.release_notes')}</span>
                         <span className="control">
                             <textarea
                                 className="input"
                                 rows={5}
                                 value={releaseNotes}
                                 onChange={e => setReleaseNotes(e.target.value)}
-                                placeholder={`What's new in this release?\n\n- Fixed crash on startup\n- Added support for multi-world\n- Improved performance by 30%`}
+                                placeholder={t('studio.update.release_notes_placeholder')}
                             />
                         </span>
                     </label>
@@ -226,7 +227,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
             <section className="panel">
                 <div className="panel-head">
                     <Upload size={16} className="pumpkin" />
-                    <h3 className="h3">Plugin Binary</h3>
+                    <h3 className="h3">{t('studio.update.plugin_binary')}</h3>
                 </div>
                 <div className="panel-body stack">
                     <div
@@ -241,12 +242,12 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         {validatingWasm ? <span className="loading" /> : <Upload />}
                         <p>
                             {validatingWasm ? (
-                                <strong>Validating WebAssembly binary structure…</strong>
+                                <strong>{t('studio.update.validating_wasm')}</strong>
                             ) : (
-                                <><strong>Drag & drop your .wasm file</strong> or click to browse</>
+                                <strong>{t('studio.update.drop_wasm')}</strong>
                             )}
                         </p>
-                        <span className="small">.wasm only · max 5 MB · API version auto-detected from binary</span>
+                        <span className="small">{t('studio.update.wasm_hint')}</span>
                         <input
                             id="wasm-upload-input"
                             type="file"
@@ -263,9 +264,9 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                         <div className="st-file">
                             <span className="mark-box mark-box-success"><CheckCircle /></span>
                             <strong className="st-file-name">{wasmFile.name}</strong>
-                            <span className="tag tag-success">Verified {wasmFormatInfo || '.wasm'}</span>
+                            <span className="tag tag-success">{t('studio.update.verified_wasm', { format: wasmFormatInfo || '.wasm' })}</span>
                             {detectedApiVersion && (
-                                <span className="tag tag-pumpkin" title="Auto-detected from WebAssembly imports / metadata">
+                                <span className="tag tag-pumpkin">
                                     Pumpkin API v{detectedApiVersion}
                                 </span>
                             )}
@@ -280,7 +281,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 <div className="notice notice-danger">
                     <span className="mark-box mark-box-danger"><Lock /></span>
                     <p className="notice-text">
-                        <strong>{twoFaError ? 'Two-Factor Authentication Required' : 'Publish Failed'}</strong>
+                        <strong>{twoFaError ? t('studio.listing.tfa_required') : t('studio.update.publish_failed')}</strong>
                         <span className="ledger-sub">{publishError}</span>
                     </p>
                     {(twoFaError || !user?.totp_enabled) && (
@@ -289,7 +290,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                             className="button button-sm"
                             onClick={() => navigate('/settings?tab=security')}
                         >
-                            <ShieldCheck /> Enable 2FA →
+                            <ShieldCheck /> {t('studio.listing.enable_tfa')}
                         </button>
                     )}
                 </div>
@@ -304,7 +305,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                     aria-busy={uploading}
                 >
                     <Send />
-                    {uploading ? 'Publishing…' : 'Publish Update'}
+                    {uploading ? t('studio.update.publishing') : t('studio.update.title')}
                 </button>
             </div>
         </div>

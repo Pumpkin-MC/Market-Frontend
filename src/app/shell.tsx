@@ -72,8 +72,8 @@ const Masthead = ({ user }: any) => {
     <>
       <NavLink to="/search" onClick={menu.close}>{t('nav.browse')}</NavLink>
       {user && (user.plugin_count > 0 || user.is_developer) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
-      {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>Publish</NavLink>}
-      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>Staff</NavLink>}
+      {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>{t('nav.publish', 'Publish')}</NavLink>}
+      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>{t('nav.staff', 'Staff')}</NavLink>}
     </>
   );
   const actions = user ? (
@@ -114,21 +114,22 @@ const Masthead = ({ user }: any) => {
 };
 
 const StudioMasthead = ({ user }: any) => {
+  const { t } = useTranslation();
   const menu = useMenu();
   const links = (
     <>
       {user?.is_developer && (
         <>
-          <NavLink to="/dashboard/plugins" end onClick={menu.close}>Plugins</NavLink>
-          <NavLink to="/dashboard/audience" onClick={menu.close}>Audience</NavLink>
+          <NavLink to="/dashboard/plugins" end onClick={menu.close}>{t('nav.plugins', 'Plugins')}</NavLink>
+          <NavLink to="/dashboard/audience" onClick={menu.close}>{t('nav.audience', 'Audience')}</NavLink>
         </>
       )}
-      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>Staff</NavLink>}
+      {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>{t('nav.staff', 'Staff')}</NavLink>}
     </>
   );
   const actions = (
     <>
-      <Link to="/" className="button button-sm" onClick={menu.close}><Store />Store</Link>
+      <Link to="/" className="button button-sm" onClick={menu.close}><Store />{t('nav.store', 'Store')}</Link>
       {user && <UserChip user={user} onNavigate={menu.close} />}
     </>
   );
@@ -232,27 +233,27 @@ const Footer = () => {
             </Link>
           </div>
           <div className="colophon-col">
-            <span className="label">Market</span>
+            <span className="label">{t('nav.market', 'Market')}</span>
             <ul>
               <li><Link to="/search">{t('nav.browse')}</Link></li>
-              <li><Link to="/dashboard/plugins">Publish</Link></li>
+              <li><Link to="/dashboard/plugins">{t('nav.publish', 'Publish')}</Link></li>
               <li><a href="https://pumpkinmc.org">Pumpkin</a></li>
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Legal</span>
+            <span className="label">{t('nav.legal', 'Legal')}</span>
             <ul>
-              <li><Link to="/terms">Terms</Link></li>
-              <li><Link to="/privacy">Privacy</Link></li>
-              <li><Link to="/legal-notice">Legal Notice</Link></li>
+              <li><Link to="/terms">{t('nav.terms', 'Terms')}</Link></li>
+              <li><Link to="/privacy">{t('nav.privacy', 'Privacy')}</Link></li>
+              <li><Link to="/legal-notice">{t('nav.legal_notice', 'Legal Notice')}</Link></li>
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Developers</span>
+            <span className="label">{t('nav.developers', 'Developers')}</span>
             <ul>
-              <li><Link to="/guidelines">Guidelines</Link></li>
-              <li><Link to="/developer-terms">Developer Terms</Link></li>
-              <li><button type="button" onClick={openCookiePreferencesModal}>Cookie Preferences</button></li>
+              <li><Link to="/guidelines">{t('nav.guidelines', 'Guidelines')}</Link></li>
+              <li><Link to="/developer-terms">{t('nav.developer_terms', 'Developer Terms')}</Link></li>
+              <li><button type="button" onClick={openCookiePreferencesModal}>{t('nav.cookie_preferences', 'Cookie Preferences')}</button></li>
             </ul>
           </div>
         </div>

@@ -65,7 +65,7 @@ const PluginsPage = () => {
     };
 
     const handleRejectTransfer = async (transferId: number) => {
-        if (!window.confirm('Are you sure you want to decline this transfer request?')) return;
+        if (!window.confirm(t('studio.plugins.confirm_decline_transfer'))) return;
         setTransferLoadingId(transferId);
         try {
             await api.post(`/user/transfers/${transferId}/reject`);
@@ -179,10 +179,10 @@ const PluginsPage = () => {
     }
 
     const filters: [string, string][] = [
-        ['all', `All (${plugins.length})`],
-        ...(hasPaidPlugins ? [['paid', 'Paid'] as [string, string]] : []),
-        ['free', 'Free'],
-        ['early_access', 'Early Access'],
+        ['all', t('studio.plugins.filter_all', { count: plugins.length })],
+        ...(hasPaidPlugins ? [['paid', t('studio.plugins.filter_paid')] as [string, string]] : []),
+        ['free', t('studio.plugins.filter_free')],
+        ['early_access', t('studio.plugins.filter_early_access')],
     ];
 
     return (
@@ -211,7 +211,7 @@ const PluginsPage = () => {
                                     <strong>{req.plugin_name}</strong>
                                     {req.plugin_category && <span className="tag tag-fg">{req.plugin_category}</span>}
                                 </span>
-                                <span className="small">Transfer request from <strong>@{req.sender_name}</strong></span>
+                                <span className="small">{t('studio.plugins.transfer_from', { sender: req.sender_name })}</span>
                             </div>
                             <div className="row">
                                 <button
@@ -220,7 +220,7 @@ const PluginsPage = () => {
                                     onClick={() => handleRejectTransfer(req.id)}
                                 >
                                     <X />
-                                    Decline
+                                    {t('studio.plugins.decline')}
                                 </button>
                                 <button
                                     className="button button-primary button-sm"
@@ -228,7 +228,7 @@ const PluginsPage = () => {
                                     onClick={() => handleAcceptTransfer(req.id)}
                                 >
                                     <CheckCircle />
-                                    {transferLoadingId === req.id ? 'Accepting…' : 'Accept Transfer'}
+                                    {transferLoadingId === req.id ? t('studio.plugins.accepting') : t('studio.plugins.accept_transfer')}
                                 </button>
                             </div>
                         </div>
@@ -242,8 +242,8 @@ const PluginsPage = () => {
                     <input
                         type="text"
                         className="input"
-                        placeholder="Filter your plugins..."
-                        aria-label="Filter your plugins..."
+                        placeholder={t('studio.plugins.search_placeholder')}
+                        aria-label={t('studio.plugins.search_placeholder')}
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                         autoComplete="off"
@@ -251,7 +251,7 @@ const PluginsPage = () => {
                     />
                 </label>
                 <span className="spacer" />
-                <div className="segmented" role="group" aria-label="Filter">
+                <div className="segmented" role="group" aria-label={t('studio.plugins.search_placeholder')}>
                     {filters.map(([key, label]) => (
                         <button key={key} type="button" aria-pressed={filterType === key} onClick={() => setFilterType(key)}>
                             {label}
@@ -263,9 +263,9 @@ const PluginsPage = () => {
             {filteredPlugins.length === 0 ? (
                 <div className="blank">
                     <Package size={36} className="pumpkin" />
-                    <span className="h2">{searchTerm ? 'No plugins matched your filter.' : 'No plugins created yet.'}</span>
+                    <span className="h2">{searchTerm ? t('studio.plugins.empty_filtered_title') : t('studio.plugins.empty_title')}</span>
                     <p className="small">
-                        {searchTerm ? 'Try adjusting your search or category filter.' : 'Click "Add New Plugin" to create your first plugin.'}
+                        {searchTerm ? t('studio.plugins.empty_filtered_desc') : t('studio.plugins.empty_desc')}
                     </p>
                 </div>
             ) : (
@@ -273,19 +273,19 @@ const PluginsPage = () => {
                     <table className="ledger st-plugins-table">
                         <thead>
                             <tr>
-                                <th>Plugin</th>
-                                <th>Visibility</th>
+                                <th>{t('studio.plugins.col_plugin')}</th>
+                                <th>{t('studio.plugins.col_visibility')}</th>
                                 <th className="end">{t('developer.dashboard.total_downloads')}</th>
                                 {hasPaidPlugins && <th className="end">{t('developer.dashboard.total_revenue')}</th>}
-                                <th>Date</th>
-                                <th className="end">Actions</th>
+                                <th>{t('studio.plugins.col_date')}</th>
+                                <th className="end">{t('studio.plugins.col_actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredPlugins.map((p: any) => {
                                 const pluginType = (p.pluginType || 'free').toLowerCase();
                                 const isPaid = pluginType === 'paid' || (p.priceCents && p.priceCents > 0);
-                                const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : 'Free';
+                                const priceFormatted = isPaid ? `€${((p.priceCents || 0) / 100).toFixed(2)}` : t('studio.plugins.filter_free');
                                 const initial = (p.name || '?').charAt(0).toUpperCase();
                                 const isPublished = p.status === 'published';
                                 const isUnderReview = p.status === 'under_review';
@@ -293,9 +293,9 @@ const PluginsPage = () => {
                                 const statusLabel = isPublished
                                     ? t('developer.dashboard.status_published', 'Published')
                                     : isUnderReview
-                                    ? 'Pending Review'
+                                    ? t('developer.dashboard.status_under_review', 'Pending Review')
                                     : isRejected
-                                    ? 'Changes Requested'
+                                    ? t('guidelines.changes_requested', 'Changes Requested')
                                     : t('developer.dashboard.status_draft', 'Offline (Draft)');
 
                                 return (
@@ -306,7 +306,7 @@ const PluginsPage = () => {
                                                     type="button"
                                                     className="st-plugins-thumb"
                                                     onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                    title="Manage Plugin"
+                                                    title={t('developer.dashboard.manage_plugin')}
                                                 >
                                                     {p.previewPath ? (
                                                         <img src={p.previewPath} alt={p.name} loading="lazy" />
@@ -326,42 +326,42 @@ const PluginsPage = () => {
                                                     <div className="row st-plugins-tags">
                                                         <span className="tag mono st-case">{p.version ? `v${p.version}` : `ID: ${p.id}`}</span>
                                                         {p.category && <span className="tag tag-fg">{p.category}</span>}
-                                                        {p.isEarlyAccess && <span className="tag tag-warning">Early Access</span>}
+                                                        {p.isEarlyAccess && <span className="tag tag-warning">{t('studio.plugins.filter_early_access')}</span>}
                                                     </div>
                                                     <div className="row st-plugins-quick">
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}`)}
-                                                            title="Edit plugin details & settings"
+                                                            title={t('studio.plugins.quick_edit')}
                                                         >
-                                                            <Settings />Edit
+                                                            <Settings />{t('studio.plugins.quick_edit')}
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(getPluginUrl(p))}
-                                                            title="View in Marketplace"
+                                                            title={t('studio.plugins.quick_store')}
                                                         >
-                                                            <ExternalLink />Store
+                                                            <ExternalLink />{t('studio.plugins.quick_store')}
                                                         </button>
                                                         <button
                                                             type="button"
                                                             onClick={() => navigate(`/dashboard/manage-plugin/${p.id}?tab=analytics`)}
-                                                            title="Plugin Analytics"
+                                                            title={t('studio.plugins.quick_analytics')}
                                                         >
-                                                            <BarChart2 />Analytics
+                                                            <BarChart2 />{t('studio.plugins.quick_analytics')}
                                                         </button>
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
 
-                                        <td data-label="Visibility">
+                                        <td data-label={t('studio.plugins.col_visibility')}>
                                             <div className="stack st-plugins-vis">
                                                 <span className="status">
                                                     {isPublished ? <span className="mark-box mark-box-success"><Check /></span> : <span className="dot" />}
                                                     {statusLabel}
                                                 </span>
-                                                <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : 'Free'}</span>
+                                                <span className={`tag ${isPaid ? 'tag-pumpkin' : 'tag-success'}`}>{isPaid ? priceFormatted : t('studio.plugins.filter_free')}</span>
                                             </div>
                                         </td>
 
@@ -377,9 +377,9 @@ const PluginsPage = () => {
                                             </td>
                                         )}
 
-                                        <td data-label="Date">
+                                        <td data-label={t('studio.plugins.col_date')}>
                                             <strong>{formatDate(p.created_at)}</strong>
-                                            <span className="ledger-sub">Uploaded</span>
+                                            <span className="ledger-sub">{t('studio.plugins.uploaded')}</span>
                                         </td>
 
                                         <td className="end st-plugins-actions-cell">
@@ -387,8 +387,8 @@ const PluginsPage = () => {
                                                 <button
                                                     className="button button-flat button-sm button-icon"
                                                     onClick={() => navigate(getPluginUrl(p))}
-                                                    title="View in Store"
-                                                    aria-label="View in Store"
+                                                    title={t('studio.plugins.view_in_store')}
+                                                    aria-label={t('studio.plugins.view_in_store')}
                                                 >
                                                     <ExternalLink />
                                                 </button>
@@ -417,7 +417,7 @@ const PluginsPage = () => {
                                 <div className="stack st-sheet-title">
                                     <h2 className="h1" id="createPluginTitle">{t('developer.dashboard.create_plugin_title', 'Create New Plugin')}</h2>
                                 </div>
-                                <button type="button" className="button button-ghost button-icon" onClick={() => setIsCreateModalOpen(false)} aria-label="Close">
+                                <button type="button" className="button button-ghost button-icon" onClick={() => setIsCreateModalOpen(false)} aria-label={t('common.close', 'Close')}>
                                     <X />
                                 </button>
                             </div>
@@ -430,13 +430,13 @@ const PluginsPage = () => {
                                 )}
 
                                 <label className="field">
-                                    <span className="field-label">Plugin Name *</span>
+                                    <span className="field-label">{t('studio.plugins.plugin_name_label')}</span>
                                     <span className="control">
                                         <input
                                             id="newPluginName"
                                             type="text"
                                             className="input"
-                                            placeholder="e.g. QuantumVault, DragonFly"
+                                            placeholder={t('studio.plugins.plugin_name_placeholder')}
                                             value={newPluginName}
                                             onChange={e => setNewPluginName(e.target.value)}
                                             maxLength={64}
@@ -447,7 +447,7 @@ const PluginsPage = () => {
                                 </label>
 
                                 <div className="field">
-                                    <span className="field-label" id="newPluginCategory">Category *</span>
+                                    <span className="field-label" id="newPluginCategory">{t('studio.plugins.category_label')}</span>
                                     <Select
                                         options={PLUGIN_CATEGORIES}
                                         value={newPluginCategory}
@@ -457,15 +457,15 @@ const PluginsPage = () => {
                                 </div>
 
                                 <div className="field">
-                                    <span className="field-label">Distribution Type</span>
+                                    <span className="field-label">{t('studio.plugins.distribution_type')}</span>
                                     <div className="st-pick">
                                         <button type="button" className="st-option" aria-pressed={newPluginType === 'free'} onClick={() => setNewPluginType('free')}>
-                                            <strong>Free Plugin</strong>
-                                            <span className="small">Available to the entire community for free.</span>
+                                            <strong>{t('studio.plugins.free_plugin_title')}</strong>
+                                            <span className="small">{t('studio.plugins.free_plugin_desc')}</span>
                                         </button>
                                         <button type="button" className="st-option" aria-pressed={newPluginType === 'paid'} onClick={() => setNewPluginType('paid')}>
-                                            <strong>Paid / Premium</strong>
-                                            <span className="small">Sell licenses with automated developer payouts.</span>
+                                            <strong>{t('studio.plugins.paid_plugin_title')}</strong>
+                                            <span className="small">{t('studio.plugins.paid_plugin_desc')}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -477,7 +477,7 @@ const PluginsPage = () => {
                                     className="button button-ghost"
                                     onClick={() => setIsCreateModalOpen(false)}
                                 >
-                                    Cancel
+                                    {t('common.cancel', 'Cancel')}
                                 </button>
                                 <button
                                     type="submit"
@@ -485,7 +485,7 @@ const PluginsPage = () => {
                                     disabled={!newPluginName.trim() || creatingPlugin}
                                     aria-busy={creatingPlugin}
                                 >
-                                    {creatingPlugin ? 'Creating Draft…' : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
+                                    {creatingPlugin ? t('studio.plugins.creating_draft') : t('developer.dashboard.btn_create_draft', 'Create Draft & Manage →')}
                                 </button>
                             </div>
                         </form>
