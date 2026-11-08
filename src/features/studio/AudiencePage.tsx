@@ -62,9 +62,14 @@ const AudiencePage = () => {
       <section className="panel">
         <div className="panel-head st-an-head">
           <div className="segmented" role="group" aria-label={t('studio.audience.server_locations')}>
-            {(['servers', 'players', 'visitors', 'free_downloads'] as const).map(type => (
+            {([
+              ['servers', t('studio.audience.layer_servers')],
+              ['players', t('studio.audience.layer_players')],
+              ['visitors', t('studio.audience.layer_visitors')],
+              ['free_downloads', t('studio.audience.layer_free_downloads')],
+            ] as const).map(([type, label]) => (
               <button key={type} type="button" className="st-an-cap" aria-pressed={mapFilter === type} onClick={() => setMapFilter(type)}>
-                {t(`studio.audience.layer_${type}`)}
+                {label}
               </button>
             ))}
           </div>

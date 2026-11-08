@@ -129,6 +129,23 @@ function scanDir(dir) {
           const key = match[1];
           const lineNum = lineIndex + 1;
 
+          // Handle dynamic template keys like `guidelines.items.${item.key}.title`
+          if (key.includes('${')) {
+            const regexSource =
+              '^' +
+              key
+                .replace(/\$\{[^}]+\}/g, '__WILDCARD__')
+                .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+                .replace(/__WILDCARD__/g, '[^.]+') +
+              '$';
+            const pattern = new RegExp(regexSource);
+            const matchingKeys = enLeafKeys.filter(k => pattern.test(k));
+            if (matchingKeys.length === 0) {
+              logError(`${relPath}:${lineNum} - Dynamic translation key pattern "${key}" does not match any string key in en.json`);
+            }
+            continue;
+          }
+
           // Check if key exists in en.json
           const value = getNestedValue(locales.en, key);
 

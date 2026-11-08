@@ -1162,7 +1162,17 @@ const StaffPage = () => {
                         name="adminSearch"
                         className="input"
                         type="search"
-                        placeholder={t(`staff.search.${activeTab}`)}
+                        placeholder={
+                            activeTab === 'queue'
+                                ? t('staff.search.queue')
+                                : activeTab === 'plugins'
+                                  ? t('staff.search.plugins')
+                                  : activeTab === 'reports'
+                                    ? t('staff.search.reports')
+                                    : activeTab === 'users'
+                                      ? t('staff.search.users')
+                                      : t('staff.search.logs')
+                        }
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
                         autoComplete="off"
@@ -1497,7 +1507,17 @@ const StaffPage = () => {
                                                 aria-label={t('staff.table.role')}
                                             />
                                         ) : (
-                                            <span className={`tag ${roleTone[u.role] || ''}`}>{t(`staff.roles.${u.role}`, u.role)}</span>
+                                            <span className={`tag ${roleTone[u.role] || ''}`}>
+                                                {u.role === 'admin'
+                                                    ? t('staff.roles.admin')
+                                                    : u.role === 'moderator'
+                                                      ? t('staff.roles.moderator')
+                                                      : u.role === 'reviewer'
+                                                        ? t('staff.roles.reviewer')
+                                                        : u.role === 'user'
+                                                          ? t('staff.roles.user')
+                                                          : u.role}
+                                            </span>
                                         )}
                                     </td>
                                     <td>{status(u.deleted_at)}</td>
