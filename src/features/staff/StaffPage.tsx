@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, Fragment } from 'react';
+import { useState, useEffect, useMemo, useRef, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import {
     AreaChart,
@@ -190,11 +190,17 @@ const StaffPage = () => {
         }
     };
 
+    const initialMountRef = useRef(true);
+
     useEffect(() => {
         fetchAllOverviewData();
     }, []);
 
     useEffect(() => {
+        if (initialMountRef.current) {
+            initialMountRef.current = false;
+            return;
+        }
         fetchTabData(activeTab);
         setSearchQuery('');
     }, [activeTab]);
@@ -218,8 +224,6 @@ const StaffPage = () => {
 
             if (results[0].status === 'fulfilled') {
                 setPlugins(Array.isArray(results[0].value.data) ? results[0].value.data : []);
-            } else {
-                throw results[0].reason;
             }
             if (results[1].status === 'fulfilled') {
                 setLogs(Array.isArray(results[1].value.data) ? results[1].value.data : []);
@@ -232,6 +236,9 @@ const StaffPage = () => {
             }
             if (isAdmin && results[4]?.status === 'fulfilled') {
                 setAdminAnalytics(results[4].value.data);
+            }
+            if (results[0].status === 'rejected') {
+                throw results[0].reason;
             }
         } catch (err: any) {
             setError(extractErrorMessage(err, 'Failed to fetch staff dashboard data'));

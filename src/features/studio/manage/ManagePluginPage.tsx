@@ -5,7 +5,7 @@ import { useAuth } from '../../../app/auth';
 import { useTranslation } from 'react-i18next';
 import {
     LayoutGrid, Tag, Upload, DollarSign, Trash2,
-    BarChart3, Key, Star, ArrowRightLeft,
+    BarChart3, Bug, Key, Star, ArrowRightLeft,
     Rocket, Eye, PowerOff, Check
 } from 'lucide-react';
 
@@ -18,6 +18,7 @@ import Reviews from './Reviews';
 import TransferOwnership from './TransferOwnership';
 import DangerZone from './DangerZone';
 import Analytics from './Analytics';
+import Crashes from './Crashes';
 import PublishReadinessModal from './PublishReadinessModal';
 import { RejectionReasonsList } from '../../../components/GuidelineRejectionPicker';
 import { getPluginUrl } from '../../../lib/url';
@@ -32,6 +33,7 @@ const NAV_ITEMS = [
     { key: 'listing',   labelKey: 'studio.manage.nav_listing',   icon: LayoutGrid       },
     { key: 'update',    labelKey: 'studio.manage.nav_update',    icon: Upload           },
     { key: 'analytics', labelKey: 'studio.manage.nav_analytics', icon: BarChart3        },
+    { key: 'crashes',   labelKey: 'studio.manage.nav_crashes',   icon: Bug              },
     { key: 'reviews',   labelKey: 'studio.manage.nav_reviews',   icon: Star             },
     { key: 'pricing',   labelKey: 'studio.manage.nav_pricing',   icon: DollarSign       },
     { key: 'licenses',  labelKey: 'studio.manage.nav_licenses',  icon: Key              },
@@ -262,6 +264,9 @@ const ManagePluginPage = () => {
                     )}
                     {activeTab === 'analytics' && (
                         <Analytics pluginId={plugin.id} pluginName={plugin.name} />
+                    )}
+                    {activeTab === 'crashes' && (
+                        <Crashes plugin={plugin} />
                     )}
                     {activeTab === 'reviews' && (
                         <Reviews plugin={plugin} />

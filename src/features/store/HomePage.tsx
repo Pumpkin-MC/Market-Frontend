@@ -45,8 +45,9 @@ const HomePage = () => {
     const [popular, setPopular] = useState<any[]>(homeCache?.popular || []);
     const [newest, setNewest] = useState<any[]>(homeCache?.newest || []);
     const [allPlugins, setAllPlugins] = useState<any[]>(homeCache?.all || []);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(!homeCache);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [sectionsFailed, setSectionsFailed] = useState(false);
     const [moreFailed, setMoreFailed] = useState(false);
     const [nextCursor, setNextCursor] = useState<string | null>(homeCache?.nextCursor ?? null);
     const [hasMore, setHasMore] = useState<boolean>(homeCache?.hasMore ?? true);
@@ -57,6 +58,70 @@ const HomePage = () => {
     const newestRef = useRef<HTMLElement | null>(null);
     const fetched = useRef({ popular: !!homeCache?.popular, newest: !!homeCache?.newest, all: !!homeCache?.all });
     const prevUserIdRef = useRef<number | undefined>(user?.id);
+
+    const loadSections = async () => {
+        setLoading(true);
+        setSectionsFailed(false);
+        try {
+            const [popRes, newRes, allRes] = await Promise.allSettled([
+                api.get('/plugins', { params: { sort: 'downloads', limit: 10 } }),
+                api.get('/plugins', { params: { sort: 'newest', limit: 10 } }),
+                api.get('/plugins', { params: { limit: PAGE_SIZE, paginated: true } })
+            ]);
+
+            let popData = popular;
+            let newData = newest;
+            let allData = allPlugins;
+            let cursor = nextCursor;
+            let more = hasMore;
+
+            if (popRes.status === 'fulfilled') {
+                popData = Array.isArray(popRes.value.data) ? popRes.value.data : (popRes.value.data?.items || []);
+                setPopular(popData);
+                fetched.current.popular = true;
+            } else {
+                console.error('Fetch error for home sections (popular):', popRes.reason);
+            }
+
+            if (newRes.status === 'fulfilled') {
+                newData = Array.isArray(newRes.value.data) ? newRes.value.data : (newRes.value.data?.items || []);
+                setNewest(newData);
+                fetched.current.newest = true;
+            } else {
+                console.error('Fetch error for home sections (newest):', newRes.reason);
+            }
+
+            if (allRes.status === 'fulfilled') {
+                const res = allRes.value;
+                allData = res.data?.items || (Array.isArray(res.data) ? res.data : []);
+                cursor = res.data?.next_cursor || res.headers?.['x-next-cursor'] || null;
+                more = res.data?.has_more ?? (res.headers?.['x-has-more'] === 'true' || allData.length === PAGE_SIZE);
+                setAllPlugins(allData);
+                setNextCursor(cursor);
+                setHasMore(more);
+                fetched.current.all = true;
+            } else {
+                console.error('Fetch error for home sections (all):', allRes.reason);
+            }
+
+            if (fetched.current.popular && fetched.current.newest && fetched.current.all) {
+                homeCache = {
+                    popular: popData,
+                    newest: newData,
+                    all: allData,
+                    nextCursor: cursor,
+                    hasMore: more,
+                };
+            } else if (!fetched.current.popular && !fetched.current.newest && !fetched.current.all) {
+                setSectionsFailed(true);
+            }
+        } catch (err) {
+            console.error('Fetch error for home sections:', err);
+            setSectionsFailed(true);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const userChanged = prevUserIdRef.current !== user?.id;
@@ -69,47 +134,11 @@ const HomePage = () => {
             return;
         }
 
-        const loadSections = async () => {
-            setLoading(true);
-            try {
-                const [popRes, newRes, allRes] = await Promise.all([
-                    api.get('/plugins', { params: { sort: 'downloads', limit: 10 } }),
-                    api.get('/plugins', { params: { sort: 'newest', limit: 10 } }),
-                    api.get('/plugins', { params: { limit: PAGE_SIZE, paginated: true } })
-                ]);
-                const popData = Array.isArray(popRes.data) ? popRes.data : (popRes.data?.items || []);
-                const newData = Array.isArray(newRes.data) ? newRes.data : (newRes.data?.items || []);
-                const allData = allRes.data?.items || (Array.isArray(allRes.data) ? allRes.data : []);
-                const cursor = allRes.data?.next_cursor || allRes.headers?.['x-next-cursor'] || null;
-                const more = allRes.data?.has_more ?? (allRes.headers?.['x-has-more'] === 'true' || allData.length === PAGE_SIZE);
-
-                setPopular(popData);
-                setNewest(newData);
-                setAllPlugins(allData);
-                setNextCursor(cursor);
-                setHasMore(more);
-
-                homeCache = {
-                    popular: popData,
-                    newest: newData,
-                    all: allData,
-                    nextCursor: cursor,
-                    hasMore: more,
-                };
-
-                fetched.current = { popular: true, newest: true, all: true };
-            } catch (err) {
-                console.error('Fetch error for home sections:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
         loadSections();
     }, []);
 
     const loadMorePlugins = async () => {
-        if (loadingMore || !hasMore || loading) return;
+        if (loadingMore || !hasMore || loading || allPlugins.length === 0) return;
         setLoadingMore(true);
         try {
             const params: any = { limit: PAGE_SIZE, paginated: true };
@@ -150,7 +179,10 @@ const HomePage = () => {
         }
     };
 
-    const observerTarget = useInfiniteScroll(loadMorePlugins, hasMore && !loading && !loadingMore && !moreFailed);
+    const observerTarget = useInfiniteScroll(
+        loadMorePlugins,
+        hasMore && !loading && !loadingMore && !moreFailed && !sectionsFailed && allPlugins.length > 0
+    );
 
     const featuredPlugins = useMemo(() => popular.slice(0, 5), [popular]);
 
@@ -341,6 +373,12 @@ const HomePage = () => {
                         {moreFailed && (
                             <div className="row sf-more">
                                 <button className="button" onClick={() => setMoreFailed(false)}>Retry</button>
+                            </div>
+                        )}
+
+                        {sectionsFailed && popular.length === 0 && newest.length === 0 && allPlugins.length === 0 && (
+                            <div className="row sf-more">
+                                <button className="button button-primary" onClick={loadSections}>Retry loading plugins</button>
                             </div>
                         )}
 
