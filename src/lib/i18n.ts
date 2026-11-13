@@ -17,6 +17,7 @@ import jaTranslation from '../locales/ja.json';
 import koTranslation from '../locales/ko.json';
 import itTranslation from '../locales/it.json';
 import nlTranslation from '../locales/nl.json';
+import viTranslation from '../locales/vi.json';
 
 const resources = {
   en: { translation: enTranslation },
@@ -32,6 +33,7 @@ const resources = {
   ko: { translation: koTranslation },
   it: { translation: itTranslation },
   nl: { translation: nlTranslation },
+  vi: { translation: viTranslation },
 };
 
 i18n
@@ -40,7 +42,7 @@ i18n
   .init({
     resources,
     fallbackLng: 'en',
-    supportedLngs: ['en', 'de', 'fr', 'es', 'ru', 'zh', 'pt', 'pl', 'tr', 'ja', 'ko', 'it', 'nl'],
+    supportedLngs: ['en', 'de', 'fr', 'es', 'ru', 'zh', 'pt', 'pl', 'tr', 'ja', 'ko', 'it', 'nl', 'vi'],
     nonExplicitSupportedLngs: true,
     load: 'languageOnly',
     interpolation: {
