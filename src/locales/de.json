@@ -317,7 +317,9 @@
       "success_badge": "Kauf erfolgreich!",
       "success_message": "Sie besitzen jetzt <strong>{{name}}</strong>. Klicken Sie auf den Download-Button, um Ihre WASM-Datei herunterzuladen.",
       "preorder_available": "Zur Vorbestellung verfügbar",
-      "expected": "Erwartet: {{date}}"
+      "expected": "Erwartet: {{date}}",
+      "invalid_coupon": "Ungültiger Gutscheincode",
+      "validate_coupon_failed": "Gutschein konnte nicht validiert werden."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "Early-Access-Plugin",
-    "early_access_notice": "Dieses Plugin befindet sich derzeit im <strong>Early Access</strong>. Es wird noch aktiv entwickelt und kann Fehler oder unvollständige Funktionen enthalten. Ein Download unterstützt den Entwickler und prägt die Zukunft des Plugins!"
+    "early_access_notice": "Dieses Plugin befindet sich derzeit im <strong>Early Access</strong>. Es wird noch aktiv entwickelt und kann Fehler oder unvollständige Funktionen enthalten. Ein Download unterstützt den Entwickler und prägt die Zukunft des Plugins!",
+    "load_failed": "Plugin nicht gefunden oder Laden fehlgeschlagen.",
+    "not_found_title": "Plugin nicht <mark>gefunden</mark>",
+    "not_found_desc": "Das angeforderte Plugin konnte nicht gefunden werden."
   },
   "profile": {
     "title": "Konto & Einstellungen",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "Passkey"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "Plugin konnte nicht zur Prüfung beansprucht werden.",
       "unclaim_failed": "Prüfungsbeanspruchung konnte nicht freigegeben werden.",
       "approve_failed": "Plugin konnte nicht genehmigt werden.",
-      "reject_failed": "Änderungsanforderung konnte nicht gesendet werden."
+      "reject_failed": "Änderungsanforderung konnte nicht gesendet werden.",
+      "moderation_failed": "Moderationsaktion konnte nicht abgeschlossen werden",
+      "role_update_failed": "Rolle konnte nicht aktualisiert werden"
     },
     "analytics": {
       "new_plugins_uploaded": "Neue Plugins hochgeladen",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "Für die gesamte Community kostenlos verfügbar.",
       "paid_plugin_title": "Kostenpflichtig / Premium",
       "paid_plugin_desc": "Verkaufe Lizenzen mit automatischen Entwickler-Auszahlungen.",
-      "creating_draft": "Entwurf wird erstellt…"
+      "creating_draft": "Entwurf wird erstellt…",
+      "accept_transfer_failed": "Übertragungsanfrage konnte nicht angenommen werden.",
+      "decline_transfer_failed": "Übertragungsanfrage konnte nicht abgelehnt werden.",
+      "create_draft_failed": "Plugin-Entwurf konnte nicht erstellt werden."
     },
     "audience": {
       "loading": "Globale Telemetrie & Verteilung werden analysiert...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "Prüfungsrichtlinien",
       "terms_suffix": "Ich gewähre Pumpkin Market die Lizenz zum Vertrieb meiner Plugins und bestätige die Einhaltung der Minecraft-EULA von Mojang.",
       "connecting_payouts": "Auszahlungen werden verbunden...",
-      "completing_registration": "Registrierung wird abgeschlossen..."
+      "completing_registration": "Registrierung wird abgeschlossen...",
+      "accept_terms_required": "Sie müssen der Entwickler-Vertriebsvereinbarung zustimmen, um fortzufahren.",
+      "complete_failed": "Entwickler-Onboarding konnte nicht abgeschlossen werden",
+      "verify_name_failed": "Entwicklername konnte nicht überprüft werden",
+      "legal_name_individual_placeholder": "Vor- und Nachname",
+      "legal_name_org_placeholder": "Eingetragener Firmenname GmbH"
     },
     "manage": {
       "loading": "Plugin wird geladen…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "Im Store ansehen",
       "unpublishing": "Wird offline genommen…",
       "confirm_unpublish": "„{{name}}“ offline nehmen?\n\nDadurch wird das Plugin aus der Marktplatzsuche und den Kategorien entfernt, bis du es wieder veröffentlichst.",
-      "nav_crashes": "Abstürze"
+      "nav_crashes": "Abstürze",
+      "unpublish_failed": "Veröffentlichung des Plugins konnte nicht zurückgezogen werden."
     },
     "readiness": {
       "badge_publish": "Veröffentlichen",
@@ -1797,7 +1814,10 @@
       "fix_listing": "Im Eintrag korrigieren",
       "fix_icon": "Icon hochladen",
       "fix_binary": "Binärdatei hochladen",
-      "fix_pricing": "Preis konfigurieren"
+      "fix_pricing": "Preis konfigurieren",
+      "check_failed": "Veröffentlichungsbereitschaft konnte nicht geprüft werden",
+      "submitted_success": "Plugin zur Überprüfung eingereicht! Unser Prüfteam wird Ihre Einreichung in Kürze prüfen.",
+      "submit_failed": "Plugin konnte nicht zur Überprüfung eingereicht werden"
     },
     "listing": {
       "title": "Store-Eintrag",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "Optional. Du kannst Bilder und GIFs auch direkt in deine Markdown-Beschreibung einbetten.",
       "add_screenshot": "Hinzufügen",
       "screenshots_hint": "Empfohlen: Seitenverhältnis 16:9, mind. 1280×720px. PNG, JPEG oder WebP. Wird bei Auswahl geprüft.",
-      "confirm_delete_screenshot": "Diesen Screenshot löschen?"
+      "confirm_delete_screenshot": "Diesen Screenshot löschen?",
+      "invalid_icon": "Ungültige Symboldatei.",
+      "icon_process_failed": "Symbol konnte nicht verarbeitet werden.",
+      "save_failed": "Plugin-Details konnten nicht gespeichert werden.",
+      "delete_screenshot_failed": "Screenshot konnte nicht gelöscht werden.",
+      "invalid_screenshot": "Ungültiger Screenshot „{{name}}“.",
+      "screenshot_upload_failed": "Screenshot-Upload fehlgeschlagen.",
+      "keywords_placeholder": "wirtschaft, shop, währung",
+      "screenshot_alt": "Screenshot"
     },
     "update": {
       "title": "Update veröffentlichen",
@@ -1876,7 +1904,10 @@
       "wasm_hint": "Nur .wasm · max. 5 MB · API-Version wird automatisch aus der Binärdatei erkannt",
       "verified_wasm": "{{format}} verifiziert",
       "publish_failed": "Veröffentlichung fehlgeschlagen",
-      "publishing": "Wird veröffentlicht…"
+      "publishing": "Wird veröffentlicht…",
+      "invalid_wasm": "Ungültige WebAssembly-Binärdatei.",
+      "wasm_binary": "WebAssembly-Binärdatei",
+      "inspect_failed": "Datei konnte nicht geprüft werden."
     },
     "pricing": {
       "title": "Preisgestaltung",
@@ -1909,7 +1940,8 @@
       "pricing_error": "Preisfehler",
       "save_success": "Preiseinstellungen erfolgreich gespeichert!",
       "saving": "Wird gespeichert…",
-      "save_pricing": "Preise speichern"
+      "save_pricing": "Preise speichern",
+      "save_failed": "Preise konnten nicht gespeichert werden."
     },
     "analytics": {
       "loading": "Analysen für {{name}} werden geladen…",
@@ -1996,7 +2028,11 @@
       "revoke": "Widerrufen",
       "confirm_revoke": "Möchtest du diesen Lizenzschlüssel wirklich widerrufen?",
       "confirm_unrevoke": "Möchtest du diesen Lizenzschlüssel wirklich wiederherstellen?",
-      "confirm_delete": "Möchtest du diesen Lizenzschlüssel-Eintrag wirklich dauerhaft löschen?"
+      "confirm_delete": "Möchtest du diesen Lizenzschlüssel-Eintrag wirklich dauerhaft löschen?",
+      "grant_failed": "Lizenz konnte dem Benutzer nicht zugewiesen werden.",
+      "unrevoke_failed": "Lizenz konnte nicht wiederhergestellt werden.",
+      "revoke_failed": "Lizenz konnte nicht widerrufen werden.",
+      "delete_failed": "Lizenzeintrag konnte nicht gelöscht werden."
     },
     "coupons": {
       "title": "Gutscheine & Aktionscodes",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}} Einlösungen",
       "uses_unlimited": "{{used}} Einlösungen",
       "expires_on": "Ablauf: {{date}}",
-      "confirm_delete": "Möchtest du diesen Gutschein wirklich löschen?"
+      "confirm_delete": "Möchtest du diesen Gutschein wirklich löschen?",
+      "create_failed": "Gutschein konnte nicht erstellt werden.",
+      "delete_failed": "Gutschein konnte nicht gelöscht werden."
     },
     "transfer": {
       "title": "Eigentümerschaft übertragen",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "z. B. notch oder dev@example.com",
       "tfa_code_label": "Gib deinen 6-stelligen Zwei-Faktor-Authentifizierungscode (2FA) ein",
       "sending": "Anfrage wird gesendet…",
-      "send_btn": "Übertragungsanfrage senden"
+      "send_btn": "Übertragungsanfrage senden",
+      "recipient_required": "Bitte geben Sie den Benutzernamen oder die E-Mail-Adresse des Empfängers an.",
+      "code_required": "Bitte geben Sie einen gültigen 6-stelligen 2FA-Code ein.",
+      "sent_success": "Übertragungsanfrage an @{{recipient}} gesendet. Der Empfänger muss sie in seinem Dashboard annehmen.",
+      "initiate_failed": "Übertragungsanfrage konnte nicht gestartet werden.",
+      "cancelled_success": "Übertragungsanfrage erfolgreich abgebrochen.",
+      "cancel_failed": "Übertragungsanfrage konnte nicht abgebrochen werden."
     },
     "danger": {
       "title": "Gefahrenzone",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. Gib zur Bestätigung den Plugin-Namen {{name}} ein:",
       "step_2_label": "2. Gib deinen 6-stelligen Zwei-Faktor-Authentifizierungscode (2FA) ein:",
       "deleting": "Wird gelöscht…",
-      "delete_btn": "Dauerhaft mit 2FA löschen"
+      "delete_btn": "Dauerhaft mit 2FA löschen",
+      "delete_failed": "Plugin konnte nicht gelöscht werden."
     },
     "settings": {
       "lead": "Entwickler-",

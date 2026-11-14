@@ -374,7 +374,7 @@ const StaffPage = () => {
             setActionModal(null);
             setActionReason('');
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to complete moderation action'));
+            alert(extractErrorMessage(err, t('staff.actions.moderation_failed')));
         } finally {
             setActionBusy(false);
         }
@@ -385,7 +385,7 @@ const StaffPage = () => {
             await api.put(`/admin/users/${id}/role`, { role: newRole, reason: `Role updated to ${newRole}` });
             setUsers(users.map(u => (u.id === id ? { ...u, role: newRole } : u)));
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to update role'));
+            alert(extractErrorMessage(err, t('staff.actions.role_update_failed')));
         }
     };
 
@@ -406,7 +406,7 @@ const StaffPage = () => {
                 });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to approve plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.approve_failed')));
         }
     };
 
@@ -423,7 +423,7 @@ const StaffPage = () => {
                 setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, ...claimData } });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to claim plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.claim_failed')));
             fetchTabData(activeTab);
         }
     };
@@ -436,7 +436,7 @@ const StaffPage = () => {
                 setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, claimed_by_id: null, claimed_by_name: null, claimed_at: null } });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to unclaim plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.unclaim_failed')));
         }
     };
 
@@ -794,7 +794,7 @@ const StaffPage = () => {
                     [t('staff.inspection.fields.reason'), selectedItem.data.reason],
                     ...(selectedItem.data.review_comment
                         ? [
-                              [t('staff.inspection.fields.review_author'), `@${selectedItem.data.review_author_username || 'Unknown'}`] as [string, any],
+                              [t('staff.inspection.fields.review_author'), `@${selectedItem.data.review_author_username || t('common.unknown')}`] as [string, any],
                               [t('staff.inspection.fields.review_rating'), `${selectedItem.data.review_rating} / 5`] as [string, any],
                               [t('staff.inspection.fields.review_content'), selectedItem.data.review_comment] as [string, any],
                           ]

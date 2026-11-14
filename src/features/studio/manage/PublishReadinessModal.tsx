@@ -60,7 +60,7 @@ export const PublishReadinessModal: React.FC<Props> = ({
             const res = await api.get<PublishReadiness>(`/plugins/${pluginId}/readiness`);
             setReadiness(res.data);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to check publish readiness');
+            setError(err.response?.data?.error || t('studio.readiness.check_failed'));
         } finally {
             setLoading(false);
         }
@@ -71,13 +71,13 @@ export const PublishReadinessModal: React.FC<Props> = ({
         setError(null);
         try {
             const res = await api.post(`/plugins/${pluginId}/publish`);
-            setSuccessMsg(res.data?.message || 'Plugin submitted for review! Our review team will inspect your submission shortly.');
+            setSuccessMsg(res.data?.message || t('studio.readiness.submitted_success'));
             onPublished();
             setTimeout(() => {
                 onClose();
             }, 1800);
         } catch (err: any) {
-            setError(err.response?.data?.error || err.response?.data?.message || err.response?.data || 'Failed to submit plugin for review');
+            setError(err.response?.data?.error || err.response?.data?.message || err.response?.data || t('studio.readiness.submit_failed'));
         } finally {
             setPublishing(false);
         }

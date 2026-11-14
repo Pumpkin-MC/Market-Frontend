@@ -317,7 +317,9 @@
       "success_badge": "購入が完了しました！",
       "success_message": "<strong>{{name}}</strong> を所有しました。ダウンロードボタンをクリックして WASM ファイルを取得してください。",
       "preorder_available": "予約購入可能",
-      "expected": "公開予定: {{date}}"
+      "expected": "公開予定: {{date}}",
+      "invalid_coupon": "無効なクーポンコードです",
+      "validate_coupon_failed": "クーポンの検証に失敗しました。"
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "早期アクセスプラグイン",
-    "early_access_notice": "このプラグインは現在<strong>早期アクセス</strong>段階です。開発中のため、バグや未完成の機能が含まれる場合があります。今ダウンロードすることで開発者を支援し、プラグインの今後を形づくることができます！"
+    "early_access_notice": "このプラグインは現在<strong>早期アクセス</strong>段階です。開発中のため、バグや未完成の機能が含まれる場合があります。今ダウンロードすることで開発者を支援し、プラグインの今後を形づくることができます！",
+    "load_failed": "プラグインが見つからないか、読み込みに失敗しました。",
+    "not_found_title": "プラグインが<mark>見つかりません</mark>",
+    "not_found_desc": "指定されたプラグインは見つかりませんでした。"
   },
   "profile": {
     "title": "アカウント設定",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "パスキー"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "プラグインの審査担当割り当てに失敗しました。",
       "unclaim_failed": "審査担当の解除に失敗しました。",
       "approve_failed": "プラグインの承認に失敗しました。",
-      "reject_failed": "修正依頼の送信に失敗しました。"
+      "reject_failed": "修正依頼の送信に失敗しました。",
+      "moderation_failed": "モデレーション操作の完了に失敗しました",
+      "role_update_failed": "ロールの更新に失敗しました"
     },
     "analytics": {
       "new_plugins_uploaded": "新規アップロードプラグイン",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "コミュニティ全体に無料で公開します。",
       "paid_plugin_title": "有料 / プレミアム",
       "paid_plugin_desc": "自動化された開発者への売上振込でライセンスを販売します。",
-      "creating_draft": "下書きを作成中…"
+      "creating_draft": "下書きを作成中…",
+      "accept_transfer_failed": "譲渡リクエストの承認に失敗しました。",
+      "decline_transfer_failed": "譲渡リクエストの辞退に失敗しました。",
+      "create_draft_failed": "プラグイン下書きの作成に失敗しました。"
     },
     "audience": {
       "loading": "グローバルテレメトリと分布を分析中...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "審査ガイドライン",
       "terms_suffix": "に同意します。また、Pumpkin Marketに私のプラグインを配布するライセンスを付与し、MojangのMinecraft EULAに準拠していることを確認します。",
       "connecting_payouts": "受取口座を連携中...",
-      "completing_registration": "登録を完了中..."
+      "completing_registration": "登録を完了中...",
+      "accept_terms_required": "続行するには開発者配信契約に同意する必要があります。",
+      "complete_failed": "開発者オンボーディングの完了に失敗しました",
+      "verify_name_failed": "開発者名の確認に失敗しました",
+      "legal_name_individual_placeholder": "氏名（フルネーム）",
+      "legal_name_org_placeholder": "法人登記名（例：株式会社〇〇）"
     },
     "manage": {
       "loading": "プラグインを読み込み中…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "ストアで表示",
       "unpublishing": "非公開化中…",
       "confirm_unpublish": "「{{name}}」を非公開にしますか？\n\n再度公開するまで、マーケットプレイスの検索およびカテゴリー一覧から非表示になります。",
-      "nav_crashes": "クラッシュ"
+      "nav_crashes": "クラッシュ",
+      "unpublish_failed": "プラグインの公開停止に失敗しました。"
     },
     "readiness": {
       "badge_publish": "公開",
@@ -1797,7 +1814,10 @@
       "fix_listing": "掲載情報を修正",
       "fix_icon": "アイコンをアップロード",
       "fix_binary": "バイナリをアップロード",
-      "fix_pricing": "価格を設定"
+      "fix_pricing": "価格を設定",
+      "check_failed": "公開準備状況の確認に失敗しました",
+      "submitted_success": "プラグインを審査に提出しました！審査チームがまもなく確認します。",
+      "submit_failed": "審査への提出に失敗しました"
     },
     "listing": {
       "title": "ストア掲載情報",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "任意。Markdownの説明文に直接画像やGIFを埋め込むこともできます。",
       "add_screenshot": "追加",
       "screenshots_hint": "推奨: アスペクト比 16:9、最小 1280×720px。PNG、JPEG、またはWebP。選択時に検証されます。",
-      "confirm_delete_screenshot": "このスクリーンショットを削除しますか？"
+      "confirm_delete_screenshot": "このスクリーンショットを削除しますか？",
+      "invalid_icon": "無効なアイコンファイルです。",
+      "icon_process_failed": "アイコンを処理できませんでした。",
+      "save_failed": "プラグイン詳細の保存に失敗しました。",
+      "delete_screenshot_failed": "スクリーンショットの削除に失敗しました。",
+      "invalid_screenshot": "無効なスクリーンショット「{{name}}」です。",
+      "screenshot_upload_failed": "スクリーンショットのアップロードに失敗しました。",
+      "keywords_placeholder": "経済, ショップ, 通貨",
+      "screenshot_alt": "スクリーンショット"
     },
     "update": {
       "title": "アップデートを公開",
@@ -1876,7 +1904,10 @@
       "wasm_hint": ".wasmのみ · 最大 5 MB · APIバージョンはバイナリから自動検出されます",
       "verified_wasm": "検証済み: {{format}}",
       "publish_failed": "公開に失敗しました",
-      "publishing": "公開中…"
+      "publishing": "公開中…",
+      "invalid_wasm": "無効な WebAssembly バイナリです。",
+      "wasm_binary": "WebAssembly バイナリ",
+      "inspect_failed": "ファイルの検査に失敗しました。"
     },
     "pricing": {
       "title": "価格設定",
@@ -1909,7 +1940,8 @@
       "pricing_error": "価格設定エラー",
       "save_success": "価格設定を保存しました！",
       "saving": "保存中…",
-      "save_pricing": "価格設定を保存"
+      "save_pricing": "価格設定を保存",
+      "save_failed": "価格設定の保存に失敗しました。"
     },
     "analytics": {
       "loading": "{{name}} のアナリティクスを読み込み中…",
@@ -1996,7 +2028,11 @@
       "revoke": "失効させる",
       "confirm_revoke": "このライセンスキーを失効させてもよろしいですか？",
       "confirm_unrevoke": "このライセンスキーの失効を解除してもよろしいですか？",
-      "confirm_delete": "このライセンスキーの記録を完全に削除してもよろしいですか？"
+      "confirm_delete": "このライセンスキーの記録を完全に削除してもよろしいですか？",
+      "grant_failed": "ユーザーへのライセンス付与に失敗しました。",
+      "unrevoke_failed": "ライセンスの失効解除に失敗しました。",
+      "revoke_failed": "ライセンスの失効に失敗しました。",
+      "delete_failed": "ライセンス記録の削除に失敗しました。"
     },
     "coupons": {
       "title": "クーポン＆プロモコード",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}} 回使用",
       "uses_unlimited": "{{used}} 回使用",
       "expires_on": "期限: {{date}}",
-      "confirm_delete": "このクーポンを削除してもよろしいですか？"
+      "confirm_delete": "このクーポンを削除してもよろしいですか？",
+      "create_failed": "クーポンの作成に失敗しました。",
+      "delete_failed": "クーポンの削除に失敗しました。"
     },
     "transfer": {
       "title": "所有権の譲渡",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "例: notch または dev@example.com",
       "tfa_code_label": "6桁の二要素認証（2FA）コードを入力してください",
       "sending": "リクエストを送信中…",
-      "send_btn": "譲渡リクエストを送信"
+      "send_btn": "譲渡リクエストを送信",
+      "recipient_required": "受取人のユーザー名またはメールアドレスを指定してください。",
+      "code_required": "有効な 6 桁の 2FA 認証コードを入力してください。",
+      "sent_success": "@{{recipient}} に譲渡リクエストを送信しました。受取人がダッシュボードで承認する必要があります。",
+      "initiate_failed": "譲渡リクエストの開始に失敗しました。",
+      "cancelled_success": "譲渡リクエストをキャンセルしました。",
+      "cancel_failed": "譲渡リクエストのキャンセルに失敗しました。"
     },
     "danger": {
       "title": "危険ゾーン",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. 確認のためプラグイン名 {{name}} を入力してください:",
       "step_2_label": "2. 6桁の二要素認証（2FA）コードを入力してください:",
       "deleting": "削除中…",
-      "delete_btn": "2FAで完全に削除する"
+      "delete_btn": "2FAで完全に削除する",
+      "delete_failed": "プラグインの削除に失敗しました。"
     },
     "settings": {
       "lead": "開発者",

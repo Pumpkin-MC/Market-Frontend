@@ -52,12 +52,12 @@ const TransferOwnership = ({ plugin }: Props) => {
         const cleanCode = twoFactorCode.trim();
 
         if (!cleanRecipient) {
-            setError('Please specify the recipient username or email.');
+            setError(t('studio.transfer.recipient_required'));
             return;
         }
 
         if (cleanCode.length !== 6) {
-            setError('Please enter a valid 6-digit 2FA authenticator code.');
+            setError(t('studio.transfer.code_required'));
             return;
         }
 
@@ -73,9 +73,9 @@ const TransferOwnership = ({ plugin }: Props) => {
             setPendingTransfer(res.data);
             setRecipient('');
             setTwoFactorCode('');
-            setSuccess(`Transfer request sent to @${res.data.recipient_name}. The recipient must accept it in their dashboard.`);
+            setSuccess(t('studio.transfer.sent_success', { recipient: res.data.recipient_name }));
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to initiate transfer request.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.transfer.initiate_failed');
             setError(msg);
         } finally {
             setSubmitting(false);
@@ -90,9 +90,9 @@ const TransferOwnership = ({ plugin }: Props) => {
         try {
             await api.delete(`/plugins/${plugin.id}/transfer`);
             setPendingTransfer(null);
-            setSuccess('Transfer request cancelled successfully.');
+            setSuccess(t('studio.transfer.cancelled_success'));
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to cancel transfer request.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.transfer.cancel_failed');
             setError(msg);
         } finally {
             setCancelling(false);

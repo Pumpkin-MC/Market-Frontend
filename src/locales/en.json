@@ -317,7 +317,9 @@
       "success_badge": "Purchase successful!",
       "success_message": "You now own <strong>{{name}}</strong>. Click the download button to get your WASM file.",
       "preorder_available": "Available for Pre-Order",
-      "expected": "Expected: {{date}}"
+      "expected": "Expected: {{date}}",
+      "invalid_coupon": "Invalid coupon code",
+      "validate_coupon_failed": "Failed to validate coupon."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "Early Access Plugin",
-    "early_access_notice": "This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features. Downloading it now helps support the developer and shape the future of the plugin!"
+    "early_access_notice": "This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features. Downloading it now helps support the developer and shape the future of the plugin!",
+    "load_failed": "Plugin not found or failed to load.",
+    "not_found_title": "Plugin Not <mark>Found</mark>",
+    "not_found_desc": "The requested plugin could not be found."
   },
   "profile": {
     "title": "Account & Settings",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "Passkey"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "Failed to claim plugin for review.",
       "unclaim_failed": "Failed to release review claim.",
       "approve_failed": "Failed to approve plugin.",
-      "reject_failed": "Failed to request changes."
+      "reject_failed": "Failed to request changes.",
+      "moderation_failed": "Failed to complete moderation action",
+      "role_update_failed": "Failed to update role"
     },
     "analytics": {
       "new_plugins_uploaded": "New Plugins Uploaded",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "Available to the entire community for free.",
       "paid_plugin_title": "Paid / Premium",
       "paid_plugin_desc": "Sell licenses with automated developer payouts.",
-      "creating_draft": "Creating Draft…"
+      "creating_draft": "Creating Draft…",
+      "accept_transfer_failed": "Failed to accept transfer request.",
+      "decline_transfer_failed": "Failed to decline transfer request.",
+      "create_draft_failed": "Failed to create plugin draft."
     },
     "audience": {
       "loading": "Analyzing Global Telemetry & Distribution...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "Review Guidelines",
       "terms_suffix": "I grant Pumpkin Market license to distribute my plugins and confirm compliance with Mojang's Minecraft EULA.",
       "connecting_payouts": "Connecting Payouts...",
-      "completing_registration": "Completing registration..."
+      "completing_registration": "Completing registration...",
+      "accept_terms_required": "You must accept the Developer Distribution Agreement to continue.",
+      "complete_failed": "Failed to complete developer onboarding",
+      "verify_name_failed": "Failed to verify developer name",
+      "legal_name_individual_placeholder": "First and Last Name",
+      "legal_name_org_placeholder": "Legal Company Name Inc."
     },
     "manage": {
       "loading": "Loading plugin…",
@@ -1761,7 +1777,8 @@
       "submit_review": "Submit for Review",
       "view_on_store": "View on Store",
       "unpublishing": "Unpublishing…",
-      "confirm_unpublish": "Take \"{{name}}\" offline?\n\nThis will remove the plugin from marketplace search and category browsing until you publish it again."
+      "confirm_unpublish": "Take \"{{name}}\" offline?\n\nThis will remove the plugin from marketplace search and category browsing until you publish it again.",
+      "unpublish_failed": "Failed to unpublish plugin."
     },
     "readiness": {
       "badge_publish": "Publish",
@@ -1797,7 +1814,10 @@
       "fix_listing": "Fix in Listing",
       "fix_icon": "Upload Icon",
       "fix_binary": "Upload Binary",
-      "fix_pricing": "Configure Price"
+      "fix_pricing": "Configure Price",
+      "check_failed": "Failed to check publish readiness",
+      "submitted_success": "Plugin submitted for review! Our review team will inspect your submission shortly.",
+      "submit_failed": "Failed to submit plugin for review"
     },
     "listing": {
       "title": "Store Listing",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "Optional. You can also embed images and GIFs directly into your Markdown description.",
       "add_screenshot": "Add",
       "screenshots_hint": "Recommended: 16:9 aspect ratio, min 1280×720px. PNG, JPEG, or WebP. Validated on selection.",
-      "confirm_delete_screenshot": "Delete this screenshot?"
+      "confirm_delete_screenshot": "Delete this screenshot?",
+      "invalid_icon": "Invalid icon file.",
+      "icon_process_failed": "Could not process icon.",
+      "save_failed": "Failed to save plugin details.",
+      "delete_screenshot_failed": "Failed to delete screenshot.",
+      "invalid_screenshot": "Invalid screenshot \"{{name}}\".",
+      "screenshot_upload_failed": "Screenshot upload failed.",
+      "keywords_placeholder": "economy, shop, currency",
+      "screenshot_alt": "Screenshot"
     },
     "update": {
       "title": "Publish Update",
@@ -1876,7 +1904,10 @@
       "wasm_hint": ".wasm only · max 5 MB · API version auto-detected from binary",
       "verified_wasm": "Verified {{format}}",
       "publish_failed": "Publish Failed",
-      "publishing": "Publishing…"
+      "publishing": "Publishing…",
+      "invalid_wasm": "Invalid WebAssembly binary.",
+      "wasm_binary": "WebAssembly Binary",
+      "inspect_failed": "Failed to inspect file."
     },
     "pricing": {
       "title": "Pricing",
@@ -1909,7 +1940,8 @@
       "pricing_error": "Pricing Error",
       "save_success": "Pricing settings saved successfully!",
       "saving": "Saving…",
-      "save_pricing": "Save Pricing"
+      "save_pricing": "Save Pricing",
+      "save_failed": "Failed to save pricing."
     },
     "analytics": {
       "loading": "Loading analytics for {{name}}…",
@@ -2039,7 +2071,11 @@
       "revoke": "Revoke",
       "confirm_revoke": "Are you sure you want to revoke this license key?",
       "confirm_unrevoke": "Are you sure you want to unrevoke this license key?",
-      "confirm_delete": "Are you sure you want to permanently delete this license key record?"
+      "confirm_delete": "Are you sure you want to permanently delete this license key record?",
+      "grant_failed": "Failed to grant license to user.",
+      "unrevoke_failed": "Failed to unrevoke license.",
+      "revoke_failed": "Failed to revoke license.",
+      "delete_failed": "Failed to delete license record."
     },
     "coupons": {
       "title": "Coupons & Promo Codes",
@@ -2061,7 +2097,9 @@
       "uses_count": "{{used}} / {{max}} uses",
       "uses_unlimited": "{{used}} uses",
       "expires_on": "Exp: {{date}}",
-      "confirm_delete": "Are you sure you want to delete this coupon?"
+      "confirm_delete": "Are you sure you want to delete this coupon?",
+      "create_failed": "Failed to create coupon.",
+      "delete_failed": "Failed to delete coupon."
     },
     "transfer": {
       "title": "Transfer Ownership",
@@ -2083,7 +2121,13 @@
       "recipient_placeholder": "e.g. notch or dev@example.com",
       "tfa_code_label": "Enter your 6-digit Two-Factor Authentication (2FA) Code",
       "sending": "Sending Request…",
-      "send_btn": "Send Transfer Request"
+      "send_btn": "Send Transfer Request",
+      "recipient_required": "Please specify the recipient username or email.",
+      "code_required": "Please enter a valid 6-digit 2FA authenticator code.",
+      "sent_success": "Transfer request sent to @{{recipient}}. The recipient must accept it in their dashboard.",
+      "initiate_failed": "Failed to initiate transfer request.",
+      "cancelled_success": "Transfer request cancelled successfully.",
+      "cancel_failed": "Failed to cancel transfer request."
     },
     "danger": {
       "title": "Danger Zone",
@@ -2094,7 +2138,8 @@
       "step_1_label": "1. Type the plugin name {{name}} to confirm:",
       "step_2_label": "2. Enter your 6-digit Two-Factor Authentication (2FA) code:",
       "deleting": "Deleting…",
-      "delete_btn": "Delete Forever with 2FA"
+      "delete_btn": "Delete Forever with 2FA",
+      "delete_failed": "Failed to delete plugin."
     },
     "settings": {
       "lead": "Developer",

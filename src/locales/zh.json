@@ -317,7 +317,9 @@
       "success_badge": "购买成功！",
       "success_message": "您已拥有 <strong>{{name}}</strong>。点击下载按钮即可获取 WASM 文件。",
       "preorder_available": "开放预购",
-      "expected": "预计发布：{{date}}"
+      "expected": "预计发布：{{date}}",
+      "invalid_coupon": "优惠码无效",
+      "validate_coupon_failed": "验证优惠码失败。"
     },
     "versions": {
       "default_notes": "修复若干问题并优化运行性能。",
@@ -332,7 +334,10 @@
       "seek": "进度条"
     },
     "early_access_title": "抢先体验插件",
-    "early_access_notice": "此插件目前处于<strong>抢先体验</strong>阶段，仍在积极开发中，可能存在错误或功能尚不完整。立即下载有助于支持开发者并参与塑造插件的未来！"
+    "early_access_notice": "此插件目前处于<strong>抢先体验</strong>阶段，仍在积极开发中，可能存在错误或功能尚不完整。立即下载有助于支持开发者并参与塑造插件的未来！",
+    "load_failed": "未找到插件或加载失败。",
+    "not_found_title": "未找到<mark>插件</mark>",
+    "not_found_desc": "无法找到请求的插件。"
   },
   "profile": {
     "title": "账户与设置",
@@ -561,7 +566,8 @@
       "renamed": "通行密钥名称更新成功！",
       "save_name": "保存名称",
       "synced": "云端同步密钥",
-      "title": "通行密钥 (Passkeys)"
+      "title": "通行密钥 (Passkeys)",
+      "default_name": "通行密钥"
     },
     "password": {
       "change_failed": "修改密码失败，请核对当前密码是否正确。",
@@ -1471,7 +1477,9 @@
       "claim_failed": "认领插件审核失败。",
       "unclaim_failed": "释放审核认领失败。",
       "approve_failed": "批准插件失败。",
-      "reject_failed": "退回修改失败。"
+      "reject_failed": "退回修改失败。",
+      "moderation_failed": "完成审核操作失败",
+      "role_update_failed": "更新角色失败"
     },
     "analytics": {
       "new_plugins_uploaded": "新上传插件",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "免费向整个社区开放。",
       "paid_plugin_title": "付费 / 高级版",
       "paid_plugin_desc": "销售许可证并享受自动化开发者收款。",
-      "creating_draft": "正在创建草稿…"
+      "creating_draft": "正在创建草稿…",
+      "accept_transfer_failed": "接受转让请求失败。",
+      "decline_transfer_failed": "拒绝转让请求失败。",
+      "create_draft_failed": "创建插件草稿失败。"
     },
     "audience": {
       "loading": "正在分析全球遥测与分布数据...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "《审核准则》",
       "terms_suffix": "我授予 Pumpkin Market 分发我插件的许可，并确认遵守 Mojang 的 Minecraft EULA。",
       "connecting_payouts": "正在连接收款账户...",
-      "completing_registration": "正在完成注册..."
+      "completing_registration": "正在完成注册...",
+      "accept_terms_required": "您必须同意开发者分发协议才能继续。",
+      "complete_failed": "完成开发者入驻失败",
+      "verify_name_failed": "验证开发者名称失败",
+      "legal_name_individual_placeholder": "真实姓名",
+      "legal_name_org_placeholder": "公司法定全称"
     },
     "manage": {
       "loading": "正在加载插件…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "在商店中查看",
       "unpublishing": "正在下架…",
       "confirm_unpublish": "确定要下架“{{name}}”吗？\n\n这会将该插件从市场搜索和分类浏览中移除，直到您再次发布。",
-      "nav_crashes": "崩溃报告"
+      "nav_crashes": "崩溃报告",
+      "unpublish_failed": "下架插件失败。"
     },
     "readiness": {
       "badge_publish": "发布",
@@ -1797,7 +1814,10 @@
       "fix_listing": "去商店页面完善",
       "fix_icon": "上传图标",
       "fix_binary": "上传二进制文件",
-      "fix_pricing": "配置价格"
+      "fix_pricing": "配置价格",
+      "check_failed": "检查发布就绪状态失败",
+      "submitted_success": "插件已提交审核！我们的审核团队将尽快检查您的提交内容。",
+      "submit_failed": "提交插件审核失败"
     },
     "listing": {
       "title": "商店页面",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "可选。您也可以直接在 Markdown 描述中嵌入图片和 GIF。",
       "add_screenshot": "添加",
       "screenshots_hint": "建议：16:9 宽高比，最小 1280×720px。支持 PNG、JPEG 或 WebP，选择时自动验证。",
-      "confirm_delete_screenshot": "确定要删除这张截图吗？"
+      "confirm_delete_screenshot": "确定要删除这张截图吗？",
+      "invalid_icon": "无效的图标文件。",
+      "icon_process_failed": "无法处理图标。",
+      "save_failed": "保存插件详情失败。",
+      "delete_screenshot_failed": "删除截图失败。",
+      "invalid_screenshot": "无效的截图“{{name}}”。",
+      "screenshot_upload_failed": "截图上传失败。",
+      "keywords_placeholder": "经济, 商店, 货币",
+      "screenshot_alt": "截图"
     },
     "update": {
       "title": "发布更新",
@@ -1876,7 +1904,10 @@
       "wasm_hint": "仅限 .wasm · 最大 5 MB · 从二进制文件中自动检测 API 版本",
       "verified_wasm": "已验证 {{format}}",
       "publish_failed": "发布失败",
-      "publishing": "正在发布…"
+      "publishing": "正在发布…",
+      "invalid_wasm": "无效的 WebAssembly 二进制文件。",
+      "wasm_binary": "WebAssembly 二进制文件",
+      "inspect_failed": "检查文件失败。"
     },
     "pricing": {
       "title": "价格设置",
@@ -1909,7 +1940,8 @@
       "pricing_error": "定价错误",
       "save_success": "价格设置保存成功！",
       "saving": "正在保存…",
-      "save_pricing": "保存价格设置"
+      "save_pricing": "保存价格设置",
+      "save_failed": "保存定价失败。"
     },
     "analytics": {
       "loading": "正在加载 {{name}} 的分析数据…",
@@ -1996,7 +2028,11 @@
       "revoke": "吊销",
       "confirm_revoke": "您确定要吊销此许可证密钥吗？",
       "confirm_unrevoke": "您确定要恢复此许可证密钥吗？",
-      "confirm_delete": "您确定要永久删除此许可证密钥记录吗？"
+      "confirm_delete": "您确定要永久删除此许可证密钥记录吗？",
+      "grant_failed": "授予用户许可证失败。",
+      "unrevoke_failed": "恢复许可证失败。",
+      "revoke_failed": "吊销许可证失败。",
+      "delete_failed": "删除许可证记录失败。"
     },
     "coupons": {
       "title": "优惠券与促销码",
@@ -2018,7 +2054,9 @@
       "uses_count": "已用 {{used}} / {{max}} 次",
       "uses_unlimited": "已用 {{used}} 次",
       "expires_on": "到期：{{date}}",
-      "confirm_delete": "您确定要删除此优惠券吗？"
+      "confirm_delete": "您确定要删除此优惠券吗？",
+      "create_failed": "创建优惠券失败。",
+      "delete_failed": "删除优惠券失败。"
     },
     "transfer": {
       "title": "转让所有权",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "例如 notch 或 dev@example.com",
       "tfa_code_label": "输入您的 6 位双重身份验证 (2FA) 验证码",
       "sending": "正在发送请求…",
-      "send_btn": "发送转让请求"
+      "send_btn": "发送转让请求",
+      "recipient_required": "请指定接收方的用户名或邮箱。",
+      "code_required": "请输入有效的 6 位双因素验证码。",
+      "sent_success": "转让请求已发送至 @{{recipient}}。接收方须在其控制台接受该请求。",
+      "initiate_failed": "发起转让请求失败。",
+      "cancelled_success": "已成功取消转让请求。",
+      "cancel_failed": "取消转让请求失败。"
     },
     "danger": {
       "title": "危险区域",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. 输入插件名称 {{name}} 以确认：",
       "step_2_label": "2. 输入您的 6 位双重身份验证 (2FA) 验证码：",
       "deleting": "正在删除…",
-      "delete_btn": "使用 2FA 永久删除"
+      "delete_btn": "使用 2FA 永久删除",
+      "delete_failed": "删除插件失败。"
     },
     "settings": {
       "lead": "开发者",

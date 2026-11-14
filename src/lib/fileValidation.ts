@@ -343,7 +343,7 @@ export async function validateWasmFile(file: File): Promise<WasmValidationResult
     const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
     return {
       valid: false,
-      error: i18n.t('developer.upload.validation.wasm_too_large', { sizeMb }),
+      error: i18n.t('developer.upload.validation.wasm_too_large', { size: sizeMb }),
       sizeBytes: file.size,
     };
   }

@@ -53,14 +53,13 @@ const Licenses = ({ plugin }: Props) => {
             setLicenses(prev => [res.data, ...prev.filter(l => l.id !== res.data.id)]);
             setUserIdentifier('');
         } catch (err: any) {
-            alert(err.response?.data || 'Failed to grant license to user.');
+            alert(err.response?.data || t('studio.licenses.grant_failed'));
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleToggleRevoke = async (licenseId: number, currentRevoked: boolean) => {
-        const action = currentRevoked ? 'unrevoke' : 'revoke';
         if (!window.confirm(currentRevoked ? t('studio.licenses.confirm_unrevoke') : t('studio.licenses.confirm_revoke'))) return;
 
         try {
@@ -71,7 +70,7 @@ const Licenses = ({ plugin }: Props) => {
                 prev.map(l => l.id === licenseId ? { ...l, revoked: !currentRevoked } : l)
             );
         } catch (err) {
-            alert(`Failed to ${action} license.`);
+            alert(currentRevoked ? t('studio.licenses.unrevoke_failed') : t('studio.licenses.revoke_failed'));
         }
     };
 
@@ -82,7 +81,7 @@ const Licenses = ({ plugin }: Props) => {
             await api.delete(`/plugins/${plugin.id}/licenses/${licenseId}`);
             setLicenses(prev => prev.filter(l => l.id !== licenseId));
         } catch (err) {
-            alert('Failed to delete license record.');
+            alert(t('studio.licenses.delete_failed'));
         }
     };
 

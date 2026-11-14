@@ -317,7 +317,9 @@
       "success_badge": "Aankoop geslaagd!",
       "success_message": "Je bent nu eigenaar van <strong>{{name}}</strong>. Klik op de downloadknop om je WASM-bestand op te halen.",
       "preorder_available": "Beschikbaar voor pre-order",
-      "expected": "Verwacht: {{date}}"
+      "expected": "Verwacht: {{date}}",
+      "invalid_coupon": "Ongeldige kortingscode",
+      "validate_coupon_failed": "Kortingscode kon niet worden gevalideerd."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "Vroegtijdige toegang-plugin",
-    "early_access_notice": "Deze plugin bevindt zich momenteel in <strong>Vroegtijdige Toegang</strong>. Hij is nog volop in ontwikkeling en kan fouten of onvolledige functies bevatten. Door nu te downloaden steun je de ontwikkelaar en help je de toekomst van de plugin vorm te geven!"
+    "early_access_notice": "Deze plugin bevindt zich momenteel in <strong>Vroegtijdige Toegang</strong>. Hij is nog volop in ontwikkeling en kan fouten of onvolledige functies bevatten. Door nu te downloaden steun je de ontwikkelaar en help je de toekomst van de plugin vorm te geven!",
+    "load_failed": "Plugin niet gevonden of laden mislukt.",
+    "not_found_title": "Plugin niet <mark>gevonden</mark>",
+    "not_found_desc": "De gevraagde plugin kon niet worden gevonden."
   },
   "profile": {
     "title": "Account & Instellingen",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "Passkey"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "Kan plugin niet claimen voor beoordeling.",
       "unclaim_failed": "Kan beoordelingsclaim niet vrijgeven.",
       "approve_failed": "Kan plugin niet goedkeuren.",
-      "reject_failed": "Kan geen wijzigingen aanvragen."
+      "reject_failed": "Kan geen wijzigingen aanvragen.",
+      "moderation_failed": "Moderatieactie kon niet worden voltooid",
+      "role_update_failed": "Rol kon niet worden bijgewerkt"
     },
     "analytics": {
       "new_plugins_uploaded": "Nieuwe plugins geüpload",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "Gratis beschikbaar voor de hele community.",
       "paid_plugin_title": "Betaald / Premium",
       "paid_plugin_desc": "Verkoop licenties met geautomatiseerde uitbetalingen voor ontwikkelaars.",
-      "creating_draft": "Concept aanmaken…"
+      "creating_draft": "Concept aanmaken…",
+      "accept_transfer_failed": "Overdrachtsverzoek accepteren mislukt.",
+      "decline_transfer_failed": "Overdrachtsverzoek afwijzen mislukt.",
+      "create_draft_failed": "Pluginconcept aanmaken mislukt."
     },
     "audience": {
       "loading": "Wereldwijde telemetrie & distributie analyseren...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "Beoordelingsrichtlijnen",
       "terms_suffix": "Ik verleen Pumpkin Market een licentie om mijn plugins te distribueren en bevestig dat ik voldoe aan de Minecraft EULA van Mojang.",
       "connecting_payouts": "Uitbetalingen koppelen...",
-      "completing_registration": "Registratie voltooien..."
+      "completing_registration": "Registratie voltooien...",
+      "accept_terms_required": "Je moet akkoord gaan met de Distributieovereenkomst voor Ontwikkelaars om door te gaan.",
+      "complete_failed": "Ontwikkelaarsonboarding voltooien mislukt",
+      "verify_name_failed": "Ontwikkelaarsnaam controleren mislukt",
+      "legal_name_individual_placeholder": "Voor- en achternaam",
+      "legal_name_org_placeholder": "Statutaire bedrijfsnaam B.V."
     },
     "manage": {
       "loading": "Plugin laden…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "Bekijk in winkel",
       "unpublishing": "Offline halen…",
       "confirm_unpublish": "\"{{name}}\" offline halen?\n\nHiermee wordt de plugin verwijderd uit de zoekresultaten en categorieën totdat je deze opnieuw publiceert.",
-      "nav_crashes": "Crashes"
+      "nav_crashes": "Crashes",
+      "unpublish_failed": "Publicatie van plugin ongedaan maken mislukt."
     },
     "readiness": {
       "badge_publish": "Publiceren",
@@ -1797,7 +1814,10 @@
       "fix_listing": "Aanpassen in vermelding",
       "fix_icon": "Icoon uploaden",
       "fix_binary": "Binary uploaden",
-      "fix_pricing": "Prijs instellen"
+      "fix_pricing": "Prijs instellen",
+      "check_failed": "Publicatiegereedheid controleren mislukt",
+      "submitted_success": "Plugin ingediend ter beoordeling! Ons team zal je inzending binnenkort bekijken.",
+      "submit_failed": "Plugin indienen ter beoordeling mislukt"
     },
     "listing": {
       "title": "Winkelvermelding",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "Optioneel. Je kunt ook afbeeldingen en GIF's rechtstreeks in je Markdown-beschrijving insluiten.",
       "add_screenshot": "Toevoegen",
       "screenshots_hint": "Aanbevolen: 16:9-beeldverhouding, min. 1280×720px. PNG, JPEG of WebP. Wordt gevalideerd bij selectie.",
-      "confirm_delete_screenshot": "Deze screenshot verwijderen?"
+      "confirm_delete_screenshot": "Deze screenshot verwijderen?",
+      "invalid_icon": "Ongeldig pictogrambestand.",
+      "icon_process_failed": "Kon pictogram niet verwerken.",
+      "save_failed": "Plugingegevens opslaan mislukt.",
+      "delete_screenshot_failed": "Screenshot verwijderen mislukt.",
+      "invalid_screenshot": "Ongeldige screenshot \"{{name}}\".",
+      "screenshot_upload_failed": "Uploaden van screenshot mislukt.",
+      "keywords_placeholder": "economie, winkel, valuta",
+      "screenshot_alt": "Screenshot"
     },
     "update": {
       "title": "Update publiceren",
@@ -1876,7 +1904,10 @@
       "wasm_hint": "Alleen .wasm · max. 5 MB · API-versie automatisch gedetecteerd uit binary",
       "verified_wasm": "Geverifieerd: {{format}}",
       "publish_failed": "Publiceren mislukt",
-      "publishing": "Publiceren…"
+      "publishing": "Publiceren…",
+      "invalid_wasm": "Ongeldige WebAssembly-binary.",
+      "wasm_binary": "WebAssembly-binary",
+      "inspect_failed": "Bestand inspecteren mislukt."
     },
     "pricing": {
       "title": "Prijzen",
@@ -1909,7 +1940,8 @@
       "pricing_error": "Prijsfout",
       "save_success": "Prijsinstellingen succesvol opgeslagen!",
       "saving": "Opslaan…",
-      "save_pricing": "Prijzen opslaan"
+      "save_pricing": "Prijzen opslaan",
+      "save_failed": "Prijzen opslaan mislukt."
     },
     "analytics": {
       "loading": "Statistieken laden voor {{name}}…",
@@ -1996,7 +2028,11 @@
       "revoke": "Intrekken",
       "confirm_revoke": "Weet je zeker dat je deze licentiesleutel wilt intrekken?",
       "confirm_unrevoke": "Weet je zeker dat je deze licentiesleutel wilt herstellen?",
-      "confirm_delete": "Weet je zeker dat je deze licentiesleutel definitief wilt verwijderen?"
+      "confirm_delete": "Weet je zeker dat je deze licentiesleutel definitief wilt verwijderen?",
+      "grant_failed": "Licentie toekennen aan gebruiker mislukt.",
+      "unrevoke_failed": "Licentie herstellen mislukt.",
+      "revoke_failed": "Licentie intrekken mislukt.",
+      "delete_failed": "Licentierecord verwijderen mislukt."
     },
     "coupons": {
       "title": "Kortingsbonnen & Promotiecodes",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}} keer gebruikt",
       "uses_unlimited": "{{used}} keer gebruikt",
       "expires_on": "Vervalt: {{date}}",
-      "confirm_delete": "Weet je zeker dat je deze kortingscode wilt verwijderen?"
+      "confirm_delete": "Weet je zeker dat je deze kortingscode wilt verwijderen?",
+      "create_failed": "Kortingscode aanmaken mislukt.",
+      "delete_failed": "Kortingscode verwijderen mislukt."
     },
     "transfer": {
       "title": "Eigendom overdragen",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "bijv. notch of dev@example.com",
       "tfa_code_label": "Voer je 6-cijferige tweefactorauthenticatiecode (2FA) in",
       "sending": "Verzoek verzenden…",
-      "send_btn": "Overdrachtsverzoek verzenden"
+      "send_btn": "Overdrachtsverzoek verzenden",
+      "recipient_required": "Geef de gebruikersnaam of het e-mailadres van de ontvanger op.",
+      "code_required": "Voer een geldige 6-cijferige 2FA-authenticatorcode in.",
+      "sent_success": "Overdrachtsverzoek verzonden naar @{{recipient}}. De ontvanger moet het accepteren in zijn dashboard.",
+      "initiate_failed": "Overdrachtsverzoek starten mislukt.",
+      "cancelled_success": "Overdrachtsverzoek succesvol geannuleerd.",
+      "cancel_failed": "Overdrachtsverzoek annuleren mislukt."
     },
     "danger": {
       "title": "Gevarenzone",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. Typ de pluginnaam {{name}} ter bevestiging:",
       "step_2_label": "2. Voer je 6-cijferige tweefactorauthenticatiecode (2FA) in:",
       "deleting": "Verwijderen…",
-      "delete_btn": "Definitief verwijderen met 2FA"
+      "delete_btn": "Definitief verwijderen met 2FA",
+      "delete_failed": "Plugin verwijderen mislukt."
     },
     "settings": {
       "lead": "Ontwikkelaar",

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Download, Star } from 'lucide-react';
 import { getPluginUrl } from '../lib/url';
 import { extractYoutubeVideoId } from '../lib/youtube';
+import { translateCategory } from '../lib/categories';
 import '../styles/store.css';
 
 const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; originalDisplay: string } => {
@@ -126,7 +127,7 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
 
             <div className="entry-body">
                 <div className="entry-meta">
-                    <span className="label">{plugin.category}</span>
+                    <span className="label">{translateCategory(t, plugin.category)}</span>
                     {plugin.version && <span className="label mono">v{plugin.version}</span>}
                 </div>
                 <h3 className="entry-name">{plugin.name}</h3>

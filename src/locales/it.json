@@ -317,7 +317,9 @@
       "success_badge": "Acquisto completato!",
       "success_message": "Ora possiedi <strong>{{name}}</strong>. Fai clic sul pulsante di download per scaricare il file WASM.",
       "preorder_available": "Disponibile per il preordine",
-      "expected": "Previsto: {{date}}"
+      "expected": "Previsto: {{date}}",
+      "invalid_coupon": "Codice coupon non valido",
+      "validate_coupon_failed": "Convalida del coupon non riuscita."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "Plugin in accesso anticipato",
-    "early_access_notice": "Questo plugin è attualmente in <strong>Accesso Anticipato</strong>. È ancora in fase di sviluppo attivo e potrebbe contenere bug o funzionalità incomplete. Scaricarlo ora aiuta a sostenere lo sviluppatore e a plasmare il futuro del plugin!"
+    "early_access_notice": "Questo plugin è attualmente in <strong>Accesso Anticipato</strong>. È ancora in fase di sviluppo attivo e potrebbe contenere bug o funzionalità incomplete. Scaricarlo ora aiuta a sostenere lo sviluppatore e a plasmare il futuro del plugin!",
+    "load_failed": "Plugin non trovato o caricamento non riuscito.",
+    "not_found_title": "Plugin non <mark>trovato</mark>",
+    "not_found_desc": "Impossibile trovare il plugin richiesto."
   },
   "profile": {
     "title": "Account e Impostazioni",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "Passkey"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "Impossibile prendere in carico il plugin per la revisione.",
       "unclaim_failed": "Impossibile rilasciare la revisione.",
       "approve_failed": "Impossibile approvare il plugin.",
-      "reject_failed": "Impossibile richiedere modifiche."
+      "reject_failed": "Impossibile richiedere modifiche.",
+      "moderation_failed": "Impossibile completare l'azione di moderazione",
+      "role_update_failed": "Impossibile aggiornare il ruolo"
     },
     "analytics": {
       "new_plugins_uploaded": "Nuovi plugin caricati",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "Disponibile gratuitamente per l'intera community.",
       "paid_plugin_title": "A pagamento / Premium",
       "paid_plugin_desc": "Vendi licenze con pagamenti automatici per gli sviluppatori.",
-      "creating_draft": "Creazione bozza…"
+      "creating_draft": "Creazione bozza…",
+      "accept_transfer_failed": "Impossibile accettare la richiesta di trasferimento.",
+      "decline_transfer_failed": "Impossibile rifiutare la richiesta di trasferimento.",
+      "create_draft_failed": "Impossibile creare la bozza del plugin."
     },
     "audience": {
       "loading": "Analisi della telemetria globale e della distribuzione...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "Linee guida di revisione",
       "terms_suffix": "Concedo a Pumpkin Market la licenza per distribuire i miei plugin e confermo la conformità con l'EULA di Minecraft di Mojang.",
       "connecting_payouts": "Collegamento pagamenti...",
-      "completing_registration": "Completamento registrazione..."
+      "completing_registration": "Completamento registrazione...",
+      "accept_terms_required": "Devi accettare il Contratto di distribuzione per gli sviluppatori per continuare.",
+      "complete_failed": "Impossibile completare l'onboarding sviluppatore",
+      "verify_name_failed": "Impossibile verificare il nome sviluppatore",
+      "legal_name_individual_placeholder": "Nome e Cognome",
+      "legal_name_org_placeholder": "Ragione sociale S.r.l."
     },
     "manage": {
       "loading": "Caricamento plugin…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "Vedi nello Store",
       "unpublishing": "Rimozione dallo store…",
       "confirm_unpublish": "Portare \"{{name}}\" offline?\n\nQuesto rimuoverà il plugin dalla ricerca sul marketplace e dalla navigazione per categorie finché non lo pubblicherai di nuovo.",
-      "nav_crashes": "Crash"
+      "nav_crashes": "Crash",
+      "unpublish_failed": "Impossibile annullare la pubblicazione del plugin."
     },
     "readiness": {
       "badge_publish": "Pubblica",
@@ -1797,7 +1814,10 @@
       "fix_listing": "Correggi nella scheda",
       "fix_icon": "Carica icona",
       "fix_binary": "Carica binario",
-      "fix_pricing": "Configura prezzo"
+      "fix_pricing": "Configura prezzo",
+      "check_failed": "Impossibile verificare i requisiti di pubblicazione",
+      "submitted_success": "Plugin inviato per la revisione! Il nostro team lo esaminerà a breve.",
+      "submit_failed": "Impossibile inviare il plugin per la revisione"
     },
     "listing": {
       "title": "Scheda dello store",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "Opzionale. Puoi anche incorporare immagini e GIF direttamente nella tua descrizione Markdown.",
       "add_screenshot": "Aggiungi",
       "screenshots_hint": "Consigliato: formato 16:9, min 1280×720px. PNG, JPEG o WebP. Convalidato alla selezione.",
-      "confirm_delete_screenshot": "Eliminare questo screenshot?"
+      "confirm_delete_screenshot": "Eliminare questo screenshot?",
+      "invalid_icon": "File icona non valido.",
+      "icon_process_failed": "Impossibile elaborare l'icona.",
+      "save_failed": "Impossibile salvare i dettagli del plugin.",
+      "delete_screenshot_failed": "Impossibile eliminare lo screenshot.",
+      "invalid_screenshot": "Screenshot non valido \"{{name}}\".",
+      "screenshot_upload_failed": "Caricamento screenshot non riuscito.",
+      "keywords_placeholder": "economia, negozio, valuta",
+      "screenshot_alt": "Screenshot"
     },
     "update": {
       "title": "Pubblica aggiornamento",
@@ -1876,7 +1904,10 @@
       "wasm_hint": "Solo .wasm · max 5 MB · Versione API rilevata automaticamente dal binario",
       "verified_wasm": "{{format}} verificato",
       "publish_failed": "Pubblicazione non riuscita",
-      "publishing": "Pubblicazione…"
+      "publishing": "Pubblicazione…",
+      "invalid_wasm": "File binario WebAssembly non valido.",
+      "wasm_binary": "Binario WebAssembly",
+      "inspect_failed": "Impossibile ispezionare il file."
     },
     "pricing": {
       "title": "Prezzi",
@@ -1909,7 +1940,8 @@
       "pricing_error": "Errore di prezzo",
       "save_success": "Impostazioni di prezzo salvate con successo!",
       "saving": "Salvataggio…",
-      "save_pricing": "Salva prezzi"
+      "save_pricing": "Salva prezzi",
+      "save_failed": "Impossibile salvare i prezzi."
     },
     "analytics": {
       "loading": "Caricamento statistiche per {{name}}…",
@@ -1996,7 +2028,11 @@
       "revoke": "Revoca",
       "confirm_revoke": "Sei sicuro di voler revocare questa chiave di licenza?",
       "confirm_unrevoke": "Sei sicuro di voler ripristinare questa chiave di licenza?",
-      "confirm_delete": "Sei sicuro di voler eliminare definitivamente questo record di chiave di licenza?"
+      "confirm_delete": "Sei sicuro di voler eliminare definitivamente questo record di chiave di licenza?",
+      "grant_failed": "Impossibile assegnare la licenza all'utente.",
+      "unrevoke_failed": "Impossibile ripristinare la licenza.",
+      "revoke_failed": "Impossibile revocare la licenza.",
+      "delete_failed": "Impossibile eliminare il record della licenza."
     },
     "coupons": {
       "title": "Coupon e Codici promozionali",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}} utilizzi",
       "uses_unlimited": "{{used}} utilizzi",
       "expires_on": "Scad: {{date}}",
-      "confirm_delete": "Sei sicuro di voler eliminare questo coupon?"
+      "confirm_delete": "Sei sicuro di voler eliminare questo coupon?",
+      "create_failed": "Impossibile creare il coupon.",
+      "delete_failed": "Impossibile eliminare il coupon."
     },
     "transfer": {
       "title": "Trasferisci proprietà",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "es. notch o dev@example.com",
       "tfa_code_label": "Inserisci il tuo codice di autenticazione a due fattori (2FA) a 6 cifre",
       "sending": "Invio richiesta…",
-      "send_btn": "Invia richiesta di trasferimento"
+      "send_btn": "Invia richiesta di trasferimento",
+      "recipient_required": "Specifica il nome utente o l'e-mail del destinatario.",
+      "code_required": "Inserisci un codice 2FA valido a 6 cifre.",
+      "sent_success": "Richiesta di trasferimento inviata a @{{recipient}}. Deve accettarla nella propria dashboard.",
+      "initiate_failed": "Impossibile avviare la richiesta di trasferimento.",
+      "cancelled_success": "Richiesta di trasferimento annullata con successo.",
+      "cancel_failed": "Impossibile annullare la richiesta di trasferimento."
     },
     "danger": {
       "title": "Zona di pericolo",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. Digita il nome del plugin {{name}} per confermare:",
       "step_2_label": "2. Inserisci il tuo codice di autenticazione a due fattori (2FA) a 6 cifre:",
       "deleting": "Eliminazione…",
-      "delete_btn": "Elimina per sempre con 2FA"
+      "delete_btn": "Elimina per sempre con 2FA",
+      "delete_failed": "Impossibile eliminare il plugin."
     },
     "settings": {
       "lead": "Account",

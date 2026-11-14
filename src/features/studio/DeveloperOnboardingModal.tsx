@@ -145,7 +145,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
 
   const handleCompleteOnboarding = async (connectStripe: boolean) => {
     if (!acceptedTerms) {
-      setError('You must accept the Developer Distribution Agreement to continue.');
+      setError(t('studio.onboarding.accept_terms_required'));
       return;
     }
     setLoading(true);
@@ -182,7 +182,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       onSuccess?.();
       onClose?.();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to complete developer onboarding');
+      setError(err.response?.data?.error || t('studio.onboarding.complete_failed'));
     } finally {
       setLoading(false);
     }
@@ -209,7 +209,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
       setNameError(null);
       nextStep();
     } catch (err: any) {
-      setNameError(err.response?.data?.error || 'Failed to verify developer name');
+      setNameError(err.response?.data?.error || t('studio.onboarding.verify_name_failed'));
     } finally {
       setNameChecking(false);
     }
@@ -257,7 +257,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
           </p>
         </div>
         {!embedded && onClose && (
-          <button type="button" className="button button-ghost button-icon" onClick={onClose} aria-label="Close modal"><X /></button>
+          <button type="button" className="button button-ghost button-icon" onClick={onClose} aria-label={t('common.close')}><X /></button>
         )}
       </div>
 
@@ -486,7 +486,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={legalName}
                       onChange={e => setLegalName(e.target.value)}
-                      placeholder={entityType === 'individual' ? 'First and Last Name' : 'Legal Company Name Inc.'}
+                      placeholder={entityType === 'individual' ? t('studio.onboarding.legal_name_individual_placeholder') : t('studio.onboarding.legal_name_org_placeholder')}
                       autoComplete="name"
                       required
                     />
@@ -503,7 +503,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={streetAddress}
                       onChange={e => setStreetAddress(e.target.value)}
-                      placeholder="123 Main St, Suite 400"
+                      placeholder={t('profile.developer.street_placeholder')}
                       autoComplete="street-address"
                       required
                     />
@@ -520,7 +520,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={city}
                       onChange={e => setCity(e.target.value)}
-                      placeholder="City"
+                      placeholder={t('studio.settings.city')}
                       autoComplete="address-level2"
                       required
                     />
@@ -565,7 +565,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                       className="input"
                       value={vatId}
                       onChange={e => setVatId(e.target.value)}
-                      placeholder="EU123456789 or Tax ID"
+                      placeholder={t('profile.developer.tax_id_placeholder')}
                       autoComplete="off"
                     />
                   </span>
@@ -603,7 +603,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
                     className="input"
                     value={supportEmail}
                     onChange={e => setSupportEmail(e.target.value)}
-                    placeholder="support@yourdomain.com"
+                    placeholder={t('profile.developer.support_email_placeholder')}
                     autoComplete="email"
                     required
                   />

@@ -31,7 +31,7 @@ const DangerZone = ({ plugin }: Props) => {
             });
             navigate('/dashboard/plugins');
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to delete plugin.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.danger.delete_failed');
             setDeleteError(msg);
             setDeleting(false);
         }

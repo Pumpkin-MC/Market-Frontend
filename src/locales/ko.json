@@ -317,7 +317,9 @@
       "success_badge": "구매가 완료되었습니다!",
       "success_message": "이제 <strong>{{name}}</strong>을(를) 소유하고 있습니다. 다운로드 버튼을 클릭하여 WASM 파일을 받으세요.",
       "preorder_available": "사전 주문 가능",
-      "expected": "예정일: {{date}}"
+      "expected": "예정일: {{date}}",
+      "invalid_coupon": "유효하지 않은 쿠폰 코드입니다",
+      "validate_coupon_failed": "쿠폰 확인에 실패했습니다."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "앞서 해보기 플러그인",
-    "early_access_notice": "이 플러그인은 현재 <strong>앞서 해보기(Early Access)</strong> 단계입니다. 활발히 개발 중이므로 버그나 미완성 기능이 포함될 수 있습니다. 지금 다운로드하여 개발자를 후원하고 플러그인의 미래를 함께 만들어 보세요!"
+    "early_access_notice": "이 플러그인은 현재 <strong>앞서 해보기(Early Access)</strong> 단계입니다. 활발히 개발 중이므로 버그나 미완성 기능이 포함될 수 있습니다. 지금 다운로드하여 개발자를 후원하고 플러그인의 미래를 함께 만들어 보세요!",
+    "load_failed": "플러그인을 찾을 수 없거나 불러오기에 실패했습니다.",
+    "not_found_title": "플러그인을 찾을 수 <mark>없음</mark>",
+    "not_found_desc": "요청하신 플러그인을 찾을 수 없습니다."
   },
   "profile": {
     "title": "계정 및 설정",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "패스키"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "플러그인 심사 배정에 실패했습니다.",
       "unclaim_failed": "심사 배정 해제에 실패했습니다.",
       "approve_failed": "플러그인 승인에 실패했습니다.",
-      "reject_failed": "수정 요청에 실패했습니다."
+      "reject_failed": "수정 요청에 실패했습니다.",
+      "moderation_failed": "관리 작업을 완료하지 못했습니다",
+      "role_update_failed": "역할을 업데이트하지 못했습니다"
     },
     "analytics": {
       "new_plugins_uploaded": "신규 업로드 플러그인",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "전체 커뮤니티에 무료로 제공됩니다.",
       "paid_plugin_title": "유료 / 프리미엄",
       "paid_plugin_desc": "자동화된 개발자 정산을 통해 라이선스를 판매합니다.",
-      "creating_draft": "초안 생성 중…"
+      "creating_draft": "초안 생성 중…",
+      "accept_transfer_failed": "소유권 이전 요청 수락에 실패했습니다.",
+      "decline_transfer_failed": "소유권 이전 요청 거절에 실패했습니다.",
+      "create_draft_failed": "플러그인 초안 생성에 실패했습니다."
     },
     "audience": {
       "loading": "글로벌 텔레메트리 및 분포 분석 중...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "심사 가이드라인",
       "terms_suffix": "에 동의합니다. 본인은 Pumpkin Market에 내 플러그인을 배포할 수 있는 라이선스를 부여하며 Mojang의 마인크래프트 EULA를 준수함을 확인합니다.",
       "connecting_payouts": "정산 계좌 연결 중...",
-      "completing_registration": "등록 완료 중..."
+      "completing_registration": "등록 완료 중...",
+      "accept_terms_required": "계속하려면 개발자 배포 계약에 동의해야 합니다.",
+      "complete_failed": "개발자 온보딩을 완료하지 못했습니다",
+      "verify_name_failed": "개발자 이름 확인에 실패했습니다",
+      "legal_name_individual_placeholder": "성명",
+      "legal_name_org_placeholder": "법인 상호명"
     },
     "manage": {
       "loading": "플러그인 불러오는 중…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "스토어에서 보기",
       "unpublishing": "비공개 전환 중…",
       "confirm_unpublish": "\"{{name}}\" 플러그인을 비공개로 전환하시겠습니까?\n\n다시 출시할 때까지 마켓플레이스 검색 및 카테고리 탐색에서 제외됩니다.",
-      "nav_crashes": "크래시"
+      "nav_crashes": "크래시",
+      "unpublish_failed": "플러그인 게시 중단에 실패했습니다."
     },
     "readiness": {
       "badge_publish": "출시",
@@ -1797,7 +1814,10 @@
       "fix_listing": "등록 정보에서 수정",
       "fix_icon": "아이콘 업로드",
       "fix_binary": "바이너리 업로드",
-      "fix_pricing": "가격 설정"
+      "fix_pricing": "가격 설정",
+      "check_failed": "게시 준비 상태 확인에 실패했습니다",
+      "submitted_success": "플러그인이 심사를 위해 제출되었습니다! 검토 팀이 곧 확인할 것입니다.",
+      "submit_failed": "심사 제출에 실패했습니다"
     },
     "listing": {
       "title": "스토어 등록 정보",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "선택사항입니다. 마크다운(Markdown) 설명 안에 이미지나 GIF를 직접 삽입할 수도 있습니다.",
       "add_screenshot": "추가",
       "screenshots_hint": "권장: 16:9 비율, 최소 1280×720px. PNG, JPEG 또는 WebP. 선택 시 자동 검증됩니다.",
-      "confirm_delete_screenshot": "이 스크린샷을 삭제하시겠습니까?"
+      "confirm_delete_screenshot": "이 스크린샷을 삭제하시겠습니까?",
+      "invalid_icon": "유효하지 않은 아이콘 파일입니다.",
+      "icon_process_failed": "아이콘을 처리할 수 없습니다.",
+      "save_failed": "플러그인 세부 정보 저장에 실패했습니다.",
+      "delete_screenshot_failed": "스크린샷 삭제에 실패했습니다.",
+      "invalid_screenshot": "유효하지 않은 스크린샷 \"{{name}}\"입니다.",
+      "screenshot_upload_failed": "스크린샷 업로드에 실패했습니다.",
+      "keywords_placeholder": "경제, 상점, 화폐",
+      "screenshot_alt": "스크린샷"
     },
     "update": {
       "title": "업데이트 출시",
@@ -1876,7 +1904,10 @@
       "wasm_hint": ".wasm 전용 · 최대 5 MB · 바이너리에서 API 버전 자동 감지",
       "verified_wasm": "{{format}} 검증됨",
       "publish_failed": "출시 실패",
-      "publishing": "출시 중…"
+      "publishing": "출시 중…",
+      "invalid_wasm": "유효하지 않은 WebAssembly 바이너리입니다.",
+      "wasm_binary": "WebAssembly 바이너리",
+      "inspect_failed": "파일 검사에 실패했습니다."
     },
     "pricing": {
       "title": "가격 설정",
@@ -1909,7 +1940,8 @@
       "pricing_error": "가격 설정 오류",
       "save_success": "가격 설정이 성공적으로 저장되었습니다!",
       "saving": "저장 중…",
-      "save_pricing": "가격 설정 저장"
+      "save_pricing": "가격 설정 저장",
+      "save_failed": "가격 설정 저장에 실패했습니다."
     },
     "analytics": {
       "loading": "{{name}} 분석 데이터 불러오는 중…",
@@ -1996,7 +2028,11 @@
       "revoke": "회수",
       "confirm_revoke": "이 라이선스 키를 회수하시겠습니까?",
       "confirm_unrevoke": "이 라이선스 키의 회수를 취소하시겠습니까?",
-      "confirm_delete": "이 라이선스 키 기록을 영구적으로 삭제하시겠습니까?"
+      "confirm_delete": "이 라이선스 키 기록을 영구적으로 삭제하시겠습니까?",
+      "grant_failed": "사용자에게 라이선스 부여에 실패했습니다.",
+      "unrevoke_failed": "라이선스 복원에 실패했습니다.",
+      "revoke_failed": "라이선스 철회에 실패했습니다.",
+      "delete_failed": "라이선스 기록 삭제에 실패했습니다."
     },
     "coupons": {
       "title": "쿠폰 및 프로모션 코드",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}}회 사용",
       "uses_unlimited": "{{used}}회 사용",
       "expires_on": "만료: {{date}}",
-      "confirm_delete": "이 쿠폰을 삭제하시겠습니까?"
+      "confirm_delete": "이 쿠폰을 삭제하시겠습니까?",
+      "create_failed": "쿠폰 생성에 실패했습니다.",
+      "delete_failed": "쿠폰 삭제에 실패했습니다."
     },
     "transfer": {
       "title": "소유권 이전",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "예: notch 또는 dev@example.com",
       "tfa_code_label": "6자리 이중 인증(2FA) 코드를 입력하세요",
       "sending": "요청 전송 중…",
-      "send_btn": "이전 요청 보내기"
+      "send_btn": "이전 요청 보내기",
+      "recipient_required": "수신자의 사용자 이름 또는 이메일을 입력하세요.",
+      "code_required": "유효한 6자리 2FA 인증 코드를 입력하세요.",
+      "sent_success": "@{{recipient}}님에게 이전 요청을 보냈습니다. 수신자가 대시보드에서 수락해야 합니다.",
+      "initiate_failed": "이전 요청을 시작하지 못했습니다.",
+      "cancelled_success": "이전 요청이 성공적으로 취소되었습니다.",
+      "cancel_failed": "이전 요청을 취소하지 못했습니다."
     },
     "danger": {
       "title": "위험 구역",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. 확인을 위해 플러그인 이름 {{name}}을(를) 입력하세요:",
       "step_2_label": "2. 6자리 이중 인증(2FA) 코드를 입력하세요:",
       "deleting": "삭제 중…",
-      "delete_btn": "2FA로 영구 삭제"
+      "delete_btn": "2FA로 영구 삭제",
+      "delete_failed": "플러그인 삭제에 실패했습니다."
     },
     "settings": {
       "lead": "개발자",

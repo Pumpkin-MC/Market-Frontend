@@ -317,7 +317,9 @@
       "success_badge": "Satın alma başarılı!",
       "success_message": "Artık <strong>{{name}}</strong> eklentisine sahipsiniz. WASM dosyanızı almak için indirme düğmesine tıklayın.",
       "preorder_available": "Ön Siparişe Açık",
-      "expected": "Beklenen: {{date}}"
+      "expected": "Beklenen: {{date}}",
+      "invalid_coupon": "Geçersiz kupon kodu",
+      "validate_coupon_failed": "Kupon doğrulanamadı."
     },
     "versions": {
       "default_notes": "Bug fixes and performance improvements.",
@@ -332,7 +334,10 @@
       "seek": "Seek"
     },
     "early_access_title": "Erken Erişim Eklentisi",
-    "early_access_notice": "Bu eklenti şu anda <strong>Erken Erişim</strong> aşamasındadır. Halen aktif olarak geliştirilmektedir ve hatalar veya eksik özellikler içerebilir. Şimdi indirmeniz geliştiriciyi destekler ve eklentinin geleceğini şekillendirmeye yardımcı olur!"
+    "early_access_notice": "Bu eklenti şu anda <strong>Erken Erişim</strong> aşamasındadır. Halen aktif olarak geliştirilmektedir ve hatalar veya eksik özellikler içerebilir. Şimdi indirmeniz geliştiriciyi destekler ve eklentinin geleceğini şekillendirmeye yardımcı olur!",
+    "load_failed": "Eklenti bulunamadı veya yüklenemedi.",
+    "not_found_title": "Eklenti <mark>Bulunamadı</mark>",
+    "not_found_desc": "İstenen eklenti bulunamadı."
   },
   "profile": {
     "title": "Hesap ve Ayarlar",
@@ -561,7 +566,8 @@
       "renamed": "Passkey renamed.",
       "save_name": "Save Name",
       "synced": "Synced",
-      "title": "Passkeys & Biometrics"
+      "title": "Passkeys & Biometrics",
+      "default_name": "Geçiş Anahtarı"
     },
     "password": {
       "change_failed": "Failed to change password. Please verify your current password.",
@@ -1471,7 +1477,9 @@
       "claim_failed": "Eklenti inceleme için alınamadı.",
       "unclaim_failed": "İnceleme bırakılamadı.",
       "approve_failed": "Eklenti onaylanamadı.",
-      "reject_failed": "Değişiklik talep edilemedi."
+      "reject_failed": "Değişiklik talep edilemedi.",
+      "moderation_failed": "Moderasyon işlemi tamamlanamadı",
+      "role_update_failed": "Rol güncellenemedi"
     },
     "analytics": {
       "new_plugins_uploaded": "Yüklenen Yeni Eklentiler",
@@ -1673,7 +1681,10 @@
       "free_plugin_desc": "Tüm topluluğun kullanımına ücretsiz olarak sunulur.",
       "paid_plugin_title": "Ücretli / Premium",
       "paid_plugin_desc": "Otomatik geliştirici ödemeleriyle lisans satın.",
-      "creating_draft": "Taslak Oluşturuluyor…"
+      "creating_draft": "Taslak Oluşturuluyor…",
+      "accept_transfer_failed": "Aktarım isteği kabul edilemedi.",
+      "decline_transfer_failed": "Aktarım isteği reddedilemedi.",
+      "create_draft_failed": "Eklenti taslağı oluşturulamadı."
     },
     "audience": {
       "loading": "Küresel Telemetri ve Dağılım Analiz Ediliyor...",
@@ -1736,7 +1747,12 @@
       "terms_guidelines": "İnceleme Yönergeleri",
       "terms_suffix": "Pumpkin Market'e eklentilerimi dağıtması için lisans veriyorum ve Mojang'ın Minecraft EULA'sına uygunluğu onaylıyorum.",
       "connecting_payouts": "Ödeme Hesabı Bağlanıyor...",
-      "completing_registration": "Kayıt tamamlanıyor..."
+      "completing_registration": "Kayıt tamamlanıyor...",
+      "accept_terms_required": "Devam etmek için Geliştirici Dağıtım Sözleşmesi'ni kabul etmelisiniz.",
+      "complete_failed": "Geliştirici kaydı tamamlanamadı",
+      "verify_name_failed": "Geliştirici adı doğrulanamadı",
+      "legal_name_individual_placeholder": "Ad ve Soyad",
+      "legal_name_org_placeholder": "Yasal Şirket Adı A.Ş."
     },
     "manage": {
       "loading": "Eklenti yükleniyor…",
@@ -1761,7 +1777,8 @@
       "view_on_store": "Mağazada Görüntüle",
       "unpublishing": "Yayından kaldırılıyor…",
       "confirm_unpublish": "\"{{name}}\" yayından kaldırılsın mı?\n\nBu işlem, siz tekrar yayınlayana kadar eklentiyi pazar yeri aramalarından ve kategori listelerinden kaldıracaktır.",
-      "nav_crashes": "Çökmeler"
+      "nav_crashes": "Çökmeler",
+      "unpublish_failed": "Eklenti yayından kaldırılamadı."
     },
     "readiness": {
       "badge_publish": "Yayınla",
@@ -1797,7 +1814,10 @@
       "fix_listing": "Sayfada Düzelt",
       "fix_icon": "Simge Yükle",
       "fix_binary": "İkili Dosya Yükle",
-      "fix_pricing": "Fiyatı Yapılandır"
+      "fix_pricing": "Fiyatı Yapılandır",
+      "check_failed": "Yayın hazırlığı kontrol edilemedi",
+      "submitted_success": "Eklenti inceleme için gönderildi! İnceleme ekibimiz başvurunuzu yakında kontrol edecektir.",
+      "submit_failed": "Eklenti inceleme için gönderilemedi"
     },
     "listing": {
       "title": "Mağaza Sayfası",
@@ -1847,7 +1867,15 @@
       "screenshots_desc": "İsteğe bağlı. Ayrıca görselleri ve GIF'leri doğrudan Markdown açıklamanıza da ekleyebilirsiniz.",
       "add_screenshot": "Ekle",
       "screenshots_hint": "Önerilen: 16:9 en-boy oranı, min. 1280×720px. PNG, JPEG veya WebP. Seçim sırasında doğrulanır.",
-      "confirm_delete_screenshot": "Bu ekran görüntüsü silinsin mi?"
+      "confirm_delete_screenshot": "Bu ekran görüntüsü silinsin mi?",
+      "invalid_icon": "Geçersiz simge dosyası.",
+      "icon_process_failed": "Simge işlenemedi.",
+      "save_failed": "Eklenti ayrıntıları kaydedilemedi.",
+      "delete_screenshot_failed": "Ekran görüntüsü silinemedi.",
+      "invalid_screenshot": "Geçersiz ekran görüntüsü \"{{name}}\".",
+      "screenshot_upload_failed": "Ekran görüntüsü yüklenemedi.",
+      "keywords_placeholder": "ekonomi, mağaza, para birimi",
+      "screenshot_alt": "Ekran görüntüsü"
     },
     "update": {
       "title": "Güncelleme Yayınla",
@@ -1876,7 +1904,10 @@
       "wasm_hint": "Yalnızca .wasm · maks. 5 MB · API sürümü ikili dosyadan otomatik algılanır",
       "verified_wasm": "Doğrulandı: {{format}}",
       "publish_failed": "Yayınlama Başarısız",
-      "publishing": "Yayınlanıyor…"
+      "publishing": "Yayınlanıyor…",
+      "invalid_wasm": "Geçersiz WebAssembly ikili dosyası.",
+      "wasm_binary": "WebAssembly İkili Dosyası",
+      "inspect_failed": "Dosya incelenemedi."
     },
     "pricing": {
       "title": "Fiyatlandırma",
@@ -1909,7 +1940,8 @@
       "pricing_error": "Fiyatlandırma Hatası",
       "save_success": "Fiyatlandırma ayarları başarıyla kaydedildi!",
       "saving": "Kaydediliyor…",
-      "save_pricing": "Fiyatlandırmayı Kaydet"
+      "save_pricing": "Fiyatlandırmayı Kaydet",
+      "save_failed": "Fiyatlandırma kaydedilemedi."
     },
     "analytics": {
       "loading": "{{name}} için istatistikler yükleniyor…",
@@ -1996,7 +2028,11 @@
       "revoke": "İptal Et",
       "confirm_revoke": "Bu lisans anahtarını iptal etmek istediğinizden emin misiniz?",
       "confirm_unrevoke": "Bu lisans anahtarının iptalini kaldırmak istediğinizden emin misiniz?",
-      "confirm_delete": "Bu lisans anahtarı kaydını kalıcı olarak silmek istediğinizden emin misiniz?"
+      "confirm_delete": "Bu lisans anahtarı kaydını kalıcı olarak silmek istediğinizden emin misiniz?",
+      "grant_failed": "Kullanıcıya lisans verilemedi.",
+      "unrevoke_failed": "Lisans geri yüklenemedi.",
+      "revoke_failed": "Lisans iptal edilemedi.",
+      "delete_failed": "Lisans kaydı silinemedi."
     },
     "coupons": {
       "title": "Kuponlar ve Promosyon Kodları",
@@ -2018,7 +2054,9 @@
       "uses_count": "{{used}} / {{max}} kullanım",
       "uses_unlimited": "{{used}} kullanım",
       "expires_on": "S.K.T: {{date}}",
-      "confirm_delete": "Bu kuponu silmek istediğinizden emin misiniz?"
+      "confirm_delete": "Bu kuponu silmek istediğinizden emin misiniz?",
+      "create_failed": "Kupon oluşturulamadı.",
+      "delete_failed": "Kupon silinemedi."
     },
     "transfer": {
       "title": "Sahipliği Devret",
@@ -2040,7 +2078,13 @@
       "recipient_placeholder": "örn. notch veya dev@example.com",
       "tfa_code_label": "6 haneli İki Faktörlü Kimlik Doğrulama (2FA) Kodunuzu girin",
       "sending": "Talep Gönderiliyor…",
-      "send_btn": "Devir Talebi Gönder"
+      "send_btn": "Devir Talebi Gönder",
+      "recipient_required": "Lütfen alıcının kullanıcı adını veya e-posta adresini belirtin.",
+      "code_required": "Lütfen geçerli 6 haneli bir 2FA doğrulama kodu girin.",
+      "sent_success": "Aktarım isteği @{{recipient}} kullanıcısına gönderildi. Alıcının kontrol panelinden kabul etmesi gerekir.",
+      "initiate_failed": "Aktarım isteği başlatılamadı.",
+      "cancelled_success": "Aktarım isteği başarıyla iptal edildi.",
+      "cancel_failed": "Aktarım isteği iptal edilemedi."
     },
     "danger": {
       "title": "Tehlikeli Bölge",
@@ -2051,7 +2095,8 @@
       "step_1_label": "1. Onaylamak için eklenti adını ({{name}}) yazın:",
       "step_2_label": "2. 6 haneli İki Faktörlü Kimlik Doğrulama (2FA) kodunuzu girin:",
       "deleting": "Siliniyor…",
-      "delete_btn": "2FA ile Kalıcı Olarak Sil"
+      "delete_btn": "2FA ile Kalıcı Olarak Sil",
+      "delete_failed": "Eklenti silinemedi."
     },
     "settings": {
       "lead": "Geliştirici",

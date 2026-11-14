@@ -10,6 +10,7 @@ import SEO from '../../components/SEO';
 import { PluginVideoPlayer } from './PluginVideoPlayer';
 import { GuidelineRejectionPicker, RejectionReasonsList } from '../../components/GuidelineRejectionPicker';
 import { serializeRejectionReason } from '../../lib/guidelines';
+import { translateCategory } from '../../lib/categories';
 import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X, ShieldCheck, AlertTriangle, Lock, Cpu, Globe, HardDrive, Terminal, Fingerprint } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../../types/plugin';
 import '../../styles/plugin.css';
@@ -133,14 +134,6 @@ const getInitials = (username: string) => {
   const parts = username.trim().split(/[\s_\-\.]+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return username.slice(0, 2).toUpperCase();
-};
-
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const day = d.getDate();
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const year = d.getFullYear();
-  return `${day} ${month}, ${year}`;
 };
 
 const getLocalizedCommandDescription = (
@@ -274,6 +267,10 @@ const PluginCommands = ({ commands }: { commands?: PluginCommand[] }) => {
 
 const PluginPage = () => {
   const { t, i18n } = useTranslation();
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language || undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  };
   const { id: rawId, slug } = useParams();
   const id = rawId ? rawId.split('-')[0] : rawId;
   const { user } = useAuth();
@@ -309,12 +306,12 @@ const PluginPage = () => {
       } else {
         setAppliedCoupon(null);
         setCouponDiscount(0);
-        setCouponMessage({ text: res.data.message || 'Invalid coupon code', isError: true });
+        setCouponMessage({ text: res.data.message || t('plugin.purchase.invalid_coupon'), isError: true });
       }
     } catch {
       setAppliedCoupon(null);
       setCouponDiscount(0);
-      setCouponMessage({ text: 'Failed to validate coupon.', isError: true });
+      setCouponMessage({ text: t('plugin.purchase.validate_coupon_failed'), isError: true });
     } finally {
       setValidatingCoupon(false);
     }
@@ -406,7 +403,7 @@ const PluginPage = () => {
     })
     .catch(err => {
       console.error('Failed to load plugin:', err);
-      setError('Plugin not found or failed to load.');
+      setError(t('plugin.load_failed'));
     })
     .finally(() => {
       setLoading(false);
@@ -492,7 +489,7 @@ const PluginPage = () => {
       return (
         <img
           src={src}
-          alt={alt || 'Plugin illustration'}
+          alt={alt || t('plugin.media.illustration')}
           loading="lazy"
           decoding="async"
           className="pd-md-img"
@@ -501,7 +498,7 @@ const PluginPage = () => {
         />
       );
     },
-  }), [openLightboxWithSrc]);
+  }), [openLightboxWithSrc, t]);
 
   const lightboxPrev = () => {
     if (!screenshots.length) return;
@@ -733,8 +730,8 @@ const PluginPage = () => {
     return (
       <div className="page pd">
         <div className="blank">
-          <h1 className="h1">Plugin Not <span className="mark">Found</span></h1>
-          <p className="small">{error || 'The requested plugin could not be found.'}</p>
+          <h1 className="h1"><Trans t={t} i18nKey="plugin.not_found_title" components={{ mark: <span className="mark" /> }} /></h1>
+          <p className="small">{error || t('plugin.not_found_desc')}</p>
           <Link to="/" className="button">{t('common.back')}</Link>
         </div>
       </div>
@@ -898,7 +895,7 @@ const PluginPage = () => {
           {
             "@type": "ListItem",
             "position": 2,
-            "name": plugin.category || t('nav.plugins'),
+            "name": translateCategory(t, plugin.category) || t('nav.plugins'),
             "item": `https://market.pumpkinmc.org/search?category=${encodeURIComponent(plugin.category || '')}`
           },
           {
@@ -955,7 +952,7 @@ const PluginPage = () => {
   })();
 
   const seoStatsLine = [
-    plugin.category,
+    translateCategory(t, plugin.category),
     plugin.version ? `v${plugin.version.replace(/^v/, '')}` : null,
     seoPriceLabel,
     plugin.is_early_access ? t('plugin.early_access_badge') : null,
@@ -1028,7 +1025,7 @@ const PluginPage = () => {
         <ChevronRight />
         {plugin.category && (
           <>
-            <Link to={`/search?category=${encodeURIComponent(plugin.category)}`}>{plugin.category}</Link>
+            <Link to={`/search?category=${encodeURIComponent(plugin.category)}`}>{translateCategory(t, plugin.category)}</Link>
             <ChevronRight />
           </>
         )}
@@ -1207,7 +1204,7 @@ const PluginPage = () => {
               <div className="row">
                 <span className="entry-by">{t('plugin.by')} <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
                 {plugin.dev_verified && <span className="tag tag-info" title={t('plugin.verified_developer')}><ShieldCheck size={12} /> {t('staff.table.verified')}</span>}
-                {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
+                {plugin.category && <span className="tag tag-fg">{translateCategory(t, plugin.category)}</span>}
                 {plugin.is_preorder && <span className="sticker sticker-sm">{t('plugin.purchase.preorder_badge')}</span>}
                 {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">{t('plugin.early_access_badge')}</span>}
                 {plugin.type === 'paid' && saleDiscount > 0 && <span className="sticker sticker-sm">-{saleDiscount}%</span>}
@@ -1984,7 +1981,7 @@ const PluginPage = () => {
                 </>
               )}
               <dt>{t('plugin.category')}</dt>
-              <dd>{plugin.category}</dd>
+              <dd>{translateCategory(t, plugin.category)}</dd>
               {plugin.source_link && (
                 <>
                   <dt>{t('plugin.source')}</dt>

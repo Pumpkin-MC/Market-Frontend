@@ -93,7 +93,7 @@ const ManagePluginPage = () => {
             await api.post(`/plugins/${plugin.id}/unpublish`);
             await fetchPlugin();
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to unpublish plugin.');
+            alert(err.response?.data?.error || t('studio.manage.unpublish_failed'));
         } finally {
             setUnpublishing(false);
         }

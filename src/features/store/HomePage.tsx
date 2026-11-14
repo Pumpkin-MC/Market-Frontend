@@ -17,12 +17,15 @@ const PAGE_SIZE = 12;
 
 // The hero card is itself a <Link>, so markdown links must not render nested
 // anchors; they keep their styling but the whole card stays the click target.
+const HeroMarkdownImage = ({ src, alt }: { src?: string | Blob; alt?: string }) => {
+    const { t } = useTranslation();
+    const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
+    return isSafe ? <img src={src} alt={alt || t('plugin.media.illustration')} loading="lazy" decoding="async" className="sf-md-img" /> : null;
+};
+
 const heroMarkdownComponents = {
     a: ({ children }: { children?: ReactNode }) => <span className="sf-md-link">{children}</span>,
-    img: ({ src, alt }: { src?: string | Blob; alt?: string }) => {
-        const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
-        return isSafe ? <img src={src} alt={alt || 'Plugin illustration'} loading="lazy" decoding="async" className="sf-md-img" /> : null;
-    },
+    img: HeroMarkdownImage,
 };
 
 const markFirst = (text: string): ReactNode => {

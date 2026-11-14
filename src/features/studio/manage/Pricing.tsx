@@ -89,7 +89,7 @@ const Pricing = ({ plugin, onSaved }: Props) => {
             onSaved();
             setTimeout(() => setPricingSuccess(false), 3000);
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to save pricing.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.pricing.save_failed');
             setPricingError(msg);
         } finally {
             setSaving(false);

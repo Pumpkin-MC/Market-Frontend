@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import api from '../../lib/api';
+import i18n from '../../lib/i18n';
 
 export interface TelemetryDistributionItem {
   label: string;
@@ -84,7 +85,7 @@ export const useAnalytics = (pluginId?: number) => {
     if (!timeSeries.length) return [];
 
     const dailyMap = timeSeries.reduce((acc, curr) => {
-      const day = curr.date || 'Unknown';
+      const day = curr.date || i18n.t('common.unknown');
       if (!acc[day]) {
         acc[day] = { date: day, views: 0, downloads: 0, earnings: 0, avgRating: 0, reviewCount: 0, conversionRate: 0 };
       }

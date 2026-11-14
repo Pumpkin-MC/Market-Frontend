@@ -7,11 +7,10 @@ import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
 import DeveloperOnboardingModal from './DeveloperOnboardingModal';
 import { getPluginUrl } from '../../lib/url';
+import { getCategoryOptions, translateCategory } from '../../lib/categories';
 import { Select } from '../../components/Select';
 import '../../styles/studio.css';
 import { useDialog } from '../../hooks/useDialog';
-
-const PLUGIN_CATEGORIES = ['Admin Tools', 'Economy', 'Fun', 'World Management', 'Utilities', 'Chat', 'Other'];
 
 const PluginsPage = () => {
     const { t } = useTranslation();
@@ -58,7 +57,7 @@ const PluginsPage = () => {
             await fetchIncomingTransfers();
             window.location.reload();
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to accept transfer request.');
+            alert(err.response?.data?.error || t('studio.plugins.accept_transfer_failed'));
         } finally {
             setTransferLoadingId(null);
         }
@@ -71,7 +70,7 @@ const PluginsPage = () => {
             await api.post(`/user/transfers/${transferId}/reject`);
             setIncomingTransfers(prev => prev.filter(t => t.id !== transferId));
         } catch (err: any) {
-            alert(err.response?.data?.error || 'Failed to decline transfer request.');
+            alert(err.response?.data?.error || t('studio.plugins.decline_transfer_failed'));
         } finally {
             setTransferLoadingId(null);
         }
@@ -93,7 +92,7 @@ const PluginsPage = () => {
             setNewPluginName('');
             navigate(`/dashboard/manage-plugin/${res.data.id}`);
         } catch (err: any) {
-            setCreateError(err.response?.data?.error || err.response?.data?.message || 'Failed to create plugin draft.');
+            setCreateError(err.response?.data?.error || err.response?.data?.message || t('studio.plugins.create_draft_failed'));
         } finally {
             setCreatingPlugin(false);
         }
@@ -325,7 +324,7 @@ const PluginsPage = () => {
                                                     </button>
                                                     <div className="row st-plugins-tags">
                                                         <span className="tag mono st-case">{p.version ? `v${p.version}` : `ID: ${p.id}`}</span>
-                                                        {p.category && <span className="tag tag-fg">{p.category}</span>}
+                                                        {p.category && <span className="tag tag-fg">{translateCategory(t, p.category)}</span>}
                                                         {p.isEarlyAccess && <span className="tag tag-warning">{t('studio.plugins.filter_early_access')}</span>}
                                                     </div>
                                                     <div className="row st-plugins-quick">
@@ -449,7 +448,7 @@ const PluginsPage = () => {
                                 <div className="field">
                                     <span className="field-label" id="newPluginCategory">{t('studio.plugins.category_label')}</span>
                                     <Select
-                                        options={PLUGIN_CATEGORIES}
+                                        options={getCategoryOptions(t)}
                                         value={newPluginCategory}
                                         onChange={setNewPluginCategory}
                                         aria-labelledby="newPluginCategory"
