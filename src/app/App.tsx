@@ -20,6 +20,7 @@ const VerifyEmailPage = lazy(() => import('../features/account/VerifyEmailPage')
 const ConfirmEmailChangePage = lazy(() => import('../features/account/ConfirmEmailChangePage'));
 const CheckEmailPage = lazy(() => import('../features/account/CheckEmailPage'));
 const SsoCallbackPage = lazy(() => import('../features/account/SsoCallbackPage'));
+const LinkServerPage = lazy(() => import('../features/account/LinkServerPage'));
 const SettingsPage = lazy(() => import('../features/account/SettingsPage'));
 const AuthorPage = lazy(() => import('../features/store/AuthorPage'));
 const SearchPage = lazy(() => import('../features/store/SearchPage'));
@@ -38,7 +39,11 @@ const AccountsRootIndex = () => {
   return <Navigate to={user ? '/settings' : '/login'} replace />;
 };
 
-const ExternalAccountsRedirect = ({ mode }: { mode: 'login' | 'register' | 'settings' }) => {
+const ExternalAccountsRedirect = ({
+  mode,
+}: {
+  mode: 'login' | 'register' | 'settings' | 'link';
+}) => {
   const location = useLocation();
   const { user } = useAuth();
   const ssoEnabled = useCrossSubdomainSso();
@@ -48,6 +53,11 @@ const ExternalAccountsRedirect = ({ mode }: { mode: 'login' | 'register' | 'sett
 
     if (mode === 'settings') {
       window.location.replace(getAccountsUrl(`/settings${location.search}`));
+      return;
+    }
+
+    if (mode === 'link') {
+      window.location.replace(getAccountsUrl(`/link${location.search}`));
       return;
     }
 
@@ -70,6 +80,13 @@ const ExternalAccountsRedirect = ({ mode }: { mode: 'login' | 'register' | 'sett
   if (!ssoEnabled) {
     if (mode === 'login') return <LoginPage />;
     if (mode === 'register') return <RegisterPage />;
+    if (mode === 'link') {
+      return (
+        <ProtectedRoute>
+          <LinkServerPage />
+        </ProtectedRoute>
+      );
+    }
     return (
       <ProtectedRoute>
         <SettingsPage />
@@ -100,6 +117,14 @@ const AccountsRoutes = () => (
         element={
           <ProtectedRoute>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="link"
+        element={
+          <ProtectedRoute>
+            <LinkServerPage />
           </ProtectedRoute>
         }
       />
@@ -149,6 +174,7 @@ const MarketRoutes = () => (
         }
       />
       <Route path="settings" element={<ExternalAccountsRedirect mode="settings" />} />
+      <Route path="link" element={<ExternalAccountsRedirect mode="link" />} />
     </Route>
 
     <Route

@@ -12,6 +12,7 @@ import { openCookiePreferencesModal } from '../../lib/consent';
 import { startRegistration } from '@simplewebauthn/browser';
 import { RecoveryCodesModal } from './RecoveryCodesModal';
 import { ChangePasswordModal } from './ChangePasswordModal';
+import { LinkedServersSection } from './LinkedServersSection';
 import {
   User, Mail, Lock, Shield, CreditCard,
   BookOpen, AlertTriangle, LogOut,
@@ -19,7 +20,7 @@ import {
   Smartphone, Key, Trash2, Code, Sparkles, Building2,
   ShieldCheck, Download, Sliders, Package, Laptop, Tablet,
   Fingerprint, Plus, ShieldAlert, RefreshCw, Copy, Check, Terminal,
-  Cloud, Pencil, X, Camera, Upload
+  Cloud, Pencil, X, Camera, Upload, Server
 } from 'lucide-react';
 import { getDevicePasskeyName } from '../../lib/deviceInfo';
 import { validateAndSanitizeImage } from '../../lib/fileValidation';
@@ -38,11 +39,12 @@ interface LibraryEntry {
   is_preorder?: boolean;
 }
 
-type Tab = 'account' | 'security' | 'api_keys' | 'developer' | 'notifications' | 'library' | 'privacy' | 'danger';
+type Tab = 'account' | 'security' | 'servers' | 'api_keys' | 'developer' | 'notifications' | 'library' | 'privacy' | 'danger';
 
 const NAV: { key: Tab; label: string; icon: React.FC<{ size?: number }> ; danger?: boolean }[] = [
   { key: 'account',       label: 'Account',             icon: User        },
   { key: 'security',      label: 'Security',            icon: Shield      },
+  { key: 'servers',       label: 'Your Servers',        icon: Server      },
   { key: 'api_keys',      label: 'API Keys',            icon: Key         },
   { key: 'developer',     label: 'Developer Profile',   icon: Code        },
   { key: 'notifications', label: 'Notifications',       icon: Bell        },
@@ -1672,6 +1674,10 @@ const SettingsPage = () => {
                 )}
               </SettingsCard>
             </>
+          )}
+
+          {activeTab === 'servers' && (
+            <LinkedServersSection onToast={showToast} />
           )}
 
           {activeTab === 'api_keys' && (
