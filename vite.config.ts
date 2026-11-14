@@ -35,7 +35,7 @@ const SURFACE_META: Record<SurfaceKind, SurfaceMeta> = {
     description:
       'Single sign-on, passkeys, 2FA security, and server management across PumpkinMC services.',
     origin: 'https://accounts.pumpkinmc.org',
-    bodyClass: 'account',
+    bodyClass: 'market account',
     includeOpenSearch: false,
   },
   servers: {
@@ -45,7 +45,7 @@ const SURFACE_META: Record<SurfaceKind, SurfaceMeta> = {
     description:
       'Explore community Minecraft servers powered by Pumpkin, with live player counts and zero fake slots.',
     origin: 'https://servers.pumpkinmc.org',
-    bodyClass: 'servers',
+    bodyClass: 'market servers',
     includeOpenSearch: false,
   },
 }

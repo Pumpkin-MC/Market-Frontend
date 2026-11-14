@@ -6,6 +6,8 @@ import './styles/system.css'
 import App from './app/App.tsx'
 import './lib/i18n'
 
+document.body.classList.add('market')
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
