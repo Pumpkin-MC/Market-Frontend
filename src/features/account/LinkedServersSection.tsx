@@ -3,7 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
   CartesianGrid,
+  Legend,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -59,6 +62,7 @@ export interface LinkedServerSummary {
   hasTelemetry: boolean;
   onlinePlayers: number;
   maxPlayers: number;
+  onlineMode?: boolean | null;
   ramAllocatedMb: number | null;
   totalRamMb: number | null;
   cpuCores: number | null;
@@ -103,6 +107,70 @@ interface CrashEntry {
   lastSeen: string;
 }
 
+interface DistributionItem {
+  label: string;
+  count: number;
+  percentage: number;
+}
+
+interface PlayerBreakdown {
+  uniquePlayers: number;
+  editions: DistributionItem[];
+  clientBrands: DistributionItem[];
+  locales: DistributionItem[];
+  viewDistances: DistributionItem[];
+}
+
+interface NewVsReturningPoint {
+  timestamp: string;
+  newPlayers: number;
+  returningPlayers: number;
+}
+
+interface BounceRateStats {
+  percentage: number | null;
+  bouncedPlayers: number;
+  firstTimeJoins: number;
+}
+
+interface RetentionCohort {
+  percentage: number | null;
+  retained: number;
+  eligible: number;
+}
+
+interface RetentionStats {
+  d1: RetentionCohort;
+  d7: RetentionCohort;
+  d30: RetentionCohort;
+}
+
+interface PlaytimeStats {
+  avgSessionSecs: number;
+  medianSessionSecs: number;
+  totalSessions: number;
+  tiers: DistributionItem[];
+}
+
+interface PeakHeatmapCell {
+  dayOfWeek: number;
+  hourUtc: number;
+  avgPlayers: number;
+  peakPlayers: number;
+}
+
+interface PlayerAnalytics {
+  dau: number;
+  wau: number;
+  mau: number;
+  bucketUnit: 'hour' | 'day' | string;
+  newVsReturning: NewVsReturningPoint[];
+  bounceRate: BounceRateStats;
+  retention: RetentionStats;
+  playtime: PlaytimeStats;
+  peakHeatmap: PeakHeatmapCell[];
+}
+
 interface LinkedServerTelemetryDetail {
   server: LinkedServerSummary;
   range: '24h' | '7d' | '30d';
@@ -111,7 +179,34 @@ interface LinkedServerTelemetryDetail {
   samples: TelemetryPoint[];
   plugins: PluginEntry[];
   crashes: CrashEntry[];
+  playerBreakdown?: PlayerBreakdown;
+  playerAnalytics?: PlayerAnalytics;
 }
+
+const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
+const WEEKDAY_LONG = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+] as const;
+
+const formatDuration = (secs: number | null | undefined): string => {
+  if (secs == null || secs <= 0) return '—';
+  const rounded = Math.round(secs);
+  if (rounded < 60) return `${rounded}s`;
+  const mins = Math.floor(rounded / 60);
+  const remSecs = rounded % 60;
+  if (mins < 60) {
+    return remSecs > 0 ? `${mins}m ${remSecs}s` : `${mins}m`;
+  }
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+  return remMins > 0 ? `${hours}h ${remMins}m` : `${hours}h`;
+};
 
 const formatMemory = (mb: number | null | undefined): string => {
   if (mb == null || mb <= 0) return '—';
@@ -704,6 +799,9 @@ export const LinkedServersSection: React.FC<{
                     <span className="small muted">
                       Peak ({range}): {detail?.peakPlayers ?? activeServer.onlinePlayers} • Avg:{' '}
                       {detail?.avgPlayers ?? activeServer.onlinePlayers}
+                      {detail?.playerBreakdown && detail.playerBreakdown.uniquePlayers > 0
+                        ? ` • Unique: ${detail.playerBreakdown.uniquePlayers.toLocaleString()}`
+                        : ''}
                     </span>
                   </div>
 
@@ -763,6 +861,11 @@ export const LinkedServersSection: React.FC<{
                     <span className="small muted">
                       {[
                         activeServer.minecraftVersion ? `MC ${activeServer.minecraftVersion}` : null,
+                        activeServer.onlineMode === true
+                          ? 'Online Mode'
+                          : activeServer.onlineMode === false
+                            ? 'Offline Mode'
+                            : null,
                         activeServer.countryName || activeServer.country,
                       ]
                         .filter(Boolean)
@@ -853,6 +956,527 @@ export const LinkedServersSection: React.FC<{
                     Historical player & memory trend points will populate automatically as your server sends periodic 5-minute heartbeats.
                   </p>
                 )}
+
+                {/* Player Engagement, Retention & Concurrency */}
+                {detail?.playerAnalytics && (() => {
+                  const pa = detail.playerAnalytics;
+                  const stickiness =
+                    pa.mau > 0 ? Math.min(100, Math.round((pa.dau / pa.mau) * 1000) / 10) : null;
+
+                  const nvrChartData = pa.newVsReturning.map((pt) => {
+                    const d = new Date(pt.timestamp);
+                    const label =
+                      pa.bucketUnit === 'hour'
+                        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                        : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                    return {
+                      label,
+                      newPlayers: pt.newPlayers,
+                      returningPlayers: pt.returningPlayers,
+                    };
+                  });
+
+                  // Shift UTC (dayOfWeek 0=Mon..6=Sun, hourUtc 0..23) into viewer's local timezone
+                  const tzOffsetHours = -Math.round(new Date().getTimezoneOffset() / 60);
+                  const tzName =
+                    typeof Intl !== 'undefined'
+                      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+                      : 'Local';
+                  const localGrid: { peak: number; avg: number }[][] = Array.from(
+                    { length: 7 },
+                    () => Array.from({ length: 24 }, () => ({ peak: 0, avg: 0 })),
+                  );
+                  let maxHeatmapPeak = 0;
+                  let bestSlot: { day: number; hour: number; peak: number; avg: number } | null =
+                    null;
+
+                  for (const cell of pa.peakHeatmap) {
+                    const totalHours = cell.dayOfWeek * 24 + cell.hourUtc + tzOffsetHours;
+                    const wrapped = ((totalHours % 168) + 168) % 168;
+                    const localDay = Math.floor(wrapped / 24);
+                    const localHour = wrapped % 24;
+                    const target = localGrid[localDay][localHour];
+                    if (cell.peakPlayers >= target.peak) {
+                      target.peak = cell.peakPlayers;
+                      target.avg = cell.avgPlayers;
+                    }
+                    if (target.peak > maxHeatmapPeak) {
+                      maxHeatmapPeak = target.peak;
+                    }
+                    if (
+                      target.peak > 0 &&
+                      (!bestSlot ||
+                        target.peak > bestSlot.peak ||
+                        (target.peak === bestSlot.peak && target.avg > bestSlot.avg))
+                    ) {
+                      bestSlot = {
+                        day: localDay,
+                        hour: localHour,
+                        peak: target.peak,
+                        avg: target.avg,
+                      };
+                    }
+                  }
+
+                  const bouncePct = pa.bounceRate.percentage;
+                  const bounceTone =
+                    bouncePct == null
+                      ? 'var(--fg)'
+                      : bouncePct <= 25
+                        ? 'var(--success, #22c55e)'
+                        : bouncePct <= 50
+                          ? '#f59e0b'
+                          : 'var(--danger, #ef4444)';
+
+                  return (
+                    <div className="stack" style={{ '--gap': '1rem' } as React.CSSProperties}>
+                      <div
+                        className="row"
+                        style={{ gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}
+                      >
+                        <h4 className="h3" style={{ margin: 0 }}>
+                          Audience, Retention &amp; Sessions
+                        </h4>
+                        {stickiness != null && (
+                          <span className="sticker sticker-sm">
+                            {stickiness.toFixed(1)}% DAU/MAU stickiness
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Top 4 KPI Cards: DAU/WAU/MAU, Bounce Rate, Session Duration, D1/D7/D30 Retention */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(14.5rem, 1fr))',
+                          gap: '0.75rem',
+                        }}
+                      >
+                        <div className="panel" style={{ padding: '0.9rem 1rem' }}>
+                          <span className="label">Active Unique Players</span>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(3, 1fr)',
+                              gap: '0.5rem',
+                              marginTop: '0.45rem',
+                            }}
+                          >
+                            <div>
+                              <div className="h3" style={{ margin: 0 }}>
+                                {pa.dau.toLocaleString()}
+                              </div>
+                              <span className="small muted mono">DAU (24h)</span>
+                            </div>
+                            <div>
+                              <div className="h3" style={{ margin: 0 }}>
+                                {pa.wau.toLocaleString()}
+                              </div>
+                              <span className="small muted mono">WAU (7d)</span>
+                            </div>
+                            <div>
+                              <div className="h3" style={{ margin: 0 }}>
+                                {pa.mau.toLocaleString()}
+                              </div>
+                              <span className="small muted mono">MAU (30d)</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="panel" style={{ padding: '0.9rem 1rem' }}>
+                          <span className="label">First-Join Bounce Rate (&lt; 2m)</span>
+                          <div
+                            className="h2"
+                            style={{ marginTop: '0.35rem', color: bounceTone }}
+                          >
+                            {bouncePct != null ? `${bouncePct.toFixed(1)}%` : '—'}
+                          </div>
+                          <span className="small muted">
+                            {pa.bounceRate.firstTimeJoins > 0
+                              ? `${pa.bounceRate.bouncedPlayers.toLocaleString()} of ${pa.bounceRate.firstTimeJoins.toLocaleString()} new joins (${range}) left in < 2m`
+                              : `No resolved first-time joins in ${range} yet`}
+                          </span>
+                        </div>
+
+                        <div className="panel" style={{ padding: '0.9rem 1rem' }}>
+                          <span className="label">Session Duration ({range.toUpperCase()})</span>
+                          <div className="h2" style={{ marginTop: '0.35rem' }}>
+                            {formatDuration(pa.playtime.avgSessionSecs)}{' '}
+                            <span className="small muted">avg</span>
+                          </div>
+                          <span className="small muted">
+                            Median: <strong>{formatDuration(pa.playtime.medianSessionSecs)}</strong>{' '}
+                            • {pa.playtime.totalSessions.toLocaleString()}{' '}
+                            {pa.playtime.totalSessions === 1 ? 'session' : 'sessions'}
+                          </span>
+                        </div>
+
+                        <div className="panel" style={{ padding: '0.9rem 1rem' }}>
+                          <span className="label">Cohort Retention</span>
+                          <div
+                            style={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(3, 1fr)',
+                              gap: '0.5rem',
+                              marginTop: '0.45rem',
+                            }}
+                          >
+                            {(
+                              [
+                                { label: 'D1', cohort: pa.retention.d1 },
+                                { label: 'D7', cohort: pa.retention.d7 },
+                                { label: 'D30', cohort: pa.retention.d30 },
+                              ] as const
+                            ).map(({ label, cohort }) => (
+                              <div
+                                key={label}
+                                title={
+                                  cohort.eligible > 0
+                                    ? `${cohort.retained} of ${cohort.eligible} eligible players returned`
+                                    : `Cohort maturing — needs ${label.slice(1)}d history`
+                                }
+                              >
+                                <div className="h3" style={{ margin: 0 }}>
+                                  {cohort.percentage != null
+                                    ? `${cohort.percentage.toFixed(0)}%`
+                                    : '—'}
+                                </div>
+                                <span className="small muted mono">
+                                  {label}{' '}
+                                  {cohort.eligible > 0
+                                    ? `(${cohort.retained}/${cohort.eligible})`
+                                    : ''}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* New vs. Returning Chart + Playtime Tiers */}
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fit, minmax(18rem, 1fr))',
+                          gap: '0.85rem',
+                        }}
+                      >
+                        <div className="panel" style={{ padding: '1rem' }}>
+                          <div
+                            className="row"
+                            style={{
+                              marginBottom: '0.75rem',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            <span className="label">
+                              New vs. Returning Players (per {pa.bucketUnit})
+                            </span>
+                            <span className="small muted mono">{range.toUpperCase()}</span>
+                          </div>
+                          {nvrChartData.length > 0 ? (
+                            <div style={{ width: '100%', height: 210 }}>
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={nvrChartData}>
+                                  <CartesianGrid strokeDasharray="3 3" stroke="var(--line)" />
+                                  <XAxis dataKey="label" stroke="var(--muted)" fontSize={11} />
+                                  <YAxis
+                                    stroke="var(--muted)"
+                                    fontSize={11}
+                                    width={34}
+                                    allowDecimals={false}
+                                  />
+                                  <Tooltip
+                                    contentStyle={{
+                                      background: 'var(--surface)',
+                                      border: '1px solid var(--line-2)',
+                                      borderRadius: 8,
+                                      fontSize: 12,
+                                    }}
+                                  />
+                                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                                  <Bar
+                                    dataKey="returningPlayers"
+                                    name="Returning"
+                                    stackId="players"
+                                    fill="var(--pumpkin)"
+                                  />
+                                  <Bar
+                                    dataKey="newPlayers"
+                                    name="New"
+                                    stackId="players"
+                                    fill="#22c55e"
+                                  />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          ) : (
+                            <p className="small muted" style={{ margin: '2rem 0' }}>
+                              New vs. returning player buckets will populate once sessions are recorded in this range.
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="panel" style={{ padding: '1rem' }}>
+                          <div
+                            className="row"
+                            style={{
+                              marginBottom: '0.75rem',
+                              justifyContent: 'space-between',
+                              flexWrap: 'wrap',
+                              gap: '0.4rem',
+                            }}
+                          >
+                            <span className="label">Playtime Tiers ({range.toUpperCase()})</span>
+                            <span className="small muted">Cumulative per player</span>
+                          </div>
+                          {pa.playtime.tiers.length > 0 ? (
+                            <div
+                              className="stack"
+                              style={{ '--gap': '0.85rem', marginTop: '0.5rem' } as React.CSSProperties}
+                            >
+                              {pa.playtime.tiers.map((tier) => (
+                                <div key={tier.label}>
+                                  <div
+                                    className="row small"
+                                    style={{ justifyContent: 'space-between', marginBottom: 4 }}
+                                  >
+                                    <strong>{tier.label}</strong>
+                                    <span className="muted mono">
+                                      {tier.count.toLocaleString()} players (
+                                      {tier.percentage.toFixed(1)}%)
+                                    </span>
+                                  </div>
+                                  <div
+                                    style={{
+                                      height: 8,
+                                      background: 'var(--sunk)',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        height: '100%',
+                                        width: `${Math.min(100, Math.max(tier.count > 0 ? 3 : 0, tier.percentage))}%`,
+                                        background: 'var(--pumpkin)',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="small muted" style={{ margin: '2rem 0' }}>
+                              Casual (&lt; 1h), Regular (1–10h), and Core (10h+) player tiers will appear once sessions are recorded.
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* 7x24 Peak Concurrency Heatmap */}
+                      <div className="panel" style={{ padding: '1rem' }}>
+                        <div
+                          className="row"
+                          style={{
+                            marginBottom: '0.75rem',
+                            justifyContent: 'space-between',
+                            flexWrap: 'wrap',
+                            gap: '0.5rem',
+                          }}
+                        >
+                          <div>
+                            <span className="label" style={{ display: 'block' }}>
+                              7×24 Peak Concurrency Heatmap (Last 30 Days)
+                            </span>
+                            <span className="small muted">
+                              Hours shown in {tzName}
+                            </span>
+                          </div>
+                          {bestSlot && (
+                            <span className="tag tag-pumpkin">
+                              Best Window: {WEEKDAY_LONG[bestSlot.day]}{' '}
+                              {String(bestSlot.hour).padStart(2, '0')}:00 ({bestSlot.peak} peak)
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="scroll-x">
+                          <div style={{ minWidth: 540 }}>
+                            {/* Hour Labels */}
+                            <div
+                              style={{
+                                display: 'grid',
+                                gridTemplateColumns: '2.6rem repeat(24, minmax(18px, 1fr))',
+                                gap: 3,
+                                marginBottom: 4,
+                              }}
+                            >
+                              <span />
+                              {Array.from({ length: 24 }, (_, hr) => (
+                                <span
+                                  key={hr}
+                                  className="mono muted"
+                                  style={{
+                                    fontSize: 10,
+                                    textAlign: 'center',
+                                    opacity: hr % 3 === 0 ? 1 : 0.45,
+                                  }}
+                                >
+                                  {hr % 3 === 0 ? String(hr).padStart(2, '0') : '·'}
+                                </span>
+                              ))}
+                            </div>
+
+                            {/* 7 Day Rows */}
+                            <div className="stack" style={{ '--gap': '3px' } as React.CSSProperties}>
+                              {WEEKDAY_SHORT.map((dayLabel, dayIdx) => (
+                                <div
+                                  key={dayLabel}
+                                  style={{
+                                    display: 'grid',
+                                    gridTemplateColumns: '2.6rem repeat(24, minmax(18px, 1fr))',
+                                    gap: 3,
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  <span className="small muted mono" style={{ fontSize: 11 }}>
+                                    {dayLabel}
+                                  </span>
+                                  {localGrid[dayIdx].map((slot, hr) => {
+                                    const ratio =
+                                      maxHeatmapPeak > 0 ? slot.peak / maxHeatmapPeak : 0;
+                                    const alpha =
+                                      slot.peak > 0
+                                        ? (0.18 + ratio * 0.82).toFixed(2)
+                                        : '0';
+                                    return (
+                                      <div
+                                        key={hr}
+                                        title={`${WEEKDAY_LONG[dayIdx]} ${String(hr).padStart(2, '0')}:00 — Peak: ${slot.peak} players, Avg: ${slot.avg.toFixed(1)}`}
+                                        style={{
+                                          height: 18,
+                                          borderRadius: 2,
+                                          background:
+                                            slot.peak > 0
+                                              ? `rgba(249, 115, 22, ${alpha})`
+                                              : 'var(--sunk)',
+                                          border:
+                                            bestSlot &&
+                                            bestSlot.day === dayIdx &&
+                                            bestSlot.hour === hr
+                                              ? '1px solid var(--fg)'
+                                              : '1px solid transparent',
+                                        }}
+                                      />
+                                    );
+                                  })}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Player Breakdown */}
+                <div>
+                  <div
+                    className="row"
+                    style={{
+                      marginBottom: '0.6rem',
+                      gap: '0.6rem',
+                      flexWrap: 'wrap',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <h4 className="h3" style={{ margin: 0 }}>
+                      Player Breakdown ({range.toUpperCase()})
+                    </h4>
+                    {detail?.playerBreakdown && detail.playerBreakdown.uniquePlayers > 0 && (
+                      <span className="sticker sticker-sm">
+                        {detail.playerBreakdown.uniquePlayers.toLocaleString()} unique{' '}
+                        {detail.playerBreakdown.uniquePlayers === 1 ? 'player' : 'players'}
+                      </span>
+                    )}
+                  </div>
+
+                  {detail?.playerBreakdown && detail.playerBreakdown.uniquePlayers > 0 ? (
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(14.5rem, 1fr))',
+                        gap: '0.75rem',
+                      }}
+                    >
+                      {(
+                        [
+                          { title: 'Editions', items: detail.playerBreakdown.editions },
+                          { title: 'Client Brands', items: detail.playerBreakdown.clientBrands },
+                          { title: 'Player Locales', items: detail.playerBreakdown.locales },
+                          { title: 'View Distance', items: detail.playerBreakdown.viewDistances },
+                        ] as const
+                      ).map((group) => (
+                        <div key={group.title} className="panel" style={{ padding: '0.9rem 1rem' }}>
+                          <span className="label" style={{ display: 'block', marginBottom: '0.65rem' }}>
+                            {group.title}
+                          </span>
+                          {group.items.length > 0 ? (
+                            <div className="stack" style={{ '--gap': '0.5rem' } as React.CSSProperties}>
+                              {group.items.slice(0, 6).map((item) => (
+                                <div key={item.label}>
+                                  <div
+                                    className="row small"
+                                    style={{ justifyContent: 'space-between', marginBottom: 3 }}
+                                  >
+                                    <span
+                                      style={{
+                                        fontWeight: 600,
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                      title={item.label}
+                                    >
+                                      {item.label}
+                                    </span>
+                                    <span className="muted mono" style={{ flexShrink: 0 }}>
+                                      {item.count.toLocaleString()} ({item.percentage.toFixed(1)}%)
+                                    </span>
+                                  </div>
+                                  <div
+                                    style={{
+                                      height: 5,
+                                      background: 'var(--sunk)',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        height: '100%',
+                                        width: `${Math.min(100, Math.max(2, item.percentage))}%`,
+                                        background: 'var(--pumpkin)',
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="small muted">No data yet</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="small muted">
+                      Anonymous player edition, client brand, locale, and view distance stats will appear once players join your server.
+                    </p>
+                  )}
+                </div>
 
                 {/* Active Plugins List */}
                 <div>
