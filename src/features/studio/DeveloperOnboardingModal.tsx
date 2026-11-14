@@ -69,7 +69,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
         quality: 0.88,
       });
       if (!validation.valid || !validation.file) {
-        setError(validation.error || 'Invalid image file.');
+        setError(validation.error || t('profile.avatar_invalid'));
         return;
       }
 
@@ -85,7 +85,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
         ? err.response.data
-        : err.response?.data?.error || 'Failed to upload profile picture.';
+        : err.response?.data?.error || t('profile.avatar_upload_failed');
       setError(msg);
     } finally {
       setAvatarBusy(false);
@@ -104,7 +104,7 @@ export const DeveloperOnboardingModal: React.FC<DeveloperOnboardingModalProps> =
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
         ? err.response.data
-        : err.response?.data?.error || 'Failed to remove profile picture.';
+        : err.response?.data?.error || t('profile.avatar_remove_failed');
       setError(msg);
     } finally {
       setAvatarBusy(false);

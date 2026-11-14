@@ -36,7 +36,8 @@
     "sort_rating": "Top Rated",
     "sort_price_low": "Price: Low to High",
     "sort_price_high": "Price: High to Low",
-    "no_plugins": "No plugins found matching your criteria."
+    "no_plugins": "No plugins found matching your criteria.",
+    "retry_loading": "Retry loading plugins"
   },
   "plugin": {
     "buy_now": "Buy Now",
@@ -59,7 +60,8 @@
       "overview": "Overview",
       "versions": "Versions",
       "reviews": "Reviews",
-      "installation": "Installation Guide"
+      "installation": "Installation Guide",
+      "security": "Security & Capabilities"
     },
     "reviews": {
       "title": "Ratings & Reviews",
@@ -100,6 +102,89 @@
       "copied": "Copied!",
       "show_all": "Show all {{count}} commands",
       "show_less": "Show less"
+    },
+    "by": "by",
+    "verified_developer": "Verified PumpkinMarket Developer",
+    "no_binary": "No Binary Uploaded Yet",
+    "view_more": "View More",
+    "no_description": "No description has been written for this plugin yet.",
+    "update_history": "Update History",
+    "released": "Released",
+    "source": "Source",
+    "view_source": "View Source Code",
+    "version_history": "Version History",
+    "released_date": "Released {{date}}",
+    "no_release_notes": "No specific release notes for this update.",
+    "initial_release": "Initial release.",
+    "no_version_history": "No version history available yet.",
+    "security": {
+      "inspector_label": "WASM Capability & Permission Inspector",
+      "wit_badge": "WIT Metadata & Sandbox",
+      "wit_intro_before": "Automatically extracted from the plugin's",
+      "wit_intro_after": "WIT export inside a fuel-limited WebAssembly sandbox, combined with cryptographic provenance and server command permission nodes.",
+      "sandbox_title": "Sandbox & Memory",
+      "enforced": "Enforced",
+      "sandbox_desc_before": "Executes inside an isolated Wasmtime linear memory sandbox. Host resources are denied by default unless explicitly requested in",
+      "sandbox_desc_after": ".",
+      "signature_title": "Ed25519 Signature",
+      "pending_build": "Pending Build",
+      "signature_verified_desc": "Cryptographically signed by PumpkinMarket on download using W3C wasm_signature (Ed25519) + pumpkin.metadata.",
+      "signature_pending_desc": "No WASM binary uploaded yet. Binary will be signed automatically once uploaded.",
+      "network_title": "Network Access",
+      "requested": "Requested",
+      "no_network": "No Network",
+      "network_requested_desc": "Requests network.* or http.outbound in PluginMetadata.permissions. Can be restricted via blocked_permissions.",
+      "network_none_desc": "Does not request any network.dns, network.tcp, network.udp, or http.outbound permissions.",
+      "fs_title": "Filesystem Access",
+      "scoped_data_folder": "Scoped Data Folder",
+      "isolated": "Isolated",
+      "fs_scoped_desc": "Requests fs.read.data / fs.write.data scoped strictly to plugins/data/<name>/.",
+      "fs_isolated_desc": "Does not request fs.read.data or fs.write.data; no host directories are preopened.",
+      "system_title": "System & Commands",
+      "host_env_info": "Host Env / Info",
+      "cmd_count": "{{count}} Cmd(s)",
+      "system_requested_desc": "Requests sys.env or sys.info host telemetry in PluginMetadata.permissions.",
+      "system_commands_desc": "Registers {{commands}} in-game command(s) with {{permissions}} player permission node(s). No sys.env access.",
+      "system_none_desc": "No host environment variable (sys.env) or system telemetry (sys.info) permissions requested.",
+      "format_title": "Binary Format & ABI",
+      "component_wit": "Component (WIT)",
+      "core_wasm": "Core WASM",
+      "wasm_module": "WebAssembly Module",
+      "targeting_api": "targeting Pumpkin API v{{version}}.",
+      "depends_on_count": "Depends on {{count}} plugin(s).",
+      "zero_deps": "Zero external plugin dependencies.",
+      "zero_requested": "0 Requested (Strict Sandbox)",
+      "permissions_count": "{{count}} Permission(s)",
+      "no_permissions_before": "This plugin declares no permissions",
+      "no_permissions_after": "All DNS lookups, TCP/UDP sockets, outbound HTTP requests, filesystem preopens, and environment variables are blocked by default.",
+      "declared_permissions_before": "Permissions declared by this plugin. Server administrators can block any of these in",
+      "declared_permissions_after": ":",
+      "copy_permission_constant": "Copy permission constant",
+      "authors": "Authors",
+      "command_permissions_title": "In-Game Command Permission Nodes ({{count}})",
+      "command_permissions_desc": "Grant these permission nodes in your Pumpkin server configuration to control which players can invoke this plugin's slash commands:",
+      "provenance_title": "WASM Binary Provenance & WIT Interfaces",
+      "sha256_checksum": "SHA-256 Binary Checksum",
+      "copy_sha256": "Copy SHA-256",
+      "imported_interfaces": "Imported Host Interfaces (WIT / WASI)",
+      "exported_entrypoints": "Exported Guest Entrypoints",
+      "summary_label": "WASM Safety & Permissions Summary",
+      "summary_title": "Safety & Permissions",
+      "host_capabilities": "Host Capabilities",
+      "strict_sandbox": "Strict Sandbox",
+      "wasm_sandbox": "WASM Sandbox",
+      "isolated_linear_memory": "Isolated linear memory",
+      "signed_binary_title": "Ed25519 Signed Binary",
+      "awaiting_binary": "Awaiting Binary Upload",
+      "verified_via_w3c": "Verified via W3C wasm_signature",
+      "requests_network": "Requests Network Access",
+      "no_outbound_network": "No Outbound Network",
+      "uses_scoped_fs": "Uses scoped filesystem storage",
+      "no_raw_fs": "No raw filesystem access",
+      "zero_permissions": "0 Permissions",
+      "commands_count_inline": "{{count}} command(s)",
+      "dependencies_count_inline": "{{count}} dependency(ies)",
+      "inspect_btn": "Inspect Capabilities & Hashes"
     }
   },
   "profile": {
@@ -130,7 +215,15 @@
       "confirm_password": "Confirm New Password",
       "new_email": "New Email Address",
       "save_security": "Update Credentials"
-    }
+    },
+    "account_profile_title": "Account Profile",
+    "avatar_label": "Profile Picture",
+    "avatar_hint": "PNG, JPEG, or WebP. Max 2 MB. Recommended 512×512px.",
+    "avatar_invalid": "Invalid image file.",
+    "avatar_updated": "Profile picture updated successfully!",
+    "avatar_upload_failed": "Failed to upload profile picture.",
+    "avatar_removed": "Profile picture removed.",
+    "avatar_remove_failed": "Failed to remove profile picture."
   },
   "developer": {
     "onboarding": {
@@ -263,7 +356,10 @@
     "verify_code": "Verify Code",
     "reset_password_title": "Reset Password",
     "reset_password_instructions": "Enter your email address and we'll send you a password reset link.",
-    "send_reset_link": "Send Reset Link"
+    "send_reset_link": "Send Reset Link",
+    "connection_error_title": "Unable to reach the server",
+    "connection_error_desc": "A temporary gateway error occurred while verifying your session.",
+    "retry_connection": "Retry Connection"
   },
   "cookie": {
     "banner_title": "Cookie Preferences",
@@ -663,7 +759,11 @@
       "staff_queue": "Staff Queue",
       "manage_draft": "Manage Draft",
       "manage_plugin": "Manage Plugin",
-      "fix_resubmit": "Fix & Resubmit"
+      "fix_resubmit": "Fix & Resubmit",
+      "claim_failed": "Failed to claim plugin for review.",
+      "unclaim_failed": "Failed to release review claim.",
+      "approve_failed": "Failed to approve plugin.",
+      "reject_failed": "Failed to request changes."
     },
     "analytics": {
       "new_plugins_uploaded": "New Plugins Uploaded",
@@ -895,7 +995,8 @@
       "col_servers": "Game Servers",
       "col_players": "Online Players",
       "col_visitors": "Web Visitors",
-      "col_downloads": "Downloads"
+      "col_downloads": "Downloads",
+      "unknown": "Unknown"
     },
     "onboarding": {
       "org_company": "Company / Studio",

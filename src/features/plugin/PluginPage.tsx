@@ -752,7 +752,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/claim`);
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to claim plugin for review.');
+      alert(err?.response?.data || t('staff.actions.claim_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -765,7 +765,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/unclaim`);
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to release review claim.');
+      alert(err?.response?.data || t('staff.actions.unclaim_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -778,7 +778,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/approve`, { reason: 'Approved during page inspection' });
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to approve plugin.');
+      alert(err?.response?.data || t('staff.actions.approve_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -811,7 +811,7 @@ const PluginPage = () => {
       setStaffRejectReason('');
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to request changes.');
+      alert(err?.response?.data || t('staff.actions.reject_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -819,7 +819,7 @@ const PluginPage = () => {
 
   const downloadLabel = (() => {
     if (!hasBinary && !plugin.is_preorder) {
-      return 'No Binary Uploaded Yet';
+      return t('plugin.no_binary');
     }
     const sizeStr = plugin?.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
@@ -922,9 +922,9 @@ const PluginPage = () => {
   const trackTone: Record<string, string> = { stable: 'tag-success', beta: 'tag-warning', alpha: 'tag-danger' };
 
   const tabList: [typeof tab, string, number?][] = [
-    ['overview', 'Overview'],
+    ['overview', t('plugin.tabs.overview')],
     ...(commandCount > 0 ? [['commands', t('plugin.commands.title', 'Commands'), commandCount] as [typeof tab, string, number]] : []),
-    ['security', 'Security & Capabilities'],
+    ['security', t('plugin.tabs.security')],
   ];
 
   const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
@@ -1196,8 +1196,8 @@ const PluginPage = () => {
             <div className="pd-title">
               <h1 className="display-2">{plugin.name}</h1>
               <div className="row">
-                <span className="entry-by">by <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
-                {plugin.dev_verified && <span className="tag tag-info" title="Verified PumpkinMarket Developer"><ShieldCheck size={12} /> Verified</span>}
+                <span className="entry-by">{t('plugin.by')} <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
+                {plugin.dev_verified && <span className="tag tag-info" title={t('plugin.verified_developer')}><ShieldCheck size={12} /> {t('staff.table.verified')}</span>}
                 {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
                 {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
                 {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
@@ -1296,7 +1296,7 @@ const PluginPage = () => {
                         {isLong && (
                           <div className="panel-foot">
                             <button type="button" className="button button-ghost button-sm" onClick={() => setVersionsOpen(true)}>
-                              View More
+                              {t('plugin.view_more')}
                               <ChevronRight />
                             </button>
                           </div>
@@ -1309,7 +1309,7 @@ const PluginPage = () => {
                     {currentDescription.trim() ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
                     ) : (
-                      <p className="muted">No description has been written for this plugin yet.</p>
+                      <p className="muted">{t('plugin.no_description')}</p>
                     )}
                   </div>
                 </>
@@ -1326,94 +1326,95 @@ const PluginPage = () => {
                 const imports = sec?.imported_interfaces ?? [];
                 const exportsList = sec?.exported_interfaces ?? [];
                 return (
-                  <section className="stack" aria-label="WASM Capability & Permission Inspector">
+                  <section className="stack" aria-label={t('plugin.security.inspector_label')}>
                     <div className="notice notice-plain">
-                      <span className="sticker sticker-success"><ShieldCheck /> WIT Metadata &amp; Sandbox</span>
+                      <span className="sticker sticker-success"><ShieldCheck /> {t('plugin.security.wit_badge')}</span>
                       <p className="notice-text">
-                        Automatically extracted from the plugin's <code>pumpkin:plugin/metadata#get-metadata</code> WIT export inside a fuel-limited WebAssembly sandbox, combined with cryptographic provenance and server command permission nodes.
+                        {t('plugin.security.wit_intro_before')}{' '}<code>pumpkin:plugin/metadata#get-metadata</code>{' '}{t('plugin.security.wit_intro_after')}
                       </p>
                     </div>
 
                     <div className="pd-safety-grid">
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Cpu /> Sandbox &amp; Memory</span>
-                          <span className="tag tag-success">Enforced</span>
+                          <span className="pd-cap-title"><Cpu /> {t('plugin.security.sandbox_title')}</span>
+                          <span className="tag tag-success">{t('plugin.security.enforced')}</span>
                         </div>
                         <p className="small muted">
-                          Executes inside an isolated Wasmtime linear memory sandbox. Host resources are denied by default unless explicitly requested in <code>PluginMetadata.permissions</code>.
+                          {t('plugin.security.sandbox_desc_before')}{' '}<code>PluginMetadata.permissions</code>{t('plugin.security.sandbox_desc_after')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Fingerprint /> Ed25519 Signature</span>
+                          <span className="pd-cap-title"><Fingerprint /> {t('plugin.security.signature_title')}</span>
                           <span className={`tag ${sec?.ed25519_signed ? 'tag-success' : 'tag-warning'}`}>
-                            {sec?.ed25519_signed ? 'Verified' : 'Pending Build'}
+                            {sec?.ed25519_signed ? t('staff.table.verified') : t('plugin.security.pending_build')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.ed25519_signed
-                            ? 'Cryptographically signed by PumpkinMarket on download using W3C wasm_signature (Ed25519) + pumpkin.metadata.'
-                            : 'No WASM binary uploaded yet. Binary will be signed automatically once uploaded.'}
+                            ? t('plugin.security.signature_verified_desc')
+                            : t('plugin.security.signature_pending_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Globe /> Network Access</span>
+                          <span className="pd-cap-title"><Globe /> {t('plugin.security.network_title')}</span>
                           <span className={`tag ${sec?.network_access ? 'tag-warning' : 'tag-success'}`}>
-                            {sec?.network_access ? 'Requested' : 'No Network'}
+                            {sec?.network_access ? t('plugin.security.requested') : t('plugin.security.no_network')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.network_access
-                            ? 'Requests network.* or http.outbound in PluginMetadata.permissions. Can be restricted via blocked_permissions.'
-                            : 'Does not request any network.dns, network.tcp, network.udp, or http.outbound permissions.'}
+                            ? t('plugin.security.network_requested_desc')
+                            : t('plugin.security.network_none_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><HardDrive /> Filesystem Access</span>
+                          <span className="pd-cap-title"><HardDrive /> {t('plugin.security.fs_title')}</span>
                           <span className={`tag ${sec?.filesystem_access ? 'tag-warning' : 'tag-success'}`}>
-                            {sec?.filesystem_access ? 'Scoped Data Folder' : 'Isolated'}
+                            {sec?.filesystem_access ? t('plugin.security.scoped_data_folder') : t('plugin.security.isolated')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.filesystem_access
-                            ? 'Requests fs.read.data / fs.write.data scoped strictly to plugins/data/<name>/.'
-                            : 'Does not request fs.read.data or fs.write.data; no host directories are preopened.'}
+                            ? t('plugin.security.fs_scoped_desc')
+                            : t('plugin.security.fs_isolated_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Terminal /> System &amp; Commands</span>
+                          <span className="pd-cap-title"><Terminal /> {t('plugin.security.system_title')}</span>
                           <span className={`tag ${sec?.system_access ? 'tag-warning' : 'tag-fg'}`}>
-                            {sec?.system_access ? 'Host Env / Info' : `${commandCount} Cmd${commandCount === 1 ? '' : 's'}`}
+                            {sec?.system_access ? t('plugin.security.host_env_info') : t('plugin.security.cmd_count', { count: commandCount })}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.system_access
-                            ? 'Requests sys.env or sys.info host telemetry in PluginMetadata.permissions.'
+                            ? t('plugin.security.system_requested_desc')
                             : commandCount > 0
-                              ? `Registers ${commandCount} in-game command(s) with ${cmdPerms.length} player permission node(s). No sys.env access.`
-                              : 'No host environment variable (sys.env) or system telemetry (sys.info) permissions requested.'}
+                              ? t('plugin.security.system_commands_desc', { commands: commandCount, permissions: cmdPerms.length })
+                              : t('plugin.security.system_none_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Package /> Binary Format &amp; ABI</span>
+                          <span className="pd-cap-title"><Package /> {t('plugin.security.format_title')}</span>
                           <span className="tag tag-pumpkin">
-                            {sec?.is_component ? 'Component (WIT)' : 'Core WASM'}
+                            {sec?.is_component ? t('plugin.security.component_wit') : t('plugin.security.core_wasm')}
                           </span>
                         </div>
                         <p className="small muted">
-                          {sec?.binary_format || 'WebAssembly Module'}
-                          {plugin.api_version ? ` targeting Pumpkin API v${plugin.api_version}.` : '.'}
-                          {deps.length > 0 ? ` Depends on ${deps.length} plugin(s).` : ' Zero external plugin dependencies.'}
+                          {sec?.binary_format || t('plugin.security.wasm_module')}
+                          {plugin.api_version ? ` ${t('plugin.security.targeting_api', { version: plugin.api_version })}` : '.'}
+                          {' '}
+                          {deps.length > 0 ? t('plugin.security.depends_on_count', { count: deps.length }) : t('plugin.security.zero_deps')}
                         </p>
                       </div>
                     </div>
@@ -1422,23 +1423,23 @@ const PluginPage = () => {
                       <div className="panel-head" style={{ justifyContent: 'space-between' }}>
                         <div className="row" style={{ gap: 8 }}>
                           <ShieldCheck className="pumpkin" />
-                          <h3 className="h3">Permissions</h3>
+                          <h3 className="h3">{t('staff.inspection.fields.permissions')}</h3>
                         </div>
                         <span className={`tag ${runtimePerms.length > 0 ? 'tag-warning' : 'tag-success'}`}>
                           {runtimePerms.length === 0
-                            ? '0 Requested (Strict Sandbox)'
-                            : `${runtimePerms.length} Permission${runtimePerms.length === 1 ? '' : 's'}`}
+                            ? t('plugin.security.zero_requested')
+                            : t('plugin.security.permissions_count', { count: runtimePerms.length })}
                         </span>
                       </div>
                       <div className="panel-body stack">
                         {runtimePerms.length === 0 ? (
                           <p className="small muted">
-                            This plugin declares no permissions (<code>permissions = []</code>). All DNS lookups, TCP/UDP sockets, outbound HTTP requests, filesystem preopens, and environment variables are blocked by default.
+                            {t('plugin.security.no_permissions_before')} (<code>permissions = []</code>). {t('plugin.security.no_permissions_after')}
                           </p>
                         ) : (
                           <>
                             <p className="small muted">
-                              Permissions declared by this plugin. Server administrators can block any of these in <code>advanced_config.plugins.blocked_permissions</code>:
+                              {t('plugin.security.declared_permissions_before')}{' '}<code>advanced_config.plugins.blocked_permissions</code>{t('plugin.security.declared_permissions_after')}
                             </p>
                             <div className="stack" style={{ gap: 8 }}>
                               {runtimePerms.map(rp => {
@@ -1464,7 +1465,7 @@ const PluginPage = () => {
                                             setCopiedPerm(rp.id);
                                             setTimeout(() => setCopiedPerm(null), 2000);
                                           }}
-                                          title="Copy permission constant"
+                                          title={t('plugin.security.copy_permission_constant')}
                                         >
                                           {copiedPerm === rp.id ? <Check /> : <Copy />}
                                         </button>
@@ -1482,7 +1483,7 @@ const PluginPage = () => {
                           <div className="row" style={{ gap: 16, flexWrap: 'wrap', paddingTop: 4 }}>
                             {deps.length > 0 && (
                               <div className="field" style={{ flex: 1, minWidth: 220 }}>
-                                <span className="field-label">Dependencies</span>
+                                <span className="field-label">{t('staff.inspection.fields.dependencies')}</span>
                                 <div className="pd-wit-list">
                                   {deps.map(dep => (
                                     <code key={dep} className="pd-chip">{dep}</code>
@@ -1492,7 +1493,7 @@ const PluginPage = () => {
                             )}
                             {metaAuthors.length > 0 && (
                               <div className="field" style={{ flex: 1, minWidth: 220 }}>
-                                <span className="field-label">Authors</span>
+                                <span className="field-label">{t('plugin.security.authors')}</span>
                                 <div className="pd-wit-list">
                                   {metaAuthors.map(author => (
                                     <span key={author} className="tag tag-fg">{author}</span>
@@ -1509,11 +1510,11 @@ const PluginPage = () => {
                       <div className="panel">
                         <div className="panel-head">
                           <Key className="pumpkin" />
-                          <h3 className="h3">In-Game Command Permission Nodes ({cmdPerms.length})</h3>
+                          <h3 className="h3">{t('plugin.security.command_permissions_title', { count: cmdPerms.length })}</h3>
                         </div>
                         <div className="panel-body stack">
                           <p className="small muted">
-                            Grant these permission nodes in your Pumpkin server configuration to control which players can invoke this plugin's slash commands:
+                            {t('plugin.security.command_permissions_desc')}
                           </p>
                           <div className="pd-wit-list">
                             {cmdPerms.map(perm => (
@@ -1528,7 +1529,7 @@ const PluginPage = () => {
                                     setCopiedPerm(perm);
                                     setTimeout(() => setCopiedPerm(null), 2000);
                                   }}
-                                  title="Copy permission node"
+                                  title={t('plugin.commands.copy_permission')}
                                 >
                                   {copiedPerm === perm ? <Check /> : <Copy />}
                                 </button>
@@ -1542,12 +1543,12 @@ const PluginPage = () => {
                     <div className="panel">
                       <div className="panel-head">
                         <Fingerprint className="pumpkin" />
-                        <h3 className="h3">WASM Binary Provenance &amp; WIT Interfaces</h3>
+                        <h3 className="h3">{t('plugin.security.provenance_title')}</h3>
                       </div>
                       <div className="panel-body stack">
                         {sec?.sha256 && (
                           <div className="field">
-                            <span className="field-label">SHA-256 Binary Checksum</span>
+                            <span className="field-label">{t('plugin.security.sha256_checksum')}</span>
                             <div className="pd-hash-box">
                               <code>{sec.sha256}</code>
                               <button
@@ -1560,7 +1561,7 @@ const PluginPage = () => {
                                 }}
                               >
                                 {copiedHash ? <Check /> : <Copy />}
-                                {copiedHash ? 'Copied' : 'Copy SHA-256'}
+                                {copiedHash ? t('plugin.copied') : t('plugin.security.copy_sha256')}
                               </button>
                             </div>
                           </div>
@@ -1568,7 +1569,7 @@ const PluginPage = () => {
 
                         {imports.length > 0 && (
                           <div className="field">
-                            <span className="field-label">Imported Host Interfaces (WIT / WASI)</span>
+                            <span className="field-label">{t('plugin.security.imported_interfaces')}</span>
                             <div className="pd-wit-list">
                               {imports.map(imp => (
                                 <code key={imp} className="pd-chip">{imp}</code>
@@ -1579,7 +1580,7 @@ const PluginPage = () => {
 
                         {exportsList.length > 0 && (
                           <div className="field">
-                            <span className="field-label">Exported Guest Entrypoints</span>
+                            <span className="field-label">{t('plugin.security.exported_entrypoints')}</span>
                             <div className="pd-wit-list">
                               {exportsList.map(exp => (
                                 <code key={exp} className="pd-chip">{exp}</code>
@@ -1878,13 +1879,13 @@ const PluginPage = () => {
             </div>
           </div>
 
-          <div className="pd-safety-card" aria-label="WASM Safety & Permissions Summary">
+          <div className="pd-safety-card" aria-label={t('plugin.security.summary_label')}>
             <div className="row" style={{ justifyContent: 'space-between' }}>
               <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <ShieldCheck size={15} className="pumpkin" /> Safety &amp; Permissions
+                <ShieldCheck size={15} className="pumpkin" /> {t('plugin.security.summary_title')}
               </span>
               <span className={`tag ${plugin.wasm_security?.sandbox_level === 'elevated' ? 'tag-warning' : 'tag-success'}`}>
-                {plugin.wasm_security?.sandbox_level === 'elevated' ? 'Host Capabilities' : 'Strict Sandbox'}
+                {plugin.wasm_security?.sandbox_level === 'elevated' ? t('plugin.security.host_capabilities') : t('plugin.security.strict_sandbox')}
               </span>
             </div>
 
@@ -1892,27 +1893,27 @@ const PluginPage = () => {
               <li className="pd-safety-item">
                 <Cpu />
                 <div>
-                  <strong>{plugin.wasm_security?.binary_format || 'WASM Sandbox'}</strong>
-                  <span className="muted">Isolated linear memory{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
+                  <strong>{plugin.wasm_security?.binary_format || t('plugin.security.wasm_sandbox')}</strong>
+                  <span className="muted">{t('plugin.security.isolated_linear_memory')}{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
                 </div>
               </li>
               <li className="pd-safety-item">
                 <Fingerprint />
                 <div>
-                  <strong>{plugin.wasm_security?.ed25519_signed ? 'Ed25519 Signed Binary' : 'Awaiting Binary Upload'}</strong>
+                  <strong>{plugin.wasm_security?.ed25519_signed ? t('plugin.security.signed_binary_title') : t('plugin.security.awaiting_binary')}</strong>
                   <span className="muted">
                     {plugin.wasm_security?.sha256
                       ? `SHA-256: ${plugin.wasm_security.sha256.slice(0, 10)}…${plugin.wasm_security.sha256.slice(-6)}`
-                      : 'Verified via W3C wasm_signature'}
+                      : t('plugin.security.verified_via_w3c')}
                   </span>
                 </div>
               </li>
               <li className="pd-safety-item">
                 <Globe />
                 <div>
-                  <strong>{plugin.wasm_security?.network_access ? 'Requests Network Access' : 'No Outbound Network'}</strong>
+                  <strong>{plugin.wasm_security?.network_access ? t('plugin.security.requests_network') : t('plugin.security.no_outbound_network')}</strong>
                   <span className="muted">
-                    {plugin.wasm_security?.filesystem_access ? 'Uses scoped filesystem storage' : 'No raw filesystem access'}
+                    {plugin.wasm_security?.filesystem_access ? t('plugin.security.uses_scoped_fs') : t('plugin.security.no_raw_fs')}
                   </span>
                 </div>
               </li>
@@ -1921,14 +1922,13 @@ const PluginPage = () => {
                 <div>
                   <strong>
                     {(plugin.wasm_security?.runtime_permissions?.length ?? 0) === 0
-                      ? '0 Permissions'
-                      : `${plugin.wasm_security?.runtime_permissions?.length} Permission${plugin.wasm_security?.runtime_permissions?.length === 1 ? '' : 's'}`}
+                      ? t('plugin.security.zero_permissions')
+                      : t('plugin.security.permissions_count', { count: plugin.wasm_security?.runtime_permissions?.length ?? 0 })}
                   </strong>
                   <span className="muted">
-                    {commandCount} command{commandCount === 1 ? '' : 's'}
-                    {(plugin.wasm_security?.dependencies?.length ?? 0) > 0
-                      ? ` · ${plugin.wasm_security?.dependencies?.length} ${plugin.wasm_security?.dependencies?.length === 1 ? 'dependency' : 'dependencies'}`
-                      : ' · 0 dependencies'}
+                    {t('plugin.security.commands_count_inline', { count: commandCount })}
+                    {' · '}
+                    {t('plugin.security.dependencies_count_inline', { count: plugin.wasm_security?.dependencies?.length ?? 0 })}
                   </span>
                 </div>
               </li>
@@ -1940,7 +1940,7 @@ const PluginPage = () => {
               style={{ justifyContent: 'space-between' }}
               onClick={() => openTab('security')}
             >
-              <span>Inspect Capabilities &amp; Hashes</span>
+              <span>{t('plugin.security.inspect_btn')}</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -1949,12 +1949,12 @@ const PluginPage = () => {
             <dl className="specs">
               {plugin.version && (
                 <>
-                  <dt>Version</dt>
+                  <dt>{t('plugin.version')}</dt>
                   <dd>
                     <span className="pd-spec-version">
                       <span className="mono">{plugin.version}</span>
                       {versions.length > 0 && (
-                        <button type="button" className="pd-textbtn" onClick={() => setVersionsOpen(true)}>Update History</button>
+                        <button type="button" className="pd-textbtn" onClick={() => setVersionsOpen(true)}>{t('plugin.update_history')}</button>
                       )}
                     </span>
                   </dd>
@@ -1966,21 +1966,21 @@ const PluginPage = () => {
                   <dd><span className="mono">v{plugin.api_version}</span></dd>
                 </>
               )}
-              <dt>Downloads</dt>
+              <dt>{t('plugin.downloads')}</dt>
               <dd>{(plugin.downloads ?? 0).toLocaleString()}</dd>
               {plugin.created_at && (
                 <>
-                  <dt>Released</dt>
+                  <dt>{t('plugin.released')}</dt>
                   <dd>{formatDate(plugin.created_at)}</dd>
                 </>
               )}
-              <dt>Category</dt>
+              <dt>{t('plugin.category')}</dt>
               <dd>{plugin.category}</dd>
               {plugin.source_link && (
                 <>
-                  <dt>Source</dt>
+                  <dt>{t('plugin.source')}</dt>
                   <dd>
-                    <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="link link-pumpkin">View Source Code</a>
+                    <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="link link-pumpkin">{t('plugin.view_source')}</a>
                   </dd>
                 </>
               )}
@@ -1993,7 +1993,7 @@ const PluginPage = () => {
             >
               <span className="row" style={{ gap: 8 }}>
                 <History size={15} />
-                <span>Version History</span>
+                <span>{t('plugin.version_history')}</span>
                 {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
               </span>
               <ChevronRight size={14} />
@@ -2088,15 +2088,15 @@ const PluginPage = () => {
       )}
 
       {versionsOpen && (
-        <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label="Version History">
+        <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label={t('plugin.version_history')}>
           <div className="sheet pd-versions-sheet" onClick={e => e.stopPropagation()}>
             <div className="sheet-head">
               <div className="row" style={{ gap: 10 }}>
                 <History className="pumpkin" size={20} />
-                <h2 className="h2">Version History</h2>
+                <h2 className="h2">{t('plugin.version_history')}</h2>
                 {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
               </div>
-              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setVersionsOpen(false)} aria-label="Close">
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setVersionsOpen(false)} aria-label={t('common.close')}>
                 <X />
               </button>
             </div>
@@ -2109,13 +2109,13 @@ const PluginPage = () => {
                         <span className="pd-version-num">v{v.version}</span>
                         {v.track && <span className={`tag tag-solid ${trackTone[v.track] ?? 'tag-fg'}`}>{v.track}</span>}
                         {v.api_version && <span className="tag tag-fg">API v{v.api_version}</span>}
-                        <span className="small">Released {formatDate(v.created_at)}</span>
+                        <span className="small">{t('plugin.released_date', { date: formatDate(v.created_at) })}</span>
                       </div>
                       <div className="pd-prose">
                         {v.release_notes ? (
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
                         ) : (
-                          <p className="muted">No specific release notes for this update.</p>
+                          <p className="muted">{t('plugin.no_release_notes')}</p>
                         )}
                       </div>
                     </li>
@@ -2128,16 +2128,16 @@ const PluginPage = () => {
                       <span className="pd-version-num">v{plugin.version}</span>
                       <span className="tag tag-solid tag-success">stable</span>
                       {plugin.api_version && <span className="tag tag-fg">API v{plugin.api_version}</span>}
-                      {plugin.created_at && <span className="small">Released {formatDate(plugin.created_at)}</span>}
+                      {plugin.created_at && <span className="small">{t('plugin.released_date', { date: formatDate(plugin.created_at) })}</span>}
                     </div>
                     <div className="pd-prose">
-                      <p className="muted">Initial release.</p>
+                      <p className="muted">{t('plugin.initial_release')}</p>
                     </div>
                   </li>
                 </ol>
               ) : (
                 <div className="blank">
-                  <p className="h3">No version history available yet.</p>
+                  <p className="h3">{t('plugin.no_version_history')}</p>
                 </div>
               )}
             </div>
