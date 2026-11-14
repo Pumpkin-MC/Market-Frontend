@@ -1,4 +1,5 @@
 import { useState, useRef, useMemo, useEffect, useCallback } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Download, Star } from 'lucide-react';
 import { getPluginUrl } from '../lib/url';
@@ -24,6 +25,7 @@ const getEffectivePrice = (plugin: any): { display: string; isSale: boolean; ori
 };
 
 const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
+    const { t } = useTranslation();
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovering, setIsHovering] = useState(false);
     const timerRef = useRef<any>(null);
@@ -117,8 +119,8 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
 
                 <div className="entry-flags">
                     {isSale && <span className="sticker sticker-sm">-{plugin.sale_discount_percent}%</span>}
-                    {plugin.is_preorder && <span className="sticker sticker-sm sticker-fg">Pre-Order</span>}
-                    {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
+                    {plugin.is_preorder && <span className="sticker sticker-sm sticker-fg">{t('plugin.pre_order')}</span>}
+                    {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">{t('plugin.early_access_badge')}</span>}
                 </div>
             </div>
 
@@ -128,7 +130,9 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
                     {plugin.version && <span className="label mono">v{plugin.version}</span>}
                 </div>
                 <h3 className="entry-name">{plugin.name}</h3>
-                <p className="entry-by">by <strong>{plugin.dev_name}</strong></p>
+                <p className="entry-by">
+                    <Trans t={t} i18nKey="common.by_author" components={{ author: <strong>{plugin.dev_name}</strong> }} />
+                </p>
 
                 <div className="entry-foot">
                     <span className="entry-stat"><Download />{(plugin.downloads ?? 0).toLocaleString()}</span>
@@ -136,7 +140,7 @@ const PluginCard = ({ plugin }: { plugin: any; hideDescription?: boolean }) => {
                         <span className="entry-stat"><Star />{Number(plugin.rating).toFixed(1)}</span>
                     )}
                     {plugin.type === 'free' ? (
-                        <span className="cost cost-free">Free</span>
+                        <span className="cost cost-free">{t('plugin.free')}</span>
                     ) : isSale ? (
                         <span className="cost cost-sale"><s>{priceInfo.originalDisplay}</s>{priceInfo.display}</span>
                     ) : (

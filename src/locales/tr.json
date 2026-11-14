@@ -21,7 +21,16 @@
     "developers": "Geliştiriciler",
     "guidelines": "Yönergeler",
     "developer_terms": "Geliştirici Koşulları",
-    "cookie_preferences": "Çerez Tercihleri"
+    "cookie_preferences": "Çerez Tercihleri",
+    "footer": {
+      "minecraft_disclaimer": "Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft."
+    },
+    "language_selection": "Language selection",
+    "main_navigation": "Main",
+    "menu": "Menu",
+    "settings": "Settings",
+    "studio": "Studio",
+    "toggle_menu": "Toggle menu"
   },
   "home": {
     "hero_title": "Yeni Nesil Minecraft Sunucu Eklentileri",
@@ -37,7 +46,18 @@
     "sort_price_low": "Fiyat: Düşükten Yükseğe",
     "sort_price_high": "Fiyat: Yüksekten Düşüğe",
     "no_plugins": "Kriterlerinize uygun eklenti bulunamadı.",
-    "retry_loading": "Eklentileri tekrar yükle"
+    "retry_loading": "Eklentileri tekrar yükle",
+    "catalog_end": "You've reached the end of the plugins catalog.",
+    "default_description": "Discover this high performance Minecraft plugin.",
+    "discount": "-{{discount}}% OFF",
+    "empty_catalog": "No plugins found. Check back later!",
+    "featured_badge": "Trending & Popular",
+    "loading": "Discovering best plugins...",
+    "loading_more": "Loading more plugins...",
+    "page_description": "Discover the best WASM-powered Minecraft plugins at Pumpkin Market. Performance, security, and variety in one place.",
+    "page_title": "Home",
+    "thumbnail": "thumbnail",
+    "view_plugin": "View Plugin"
   },
   "plugin": {
     "buy_now": "Hemen Satın Al",
@@ -77,7 +97,27 @@
       "dev_reply": "Geliştirici Yanıtı",
       "reply_placeholder": "Bu değerlendirmeye yanıtınızı yazın...",
       "reply_submit": "Yanıtı Yayınla",
-      "reply_btn": "Yanıtla"
+      "reply_btn": "Yanıtla",
+      "delete_confirm": "Are you sure you want to delete your review?",
+      "delete_mine": "Delete my review",
+      "delete_review_label": "Delete Review",
+      "developer_response": "Developer Response",
+      "empty": "No reviews yet. Be the first to leave one!",
+      "experience": "Your Experience",
+      "experience_placeholder": "What did you like? What could be better?",
+      "leave_review": "Leave a Review",
+      "login_required": "Please <login>login</login> to rate this plugin.",
+      "post_review": "Post Review",
+      "posted_notice": "<strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!",
+      "rating": "Your Rating",
+      "rating_count_one": "{{formattedCount}} Rating",
+      "rating_count_other": "{{formattedCount}} Ratings",
+      "reply_as_developer": "Reply as developer",
+      "replying": "Replying...",
+      "report": "Report review",
+      "response_placeholder": "Write your response to this review...",
+      "reviews_count_one": "{{count}} İnceleme",
+      "reviews_count_other": "{{count}} İnceleme"
     },
     "report": {
       "report_plugin": "Eklentiyi Bildir",
@@ -89,7 +129,29 @@
       "reason_other": "Diğer kural ihlali",
       "details_placeholder": "Lütfen detayları belirtin...",
       "submit": "Bildirimi Gönder",
-      "success": "Bildirim iletildi. Moderasyon ekibimiz inceleyecektir."
+      "success": "Bildirim iletildi. Moderasyon ekibimiz inceleyecektir.",
+      "describe_issue": "Describe the issue…",
+      "plugin_reasons": {
+        "broken": "Broken / non-functional",
+        "inappropriate": "Inappropriate content",
+        "malware": "Malware or malicious code",
+        "misleading": "Misleading description",
+        "other": "Other",
+        "spam": "Spam or fake listing",
+        "stolen": "Stolen or plagiarised content"
+      },
+      "reason": "Reason for report",
+      "report_plugin_label": "Report plugin",
+      "review_reason": "Reason for reporting this review",
+      "review_reasons": {
+        "hate": "Hate speech or harassment",
+        "language": "Inappropriate language",
+        "off_topic": "Off-topic or irrelevant",
+        "other": "Other",
+        "spam": "Spam or advertising"
+      },
+      "submitted": "Report submitted",
+      "thanks": "Bildirim gönderildi. Pazar yerini güvende tutmaya yardımcı olduğunuz için teşekkürler."
     },
     "commands": {
       "title": "Komutlar",
@@ -185,7 +247,92 @@
       "commands_count_inline": "{{count}} komut",
       "dependencies_count_inline": "{{count}} bağımlılık",
       "inspect_btn": "Yetenekleri ve Özetleri İncele"
-    }
+    },
+    "actions": {
+      "copied": "Copied",
+      "expand": "Expand",
+      "loading": "Loading…",
+      "sending": "Sending…",
+      "show_less": "Show Less"
+    },
+    "early_access_badge": "Early Access",
+    "installation": {
+      "copy_command": "Copy ppm install command",
+      "github": "View ppm package manager on GitHub",
+      "install": "Install with ppm package manager"
+    },
+    "media": {
+      "expanded_view": "Expanded view",
+      "go_to_screenshot": "Go to screenshot {{number}}",
+      "illustration": "Plugin illustration",
+      "main": "Main",
+      "next": "Next screenshot",
+      "previous": "Previous screenshot",
+      "thumbnail": "Thumbnail",
+      "video": "Video",
+      "video_thumbnail": "Video Thumbnail"
+    },
+    "messages": {
+      "ad_wait": "Wait 5 seconds to support the developer...",
+      "already_owned": "You already own this plugin — downloading now.",
+      "checkout_failed": "Checkout failed. Please try again.",
+      "delete_review_failed": "Failed to delete review.",
+      "download_failed": "Download failed. Please try again.",
+      "preorder_confirmed": "You have pre-ordered this plugin! You will receive an email as soon as it releases.",
+      "preorder_owned": "You have successfully pre-ordered this plugin! You will receive an automated email notification the moment the developer releases the downloadable version.",
+      "reply_failed": "Failed to post reply.",
+      "report_failed": "Failed to submit report. Please try again.",
+      "review_report_failed": "Failed to report review. Please try again.",
+      "review_report_success": "Thank you. The report has been submitted to moderators."
+    },
+    "metadata": {
+      "description": "Download {{name}} by {{author}} on Pumpkin Market.",
+      "downloads_count_one": "{{formatted}} indirme",
+      "downloads_count_other": "{{formatted}} indirme",
+      "free_ad_supported": "Ücretsiz (Reklam Destekli)",
+      "keywords": "{{name}}, {{author}}, minecraft eklentisi, pumpkinmc, wasm, {{category}}, {{keywords}}",
+      "og_title": "{{name}} (Geliştirici: {{author}})",
+      "og_title_version": "{{name}} (v{{version}}, Geliştirici: {{author}})",
+      "price": "Fiyat",
+      "breadcrumb": "İçerik haritası"
+    },
+    "purchase": {
+      "ad_supported": "AD SUPPORTED",
+      "apply": "Apply",
+      "awaiting_release": "Pre-Ordered (Awaiting Release)",
+      "clear": "Clear",
+      "coupon_discount": "-{{discount}}% COUPON",
+      "download": "Download {{size}}",
+      "free": "FREE",
+      "preorder_badge": "PRE-ORDER",
+      "preorder_notice": "Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.",
+      "preorder_now": "Pre-Order Now",
+      "preorder_owned_notice": "You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.",
+      "promo_placeholder": "PROMOCODE",
+      "promo_prompt": "Have a promo code?",
+      "purchase": "Purchase Plugin",
+      "purchased": "Purchased",
+      "sale_discount": "-{{discount}}% SALE",
+      "watch_ad": "Watch Ad to Download",
+      "success_badge": "Satın alma başarılı!",
+      "success_message": "Artık <strong>{{name}}</strong> eklentisine sahipsiniz. WASM dosyanızı almak için indirme düğmesine tıklayın.",
+      "preorder_available": "Ön Siparişe Açık",
+      "expected": "Beklenen: {{date}}"
+    },
+    "versions": {
+      "default_notes": "Bug fixes and performance improvements.",
+      "history": "Version History ({{count}})",
+      "whats_new": "What's New"
+    },
+    "video": {
+      "exit_fullscreen": "Exit Fullscreen",
+      "fullscreen": "Fullscreen",
+      "mute": "Mute",
+      "player": "Video Player",
+      "seek": "Seek"
+    },
+    "early_access_title": "Erken Erişim Eklentisi",
+    "early_access_notice": "Bu eklenti şu anda <strong>Erken Erişim</strong> aşamasındadır. Halen aktif olarak geliştirilmektedir ve hatalar veya eksik özellikler içerebilir. Şimdi indirmeniz geliştiriciyi destekler ve eklentinin geleceğini şekillendirmeye yardımcı olur!"
   },
   "profile": {
     "title": "Hesap ve Ayarlar",
@@ -199,7 +346,16 @@
       "browse_btn": "Eklentileri Keşfet",
       "purchased_on": "Satın alma tarihi:",
       "preorder_badge": "Ön Sipariş",
-      "download_latest": "En Son .wasm Dosyasını İndir"
+      "download_latest": "En Son .wasm Dosyasını İndir",
+      "browse": "Browse Plugins",
+      "empty_description": "Purchased plugins will appear here, ready to download anytime.",
+      "empty_title": "Your library is <mark>empty</mark>",
+      "heading": "<mark>My</mark> Library",
+      "load_failed": "Failed to load your library. Please try again.",
+      "owned": "Owned",
+      "plugin_count_one": "{{count}} plugin",
+      "plugin_count_other": "{{count}} plugins",
+      "subtitle": "Your purchased plugins, available to download at any time."
     },
     "security": {
       "title": "Hesap Güvenliği",
@@ -214,7 +370,28 @@
       "new_password": "Yeni Şifre",
       "confirm_password": "Yeni Şifreyi Onayla",
       "new_email": "Yeni E-Posta Adresi",
-      "save_security": "Bilgileri Güncelle"
+      "save_security": "Bilgileri Güncelle",
+      "current_password_placeholder": "Your current password",
+      "disable_confirmation": "Confirm with your password to disable",
+      "disable_failed": "Failed to disable 2FA.",
+      "disable_totp": "Disable 2FA",
+      "disabled_message": "2FA is <strong>not enabled</strong>. We recommend enabling it for account protection.",
+      "disabled_success": "2FA has been disabled.",
+      "enabled_message": "2FA is currently <strong>enabled</strong> on your account.",
+      "enabled_success": "2FA enabled successfully!",
+      "enter_code": "Enter the 6-digit code from your app:",
+      "heading": "<mark>Security</mark> Settings",
+      "manual_code": "Or enter this code manually:",
+      "password_changed": "Password changed successfully.",
+      "password_description": "Use a strong, unique password you don't use elsewhere.",
+      "password_instructions": "Protect your account with a strong password. You can also choose to log out of other active devices when updating your password.",
+      "scan_qr": "Scan this QR code with your authenticator app:",
+      "setup_failed": "Failed to start 2FA setup.",
+      "setup_totp": "Set Up 2FA",
+      "subtitle": "Protect your account with a strong password and two-factor authentication.",
+      "totp_description": "Add an extra layer of security using an authenticator app like Google Authenticator or Authy.",
+      "verify_enable": "Verify & Enable",
+      "verifying": "Verifying..."
     },
     "account_profile_title": "Hesap Profili",
     "avatar_label": "Profil Resmi",
@@ -223,7 +400,338 @@
     "avatar_updated": "Profil resmi başarıyla güncellendi!",
     "avatar_upload_failed": "Profil resmi yüklenemedi.",
     "avatar_removed": "Profil resmi kaldırıldı.",
-    "avatar_remove_failed": "Profil resmi kaldırılamadı."
+    "avatar_remove_failed": "Profil resmi kaldırılamadı.",
+    "account": {
+      "country": "Country",
+      "country_failed": "Failed to update country.",
+      "country_placeholder": "Select a country…",
+      "email_failed": "Failed to update email.",
+      "email_placeholder": "your@email.com",
+      "heading": "<mark>Account</mark> Details",
+      "language": "Preferred Language",
+      "language_failed": "Failed to update preferred language.",
+      "no_changes": "No changes to save.",
+      "profile_title": "Account Profile",
+      "updated": "Account details updated successfully!",
+      "username_failed": "Failed to update username.",
+      "username_placeholder": "Your username"
+    },
+    "api_keys": {
+      "active_description": "Tokens currently authorized to authenticate as your account.",
+      "active_title": "Active Tokens",
+      "copy": "Copy Token",
+      "copy_warning": "<strong>Make sure to copy your token now.</strong> For your security, you will not be able to view this token again after leaving this page.",
+      "create_description": "Create a dedicated token for automated plugin downloads, server setup scripts, or backup bots.",
+      "create_failed": "Failed to create API key",
+      "create_title": "Generate New API Key",
+      "created": "API Key created successfully!",
+      "created_on": "Created: {{date}}",
+      "created_title": "Personal Access Token Created Successfully!",
+      "deselect_all": "Deselect All",
+      "developer_badge": "Developer",
+      "empty": "No API keys generated yet.",
+      "empty_description": "Generate your first token above to start automating plugin downloads with curl or scripts.",
+      "expiration": "Expiration",
+      "expiration_hint": "Tokens will automatically stop working after expiry",
+      "expires_on": "Expires: {{date}}",
+      "generate": "Generate Token",
+      "generating": "Generating…",
+      "heading": "<mark>API Keys</mark> & Automation Tokens",
+      "last_used": "Last used: {{date}}",
+      "loading": "Loading your API keys…",
+      "name": "Key Name / Purpose",
+      "name_hint": "e.g., 'SMP Server 1', 'Pterodactyl Daemon', 'CI Automation'",
+      "name_placeholder": "My Production Server",
+      "never": "Never",
+      "revoke_confirm": "Are you sure you want to revoke this API key? External tools and servers using it will immediately lose access.",
+      "revoke_failed": "Failed to revoke API key",
+      "revoked": "API Key revoked successfully.",
+      "scope_description": "Configure permissions granted to this token. External tools will only be able to perform authorized actions.",
+      "scope_title": "Permission Scopes",
+      "select_all": "Select All",
+      "select_scope_error": "Please select at least one permission scope for this key.",
+      "selected_scopes": "{{selected}} / {{total}} selected",
+      "subtitle": "Personal access tokens allow external tools, CI/CD pipelines, and Minecraft servers to securely call the Pumpkin Market REST API without exposing your account password.",
+      "usage_description": "Using your token with cURL or automation scripts.",
+      "usage_instructions": "Pass your token in the <header /> header to authenticate directly with the REST API:",
+      "usage_title": "How to Use Your Token"
+    },
+    "author": {
+      "load_failed": "Could not load this profile.",
+      "not_found": "Developer not found.",
+      "page_description": "Plugins published by {{username}} on Pumpkin Market.",
+      "page_title": "{{username}} — Developer"
+    },
+    "danger": {
+      "delete_action": "Delete My Account Permanently",
+      "delete_confirm": "Are you sure you want to permanently delete your account? Under GDPR Article 17 (Right to erasure), all your account data, developer profile, uploaded plugins, and reviews will be permanently wiped.",
+      "delete_failed": "Failed to delete account.",
+      "delete_title": "Delete Account",
+      "delete_warning": "<strong>Permanently deletes your account, all uploaded plugins, and any remaining balance. This cannot be reversed.</strong> Deleting your account will immediately remove all your plugins from the marketplace and forfeit any pending payouts.",
+      "heading": "<mark>Danger</mark> Zone",
+      "subtitle": "These actions are permanent and cannot be undone."
+    },
+    "developer": {
+      "checking_name": "Checking developer name availability...",
+      "dashboard_failed": "Failed to open payout dashboard.",
+      "github_placeholder": "https://github.com/username",
+      "name_too_long": "Developer name cannot exceed 50 characters",
+      "name_too_short": "Developer name must be at least 2 characters",
+      "onboarding_failed": "Failed to start payout onboarding.",
+      "saving": "Saving Developer Info…",
+      "street_placeholder": "123 Main St",
+      "support_email_placeholder": "support@domain.com",
+      "tax_id_placeholder": "EU123456789",
+      "update_failed": "Failed to update developer profile.",
+      "updated": "Developer profile updated!",
+      "website_placeholder": "https://website.com"
+    },
+    "expiry": {
+      "days_0": "No Expiration",
+      "days_180": "180 Days",
+      "days_30": "30 Days",
+      "days_365": "1 Year",
+      "days_90": "90 Days (Recommended)"
+    },
+    "languages": {
+      "de": "Deutsch (German)",
+      "en": "English",
+      "es": "Español (Spanish)",
+      "fr": "Français (French)",
+      "it": "Italiano (Italian)",
+      "ja": "日本語 (Japanese)",
+      "ko": "한국어 (Korean)",
+      "nl": "Nederlands (Dutch)",
+      "pl": "Polski (Polish)",
+      "pt": "Português (Portuguese)",
+      "ru": "Русский (Russian)",
+      "tr": "Türkçe (Turkish)",
+      "zh": "中文 (Chinese)",
+      "zh_cn": "Simplified Chinese"
+    },
+    "nav": {
+      "account": "Account",
+      "api_keys": "API Keys",
+      "danger": "Danger Zone",
+      "developer": "Developer Profile",
+      "library": "Library",
+      "notifications": "Notifications",
+      "privacy": "Privacy & Data",
+      "security": "Security"
+    },
+    "notifications": {
+      "description": "Control which transactional emails we send to your registered address.",
+      "heading": "<mark>Notification</mark> Preferences",
+      "marketing": "Tips & promotions",
+      "marketing_description": "Occasional tips to grow your plugin sales.",
+      "purchase": "New purchase",
+      "purchase_description": "Receive an email whenever someone buys your plugin.",
+      "review": "New review",
+      "review_description": "Get notified when a user leaves a review on your plugin.",
+      "saved": "Notification preferences saved!",
+      "subtitle": "Choose which emails and alerts you want to receive.",
+      "title": "Email Notifications",
+      "updates": "Marketplace updates",
+      "updates_description": "Important changes to marketplace policies or features."
+    },
+    "page_title": "Account <mark>Settings</mark>",
+    "passkeys": {
+      "add": "Add Passkey",
+      "added_on": "Added {{date}}",
+      "added_recently": "Added recently",
+      "continue": "Continue with Biometrics",
+      "delete": "Delete Passkey",
+      "delete_confirm": "Are you sure you want to remove this passkey?",
+      "delete_failed": "Failed to remove passkey.",
+      "description": "Sign in securely and instantly with Touch ID, Face ID, Windows Hello, or physical security keys.",
+      "empty": "No passkeys registered yet. Add one to enable passwordless biometrics.",
+      "hardware": "Hardware Key",
+      "instructions": "Passkeys provide phishing-resistant security backed by hardware cryptographic keys on your device.",
+      "last_used": "Last used {{date}}",
+      "loading": "Loading registered passkeys...",
+      "name": "Passkey Name (e.g. MacBook Pro Touch ID, Windows Hello)",
+      "name_hint": "Give your passkey a descriptive nickname so you recognize the device later.",
+      "prompting": "Prompting Device...",
+      "register_failed": "Failed to register passkey.",
+      "register_title": "Register a New Passkey",
+      "registered": "Passkey registered successfully!",
+      "removed": "Passkey removed.",
+      "rename": "Rename Passkey",
+      "rename_failed": "Failed to rename passkey.",
+      "renamed": "Passkey renamed.",
+      "save_name": "Save Name",
+      "synced": "Synced",
+      "title": "Passkeys & Biometrics"
+    },
+    "password": {
+      "change_failed": "Failed to change password. Please verify your current password.",
+      "confirm_placeholder": "Repeat new password",
+      "current_placeholder": "Enter current password",
+      "current_required": "Please enter your current password.",
+      "description": "Choose a strong, unique password to secure your account.",
+      "logout_description": "Sign out of all other browsers, phones, and devices. You will remain logged in on this device.",
+      "logout_devices": "Log out other devices",
+      "minimum_length": "New password must be at least 8 characters long.",
+      "mismatch": "Passwords do not match",
+      "mismatch_error": "New passwords do not match.",
+      "success": "Password successfully updated! Closing...",
+      "update": "Update Password"
+    },
+    "privacy": {
+      "access_description": "You can request and download a full copy of your account records at any time using the export tool above.",
+      "access_title": "Access & Portability",
+      "contact_description": "Have questions about your data or privacy? Contact our team anytime at <email />.",
+      "contact_title": "Contact & Support",
+      "controls_description": "How you can access, update, or remove your data on PumpkinMarket.",
+      "controls_title": "Data & Privacy Controls",
+      "cookie_description": "Choose what cookies and tracking technologies are enabled while you browse PumpkinMarket.",
+      "cookie_instructions": "You can update your preferences or turn off analytics cookies at any time without affecting your marketplace experience.",
+      "cookie_manage": "Manage Cookie Preferences",
+      "delete_description": "Permanently delete your account and all associated data anytime in the Danger Zone tab.",
+      "delete_title": "Deleting Your Account",
+      "export_description": "Download a copy of your account data including your purchases, licenses, reviews, and developer details in JSON format.",
+      "export_download": "Download Data Export (.json)",
+      "export_failed": "Failed to export your data.",
+      "export_generating": "Generating Export…",
+      "export_instructions": "Generate a structured machine-readable export of all data associated with your PumpkinMarket account.",
+      "export_title": "Export Account Data",
+      "exported": "Personal data export downloaded successfully!",
+      "heading": "<mark>Privacy</mark> & Data",
+      "subtitle": "Manage your personal data, download an export of your account, and configure cookie settings.",
+      "update_description": "Keep your email, username, country, and developer profile up to date anytime directly from your settings tabs.",
+      "update_title": "Updating Your Information"
+    },
+    "recovery": {
+      "confirm_title": "Confirm Password to Generate Recovery Codes",
+      "current_password": "Your Current Password",
+      "description": "One-time use backup codes to regain access to your account if you lose your phone or security key.",
+      "empty": "No active recovery codes. Generate a set of backup codes to prevent getting locked out.",
+      "generate": "Generate Codes",
+      "generate_failed": "Failed to generate recovery codes.",
+      "generate_new": "Generate New Codes",
+      "generate_ten": "Generate 10 Codes",
+      "generated": "New recovery codes generated.",
+      "generating": "Generating...",
+      "invalidate_warning": "Generating new recovery codes will automatically invalidate all previously generated codes.",
+      "loading": "Loading recovery codes status...",
+      "remaining": "You have <remaining /> of <total /> recovery codes remaining.",
+      "title": "Emergency Recovery Codes"
+    },
+    "recovery_modal": {
+      "confirm": "I have safely stored my recovery codes →",
+      "copy_all": "Copy All",
+      "copy_document": "PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: {{date}}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n{{codes}}\n\nKeep these codes in a secure location (e.g., password manager).",
+      "description": "If you ever lose access to your authenticator app or security keys, you can use these 10 one-time codes to regain access to your account.",
+      "download": "Download (.txt)",
+      "download_document": "PUMPKIN MARKET - EMERGENCY RECOVERY CODES\nGenerated on: {{date}}\n\nEach code can be used once if you lose access to your Passkey or 2FA Authenticator:\n\n{{codes}}\n\nStore these codes safely. Never share them with anyone.",
+      "print": "Print Codes",
+      "title": "Save Your Recovery Codes",
+      "warning": "<strong>Important:</strong> We do not store these codes in plaintext and cannot recover them for you. Save them in a password manager now."
+    },
+    "roles": {
+      "admin": "Administrator",
+      "moderator": "Moderator",
+      "reviewer": "İncelemeci"
+    },
+    "scopes": {
+      "analytics_description": "Permissions for developer statistics, revenue metrics, and runtime telemetry",
+      "analytics_read": "Read Analytics",
+      "analytics_read_description": "Query developer download charts, visitor statistics, and revenue telemetry",
+      "analytics_title": "Analytics & Telemetry",
+      "coupons_description": "Permissions for promotional discount codes",
+      "coupons_read": "View Coupons",
+      "coupons_read_description": "List active, scheduled, and expired promotional discount codes",
+      "coupons_write": "Manage Coupons",
+      "coupons_write_description": "Create, update, and delete promotional discount codes",
+      "licenses_create": "Issue Licenses",
+      "licenses_create_description": "Generate and issue new customer license keys",
+      "licenses_delete": "Delete Licenses",
+      "licenses_delete_description": "Permanently remove license records from the database",
+      "licenses_description": "Permissions for customer licenses on paid/premium plugins",
+      "licenses_read": "View Licenses",
+      "licenses_read_description": "List issued customer licenses and inspect activation status",
+      "licenses_revoke": "Revoke Licenses",
+      "licenses_revoke_description": "Toggle revocation status for issued customer licenses",
+      "plugins_create": "Create Plugins",
+      "plugins_create_description": "Register and create new plugin listings on the marketplace",
+      "plugins_delete": "Delete Plugins",
+      "plugins_delete_description": "Permanently remove owned plugins and associated artifacts",
+      "plugins_description": "Permissions for reading, downloading, creating, updating, and publishing plugins",
+      "plugins_download": "Download Plugins",
+      "plugins_download_description": "Download free and owned plugin WebAssembly binaries and release artifacts",
+      "plugins_media": "Upload Media",
+      "plugins_media_description": "Upload screenshots, promotional images, and media gallery assets",
+      "plugins_publish": "Publish & Unpublish",
+      "plugins_publish_description": "Publish draft plugins or toggle release visibility status",
+      "plugins_read": "Read Plugins",
+      "plugins_read_description": "View plugin metadata, draft status, and version history",
+      "plugins_update": "Update Details",
+      "plugins_update_description": "Edit plugin descriptions, categories, links, icons, and pricing",
+      "plugins_versions": "Upload Versions",
+      "plugins_versions_description": "Upload new WebAssembly release binaries and version archives",
+      "reviews_description": "Permissions for reading and replying to community reviews",
+      "reviews_read": "View Reviews",
+      "reviews_read_description": "Read plugin user ratings and feedback reviews",
+      "reviews_reply": "Reply to Reviews",
+      "reviews_reply_description": "Post official developer replies to customer reviews",
+      "telemetry_read": "Read Telemetry",
+      "telemetry_read_description": "Query runtime heartbeat metrics, active player counts, and server distributions"
+    },
+    "sessions": {
+      "active_now": "Active now",
+      "browser_fallback": "Web Browser",
+      "current_device": "Current Device",
+      "description": "Review browsers and devices currently logged into your account. You can revoke unrecognized sessions at any time.",
+      "device_fallback": "Web Device",
+      "empty": "No active sessions found.",
+      "ip_address": "IP: {{ip}}",
+      "last_active": "Last active {{date}} {{time}}",
+      "loading": "Loading active devices…",
+      "others_revoked": "Signed out of all other devices.",
+      "revoke_failed": "Failed to revoke session.",
+      "revoke_others_confirm": "Are you sure you want to sign out of all other devices?",
+      "revoke_others_failed": "Failed to sign out of other sessions.",
+      "revoked": "Session revoked successfully.",
+      "revoking": "Revoking…",
+      "sign_out_others": "Sign Out of All Other Devices",
+      "signing_out": "Signing out…",
+      "title": "Active Devices & Sessions"
+    },
+    "setup": {
+      "code_invalid": "Invalid 2FA code. Please try again.",
+      "code_invalid_length": "Please enter a valid 6-digit authentication code.",
+      "continue": "Continue →",
+      "continue_upload": "Continue to Upload →",
+      "copy_secret": "Copy Secret",
+      "description": "Protect your account with modern security. Choose between biometric passkeys or standard 2FA authenticator apps.",
+      "passkey_canceled": "Registration was canceled or timed out.",
+      "passkey_create": "Create & Register Passkey",
+      "passkey_created": "Passkey created successfully!",
+      "passkey_creating": "Setting up Passkey...",
+      "passkey_description": "Fastest & most secure. Touch ID, Face ID, Windows Hello, or Security Key.",
+      "passkey_explanation": "<strong>How it works:</strong> Passkeys replace passwords and SMS codes with cryptographic keys stored securely in your device's keychain. They are 100% phishing-proof.",
+      "passkey_failed": "Failed to register passkey. Ensure your device supports biometrics/WebAuthn.",
+      "passkey_name": "Device / Passkey Name (Optional)",
+      "passkey_placeholder": "e.g. MacBook Pro Touch ID, Windows PC, or YubiKey",
+      "passkey_title": "Passkey & Biometrics",
+      "recommended": "Recommended",
+      "required": "Required",
+      "required_publishing": "Required for Plugin Publishing & Developer Verification",
+      "skip": "Skip for now →",
+      "title": "Secure Your Account",
+      "totp_code": "2. Enter the 6-Digit Code from the App",
+      "totp_description": "Use Google Authenticator, Microsoft Authenticator, Authy, or 1Password.",
+      "totp_enable": "Verify & Enable 2FA",
+      "totp_enabled": "Two-Factor Authentication enabled successfully!",
+      "totp_generating": "Generating 2FA Secret & QR Code...",
+      "totp_manual": "Or manually copy the setup key below:",
+      "totp_scan": "1. Scan QR Code with Authenticator App",
+      "totp_setup_failed": "Failed to initialize 2FA setup.",
+      "totp_title": "Authenticator App (TOTP 2FA)",
+      "totp_verifying": "Verifying Code...",
+      "try_again": "Try Again"
+    },
+    "sign_out": "Sign Out"
   },
   "developer": {
     "onboarding": {
@@ -334,7 +842,54 @@
       "preorder_desc": "Kullanıcıların dosya çıkışından önce satın almasına izin verin",
       "release_date": "Hedeflenen Çıkış Tarihi",
       "publish_btn": "Eklentiyi Yayınla ->",
-      "publishing": "Dosya yükleniyor ve doğrulanıyor..."
+      "publishing": "Dosya yükleniyor ve doğrulanıyor...",
+      "validation": {
+        "component_bounds": "Section length ({{length}} bytes) exceeds file size at offset 0x{{offset}}.",
+        "component_length": "Corrupted LEB128 section length at byte offset 0x{{offset}}.",
+        "component_section": "Invalid component section ID {{sectionId}} at byte offset 0x{{offset}}.",
+        "corrupted_file": "Corrupted file",
+        "image_canvas": "Could not initialize image processing canvas.",
+        "image_corrupt": "Corrupt or malformed image data.",
+        "image_dimensions": "Image dimensions ({{width}}x{{height}}) are too small. Minimum is {{minWidth}}x{{minHeight}}px.",
+        "image_encoding": "Image encoding failed.",
+        "image_format": "\"{{name}}\" is not a valid image. Only genuine PNG, JPEG, and WebP files are accepted.",
+        "image_processing": "Could not process \"{{name}}\": {{error}}",
+        "image_too_large": "Image file \"{{name}}\" is too large (max 20 MB original). Please resize it first.",
+        "no_file": "No file selected.",
+        "no_image": "No image file provided.",
+        "unknown_error": "Unknown error",
+        "wasm_bytecode": "WebAssembly core bytecode validation failed: module structure or types are corrupted.",
+        "wasm_component": "Corrupted WebAssembly Component Model structure.",
+        "wasm_extension": "File must have a .wasm extension.",
+        "wasm_header": "Invalid file format: missing standard WebAssembly header (\\0asm).",
+        "wasm_inspection": "Failed to inspect WebAssembly binary: {{error}}",
+        "wasm_too_large": "Plugin binary exceeds the 5 MB limit ({{size}} MB). Please optimize or split your plugin.",
+        "wasm_too_small": "File is too small to be a valid WebAssembly module or component.",
+        "wasm_unsupported": "Unsupported WebAssembly version or format. Supported: Core WebAssembly v1 and WebAssembly Component Model (WIT).",
+        "invalid_section_id": "{{offset}} bayt ofsetinde geçersiz bileşen bölümü kimliği {{sectionId}}.",
+        "corrupted_section_length": "{{offset}} bayt ofsetinde bozuk LEB128 bölüm uzunluğu.",
+        "section_exceeds_size": "{{offset}} ofsetindeki bölüm uzunluğu ({{length}} bayt) dosya boyutunu aşıyor.",
+        "missing_magic": "Geçersiz dosya biçimi: standart WebAssembly üstbilgisi (\\0asm) eksik.",
+        "unsupported_wasm": "Desteklenmeyen WebAssembly sürümü veya biçimi. Desteklenenler: Core WebAssembly v1 ve WebAssembly Component Model (WIT).",
+        "invalid_bytecode": "WebAssembly çekirdek bayt kodu doğrulaması başarısız: modül yapısı veya türleri bozuk.",
+        "corrupted_component": "Bozuk WebAssembly Component Model yapısı.",
+        "inspect_failed": "WebAssembly ikili dosyası incelenemedi: {{message}}",
+        "invalid_image": "\"{{name}}\" geçerli bir görsel değil. Yalnızca gerçek PNG, JPEG ve WebP dosyaları kabul edilir.",
+        "corrupt_image": "Bozuk veya hatalı biçimlendirilmiş görsel verisi.",
+        "image_too_small": "Görsel boyutları ({{width}}x{{height}}) çok küçük. Minimum {{minWidth}}x{{minHeight}}px olmalıdır.",
+        "canvas_init_failed": "Görsel işleme tuvali başlatılamadı.",
+        "image_encoding_failed": "Görsel kodlama başarısız oldu.",
+        "image_process_failed": "\"{{name}}\" işlenemedi: {{message}}"
+      }
+    },
+    "categories": {
+      "admin_tools": "Admin Tools",
+      "chat": "Chat",
+      "economy": "Economy",
+      "fun": "Fun",
+      "other": "Other",
+      "utilities": "Utilities",
+      "world_management": "World Management"
     }
   },
   "auth": {
@@ -359,7 +914,101 @@
     "send_reset_link": "Bağlantı Gönder",
     "connection_error_title": "Sunucuya ulaşılamıyor",
     "connection_error_desc": "Oturumunuz doğrulanırken geçici bir ağ geçidi hatası oluştu.",
-    "retry_connection": "Bağlantıyı Yeniden Dene"
+    "retry_connection": "Bağlantıyı Yeniden Dene",
+    "authentication_code": "Authentication Code",
+    "check_email": {
+      "email_fallback": "your email address",
+      "instructions": "Please click the link in the email to activate your account. The link will expire in 15 minutes.",
+      "missing": "Didn't receive the email? Check your spam folder or try registering again.",
+      "sent": "We've sent a verification link to <email />.",
+      "title": "Check Your <highlight>Inbox</highlight>"
+    },
+    "confirm_email": {
+      "failed": "Update <highlight>Failed</highlight>",
+      "retry": "Please try updating your email again from your profile page.",
+      "success": "Email Updated <highlight>Successfully!</highlight>",
+      "success_description": "Your new email is now active. Redirecting to your profile...",
+      "verifying": "Verifying your email change..."
+    },
+    "email_placeholder": "you@company.com",
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "invalid_email": "Please enter a valid email address.",
+      "missing_verification_token": "No verification token found.",
+      "security_check": "Please complete the security check.",
+      "verification_failed": "Verification failed. The link may be invalid or expired."
+    },
+    "forgot": {
+      "sending": "Sending...",
+      "sent": "If an account exists with that email, a reset link has been sent.",
+      "sign_in": "Remembered your password? <login>Sign in</login>",
+      "submit": "Send reset link",
+      "subtitle": "Enter your email and we'll send you a link to reset your password.",
+      "title": "Reset your <highlight>password</highlight>"
+    },
+    "invalid_2fa_code": "Invalid 2FA code",
+    "invalid_email_hint": "Please enter a valid email address",
+    "login": {
+      "authentication_hint": "Enter the 6-digit code from your authenticator app.",
+      "email_password": "or email & password",
+      "invalid_credentials": "Invalid credentials.",
+      "invalid_recovery_code": "Invalid recovery code",
+      "passkey": "Sign in with a Passkey",
+      "passkey_failed": "Passkey authentication failed.",
+      "recovery_code": "Emergency Recovery Code",
+      "recovery_hint": "Enter one of your 12-character backup recovery codes.",
+      "subtitle": "Sign in to your PumpkinMC account.",
+      "title": "Welcome <highlight>back</highlight>",
+      "use_authenticator": "← Back to authenticator app code",
+      "use_recovery": "Lost access to your phone? Use a recovery code →",
+      "verify_recovery": "Verify Recovery Code",
+      "verify_sign_in": "Verify & Sign In"
+    },
+    "password_requirements": {
+      "length": "At least 8 characters",
+      "lowercase": "At least one lowercase letter",
+      "number": "At least one number",
+      "requirements_met": "{{met}}/{{total}} requirements met",
+      "special": "At least one special character",
+      "uppercase": "At least one uppercase letter"
+    },
+    "password_strength": {
+      "fair": "Fair",
+      "strong": "Strong",
+      "very_strong": "Very strong",
+      "very_weak": "Very weak",
+      "weak": "Weak"
+    },
+    "register": {
+      "agreement": "By creating an account, you agree to our <terms>Terms of Service</terms> and <privacy>Privacy Policy</privacy>",
+      "creating": "Creating account…",
+      "email_valid": "Looks good!",
+      "failed": "Registration failed. Please try again.",
+      "password_placeholder": "Create a strong password",
+      "password_requirements_error": "Please meet all password requirements."
+    },
+    "reset": {
+      "invalid_link_description": "This password reset link is invalid or has expired.",
+      "invalid_link_error": "Invalid reset link. Please request a new one.",
+      "invalid_link_title": "Invalid <highlight>Link</highlight>",
+      "password_length_error": "Password must be at least 8 characters long.",
+      "password_mismatch": "Passwords do not match.",
+      "request_link": "Request a new link",
+      "submit": "Update password",
+      "subtitle": "Choose a new, strong password for your account.",
+      "success": "Password has been successfully reset. You can now log in with your new password.",
+      "title": "Set new <highlight>password</highlight>"
+    },
+    "username_placeholder": "johndoe",
+    "verify_email": {
+      "failed": "Verification <highlight>Failed</highlight>",
+      "return_to_registration": "Return to Registration",
+      "security_description": "Add an extra layer of security before you get started. Choose passkeys (biometrics) or an authenticator app. You can also do this later.",
+      "security_title": "Protect Your Account (Recommended)",
+      "success": "Email verified successfully! Welcome to Pumpkin Market.",
+      "verifying": "Verifying your email address...",
+      "waiting": "Please wait while we confirm your credentials."
+    }
   },
   "cookie": {
     "banner_title": "Çerez Tercihleri",
@@ -367,7 +1016,21 @@
     "accept_all": "Tümünü Kabul Et",
     "reject_non_essential": "Yalnızca Zorunlu",
     "customize": "Tercihleri Özelleştir",
-    "save": "Tercihleri Kaydet"
+    "save": "Tercihleri Kaydet",
+    "always_active": "Always Active",
+    "analytics_desc": "Collects anonymous aggregated statistical data about site usage (pages viewed, session lengths) to help us optimize Marketplace features and discover popular plugins. IP addresses are masked and anonymized.",
+    "analytics_details": "<provider>Provider:</provider> Google Analytics 4 (IP Anonymized) · <retention>Retention:</retention> Up to 14 months",
+    "analytics_title": "Analytics & Performance Cookies",
+    "banner_label": "Cookie consent banner",
+    "close_preferences": "Close preferences",
+    "necessary_desc": "Essential for security, user authentication sessions, bot protection (Cloudflare Turnstile), and remembering your preferences (such as selected language and currency).",
+    "necessary_details": "<providers>Providers:</providers> PumpkinMarket, Cloudflare · <storage>Storage:</storage> LocalStorage & Session Tokens",
+    "necessary_title": "Strictly Necessary Cookies & Storage",
+    "preferences_desc": "Customize your cookie settings below. Strictly necessary cookies are required for authentication, security, and basic site functionality and cannot be disabled.",
+    "preferences_title": "Privacy & Cookie Preferences",
+    "privacy_policy": "Privacy Policy",
+    "reject_optional": "Reject Non-Essential",
+    "toggle_analytics": "Toggle analytics cookies"
   },
   "search": {
     "recent_title": "Son Aramalar",
@@ -380,7 +1043,35 @@
     "tags_title": "Etiketler",
     "plugin_count": "1 eklenti",
     "plugins_count": "{{count}} eklenti",
-    "view_all_results": "\"{{query}}\" için tüm sonuçları gör"
+    "view_all_results": "\"{{query}}\" için tüm sonuçları gör",
+    "adwall": "Ad-supported",
+    "all_types": "All types",
+    "clear_all": "Clear all",
+    "clear_filters": "Clear filters",
+    "clear_input": "Clear search input",
+    "filters": "Filters",
+    "license_type": "License",
+    "load_failed": "Could not load plugins. Please try again.",
+    "loading_suggestions": "Loading suggestions",
+    "max_price": "Max",
+    "min_price": "Min",
+    "no_matches": "No plugins match your filters.",
+    "no_plugins": "No plugins found yet.",
+    "page_description": "Search plugins, developers, and categories on Pumpkin Market.",
+    "page_title": "{{query}} — Search",
+    "price_range": "Price range",
+    "remove_recent": "Remove {{term}} from recent searches",
+    "results_count": "{{total}}{{more}} plugins",
+    "results_description": "Plugins matching \"{{query}}\" on Pumpkin Market.",
+    "results_title": "Search <highlight>results</highlight>",
+    "searching": "Searching…",
+    "sort_by": "Sort by",
+    "sort_name_asc": "Name (A-Z)",
+    "sort_name_desc": "Name (Z-A)",
+    "sort_newest": "Newest",
+    "sort_popular": "Most popular",
+    "sort_price_asc": "Price (low to high)",
+    "sort_price_desc": "Price (high to low)"
   },
   "common": {
     "save": "Kaydet",
@@ -392,7 +1083,24 @@
     "error": "Bir hata oluştu.",
     "success": "Başarıyla kaydedildi.",
     "close": "Kapat",
-    "search": "Ara"
+    "search": "Ara",
+    "by_author": "by <author />",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "dismiss": "Dismiss",
+    "hide_password": "Hide password",
+    "not_available": "N/A",
+    "retry": "Retry",
+    "retry_error": "{{error}} — Try Again",
+    "revoke": "Revoke",
+    "save_changes": "Save Changes",
+    "save_preferences": "Save Preferences",
+    "saving_changes": "Saving Changes…",
+    "select": "Select",
+    "show_password": "Show password",
+    "submit": "Submit",
+    "unknown": "Bilinmiyor",
+    "updating": "Updating..."
   },
   "guidelines": {
     "changes_requested": "Değişiklik İstendi",
@@ -1448,5 +2156,357 @@
       "how_it_works_title": "Sıfır Yapılandırmalı WASM Çökme İlişkilendirmesi",
       "how_it_works_desc": "PumpkinMarket'ten indirilen her .wasm ikili dosyası otomatik olarak Ed25519 imzalı bir pumpkin.metadata özel bölümü içerir. Bir eklenti Wasmtime içinde çöktüğünde Pumpkin ana bilgisayarı bu meta veriyi okuyarak çökmeyi tam eklenti sürümüne atfeder ve değiştirilmiş veya iptal edilmiş kopyaları filtreler."
     }
+  },
+  "legal": {
+    "cookie_preferences": "Cookie Preferences",
+    "developer_terms": {
+      "footer_guidelines": "→ Marketplace Review Guidelines",
+      "footer_privacy": "→ Privacy Policy",
+      "footer_terms": "→ General Terms of Service",
+      "lede": "Terms, distribution rights, and platform governance for Pumpkin Marketplace creators.",
+      "sections": {
+        "anti-circumvention": {
+          "content": "Developers may not use Pumpkin Marketplace listings, descriptions, binary messages, or community features to direct users off-platform for the purpose of evading platform fees or purchasing digital goods outside of our secure checkout. Any attempt to circumvent Marketplace payment systems will result in immediate termination of developer privileges and permanent forfeiture of pending payouts.",
+          "title": "8. Anti-Steering & Circumvention Prohibitions"
+        },
+        "commercial-terms": {
+          "content": "6.1 Revenue Split:\nFor all paid Plugin sales and pre-orders processed through the Marketplace, the standard revenue distribution is:\n• 70% of Net Revenue to the Developer.\n• 30% Platform Fee to Pumpkin Marketplace for hosting, cryptographic licensing infrastructure, bandwidth, catalog distribution, and maintenance.\n\n6.2 Payouts via Stripe Connect:\nSellers must maintain an active, fully verified Stripe Connected Account in an eligible jurisdiction. Payouts are transferred automatically by Stripe in accordance with your regional Stripe payout schedule.\n\n6.3 Payment Processing & Currency:\nTransactions are executed in EUR. Standard payment gateway processing fees (e.g., Stripe processing fees) and mandatory government taxes (such as VAT where applicable) are deducted from gross receipts before net distribution.\n\n6.4 Refund & Chargeback Offsets (Clawbacks):\nIf a refund is issued in accordance with our Digital Withdrawal Waiver & Refund Policy, or if a buyer initiates a fraudulent payment chargeback, the refunded amount and associated payment dispute fees will be deducted from your developer account balance or offset against future earnings.",
+          "title": "6. Commercial Terms, Revenue Share (70/30) & Payouts"
+        },
+        "definitions": {
+          "content": "This Developer Distribution Agreement (\"Agreement\") constitutes a legally binding contract between you (either as an individual developer or an authorized representative of a company/entity, referred to as \"Developer\" or \"You\") and Aleksandr Medvedev (\"Operator\", \"Pumpkin Marketplace\", \"We\", or \"Us\"), governing your distribution, publication, sale, and licensing of Minecraft plugins, WebAssembly modules, and associated digital assets (\"Plugins\") via the Pumpkin Marketplace platform.\n\nBy completing developer onboarding or submitting any Plugin to Pumpkin Marketplace, you explicitly agree to be bound by this Agreement, our general Terms of Service, Privacy Policy, and Marketplace Review Guidelines. If you do not agree to all terms of this Agreement, you must not register as a developer or submit Plugins.",
+          "title": "1. Definitions & Scope of Agreement"
+        },
+        "developer-warranties": {
+          "content": "By publishing any Plugin, you represent and warrant that:\n• Originality & Ownership: You are the original author of the Plugin or possess all necessary commercial licenses, intellectual property rights, and permissions to distribute all included code, libraries, and assets.\n• No Malicious Payloads: The Plugin does not contain malware, trojans, cryptominers, spyware, keyloggers, or hidden administrative backdoors.\n• Transparent Telemetry: Any telemetry, remote licensing validation, or analytics performed by your Plugin must be explicitly disclosed in the store listing description and must include an opt-out configuration setting.\n• No Circumvention: You will not attempt to bypass platform review processes, evade sandboxing restrictions, or distribute obfuscated code designed to hide non-compliant functionality.\n• Truthful Information: All documentation, changelogs, system requirements, and marketing materials provided are accurate and not misleading.",
+          "title": "4. Developer Warranties, Security & Prohibited Conduct"
+        },
+        "governing-law": {
+          "content": "11.1 Governing Law:\nThis Agreement and any disputes arising out of or related to it shall be governed by and construed in accordance with the substantive laws of the Federal Republic of Germany, without regard to its conflict of law principles.\n\n11.2 Operator Legal Contact:\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden, Germany\nContact: lilalexmed@proton.me / support@pumpkinmc.org",
+          "title": "11. Governing Law & Operator Contact"
+        },
+        "indemnification": {
+          "content": "To the maximum extent permitted by applicable law, you agree to DEFEND, INDEMNIFY, and HOLD HARMLESS Aleksandr Medvedev (Operator), Pumpkin Marketplace, its affiliates, contributors, and agents from and against any and all claims, demands, liabilities, damages, losses, costs, expenses, and legal fees arising out of or related to:\n• Any breach by you of this Agreement, warranties, or representations.\n• Any claim that your Plugin infringes or misappropriates any third-party patent, copyright, trademark, trade secret, or privacy right.\n• Any harm, server crash, data loss, financial loss, or damage caused to end users or third parties by your Plugin.\n• Any violation by your Plugin of the Minecraft / Mojang EULA or applicable regional laws and regulations.",
+          "title": "9. Developer Indemnification & Operator Liability Shield"
+        },
+        "license-grant": {
+          "content": "2.1 Distribution License:\nYou retain your intellectual property ownership in your original Plugin source code. However, you hereby grant to Pumpkin Marketplace a worldwide, non-exclusive, royalty-free, transferable, and sublicensable license to:\n• Host, reproduce, store, cache, format, sign, compile, and distribute the Plugin binary (.wasm) and metadata to end users.\n• Parse, inspect, sandbox, benchmark, decompile, and security-scan your Plugin files for malicious behavior, stability, and policy compliance.\n• Use your Plugin's name, icon, screenshots, video trailers, and developer display name for marketing, promotional campaigns, showcase reels, and marketplace cataloging.\n\n2.2 End User Sublicense:\nYou grant Pumpkin Marketplace the authority to issue licenses to end users who acquire your Plugin (whether free, ad-supported, or paid) allowing them to install and run the Plugin on their Minecraft servers in accordance with your specified license terms.",
+          "title": "2. Grant of Worldwide Distribution & Processing License"
+        },
+        "mojang-compliance": {
+          "content": "5.1 Strict EULA Compliance:\nYou acknowledge that all Minecraft-related creations must strictly adhere to Mojang Studios' End User License Agreement (EULA), Brand and Asset Guidelines, and Commercial Usage Guidelines.\n\n5.2 In-Game Monetization Rules:\nPlugins distributed on Pumpkin Marketplace must not facilitate \"pay-to-win\" mechanics or gameplay features that violate Mojang's commercial rules for server monetization. You are solely responsible for ensuring your Plugin's functionality conforms to Mojang's evolving policies.\n\n5.3 No Official Endorsement:\nYou may not claim, imply, or advertise that your Plugin or studio is officially affiliated with, endorsed by, or sponsored by Mojang Studios, Microsoft, or PumpkinMC.",
+          "title": "5. Mojang Studios & Minecraft EULA Compliance"
+        },
+        "platform-control": {
+          "content": "3.1 Sole Discretion over Distribution:\nPumpkin Marketplace operates a curated, secure ecosystem. The Operator retains absolute and sole discretion regarding whether to approve, reject, feature, sandbox, delist, disable, or remove any Plugin, update, or developer account from the platform at any time.\n\n3.2 Zero-Liability Takedown Rights:\nThe Operator may immediately remove, disable, or quarantine any Plugin without prior notice and without liability to you in circumstances including but not limited to:\n• Security Vulnerabilities: Discovery of security exploits, backdoors, crash triggers, memory leaks, or unauthorized remote code execution.\n• Malicious Functionality: Inclusion of hidden \"OP\" commands, ransomware, token stealers, botnets, or undisclosed spyware.\n• Copyright & IP Disputes: Receipt of a credible DMCA notice, copyright infringement claim, or trademark violation.\n• Minecraft / Mojang EULA Breaches: Violations of Mojang Studios' Commercial Usage Guidelines or EULA.\n• Deceptive Practices: Misleading store descriptions, false advertising, fake ratings, or review manipulation.\n• Developer Abandonment: Extended periods of non-responsiveness to critical bug reports or severe compatibility failures.\n\n3.3 Emergency Remote Kill Switch & Binary Revocation:\nIn the event of a verified critical security threat or zero-day vulnerability threatening the wider Minecraft server ecosystem, Pumpkin Marketplace reserves the right to disable cryptographic license verification, revoke download links, or instruct client runtimes to block the affected binary immediately.",
+          "title": "3. Absolute Platform Control, Moderation & Discretionary Takedowns"
+        },
+        "support-sla": {
+          "content": "7.1 Support Obligation:\nAs a developer selling or distributing software on Pumpkin Marketplace, you are solely responsible for providing end-user technical support for your Plugins. You must maintain a valid, monitored support email address or support Discord server listed on your profile and plugin listings.\n\n7.2 Response Time SLA:\nYou agree to make reasonable, good-faith efforts to respond to customer support inquiries and defect reports within 5 business days. Repeated failure to respond to buyer inquiries regarding verified technical defects may result in listing suspension or mandatory refund issuance.",
+          "title": "7. Customer Support & Maintenance Commitments"
+        },
+        "termination": {
+          "content": "10.1 Voluntary Termination:\nYou may terminate your developer account at any time by delisting your Plugins and contacting support@pumpkinmc.org.\n\n10.2 Survival of Buyer Licenses:\nIn the event of delisting or developer account closure, existing buyers who previously purchased or acquired your Plugin retain their perpetual license to access, download, and use the versions they acquired.\n\n10.3 Survival of Legal Provisions:\nSections 2.1 (for existing installations), 3, 4, 5, 6.4, 9, 10, and 11 shall survive any termination of this Agreement.",
+          "title": "10. Term, Suspension & Post-Termination Rights"
+        }
+      },
+      "seo_description": "Legal terms and distribution agreement for developers publishing plugins on Pumpkin Marketplace.",
+      "seo_title": "Developer Distribution Agreement",
+      "summary": {
+        "control": "<strong>Full platform control:</strong> Pumpkin Marketplace maintains strict quality & safety standards and reserves the right to delist or quarantine non-compliant, unsafe, or abandoned plugins.",
+        "license": "<strong>Distribution license:</strong> You grant Pumpkin Marketplace a worldwide license to host, cache, security-scan, sign, and distribute your binaries to buyers.",
+        "ownership": "<strong>You own your code:</strong> You retain ownership of your original Plugin source code and assets.",
+        "revenue": "<strong>Revenue & payouts:</strong> Paid plugins follow a standard 70/30 developer/platform split with automated payouts.",
+        "security": "<strong>Security & EULA:</strong> Code must be free of backdoors, spyware, or malicious payloads and comply with Mojang's Minecraft EULA."
+      },
+      "summary_title": "Summary for Creators",
+      "title": "Developer",
+      "title_highlight": "Distribution Agreement",
+      "updated": "Effective Date: June 2026 • Version 2026.1"
+    },
+    "guidelines": {
+      "before_submit": "Before You Submit",
+      "before_submit_items": {
+        "complete": "Ensure your plugin is complete and functional.",
+        "crashes": "Test for crashes and server performance impact.",
+        "links": "Check that all links, icons, and metadata are accurate and final.",
+        "security": "Verify that your plugin follows all security best practices."
+      },
+      "business": {
+        "lead": "Monetization on PumpkinMarket should be transparent and provide clear value to the user.",
+        "payments": {
+          "digital": "<strong>3.1.2 Digital Goods:</strong> Plugins must not unlock features via external \"keys\" or \"codes\" purchased outside the market.",
+          "integrated": "<strong>3.1.1 Integrated Payments:</strong> All transactions for plugins must go through the PumpkinMarket system. Linking to Patreon, PayPal, or other external payment sites within the plugin or description is not allowed.",
+          "title": "3.1 Payments"
+        },
+        "practices": {
+          "bait": "<strong>3.2.1 Bait and Switch:</strong> Plugins must not change their primary purpose after approval or hide essential features behind unexpected paywalls.",
+          "reviews": "<strong>3.2.2 Fake Reviews:</strong> Developers found to be inflating their own ratings or reviews will be permanently banned.",
+          "scamming": "<strong>3.2.3 Scamming:</strong> Any plugin found to be a scam or \"vaporware\" will result in an immediate permanent ban and possible refunding of all affected users.",
+          "title": "3.2 Business Practices"
+        }
+      },
+      "design": {
+        "copycats": {
+          "originality": "<strong>4.1.1 Özgünlük:</strong> Mevcut kategorilerdeki rakip eklentiler, anlamlı iyileştirmeler sağladığı sürece (daha iyi performans, zengin yapılandırma, veritabanı desteği veya aktif bakım) memnuniyetle karşılanır. Daha az işlev sunan basit kopyalar reddedilir.",
+          "spam": "<strong>4.1.2 İstenmeyen Gönderim (Spam):</strong> Birbirine çok benzeyen birden fazla eklenti veya seri yapay zeka çıktısı yüklemeyin. Özellikleri yapılandırma seçeneklerine sahip tek ve kaliteli bir eklentide birleştirin.",
+          "title": "4.1 Copycats and Spam"
+        },
+        "lead": "A great plugin is more than just code; it's also about how it's presented and how users interact with it.",
+        "ux": {
+          "consistency": "<strong>4.2.1 Consistency:</strong> We recommend following standard command patterns (e.g., /pluginname help) to ensure a familiar experience for users.",
+          "documentation": "<strong>4.2.2 Documentation:</strong> Provide clear instructions in your description or a linked wiki. Plugins that are impossible to configure or use will be rejected.",
+          "title": "4.2 User Experience"
+        }
+      },
+      "footer": "We hope these guidelines help you build better plugins and a better PumpkinMarket. We’re excited to see what you create!",
+      "intro": "Plugins are a great way to extend the functionality of PumpkinMC servers. Our goal is to provide a safe experience for users and a great opportunity for every developer to succeed. We’ve developed these Review Guidelines to help you through the development process.",
+      "lede": "High-quality plugins for a high-quality community.",
+      "legal": {
+        "ip": {
+          "body": "You must be the original author of the code or have the legal right to distribute it. Using leaked or stolen code (\"leaks\") will result in an immediate ban.",
+          "title": "5.1 Intellectual Property"
+        },
+        "lead": "You are responsible for ensuring your plugin complies with all applicable laws and regulations.",
+        "licenses": {
+          "body": "If your plugin includes open-source components, you must adhere to the terms of those licenses. Include necessary attributions and license files within your plugin archive.",
+          "title": "5.2 Open Source Licenses"
+        },
+        "removal": {
+          "body": "PumpkinMarket reserves the right to remove any plugin at its sole discretion if it is determined to be detrimental to the market's reputation or user safety, even if a specific guideline has not been technically violated.",
+          "title": "5.3 Right to Remove"
+        }
+      },
+      "performance": {
+        "completeness": {
+          "intro": "PumpkinMarket will reject plugins that are not yet complete. We do not accept \"placeholder\" plugins or versions that are non-functional.",
+          "minimum": "<strong>2.1.1 Asgari İşlevsellik:</strong> Eklentiler sunucu deneyimine anlamlı bir katkı sağlamalıdır. Basit tek komutlu sarmalayıcılar, boş eklentiler veya denetlenmemiş düşük kaliteli yapay zeka betikleri reddedilir.",
+          "stability": "<strong>2.1.2 Stability:</strong> Plugins that cause the server to crash or hang during normal operation will be removed.",
+          "title": "2.1 Plugin Completeness"
+        },
+        "lead": "Users expect plugins to be reliable and efficient. Unoptimized plugins can crash servers or cause significant lag, leading to a poor user experience.",
+        "metadata": {
+          "categorization": "<strong>2.2.2 Categorization:</strong> Plugins must be placed in the most relevant category. Mis-categorizing to gain visibility is a violation.",
+          "descriptions": "<strong>2.2.3 Descriptions:</strong> Do not include irrelevant keywords or \"tag spam\" in your description to manipulate search results.",
+          "intro": "The information you provide about your plugin must be accurate and honest.",
+          "screenshots": "<strong>2.2.1 Ekran Görüntüleri:</strong> Ekran görüntüleri, eklentinin oyun içi arayüzünü, web panelini veya efektlerini doğru şekilde yansıtmalıdır. Gerçek ekran görüntüleri yerine ilgisiz stok görseller veya yanıltıcı yapay zeka çizimleri kullanmayın.",
+          "title": "2.2 Accurate Metadata"
+        },
+        "resources": {
+          "cpu": "<strong>2.3.1 CPU usage:</strong> Avoid blocking the main server thread. Use asynchronous tasks where possible.",
+          "intro": "PumpkinMC servers run in high-concurrency environments. Performance is critical.",
+          "memory": "<strong>2.3.2 Memory leaks:</strong> Ensure your WASM binary does not leak memory over long runtimes.",
+          "title": "2.3 Resource Management"
+        }
+      },
+      "safety": {
+        "lead": "When users download a plugin from PumpkinMarket, they need to be certain that it is safe to do so. Your plugin should not contain self-replicating code, backdoors, or any features that could harm a server or its data.",
+        "objectionable": {
+          "defamatory": "<strong>1.1.1 Defamatory or Discriminatory:</strong> Content that is defamatory, discriminatory, or mean-spirited, including references or commentary about religion, race, sexual orientation, gender, national/ethnic origin, or other targeted groups.",
+          "harassment": "<strong>1.1.4 Harassment:</strong> Features designed to facilitate doxxing, stalking, or targeted harassment of server players.",
+          "intro": "Plugins should not include content that is offensive, insensitive, upsetting, intended to disgust, or in exceptionally poor taste. Examples of such content include:",
+          "sexual": "<strong>1.1.3 Sexual Content:</strong> Overtly sexual or pornographic material, including \"adult-themed\" plugins.",
+          "title": "1.1 Objectionable Content",
+          "violence": "<strong>1.1.2 Violence:</strong> Realistic depictions of physical harm or violence against people or animals. Content that encourages self-harm or illegal acts."
+        },
+        "privacy": {
+          "intro": "Data privacy is a fundamental right. Plugins must be transparent about data collection.",
+          "opt_out": "<strong>1.3.2 Opt-out:</strong> All telemetry or external reporting must provide a configuration option to be disabled.",
+          "sensitive": "<strong>1.3.3 Sensitive Files:</strong> Plugins must not access or upload files outside of their designated data folder without clear justification and disclosure.",
+          "title": "1.3 Data Privacy",
+          "transparency": "<strong>1.3.1 Transparency:</strong> If your plugin sends data to an external server (e.g., for analytics or licensing), you must disclose this clearly in the description."
+        },
+        "protection": {
+          "intro": "PumpkinMarket is dedicated to the prevention of \"griefing\" and malicious exploitation at the platform level.",
+          "malware": "<strong>1.2.1 Malware:</strong> Plugins must not contain any malicious code. This includes viruses, backdoors, hidden \"OP\" commands, or any code that performs actions without the server owner's knowledge.",
+          "phishing": "<strong>1.2.2 Phishing:</strong> Plugins must not attempt to steal user credentials, tokens (like Discord tokens), or any sensitive configuration files from the server host.",
+          "remote": "<strong>1.2.3 Remote Execution:</strong> Plugins must not download and execute arbitrary code from external sources that was not included in the original WASM binary approved by the market.",
+          "title": "1.2 User Protection"
+        }
+      },
+      "title": "PumpkinMarket",
+      "title_highlight": "Review Guidelines",
+      "toc": {
+        "business": "3. Business",
+        "design": "4. Design",
+        "legal": "5. Legal",
+        "performance": "2. Performance",
+        "safety": "1. Safety"
+      },
+      "updated": "Last Updated: June 11, 2026"
+    },
+    "links": {
+      "create_account": "Create Account",
+      "marketplace": "Marketplace",
+      "privacy": "Privacy Policy",
+      "terms": "Terms of Service"
+    },
+    "manage_cookie_preferences": "Manage Cookie Preferences",
+    "notice": {
+      "footer": "Official Provider Identification for the PumpkinMC Plugin Marketplace · Contact: <email />",
+      "kicker": "Legal Notice / Impressum",
+      "lede": "Information and provider identification pursuant to § 5 of the German Digital Services Act (DDG) and § 18 Section 2 MStV.",
+      "sections": {
+        "copyright": {
+          "content": "The content and works created by the site operators on these pages are subject to German copyright law. Duplication, processing, distribution, and any kind of exploitation outside the limits of copyright law require the written consent of the respective author or creator.\n\nDownloads and copies of this site are only permitted for private, non-commercial use, unless expressly permitted otherwise by the respective plugin's open-source or commercial license.\n\nInsofar as the content on this site was not created by the operator, the copyrights of third parties (such as plugin creators and contributing developers) are respected. In particular, third-party content is marked as such. Should you nevertheless become aware of a copyright infringement, please notify us at support@pumpkinmc.org. Upon notification of infringements, we will remove such content immediately.",
+          "title": "6. Copyright & Intellectual Property"
+        },
+        "dispute-resolution": {
+          "content": "Online Dispute Resolution (ODR):\nThe European Commission provides a platform for online dispute resolution (ODR), accessible at:\nhttps://ec.europa.eu/consumers/odr/\n\nOur contact email for consumer dispute matters: lilalexmed@proton.me\n\nConsumer Dispute Resolution:\nWe are neither obligated nor willing to participate in dispute resolution proceedings before a consumer arbitration board (Verbraucherschlichtungsstelle) pursuant to the German Consumer Dispute Resolution Act (VSBG).",
+          "title": "3. EU Online Dispute Resolution & Consumer Arbitration"
+        },
+        "editorial": {
+          "content": "Responsible for journalistic and editorial content pursuant to § 18 Section 2 of the German Interstate Media Treaty (Medienstaatsvertrag - MStV):\n\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden\nGermany",
+          "title": "2. Responsible for Content (§ 18 Abs. 2 MStV)"
+        },
+        "liability-content": {
+          "content": "As a service provider, we are responsible for our own content on these pages under general statutory laws pursuant to § 7 Section 1 of the German Digital Services Act (DDG).\n\nAccording to §§ 8 to 10 DDG, however, we as a service provider are not obligated to permanently monitor transmitted or stored third-party information (such as user-submitted plugins, reviews, or comments) or to investigate circumstances that indicate illegal activity.\n\nObligations to remove or block the use of information under general statutory laws remain unaffected. Any liability in this respect, however, is only possible from the time of knowledge of a specific infringement. Upon notification of corresponding infringements, we will remove this content immediately.",
+          "title": "4. Liability for Content (§ 7 Abs. 1 DDG)"
+        },
+        "liability-links": {
+          "content": "Our Service contains links to external third-party websites (such as plugin repositories, creator documentation, and Discord) over whose content we have no influence. Therefore, we cannot assume any liability for this external content.\n\nThe respective provider or operator of the pages is always responsible for the content of the linked pages. The linked pages were checked for possible legal violations at the time of linking. Illegal content was not recognizable at the time of linking.\n\nPermanent monitoring of the content of the linked pages is not reasonable without concrete evidence of an infringement. Upon notification of legal infringements, we will remove such links immediately.",
+          "title": "5. Liability for External Links"
+        },
+        "operator": {
+          "content": "Information pursuant to § 5 of the German Digital Services Act (Digitale-Dienste-Gesetz - DDG):\n\nService Operator:\nAleksandr Medvedev\nKastanienweg 20\n40723 Hilden\nGermany\n\nContact Details:\n• Direct Email: lilalexmed@proton.me\n• Platform Support: support@pumpkinmc.org\n• Privacy & Data Protection: privacy@pumpkinmc.org\n• Official Website: https://pumpkinmc.org\n• Discord Community: https://discord.gg/pumpkinmc",
+          "title": "1. Service Provider & Operator Information (§ 5 DDG)"
+        }
+      },
+      "title": "Legal Notice &",
+      "title_highlight": "Provider Identification",
+      "updated": "Last updated: August 2026 · Effective immediately"
+    },
+    "on_this_page": "On this page",
+    "privacy": {
+      "footer": "Questions about your privacy or data? Reach us anytime at <email />",
+      "kicker": "Privacy Policy",
+      "lede": "Learn how we collect, use, and protect your personal information, and the choices you have regarding your data.",
+      "sections": {
+        "children": {
+          "content": "The Service is not intended for children under 16 years of age. We do not knowingly collect personal data from minors. If you believe a minor has registered an account without appropriate parental consent, please contact us at privacy@pumpkinmc.org and we will promptly remove the account.",
+          "title": "10. Children's Privacy"
+        },
+        "contact": {
+          "content": "If you have any questions or requests regarding this Privacy Policy or your data, please contact our team:\n\nEmail: privacy@pumpkinmc.org\nSupport: support@pumpkinmc.org\nDiscord: https://discord.gg/pumpkinmc\nWebsite: https://pumpkinmc.org\n\nWe respond to all privacy inquiries within 5 business days.",
+          "title": "11. Contact Us"
+        },
+        "cookies": {
+          "content": "We use cookies and browser storage responsibly:\n\nStrictly Necessary Storage (Always Active)\nEssential for session authentication, security verification, and remembering your language or currency. The marketplace cannot function without these.\n\nAnalytics Cookies (Optional)\nHelp us understand how users interact with the site so we can improve performance and feature discovery. These are turned off by default and only activate if you consent.\n\nYou can customize or change your cookie choices at any time using the preferences button below or from the site footer.",
+          "title": "7. Cookies & Local Storage"
+        },
+        "how-we-use": {
+          "content": "We process your information under the following legal standards and purposes:\n\nTo Deliver Our Marketplace Services\n• Creating and managing your account.\n• Delivering purchased plugins and verifying license keys.\n• Enabling developer payouts and sales management.\n• Sending necessary transactional emails (email confirmations, password resets, security alerts).\n\nTo Ensure Security & Prevent Abuse\n• Defending against spam, bots, and brute force attacks (via Cloudflare Turnstile).\n• Preventing fraudulent payments and chargebacks.\n• Resolving customer support requests and enforcing marketplace rules.\n\nWith Your Consent\n• Anonymous aggregated analytics to understand popular plugins and site traffic (Google Analytics 4 with IP anonymization).\n• Optional product announcements. You may change your preferences or opt out at any time.\n\nCompliance with Legal Obligations\n• Retaining transaction records and invoices as required by financial, commercial, and tax laws.",
+          "title": "3. How & Why We Process Your Data"
+        },
+        "information-collected": {
+          "content": "We collect the following categories of information:\n\nAccount Information\nWhen you create an account, we collect your username, email address, password hash (salted using bcrypt), country of residence, preferred currency, and two-factor authentication (TOTP) status.\n\nDeveloper & Seller Profile\nIf you register as a creator or publish plugins, we collect your public display name, entity type (individual vs. organization), and payout/tax details where applicable (legal name, address, VAT ID, support email, website, and GitHub link).\n\nTransactions & Licenses\nWhen you purchase or sell plugins, we record transaction details including plugin ID, amount, date, and generated license keys. Payment processing is handled directly by Stripe — we do not store full credit card numbers on our servers.\n\nTechnical & Security Data\nTo defend against automated bots, fraud, and attacks, we process basic connection headers, coarse country location (via Cloudflare edge headers without storing raw IP addresses in application databases), and Cloudflare Turnstile security tokens.\n\nUser Content & Reviews\nReviews, ratings, replies, and plugin listings you post publicly on the platform.",
+          "title": "2. Information We Collect"
+        },
+        "international-transfers": {
+          "content": "PumpkinMC operates globally. When data is transferred across international borders, we ensure appropriate safeguards are in place — including Standard Contractual Clauses (SCCs) and verified compliance frameworks — to ensure your data receives strong and consistent protection.",
+          "title": "5. International Transfers"
+        },
+        "overview": {
+          "content": "PumpkinMC (\"we\", \"us\", or \"our\") operates the PumpkinMC Plugin Marketplace and related services (the \"Service\"). This Privacy Policy explains how we collect, use, store, and protect your information when you browse our site, publish plugins, or make purchases.\n\nWe believe in privacy by design. We do not sell your personal data to advertisers or third parties, and we only collect information necessary to operate, improve, and secure our marketplace.\n\nData Controller Contact Information:\n• Entity: PumpkinMC Data Protection\n• Email: privacy@pumpkinmc.org\n• Support: support@pumpkinmc.org\n• Website: https://pumpkinmc.org",
+          "title": "1. Overview & Data Controller"
+        },
+        "retention": {
+          "content": "We keep your personal information only for as long as needed to fulfill the purposes outlined in this policy:\n\n• Active Accounts: Retained for the lifetime of your account.\n• Deleted Accounts: Removed immediately upon account deletion; backup archives clear within 30 days.\n• Invoices & Financial Records: Retained for up to 7 to 10 years to comply with statutory accounting and tax regulations.\n• Analytics Logs: Stored in aggregated, anonymized form without personal identifiers.",
+          "title": "6. Data Retention"
+        },
+        "rights": {
+          "content": "Regardless of your location, you have strong controls over your personal data:\n\n• Access & Portability: You can request and download a full machine-readable JSON export of your account data at any time from your Account Settings.\n• Correction & Updates: You can update your email, username, country, and developer profile directly from your settings.\n• Account Deletion: You can permanently delete your account and all associated personal data anytime in the Danger Zone settings tab.\n• Manage Consent: You can update your cookie preferences or opt out of analytics tracking at any time with immediate effect.\n• Inquiries & Concerns: You have the right to contact us or lodge a complaint with your local data protection supervisory authority if you believe your data has been mishandled.\n\nTo exercise any of your rights, use the tools in your Account Settings or contact us at privacy@pumpkinmc.org.",
+          "title": "8. Your Rights & Choices"
+        },
+        "security": {
+          "content": "We implement robust security measures to protect your information:\n\n• Strong one-way password hashing using bcrypt.\n• End-to-end encrypted web traffic using TLS 1.3 encryption.\n• Two-factor authentication (TOTP) support for all accounts.\n• Strict role-based access controls limiting internal data access to authorized systems only.",
+          "title": "9. Data Security"
+        },
+        "service-providers": {
+          "content": "We work with trusted third-party providers who process data on our behalf under strict data protection agreements:\n\nStripe (Payments & Payouts)\nProcesses payments and creator payout onboarding securely under PCI-DSS Level 1 compliance.\n\nCloudflare (Security & CDN)\nProvides fast content delivery, DDoS protection, and privacy-preserving bot detection (Turnstile).\n\nGoogle Analytics (Analytics — Consent Only)\nCollects aggregated visit metrics only when you choose to enable analytics cookies. IP anonymization is enforced.\n\nEmail Delivery Service\nTransmits essential account notices, security updates, and verification emails.\n\nWe never sell, rent, or trade your personal data with third-party advertisers or data brokers.",
+          "title": "4. Third-Party Service Providers"
+        }
+      },
+      "title": "Your Privacy,",
+      "title_highlight": "Our Commitment",
+      "updated": "Last updated: August 2026 · Effective immediately"
+    },
+    "terms": {
+      "footer": "Questions about these terms? Reach us at <email /> or join our <discord>Discord server</discord>.",
+      "kicker": "Legal",
+      "lede": "Please read these terms carefully before buying or selling plugins on PumpkinMC.",
+      "sections": {
+        "acceptance": {
+          "content": "By accessing or using the PumpkinMC Plugin Marketplace (\"Marketplace\"), you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree to these Terms, you may not access or use the Marketplace. These Terms apply to all visitors, buyers, sellers, and developers who access the Marketplace.\n\nPumpkinMC reserves the right to update or modify these Terms at any time. Continued use of the Marketplace after any changes constitutes your acceptance of the new Terms. We will notify registered users of material changes via email or a prominent notice on the platform.",
+          "title": "1. Acceptance of Terms"
+        },
+        "accounts": {
+          "content": "To access certain features of the Marketplace, you must register for an account. You agree to provide accurate, current, and complete information during registration and to keep your account information up to date.\n\nYou are responsible for safeguarding your password and for any activity that occurs under your account. You must notify PumpkinMC immediately of any unauthorized use. PumpkinMC is not liable for any loss or damage arising from your failure to protect your account credentials.\n\nAccounts are personal and non-transferable. You may not create multiple accounts to circumvent bans, purchase limits, or any other restrictions.",
+          "title": "3. Accounts & Registration"
+        },
+        "contact": {
+          "content": "If you have any questions about these Terms or the Marketplace, please contact us at:\n\nEmail: support@pumpkinmc.org\nDiscord: discord.gg/pumpkinmc\nWebsite: pumpkinmc.org\n\nWe aim to respond to all inquiries within 3 business days.",
+          "title": "15. Contact"
+        },
+        "disclaimer": {
+          "content": "The Marketplace is provided on an \"as is\" and \"as available\" basis without warranties of any kind, either express or implied. PumpkinMC does not warrant that the Marketplace will be uninterrupted, error-free, or free of viruses or other harmful components.\n\nPumpkinMC does not endorse, verify, or take responsibility for any Plugin listed by third-party sellers. You download and install Plugins at your own risk. PumpkinMC strongly recommends reviewing Plugin source code and testing in a non-production environment before deploying to a live server.",
+          "title": "11. Disclaimer of Warranties"
+        },
+        "eligibility": {
+          "content": "You must be at least 13 years of age to use the Marketplace. If you are under 18, you must have the consent of a parent or legal guardian. By using the Marketplace, you represent and warrant that you meet these eligibility requirements.\n\nYou may not use the Marketplace if you have previously been banned or suspended from PumpkinMC or any related service, or if your use would violate any applicable law or regulation.",
+          "title": "2. Eligibility"
+        },
+        "governing": {
+          "content": "These Terms are governed by and construed in accordance with applicable law. Any disputes arising under or in connection with these Terms shall be resolved through binding arbitration, except that either party may seek injunctive or other equitable relief in a court of competent jurisdiction.\n\nIf any provision of these Terms is found to be unenforceable, the remaining provisions shall continue in full force and effect.",
+          "title": "14. Governing Law"
+        },
+        "ip": {
+          "content": "Sellers retain ownership of their Plugin source code and associated assets. By listing a Plugin on the Marketplace, sellers grant PumpkinMC a non-exclusive, royalty-free license to display, reproduce, and distribute the Plugin solely for the purpose of operating the Marketplace.\n\nBuyers receive a limited, non-exclusive, non-transferable license to use purchased Plugins on their own Minecraft servers. Buyers may not resell, redistribute, decompile, reverse-engineer, or sublicense Plugins unless explicitly permitted by the seller's stated license terms.\n\nThe PumpkinMC name, logo, and branding are the exclusive property of PumpkinMC and may not be used without prior written consent.",
+          "title": "9. Intellectual Property"
+        },
+        "liability": {
+          "content": "To the fullest extent permitted by applicable law, PumpkinMC and its affiliates, officers, employees, and agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising out of or related to your use of the Marketplace, including but not limited to server damage, data loss, or loss of profits.\n\nIn no event shall PumpkinMC's total liability to you for all claims exceed the greater of the amount you paid to PumpkinMC in the twelve months preceding the claim or USD $50.",
+          "title": "12. Limitation of Liability"
+        },
+        "plugins": {
+          "content": "Sellers may submit Minecraft plugins and related digital goods (\"Plugins\") for listing on the Marketplace subject to review and approval. By submitting a Plugin, you represent and warrant that:\n\n• You are the original author or have the legal right to sell the Plugin.\n• The Plugin does not infringe upon any third-party intellectual property rights, including those of Mojang Studios or Microsoft.\n• The Plugin does not contain malicious code, backdoors, exploits, or any functionality designed to harm servers, players, or end users.\n• All Plugin descriptions, screenshots, and metadata are accurate and not misleading.\n• The Plugin complies with Mojang's End User License Agreement (EULA) and any applicable Minecraft usage policies.\n\nPumpkinMC reserves the right to remove any Plugin listing at any time, without notice, for any reason including but not limited to violation of these Terms, community reports, or suspected malicious activity.",
+          "title": "4. Plugin Listings & Content"
+        },
+        "privacy": {
+          "content": "Your use of the Marketplace is also governed by our Privacy Policy, which is incorporated into these Terms by reference. By using the Marketplace, you consent to the collection and use of your information as described in our Privacy Policy.\n\nWe collect information necessary to operate the Marketplace, process transactions, and provide support. We do not sell your personal information to third parties. Seller payout information may be shared with payment processors as necessary to complete transactions.",
+          "title": "10. Privacy"
+        },
+        "prohibited": {
+          "content": "The following content is strictly prohibited on the Marketplace:\n\n• Plugins containing malware, ransomware, spyware, or any malicious code.\n• Plugins that steal player data, credentials, or personal information.\n• Duplicate or plagiarized plugins submitted without the original author's consent.\n• Plugins that enable griefing, cheating, or exploiting of unrelated servers or players.\n• Adult, explicit, or NSFW content of any kind.\n• Plugins that violate Mojang's EULA, including those that grant gameplay advantages for real-money purchases in non-compliant ways.\n• Content that promotes hate speech, harassment, or discrimination.\n• Any Plugin misrepresented as an official PumpkinMC, Mojang, or Microsoft product.\n\nViolation of these prohibitions may result in immediate account termination and, where applicable, referral to relevant authorities.",
+          "title": "5. Prohibited Content"
+        },
+        "refunds": {
+          "content": "Digital Content & Right of Withdrawal Waiver:\nDue to the digital nature of software downloads, when you purchase and download a Plugin, you expressly consent to immediate performance of the contract and acknowledge that you lose your statutory 14-day right of withdrawal under EU Consumer Rights Directive (2011/83/EU) once the download or key generation commences.\n\nWhen Refunds Are Granted:\nWe want all buyers to have a safe and fair experience. Refunds may be approved under the following conditions:\n• Technical Defect: The Plugin has a verifiable critical defect on supported server software, and the developer fails to provide a working fix or update within 5 business days of your support request.\n• Material Misrepresentation: The Plugin is missing core advertised features explicitly listed on its store page.\n• Accidental Duplicate Purchase: You accidentally purchased the identical Plugin twice within 24 hours.\n• Security & Policy Violation: The Plugin is found to contain unauthorized backdoors, malware, or violates our safety policies.\n\nNon-Refundable Circumstances:\n• Change of Mind (\"Buyer's Remorse\"): Deciding you no longer need the Plugin or purchased by mistake after downloading.\n• Incompatibility with Unsupported Versions: Attempting to run the Plugin on an incompatible server engine or Minecraft version clearly marked unsupported on the store listing.\n• Configuration / Administration Issues: Inability or lack of technical knowledge to configure YAML/JSON files or server environments.\n\nDispute & Refund Workflow:\n1. Contact the Developer: Reach out directly to the developer using their support email or Discord listed on the Plugin page.\n2. 5-Day Resolution Window: Give the developer 5 business days to assist or resolve the defect.\n3. Escalate to PumpkinMarket: If the developer is unresponsive or unable to resolve the verified defect, forward your proof of purchase and communication to support@pumpkinmc.org.\n\nLicense Revocation:\nUpon any approved refund or chargeback, the associated cryptographic license key is immediately revoked, and download access from your Library is disabled.",
+          "title": "7. Digital Withdrawal Waiver & Refund Policy"
+        },
+        "sellers": {
+          "content": "Sellers are responsible for maintaining and supporting their Plugins for a reasonable period following sale. This includes providing updates to maintain compatibility with reasonably current versions of Minecraft and Spigot/Paper API where applicable.\n\nSellers receive payouts according to the PumpkinMC revenue share agreement communicated at the time of seller onboarding. PumpkinMC reserves the right to adjust revenue share rates with 30 days' notice to active sellers.\n\nSellers must respond to buyer support inquiries within 5 business days. Failure to maintain adequate support may result in Plugin delisting or seller account review.\n\nSellers may not solicit buyers to transact outside of the Marketplace in order to circumvent fees or protections.",
+          "title": "8. Seller Obligations"
+        },
+        "termination": {
+          "content": "PumpkinMC may suspend or terminate your account at any time, with or without notice, for conduct that violates these Terms or is harmful to other users, PumpkinMC, or third parties, or for any other reason at PumpkinMC's sole discretion.\n\nUpon termination, your right to use the Marketplace ceases immediately. Provisions of these Terms that by their nature should survive termination — including intellectual property, disclaimers, and limitations of liability — shall survive.\n\nYou may close your account at any time by contacting support@pumpkinmc.org. Closing your account does not entitle you to a refund of any purchases.",
+          "title": "13. Termination"
+        },
+        "transactions": {
+          "content": "All purchases made through the Marketplace are final unless otherwise stated or required by applicable law. By completing a purchase, you authorize PumpkinMC to charge your selected payment method for the listed price.\n\nPrices are displayed in EUR and may be subject to applicable taxes depending on your jurisdiction. PumpkinMC is not responsible for currency conversion fees charged by your bank or payment provider.\n\nIn the event of a disputed charge, please contact support@pumpkinmc.org before initiating a chargeback with your payment provider. Chargebacks initiated without prior contact may result in account suspension.",
+          "title": "6. Purchases & Payments"
+        }
+      },
+      "title": "Plugin Marketplace",
+      "title_highlight": "Terms of Service",
+      "updated": "Last updated: March 3, 2026 · Effective immediately"
+    }
+  },
+  "seo": {
+    "default_description": "PumpkinMC Minecraft sunucuları için yüksek performanslı WebAssembly eklentilerini keşfedin, indirin ve yayınlayın.",
+    "home_title": "Pumpkin Market - WASM Minecraft Plugin Marketplace",
+    "keywords": "minecraft, plugins, wasm, marketplace, mc plugins, development",
+    "site_name": "Pumpkin Market",
+    "title_suffix": "{{title}} | {{site}}"
   }
 }

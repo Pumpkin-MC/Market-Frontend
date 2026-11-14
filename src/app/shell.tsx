@@ -52,11 +52,14 @@ const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) =
   </NavLink>
 );
 
-const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
-  <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label="Toggle menu" aria-expanded={open}>
-    {open ? <X /> : <Menu />}
-  </button>
-);
+const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label={t('nav.toggle_menu')} aria-expanded={open}>
+      {open ? <X /> : <Menu />}
+    </button>
+  );
+};
 
 const useMenu = () => {
   const [open, setOpen] = useState(false);
@@ -93,7 +96,7 @@ const Masthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Market</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Main">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.main_navigation')}>{links}</nav>
           <div className="masthead-search">
             <NavSearch onNavigate={menu.close} />
           </div>
@@ -102,7 +105,7 @@ const Masthead = ({ user }: any) => {
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -142,13 +145,13 @@ const StudioMasthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Studio</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Studio">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.studio')}>{links}</nav>
           <div className="masthead-actions">{actions}</div>
           <MenuToggle open={menu.open} onToggle={menu.toggle} />
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -190,7 +193,7 @@ const LANGUAGES = [
 ];
 
 const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, login } = useAuth();
 
   const handleLanguageChange = async (newLang: string) => {
@@ -214,7 +217,7 @@ const LanguageSelector = () => {
       options={LANGUAGES}
       value={currentLang}
       onChange={handleLanguageChange}
-      aria-label="Language selection"
+      aria-label={t('nav.language_selection')}
       className="language-select"
     />
   );
@@ -259,7 +262,7 @@ const Footer = () => {
         </div>
         <div className="colophon-base">
           <span>© 2026 PumpkinMC</span>
-          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span>{t('nav.footer.minecraft_disclaimer')}</span>
           <span className="spacer" />
           <LanguageSelector />
         </div>

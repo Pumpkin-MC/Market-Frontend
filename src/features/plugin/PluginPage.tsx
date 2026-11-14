@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
@@ -33,22 +33,22 @@ const getYoutubeVideoId = (url: string) => {
 };
 
 const REPORT_REASONS = [
-  'Malware or malicious code',
-  'Stolen or plagiarised content',
-  'Misleading description',
-  'Broken / non-functional',
-  'Inappropriate content',
-  'Spam or fake listing',
-  'Other',
-];
+  { value: 'Malware or malicious code', label: 'plugin.report.plugin_reasons.malware' },
+  { value: 'Stolen or plagiarised content', label: 'plugin.report.plugin_reasons.stolen' },
+  { value: 'Misleading description', label: 'plugin.report.plugin_reasons.misleading' },
+  { value: 'Broken / non-functional', label: 'plugin.report.plugin_reasons.broken' },
+  { value: 'Inappropriate content', label: 'plugin.report.plugin_reasons.inappropriate' },
+  { value: 'Spam or fake listing', label: 'plugin.report.plugin_reasons.spam' },
+  { value: 'Other', label: 'plugin.report.plugin_reasons.other' },
+] as const;
 
 const REVIEW_REPORT_REASONS = [
-  'Inappropriate language',
-  'Spam or advertising',
-  'Hate speech or harassment',
-  'Off-topic or irrelevant',
-  'Other',
-];
+  { value: 'Inappropriate language', label: 'plugin.report.review_reasons.language' },
+  { value: 'Spam or advertising', label: 'plugin.report.review_reasons.spam' },
+  { value: 'Hate speech or harassment', label: 'plugin.report.review_reasons.hate' },
+  { value: 'Off-topic or irrelevant', label: 'plugin.report.review_reasons.off_topic' },
+  { value: 'Other', label: 'plugin.report.review_reasons.other' },
+] as const;
 const MAX_REVIEW_LENGTH = 2000;
 
 const safeMarkdownComponents = {
@@ -69,7 +69,8 @@ const safeMarkdownComponents = {
       </a>
     );
   },
-  img: ({ src, alt, ...props }: any) => {
+  img: function MarkdownImage({ src, alt, ...props }: any) {
+    const { t } = useTranslation();
     const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
     if (!isSafe) {
       return null;
@@ -77,7 +78,7 @@ const safeMarkdownComponents = {
     return (
       <img
         src={src}
-        alt={alt || 'Plugin illustration'}
+        alt={alt || t('plugin.media.illustration')}
         loading="lazy"
         decoding="async"
         className="pd-md-img"
@@ -100,6 +101,7 @@ const Stars = ({ value, onRate }: { value: number; onRate?: (n: number) => void 
 );
 
 const ExpandableText = ({ text, limit = 500, className }: { text: string; limit?: number; className?: string }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldTruncate = text.length > limit;
   const displayText = isExpanded ? text : text.slice(0, limit) + (shouldTruncate ? '...' : '');
@@ -109,7 +111,7 @@ const ExpandableText = ({ text, limit = 500, className }: { text: string; limit?
       <p className="pd-pre">{displayText}</p>
       {shouldTruncate && (
         <button type="button" className="pd-textbtn" onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? 'Show Less' : 'Expand'}
+          {isExpanded ? t('plugin.actions.show_less') : t('plugin.actions.expand')}
         </button>
       )}
     </div>
@@ -572,13 +574,13 @@ const PluginPage = () => {
       // Already owns it — download directly, no checkout
       if (ownsPlugin) {
         if (plugin.is_preorder) {
-          alert('You have successfully pre-ordered this plugin! You will receive an automated email notification the moment the developer releases the downloadable version.');
+          alert(t('plugin.messages.preorder_owned'));
           return;
         }
         try {
           await triggerDownload(`/plugins/${id}/download/premium`);
         } catch {
-          alert('Download failed. Please try again.');
+          alert(t('plugin.messages.download_failed'));
         }
         return;
       }
@@ -593,13 +595,13 @@ const PluginPage = () => {
           // Webhook already recorded purchase before redirect resolved
           setOwnsPlugin(true);
           if (plugin.is_preorder) {
-            alert('You have pre-ordered this plugin! You will receive an email as soon as it releases.');
+            alert(t('plugin.messages.preorder_confirmed'));
           } else {
-            alert('You already own this plugin — downloading now.');
+            alert(t('plugin.messages.already_owned'));
             await triggerDownload(`/plugins/${id}/download/premium`);
           }
         } else {
-          alert('Checkout failed. Please try again.');
+          alert(t('plugin.messages.checkout_failed'));
         }
       } finally {
       }
@@ -608,7 +610,7 @@ const PluginPage = () => {
 
     // Adwall
     if (plugin.type === 'adwall' && !adShown) {
-      alert('Wait 5 seconds to support the developer...');
+      alert(t('plugin.messages.ad_wait'));
       setTimeout(() => setAdShown(true), 5000);
       return;
     }
@@ -617,7 +619,7 @@ const PluginPage = () => {
     try {
       await triggerDownload(`/plugins/${id}/download`);
     } catch {
-      alert('Download failed. Please try again.');
+      alert(t('plugin.messages.download_failed'));
     }
   };
 
@@ -633,12 +635,12 @@ const PluginPage = () => {
   };
 
   const deleteReview = async () => {
-    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    if (!window.confirm(t('plugin.reviews.delete_confirm'))) return;
     try {
       await api.delete(`/plugins/${id}/reviews`);
       fetchPlugin();
     } catch {
-      alert('Failed to delete review.');
+      alert(t('plugin.messages.delete_review_failed'));
     }
   };
 
@@ -652,7 +654,7 @@ const PluginPage = () => {
       setReplyText('');
       fetchPlugin();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to post reply.');
+      alert(err.response?.data?.error || t('plugin.messages.reply_failed'));
     } finally {
       setReplySubmitting(false);
     }
@@ -674,7 +676,7 @@ const PluginPage = () => {
       await api.post(`/plugins/${id}/report`, { reason });
       setReportDone(true);
     } catch {
-      alert('Failed to submit report. Please try again.');
+      alert(t('plugin.messages.report_failed'));
     } finally {
       setReportSubmitting(false);
     }
@@ -695,9 +697,9 @@ const PluginPage = () => {
       await api.post(`/plugins/${id}/reviews/${reviewId}/report`, { reason });
       setReportedReviews(prev => new Set(prev).add(reviewId));
       resetReviewReport();
-      alert('Thank you. The report has been submitted to moderators.');
+      alert(t('plugin.messages.review_report_success'));
     } catch {
-      alert('Failed to report review. Please try again.');
+      alert(t('plugin.messages.review_report_failed'));
     } finally {
       setReviewReportSubmitting(false);
     }
@@ -824,22 +826,22 @@ const PluginPage = () => {
     const sizeStr = plugin?.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
     if (plugin.type === 'paid') {
-      if (!ownershipChecked) return 'Loading…';
+      if (!ownershipChecked) return t('plugin.actions.loading');
       if (ownsPlugin) {
         if (plugin.is_preorder) {
-          return 'Pre-Ordered (Awaiting Release)';
+          return t('plugin.purchase.awaiting_release');
         }
-        return `Download ${sizeStr}`;
+        return t('plugin.purchase.download', { size: sizeStr });
       }
       if (plugin.is_preorder) {
-        return 'Pre-Order Now';
+        return t('plugin.purchase.preorder_now');
       }
-      return 'Purchase Plugin';
+      return t('plugin.purchase.purchase');
     }
 
-    if (plugin.type === 'adwall' && !adShown) return 'Watch Ad to Download';
+    if (plugin.type === 'adwall' && !adShown) return t('plugin.purchase.watch_ad');
 
-    return `Download ${sizeStr}`;
+    return t('plugin.purchase.download', { size: sizeStr });
   })();
 
   const cleanDesc = currentDescription
@@ -890,13 +892,13 @@ const PluginPage = () => {
           {
             "@type": "ListItem",
             "position": 1,
-            "name": "Home",
+            "name": t('home.page_title'),
             "item": "https://market.pumpkinmc.org"
           },
           {
             "@type": "ListItem",
             "position": 2,
-            "name": plugin.category || "Plugins",
+            "name": plugin.category || t('nav.plugins'),
             "item": `https://market.pumpkinmc.org/search?category=${encodeURIComponent(plugin.category || '')}`
           },
           {
@@ -930,14 +932,14 @@ const PluginPage = () => {
   const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
 
   const reasonPicker = (
-    reasons: string[],
+    reasons: typeof REPORT_REASONS | typeof REVIEW_REPORT_REASONS,
     selected: string,
     onPick: (reason: string) => void,
   ) => (
     <div className="segmented pd-reasons">
-      {reasons.map(reason => (
-        <button key={reason} type="button" aria-pressed={selected === reason} onClick={() => onPick(reason)}>
-          {reason}
+      {reasons.map(({ value, label }) => (
+        <button key={value} type="button" aria-pressed={selected === value} onClick={() => onPick(value)}>
+          {t(label)}
         </button>
       ))}
     </div>
@@ -946,27 +948,30 @@ const PluginPage = () => {
   const seoPriceLabel = (() => {
     if (plugin.type === 'paid') {
       const priceText = saleDiscount > 0 ? `${euro(salePrice)} (-${saleDiscount}%)` : euro(basePrice);
-      return plugin.is_preorder ? `${priceText} (Pre-Order)` : priceText;
+      return plugin.is_preorder ? `${priceText} (${t('plugin.pre_order')})` : priceText;
     }
-    if (plugin.type === 'adwall') return 'Free (Ad-Supported)';
-    return 'Free';
+    if (plugin.type === 'adwall') return t('plugin.metadata.free_ad_supported');
+    return t('plugin.free');
   })();
 
   const seoStatsLine = [
     plugin.category,
     plugin.version ? `v${plugin.version.replace(/^v/, '')}` : null,
     seoPriceLabel,
-    plugin.is_early_access ? 'Early Access' : null,
-    `${(plugin.downloads ?? 0).toLocaleString()} ${(plugin.downloads ?? 0) === 1 ? 'download' : 'downloads'}`,
+    plugin.is_early_access ? t('plugin.early_access_badge') : null,
+    t('plugin.metadata.downloads_count', {
+      count: plugin.downloads ?? 0,
+      formatted: (plugin.downloads ?? 0).toLocaleString(),
+    }),
     stats ? `★ ${stats.avg}/5 (${stats.total})` : null,
   ].filter(Boolean).join(' • ');
 
-  const seoSummary = cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`;
+  const seoSummary = cleanDesc || t('plugin.metadata.description', { name: plugin.name, author: plugin.dev_name });
   const seoMetaDesc = `${seoSummary} — ${seoStatsLine}`;
   const seoOgDesc = `${seoSummary}\n\n${seoStatsLine}`;
   const seoOgTitle = plugin.version
-    ? `${plugin.name} (v${plugin.version.replace(/^v/, '')}) by ${plugin.dev_name}`
-    : `${plugin.name} by ${plugin.dev_name}`;
+    ? t('plugin.metadata.og_title_version', { name: plugin.name, version: plugin.version.replace(/^v/, ''), author: plugin.dev_name })
+    : t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name });
   const ytVideoId = plugin.youtube_video_url ? getYoutubeVideoId(plugin.youtube_video_url) : null;
   const seoOgImage =
     plugin.preview_path ||
@@ -993,19 +998,24 @@ const PluginPage = () => {
   return (
     <div className="page pd">
       <SEO
-        title={`${plugin.name} by ${plugin.dev_name}`}
+        title={t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name })}
         ogTitle={seoOgTitle}
         description={seoMetaDesc}
         ogDescription={seoOgDesc}
         canonical={canonicalUrl}
-        keywords={`${plugin.name}, ${plugin.dev_name}, minecraft plugin, pumpkinmc, wasm, ${plugin.category || ''}, ${plugin.keywords || ''}`}
+        keywords={t('plugin.metadata.keywords', {
+          name: plugin.name,
+          author: plugin.dev_name,
+          category: plugin.category || '',
+          keywords: plugin.keywords || '',
+        })}
         ogType="website"
         ogImage={seoOgImage}
         twitterCard={seoTwitterCard}
         twitterLabels={{
-          label1: 'Developer',
+          label1: t('plugin.author'),
           data1: plugin.dev_name,
-          label2: 'Price',
+          label2: t('plugin.metadata.price'),
           data2: seoPriceLabel,
         }}
       />
@@ -1013,8 +1023,8 @@ const PluginPage = () => {
         {JSON.stringify(productSchema)}
       </script>
 
-      <nav className="crumbs" aria-label="Breadcrumb">
-        <Link to="/">Market</Link>
+      <nav className="crumbs" aria-label={t('plugin.metadata.breadcrumb')}>
+        <Link to="/">{t('nav.market')}</Link>
         <ChevronRight />
         {plugin.category && (
           <>
@@ -1145,11 +1155,11 @@ const PluginPage = () => {
 
           {showPaymentSuccess && (
             <div className="notice notice-success" role="status">
-              <span className="sticker sticker-success">Purchase successful!</span>
+              <span className="sticker sticker-success">{t('plugin.purchase.success_badge')}</span>
               <p className="notice-text">
-                You now own <strong>{plugin.name}</strong>. Click the download button to get your WASM file.
+                <Trans t={t} i18nKey="plugin.purchase.success_message" values={{ name: plugin.name }} components={{ strong: <strong /> }} />
               </p>
-              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setShowPaymentSuccess(false)} aria-label="Dismiss">
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setShowPaymentSuccess(false)} aria-label={t('common.dismiss')}>
                 <X />
               </button>
             </div>
@@ -1157,18 +1167,18 @@ const PluginPage = () => {
 
           {plugin.is_preorder && (
             <div className="notice notice-pumpkin">
-              <span className="sticker">Available for Pre-Order</span>
+              <span className="sticker">{t('plugin.purchase.preorder_available')}</span>
               <div className="notice-text pd-notice-body">
                 {plugin.preorder_release_date && (
-                  <span className="label label-fg">Expected: {formatDate(plugin.preorder_release_date)}</span>
+                  <span className="label label-fg">{t('plugin.purchase.expected', { date: formatDate(plugin.preorder_release_date) })}</span>
                 )}
                 {ownsPlugin ? (
                   <p className="pd-ok">
-                    <Check /> You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.
+                    <Check /> {t('plugin.purchase.preorder_owned_notice')}
                   </p>
                 ) : (
                   <p>
-                    Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.
+                    {t('plugin.purchase.preorder_notice')}
                   </p>
                 )}
               </div>
@@ -1177,10 +1187,9 @@ const PluginPage = () => {
 
           {plugin.is_early_access && (
             <div className="notice notice-warning">
-              <span className="sticker sticker-warning">Early Access Plugin</span>
+              <span className="sticker sticker-warning">{t('plugin.early_access_title')}</span>
               <p className="notice-text">
-                This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features.
-                Downloading it now helps support the developer and shape the future of the plugin!
+                <Trans t={t} i18nKey="plugin.early_access_notice" components={{ strong: <strong /> }} />
               </p>
             </div>
           )}
@@ -1199,14 +1208,14 @@ const PluginPage = () => {
                 <span className="entry-by">{t('plugin.by')} <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
                 {plugin.dev_verified && <span className="tag tag-info" title={t('plugin.verified_developer')}><ShieldCheck size={12} /> {t('staff.table.verified')}</span>}
                 {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
-                {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
-                {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
+                {plugin.is_preorder && <span className="sticker sticker-sm">{t('plugin.purchase.preorder_badge')}</span>}
+                {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">{t('plugin.early_access_badge')}</span>}
                 {plugin.type === 'paid' && saleDiscount > 0 && <span className="sticker sticker-sm">-{saleDiscount}%</span>}
               </div>
               {stats && (
                 <div className="row pd-score">
                   <Stars value={Number(stats.avg)} />
-                  <span className="small"><strong>{stats.avg}</strong> · {stats.total.toLocaleString()} Ratings</span>
+                  <span className="small"><strong>{stats.avg}</strong> · {t('plugin.reviews.rating_count', { count: stats.total, formattedCount: stats.total.toLocaleString() })}</span>
                 </div>
               )}
             </div>
@@ -1238,23 +1247,23 @@ const PluginPage = () => {
                             openLightbox(idx >= 0 ? idx : 0);
                           }}
                         >
-                          <img src={mainScreenshot || screenshots[0]?.path} alt="Main" />
+                          <img src={mainScreenshot || screenshots[0]?.path} alt={t('plugin.media.main')} />
                         </button>
                       )}
                       <div className="pd-thumbs">
                         {plugin.youtube_video_url && (
                           <button type="button" className="pd-thumb" aria-pressed={mainScreenshot === 'video'} onClick={() => setMainScreenshot('video')}>
                             {getYoutubeVideoId(plugin.youtube_video_url) ? (
-                              <img src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} alt="Video Thumbnail" />
+                              <img src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} alt={t('plugin.media.video_thumbnail')} />
                             ) : (
-                              <span className="label">Video</span>
+                              <span className="label">{t('plugin.media.video')}</span>
                             )}
                             <span className="pd-play"><Play /></span>
                           </button>
                         )}
                         {screenshots.map((shot: any) => (
                           <button key={shot.id} type="button" className="pd-thumb" aria-pressed={mainScreenshot === shot.path} onClick={() => setMainScreenshot(shot.path)}>
-                            <img src={shot.path} alt="Thumbnail" />
+                            <img src={shot.path} alt={t('plugin.media.thumbnail')} />
                           </button>
                         ))}
                       </div>
@@ -1272,7 +1281,7 @@ const PluginPage = () => {
                       <section className="panel pd-news">
                         <div className="panel-head">
                           <Sparkles className="pumpkin" />
-                          <h2 className="h3">What's New</h2>
+                          <h2 className="h3">{t('plugin.versions.whats_new')}</h2>
                           <span className="tag tag-pumpkin">v{latest.version}</span>
                           {latest.api_version && <span className="tag tag-fg">API v{latest.api_version}</span>}
                           {latest.created_at && <span className="small">{formatDate(latest.created_at)}</span>}
@@ -1280,7 +1289,7 @@ const PluginPage = () => {
                           {versions.length > 1 && (
                             <button type="button" className="button button-flat button-sm" onClick={() => setVersionsOpen(true)}>
                               <History />
-                              Version History ({versions.length})
+                              {t('plugin.versions.history', { count: versions.length })}
                             </button>
                           )}
                         </div>
@@ -1290,7 +1299,7 @@ const PluginPage = () => {
                               {latest.release_notes}
                             </ReactMarkdown>
                           ) : (
-                            <p className="muted">Bug fixes and performance improvements.</p>
+                            <p className="muted">{t('plugin.versions.default_notes')}</p>
                           )}
                         </div>
                         {isLong && (
@@ -1596,11 +1605,11 @@ const PluginPage = () => {
             </div>
           </div>
 
-          <section className="pd-reviews" id="pd-reviews" aria-label="Ratings & Reviews">
+          <section className="pd-reviews" id="pd-reviews" aria-label={t('plugin.reviews.title')}>
             <div className="pd-reviews-head">
-              <h2 className="h2">Ratings &amp; Reviews</h2>
+              <h2 className="h2">{t('plugin.reviews.title')}</h2>
               {reviews.length > 0 && (
-                <span className="tag tag-fg">{reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}</span>
+                <span className="tag tag-fg">{t('plugin.reviews.reviews_count', { count: reviews.length })}</span>
               )}
             </div>
 
@@ -1609,7 +1618,7 @@ const PluginPage = () => {
                 <div className="pd-avg">
                   <span className="stat-value">{stats.avg}</span>
                   <Stars value={Number(stats.avg)} />
-                  <span className="small">{stats.total.toLocaleString()} Ratings</span>
+                  <span className="small">{t('plugin.reviews.rating_count', { count: stats.total, formattedCount: stats.total.toLocaleString() })}</span>
                 </div>
                 <div className="pd-bars">
                   {[5, 4, 3, 2, 1].map(num => (
@@ -1625,7 +1634,7 @@ const PluginPage = () => {
               </div>
             ) : (
               <div className="blank">
-                <p className="h3">No reviews yet. Be the first to leave one!</p>
+                <p className="h3">{t('plugin.reviews.empty')}</p>
               </div>
             )}
 
@@ -1648,7 +1657,7 @@ const PluginPage = () => {
                     {r.developer_reply && (
                       <div className="pd-reply">
                         <div className="row">
-                          <span className="label pumpkin">{t('plugin.reviews.dev_reply', 'Developer Reply')}</span>
+                          <span className="label pumpkin">{t('plugin.reviews.developer_response')}</span>
                           <span className="small">{formatDate(r.replied_at)}</span>
                         </div>
                         <ExpandableText text={r.developer_reply} limit={300} />
@@ -1658,17 +1667,17 @@ const PluginPage = () => {
                     <div className="pd-review-actions">
                       {reportedReviews.has(r.id) ? (
                         <p className="small pd-ok">
-                          <Check /> Report submitted
+                          <Check /> {t('plugin.report.submitted')}
                         </p>
                       ) : reviewReportOpen === r.id ? (
                         <form onSubmit={(e) => submitReviewReport(e, r.id)} className="pd-form">
-                          <span className="field-label">Reason for reporting this review</span>
+                          <span className="field-label">{t('plugin.report.review_reason')}</span>
                           {reasonPicker(REVIEW_REPORT_REASONS, reviewReportSelected, reason => { setReviewReportSelected(reason); setReviewReportCustom(''); })}
                           {reviewReportSelected === 'Other' && (
                             <div className="control">
                               <textarea
                                 className="input"
-                                placeholder="Describe the issue…"
+                                placeholder={t('plugin.report.describe_issue')}
                                 value={reviewReportCustom}
                                 onChange={e => setReviewReportCustom(e.target.value)}
                                 rows={2}
@@ -1678,7 +1687,7 @@ const PluginPage = () => {
                           )}
                           <div className="row">
                             <button type="button" className="button button-ghost button-sm" onClick={resetReviewReport}>
-                              Cancel
+                              {t('common.cancel')}
                             </button>
                             <button
                               type="submit"
@@ -1689,7 +1698,7 @@ const PluginPage = () => {
                                 (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
                               }
                             >
-                              {reviewReportSubmitting ? 'Sending…' : 'Submit'}
+                              {reviewReportSubmitting ? t('plugin.actions.sending') : t('common.submit')}
                             </button>
                           </div>
                         </form>
@@ -1698,7 +1707,7 @@ const PluginPage = () => {
                           <div className="control">
                             <textarea
                               className="input"
-                              placeholder={t('plugin.reviews.reply_placeholder', 'Write your response to this review...')}
+                              placeholder={t('plugin.reviews.response_placeholder')}
                               value={replyText}
                               onChange={e => setReplyText(e.target.value)}
                               rows={3}
@@ -1707,10 +1716,10 @@ const PluginPage = () => {
                           </div>
                           <div className="row">
                             <button type="button" className="button button-ghost button-sm" onClick={() => { setReplyOpen(null); setReplyText(''); }}>
-                              {t('common.cancel', 'Cancel')}
+                              {t('common.cancel')}
                             </button>
                             <button type="submit" className="button button-primary button-sm" disabled={replySubmitting || !replyText.trim()}>
-                              {replySubmitting ? t('studio.reviews.posting', 'Posting…') : t('plugin.reviews.reply_submit', 'Post Reply')}
+                              {replySubmitting ? t('plugin.reviews.replying') : t('plugin.reviews.reply_submit')}
                             </button>
                           </div>
                         </form>
@@ -1718,17 +1727,17 @@ const PluginPage = () => {
                         <>
                           {user && user.username === r.username ? (
                             <button type="button" className="button button-ghost button-sm pd-danger" onClick={deleteReview}>
-                              <Trash2 /> {t('plugin.reviews.delete_review', 'Delete')}
+                              <Trash2 /> {t('plugin.reviews.delete_mine')}
                             </button>
                           ) : user && (
                             <button type="button" className="button button-ghost button-sm" onClick={() => setReviewReportOpen(r.id)}>
-                              <Flag /> {t('plugin.report.report_review', 'Report Review')}
+                              <Flag /> {t('plugin.reviews.report')}
                             </button>
                           )}
 
                           {isOwner && !r.developer_reply && !replyOpen && (
                             <button type="button" className="button button-ghost button-sm pd-accent" onClick={() => setReplyOpen(r.id)}>
-                              <MessageSquare /> {t('plugin.reviews.reply_btn', 'Reply')}
+                              <MessageSquare /> {t('plugin.reviews.reply_as_developer')}
                             </button>
                           )}
                         </>
@@ -1744,28 +1753,28 @@ const PluginPage = () => {
                 <div className="notice notice-success">
                   <span className="mark-box"><Check /></span>
                   <p className="notice-text">
-                    <strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!
+                    <Trans t={t} i18nKey="plugin.reviews.posted_notice" components={{ strong: <strong /> }} />
                   </p>
                   <button type="button" className="button button-danger button-sm" onClick={deleteReview}>
-                    Delete Review
+                    {t('plugin.reviews.delete_review_label')}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={submitReview} className="panel">
                   <div className="panel-head">
-                    <h3 className="h3">Leave a Review</h3>
+                    <h3 className="h3">{t('plugin.reviews.leave_review')}</h3>
                   </div>
                   <div className="panel-body fields">
                     <div className="field">
-                      <span className="field-label">Your Rating</span>
+                      <span className="field-label">{t('plugin.reviews.rating')}</span>
                       <Stars value={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
                     </div>
                     <label className="field">
-                      <span className="field-label">Your Experience</span>
+                      <span className="field-label">{t('plugin.reviews.experience')}</span>
                       <span className="control">
                         <textarea
                           className="input"
-                          placeholder="What did you like? What could be better?"
+                          placeholder={t('plugin.reviews.experience_placeholder')}
                           value={reviewForm.comment}
                           maxLength={MAX_REVIEW_LENGTH}
                           onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
@@ -1775,14 +1784,14 @@ const PluginPage = () => {
                     </label>
                   </div>
                   <div className="panel-foot">
-                    <button className="button button-primary" type="submit">Post Review</button>
+                    <button className="button button-primary" type="submit">{t('plugin.reviews.post_review')}</button>
                   </div>
                 </form>
               )
             ) : (
               <div className="notice notice-plain">
                 <p className="notice-text">
-                  Please <Link className="link link-pumpkin" to="/login">login</Link> to rate this plugin.
+                  <Trans t={t} i18nKey="plugin.reviews.login_required" components={{ login: <Link className="link link-pumpkin" to="/login" /> }} />
                 </p>
               </div>
             )}
@@ -1795,29 +1804,29 @@ const PluginPage = () => {
               {plugin.type === 'paid' && ownsPlugin ? (
                 <span className="status pd-owned">
                   <span className={`mark-box ${plugin.is_preorder ? 'mark-box-warning' : 'mark-box-success'}`}><Check /></span>
-                  {plugin.is_preorder ? 'Pre-Ordered (Awaiting Release)' : 'Purchased'}
+                  {plugin.is_preorder ? t('plugin.purchase.awaiting_release') : t('plugin.purchase.purchased')}
                 </span>
               ) : plugin.type === 'paid' ? (
                 <div className="stack pd-price">
-                  {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
+                  {plugin.is_preorder && <span className="sticker sticker-sm">{t('plugin.purchase.preorder_badge')}</span>}
                   <span className={`cost cost-lg${discounted ? ' cost-sale' : ''}`}>
                     {discounted && <s>{euro(basePrice)}</s>}
                     {euro(finalPrice)}
                   </span>
                   {discounted && (
                     <div className="row">
-                      {saleDiscount > 0 && <span className="tag tag-danger">-{saleDiscount}% SALE</span>}
-                      {couponDiscount > 0 && <span className="tag tag-success">-{couponDiscount}% COUPON</span>}
+                      {saleDiscount > 0 && <span className="tag tag-danger">{t('plugin.purchase.sale_discount', { discount: saleDiscount })}</span>}
+                      {couponDiscount > 0 && <span className="tag tag-success">{t('plugin.purchase.coupon_discount', { discount: couponDiscount })}</span>}
                     </div>
                   )}
                 </div>
               ) : (
-                <span className={`cost cost-lg${plugin.type === 'adwall' ? '' : ' cost-free'}`}>{plugin.type === 'adwall' ? 'AD SUPPORTED' : 'FREE'}</span>
+                <span className={`cost cost-lg${plugin.type === 'adwall' ? '' : ' cost-free'}`}>{plugin.type === 'adwall' ? t('plugin.purchase.ad_supported') : t('plugin.purchase.free')}</span>
               )}
 
               {plugin.type === 'paid' && !ownsPlugin && (
                 <div className="field">
-                  <label className="field-label" htmlFor="detailPromoCode">Have a promo code?</label>
+                  <label className="field-label" htmlFor="detailPromoCode">{t('plugin.purchase.promo_prompt')}</label>
                   <div className="pd-coupon">
                     <span className="control">
                       <input
@@ -1827,7 +1836,7 @@ const PluginPage = () => {
                         className="input"
                         value={couponCode}
                         onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="PROMOCODE"
+                        placeholder={t('plugin.purchase.promo_placeholder')}
                         disabled={validatingCoupon || appliedCoupon !== null}
                         autoComplete="off"
                         autoCapitalize="characters"
@@ -1836,11 +1845,11 @@ const PluginPage = () => {
                     </span>
                     {appliedCoupon ? (
                       <button type="button" className="button button-flat" onClick={handleClearCoupon}>
-                        Clear
+                        {t('plugin.purchase.clear')}
                       </button>
                     ) : (
                       <button type="button" className="button" onClick={handleApplyCoupon} disabled={validatingCoupon || !couponCode.trim()}>
-                        {validatingCoupon ? '…' : 'Apply'}
+                        {validatingCoupon ? '…' : t('plugin.purchase.apply')}
                       </button>
                     )}
                   </div>
@@ -1861,9 +1870,9 @@ const PluginPage = () => {
 
               <div className="cmd">
                 <code title={ppmCommand}>{ppmCommand}</code>
-                <button type="button" onClick={() => handleCopyPpm(ppmCommand)} title="Copy command" aria-label="Copy ppm install command">
+                <button type="button" onClick={() => handleCopyPpm(ppmCommand)} title={t('plugin.commands.copy_command')} aria-label={t('plugin.installation.copy_command')}>
                   {ppmCopied ? <Check /> : <Copy />}
-                  {ppmCopied ? 'Copied' : 'Copy'}
+                  {ppmCopied ? t('plugin.actions.copied') : t('common.copy')}
                 </button>
               </div>
               <a
@@ -1871,10 +1880,10 @@ const PluginPage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="pd-ppm"
-                title="View ppm package manager on GitHub"
+                title={t('plugin.installation.github')}
               >
                 <Package />
-                Install with ppm package manager
+                {t('plugin.installation.install')}
               </a>
             </div>
           </div>
@@ -2002,17 +2011,17 @@ const PluginPage = () => {
             {user && !reportDone && (
               !reportOpen ? (
                 <button type="button" className="button button-ghost button-sm pd-report-btn" onClick={() => setReportOpen(true)}>
-                  <Flag /> Report plugin
+                  <Flag /> {t('plugin.report.report_plugin_label')}
                 </button>
               ) : (
                 <form onSubmit={submitReport} className="pd-form">
-                  <span className="field-label">Reason for report</span>
+                  <span className="field-label">{t('plugin.report.reason')}</span>
                   {reasonPicker(REPORT_REASONS, reportSelected, reason => { setReportSelected(reason); setReportCustom(''); })}
                   {reportSelected === 'Other' && (
                     <div className="control">
                       <textarea
                         className="input"
-                        placeholder="Describe the issue…"
+                        placeholder={t('plugin.report.describe_issue')}
                         value={reportCustom}
                         onChange={e => setReportCustom(e.target.value)}
                         rows={3}
@@ -2022,7 +2031,7 @@ const PluginPage = () => {
                   )}
                   <div className="row">
                     <button type="button" className="button button-ghost button-sm" onClick={resetReport}>
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -2033,7 +2042,7 @@ const PluginPage = () => {
                         (reportSelected === 'Other' && !reportCustom.trim())
                       }
                     >
-                      {reportSubmitting ? 'Sending…' : 'Submit'}
+                      {reportSubmitting ? t('plugin.actions.sending') : t('common.submit')}
                     </button>
                   </div>
                 </form>
@@ -2041,7 +2050,7 @@ const PluginPage = () => {
             )}
             {reportDone && (
               <p className="small pd-ok">
-                <Check /> Report submitted. Thanks for keeping the marketplace safe.
+                <Check /> {t('plugin.report.thanks')}
               </p>
             )}
           </div>
@@ -2146,13 +2155,13 @@ const PluginPage = () => {
       )}
 
       {lightboxImage && (
-        <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label="Expanded view">
+        <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label={t('plugin.media.expanded_view')}>
           <div className="pd-lightbox-frame" onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxImage} alt="Expanded view" />
+            <img src={lightboxImage} alt={t('plugin.media.expanded_view')} />
             <div className="pd-lightbox-bar">
               {isScreenshotInGallery && (
                 <>
-                  <button type="button" className="button button-sm button-icon" onClick={lightboxPrev} aria-label="Previous screenshot">
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxPrev} aria-label={t('plugin.media.previous')}>
                     <ChevronLeft />
                   </button>
                   <div className="pd-dots">
@@ -2162,17 +2171,17 @@ const PluginPage = () => {
                         type="button"
                         aria-current={i === lightboxIndex}
                         onClick={() => openLightbox(i)}
-                        aria-label={`Go to screenshot ${i + 1}`}
+                        aria-label={t('plugin.media.go_to_screenshot', { number: i + 1 })}
                       />
                     ))}
                   </div>
-                  <button type="button" className="button button-sm button-icon" onClick={lightboxNext} aria-label="Next screenshot">
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxNext} aria-label={t('plugin.media.next')}>
                     <ChevronRight />
                   </button>
                 </>
               )}
               <span className="spacer" />
-              <button type="button" className="button button-sm button-icon" onClick={closeLightbox} aria-label="Close">
+              <button type="button" className="button button-sm button-icon" onClick={closeLightbox} aria-label={t('common.close')}>
                 <X />
               </button>
             </div>
