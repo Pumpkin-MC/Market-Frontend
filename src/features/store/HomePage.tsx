@@ -378,7 +378,7 @@ const HomePage = () => {
 
                         {sectionsFailed && popular.length === 0 && newest.length === 0 && allPlugins.length === 0 && (
                             <div className="row sf-more">
-                                <button className="button button-primary" onClick={loadSections}>Retry loading plugins</button>
+                                <button className="button button-primary" onClick={loadSections}>{t('home.retry_loading')}</button>
                             </div>
                         )}
 

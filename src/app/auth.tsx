@@ -143,19 +143,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const AuthConnectionError = ({ onRetry }: { onRetry: () => void }) => (
-  <div className="page sect">
-    <div className="blank">
-      <p className="h2">Unable to reach the server</p>
-      <p className="small">A temporary gateway error occurred while verifying your session.</p>
-      <div className="row" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-        <button type="button" className="button button-primary" onClick={onRetry}>
-          Retry Connection
-        </button>
+const AuthConnectionError = ({ onRetry }: { onRetry: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="page sect">
+      <div className="blank">
+        <p className="h2">{t('auth.connection_error_title')}</p>
+        <p className="small">{t('auth.connection_error_desc')}</p>
+        <div className="row" style={{ justifyContent: 'center', marginTop: '1rem' }}>
+          <button type="button" className="button button-primary" onClick={onRetry}>
+            {t('auth.retry_connection')}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authError, retryAuth } = useAuth();

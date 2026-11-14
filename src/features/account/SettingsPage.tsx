@@ -926,7 +926,7 @@ const SettingsPage = () => {
         quality: 0.88,
       });
       if (!validation.valid || !validation.file) {
-        showToast(validation.error || 'Invalid image file.', 'error');
+        showToast(validation.error || t('profile.avatar_invalid'), 'error');
         return;
       }
 
@@ -944,11 +944,11 @@ const SettingsPage = () => {
         setDevProfile(res.data.profile);
       }
       refreshUser?.();
-      showToast('Profile picture updated successfully!');
+      showToast(t('profile.avatar_updated'));
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
         ? err.response.data
-        : err.response?.data?.error || 'Failed to upload profile picture.';
+        : err.response?.data?.error || t('profile.avatar_upload_failed');
       showToast(msg, 'error');
     } finally {
       setAvatarBusy(false);
@@ -969,11 +969,11 @@ const SettingsPage = () => {
         setDevProfile({ ...devProfile, avatar_url: null, avatar_path: null });
       }
       refreshUser?.();
-      showToast('Profile picture removed.');
+      showToast(t('profile.avatar_removed'));
     } catch (err: any) {
       const msg = typeof err.response?.data === 'string'
         ? err.response.data
-        : err.response?.data?.error || 'Failed to remove profile picture.';
+        : err.response?.data?.error || t('profile.avatar_remove_failed');
       showToast(msg, 'error');
     } finally {
       setAvatarBusy(false);
@@ -1108,8 +1108,8 @@ const SettingsPage = () => {
               className="avatar ac-avatar-trigger"
               onClick={() => avatarInputRef.current?.click()}
               disabled={avatarBusy}
-              title="Change profile picture"
-              aria-label="Change profile picture"
+              title={t('studio.onboarding.change_picture')}
+              aria-label={t('studio.onboarding.change_picture')}
             >
               {user?.avatar_url ? (
                 <img src={user.avatar_url} alt={user.username || ''} />
@@ -1154,7 +1154,7 @@ const SettingsPage = () => {
             <>
               <SectionHead lead="Account" rest="Details" />
 
-              <SettingsCard title="Account Profile" icon={User}>
+              <SettingsCard title={t('profile.account_profile_title')} icon={User}>
                 <div className="ac-avatar-row">
                   <span className="avatar avatar-xl">
                     {user?.avatar_url ? (
@@ -1164,8 +1164,8 @@ const SettingsPage = () => {
                     )}
                   </span>
                   <div className="stack ac-tight">
-                    <span className="field-label">Profile Picture</span>
-                    <span className="field-hint">PNG, JPEG, or WebP. Max 2 MB. Recommended 512×512px.</span>
+                    <span className="field-label">{t('profile.avatar_label')}</span>
+                    <span className="field-hint">{t('profile.avatar_hint')}</span>
                     <div className="row" style={{ marginTop: 4 }}>
                       <button
                         type="button"
@@ -1174,7 +1174,7 @@ const SettingsPage = () => {
                         disabled={avatarBusy}
                       >
                         <Upload size={14} />
-                        {avatarBusy ? 'Uploading…' : user?.avatar_url ? 'Change Picture' : 'Upload Picture'}
+                        {avatarBusy ? t('studio.onboarding.uploading') : user?.avatar_url ? t('studio.onboarding.change_picture') : t('studio.onboarding.upload_picture')}
                       </button>
                       {user?.avatar_url && (
                         <button
@@ -1184,7 +1184,7 @@ const SettingsPage = () => {
                           disabled={avatarBusy}
                         >
                           <Trash2 size={14} />
-                          Remove
+                          {t('studio.onboarding.remove_picture')}
                         </button>
                       )}
                     </div>
