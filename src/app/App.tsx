@@ -1,17 +1,35 @@
 import { lazy, useEffect } from 'react';
-import { BrowserRouter as Router, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import {
+  BrowserRouter as Router,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useParams,
+} from 'react-router-dom';
 import { CookieBanner } from '../components/CookieBanner';
 import {
   IS_ACCOUNTS_SURFACE,
+  IS_SERVERS_SURFACE,
   getAccountsUrl,
+  getServersUrl,
   getSsoAuthorizeUrl,
   useCrossSubdomainSso,
 } from '../lib/domains';
 import { AuthProvider, ProtectedRoute, StaffRoute, useAuth } from './auth';
-import { AccountsLayout, MainLayout, PageLoader, ScrollToTop, StudioLayout } from './shell';
+import {
+  AccountsLayout,
+  MainLayout,
+  PageLoader,
+  ScrollToTop,
+  ServersLayout,
+  StudioLayout,
+} from './shell';
 
 const HomePage = lazy(() => import('../features/store/HomePage'));
 const PluginPage = lazy(() => import('../features/plugin/PluginPage'));
+const ServersHomePage = lazy(() => import('../features/servers/ServersHomePage'));
+const ServerDetailPage = lazy(() => import('../features/servers/ServerDetailPage'));
 const LoginPage = lazy(() => import('../features/account/LoginPage'));
 const RegisterPage = lazy(() => import('../features/account/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('../features/account/ForgotPasswordPage'));
@@ -95,7 +113,25 @@ const ExternalAccountsRedirect = ({
   }
 
   if (user && mode === 'login') {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={IS_SERVERS_SURFACE ? '/' : '/dashboard'} replace />;
+  }
+
+  return <PageLoader />;
+};
+
+const ExternalServersRedirect = ({ detail = false }: { detail?: boolean }) => {
+  const { id } = useParams<{ id: string }>();
+  const location = useLocation();
+  const ssoEnabled = useCrossSubdomainSso();
+
+  useEffect(() => {
+    if (!ssoEnabled) return;
+    const targetPath = detail && id ? `/server/${id}${location.search}` : `/${location.search}`;
+    window.location.replace(getServersUrl(targetPath));
+  }, [detail, id, location.search, ssoEnabled]);
+
+  if (!ssoEnabled) {
+    return detail ? <ServerDetailPage /> : <ServersHomePage />;
   }
 
   return <PageLoader />;
@@ -140,10 +176,36 @@ const AccountsRoutes = () => (
   </Routes>
 );
 
+const ServersRoutes = () => (
+  <Routes>
+    <Route element={<ServersLayout />}>
+      <Route path="/" element={<ServersHomePage />} />
+      <Route path="server/:id" element={<ServerDetailPage />} />
+      <Route path="servers/:id" element={<ServerDetailPage />} />
+      <Route path="auth/callback" element={<SsoCallbackPage />} />
+      <Route path="login" element={<ExternalAccountsRedirect mode="login" />} />
+      <Route path="register" element={<ExternalAccountsRedirect mode="register" />} />
+      <Route path="settings" element={<ExternalAccountsRedirect mode="settings" />} />
+      <Route path="link" element={<ExternalAccountsRedirect mode="link" />} />
+      <Route path="terms" element={<TermsOfServicePage />} />
+      <Route path="privacy" element={<PrivacyPolicyPage />} />
+      <Route path="guidelines" element={<GuidelinesPage />} />
+      <Route path="developer-terms" element={<DeveloperTermsPage />} />
+      <Route path="legal/developer-terms" element={<DeveloperTermsPage />} />
+      <Route path="legal-notice" element={<LegalNoticePage />} />
+      <Route path="impressum" element={<LegalNoticePage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Route>
+  </Routes>
+);
+
 const MarketRoutes = () => (
   <Routes>
     <Route element={<MainLayout />}>
       <Route path="/" element={<HomePage />} />
+      <Route path="servers" element={<ExternalServersRedirect />} />
+      <Route path="servers/:id" element={<ExternalServersRedirect detail />} />
+      <Route path="server/:id" element={<ExternalServersRedirect detail />} />
       <Route path="plugin/:id" element={<PluginPage />} />
       <Route path="plugin/:id-:slug" element={<PluginPage />} />
       <Route path="plugins/:id" element={<PluginPage />} />
@@ -199,7 +261,13 @@ const App = () => (
     <AuthProvider>
       <ScrollToTop />
       <CookieBanner />
-      {IS_ACCOUNTS_SURFACE ? <AccountsRoutes /> : <MarketRoutes />}
+      {IS_ACCOUNTS_SURFACE ? (
+        <AccountsRoutes />
+      ) : IS_SERVERS_SURFACE ? (
+        <ServersRoutes />
+      ) : (
+        <MarketRoutes />
+      )}
     </AuthProvider>
   </Router>
 );

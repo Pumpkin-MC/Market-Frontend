@@ -1,6 +1,6 @@
 import api from './api';
 
-export type AppSurface = 'accounts' | 'market';
+export type AppSurface = 'accounts' | 'market' | 'servers';
 
 const SSO_REDIRECT_STORAGE_KEY = 'pmk_sso_redirect_to';
 
@@ -8,7 +8,7 @@ const trimTrailingSlash = (url: string): string => url.replace(/\/+$/, '');
 
 function resolveSurface(): AppSurface {
   const configured = import.meta.env.VITE_SURFACE as string | undefined;
-  if (configured === 'accounts' || configured === 'market') {
+  if (configured === 'accounts' || configured === 'market' || configured === 'servers') {
     return configured;
   }
 
@@ -17,6 +17,9 @@ function resolveSurface(): AppSurface {
     if (host === 'accounts.pumpkinmc.org' || host.startsWith('accounts.')) {
       return 'accounts';
     }
+    if (host === 'servers.pumpkinmc.org' || host.startsWith('servers.')) {
+      return 'servers';
+    }
   }
 
   return 'market';
@@ -24,6 +27,7 @@ function resolveSurface(): AppSurface {
 
 export const APP_SURFACE: AppSurface = resolveSurface();
 export const IS_ACCOUNTS_SURFACE: boolean = APP_SURFACE === 'accounts';
+export const IS_SERVERS_SURFACE: boolean = APP_SURFACE === 'servers';
 
 export const ACCOUNTS_ORIGIN: string = trimTrailingSlash(
   (import.meta.env.VITE_ACCOUNTS_URL as string | undefined) || 'https://accounts.pumpkinmc.org'
@@ -31,6 +35,10 @@ export const ACCOUNTS_ORIGIN: string = trimTrailingSlash(
 
 export const MARKET_ORIGIN: string = trimTrailingSlash(
   (import.meta.env.VITE_MARKET_URL as string | undefined) || 'https://market.pumpkinmc.org'
+);
+
+export const SERVERS_ORIGIN: string = trimTrailingSlash(
+  (import.meta.env.VITE_SERVERS_URL as string | undefined) || 'https://servers.pumpkinmc.org'
 );
 
 /**
@@ -53,6 +61,29 @@ export function getAccountsUrl(path = '/'): string {
 export function getMarketUrl(path = '/'): string {
   const normalized = path.startsWith('/') ? path : `/${path}`;
   return `${MARKET_ORIGIN}${normalized}`;
+}
+
+export function getServersUrl(path = '/'): string {
+  const normalized = path.startsWith('/') ? path : `/${path}`;
+  return `${SERVERS_ORIGIN}${normalized}`;
+}
+
+export function getServerDetailPath(publicId: string, slug?: string): string {
+  const cleanSlug = slug?.trim();
+  const segment = cleanSlug ? `${publicId}-${cleanSlug}` : publicId;
+  return IS_SERVERS_SURFACE ? `/server/${segment}` : `/servers/${segment}`;
+}
+
+export function getServerDetailUrl(publicId: string, slug?: string): string {
+  const cleanSlug = slug?.trim();
+  const segment = cleanSlug ? `${publicId}-${cleanSlug}` : publicId;
+  if (typeof window !== 'undefined') {
+    const host = window.location.hostname.toLowerCase();
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return IS_SERVERS_SURFACE ? `/server/${segment}` : `/servers/${segment}`;
+    }
+  }
+  return getServersUrl(`/server/${segment}`);
 }
 
 export function getSsoAuthorizeUrl(returnPathOrUrl?: string): string {
@@ -132,7 +163,7 @@ export async function completePostAuthNavigation(
     }
   }
 
-  const defaultPath = IS_ACCOUNTS_SURFACE ? '/settings' : '/dashboard';
+  const defaultPath = IS_ACCOUNTS_SURFACE ? '/settings' : IS_SERVERS_SURFACE ? '/' : '/dashboard';
   const safeLocal =
     localFallbackPath && localFallbackPath.startsWith('/') && !localFallbackPath.startsWith('//')
       ? localFallbackPath

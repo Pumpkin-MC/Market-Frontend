@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
   Area,
@@ -12,24 +12,41 @@ import {
 import {
   Activity,
   AlertTriangle,
+  ArrowBigUp,
   Check,
   Copy,
   Cpu,
   ExternalLink,
+  Globe,
   HardDrive,
+  Image as ImageIcon,
   Pencil,
   Plus,
   RefreshCw,
+  Save,
   Server,
   ShieldCheck,
   Terminal,
   Trash2,
+  Upload,
   Users,
   X,
 } from 'lucide-react';
 import api from '../../lib/api';
-import { IS_ACCOUNTS_SURFACE, getMarketUrl } from '../../lib/domains';
+import {
+  IS_ACCOUNTS_SURFACE,
+  getMarketUrl,
+  getServerDetailUrl,
+  getServersUrl,
+  useCrossSubdomainSso,
+} from '../../lib/domains';
+import { validateAndSanitizeImage } from '../../lib/fileValidation';
 import { getPluginUrl } from '../../lib/url';
+import { ServerTagPicker } from '../servers/ServerTagBadge';
+import {
+  MAX_SERVER_TAGS,
+  type OwnerServerListingResponse,
+} from '../servers/constants';
 
 export interface LinkedServerSummary {
   id: number;
@@ -117,6 +134,7 @@ const formatRelativeTime = (iso: string | null | undefined): string => {
 export const LinkedServersSection: React.FC<{
   onToast?: (text: string, type: 'success' | 'error') => void;
 }> = ({ onToast }) => {
+  const sso = useCrossSubdomainSso();
   const [searchParams, setSearchParams] = useSearchParams();
   const [servers, setServers] = useState<LinkedServerSummary[]>([]);
   const [loadingList, setLoadingList] = useState(true);
@@ -134,6 +152,50 @@ export const LinkedServersSection: React.FC<{
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
   const [confirmUnlinkId, setConfirmUnlinkId] = useState<number | null>(null);
+
+  const [listing, setListing] = useState<OwnerServerListingResponse | null>(null);
+  const [loadingListing, setLoadingListing] = useState(false);
+  const [savingListing, setSavingListing] = useState(false);
+  const [uploadingIcon, setUploadingIcon] = useState(false);
+  const iconInputRef = useRef<HTMLInputElement | null>(null);
+
+  const [formIsListed, setFormIsListed] = useState(false);
+  const [formJavaAddress, setFormJavaAddress] = useState('');
+  const [formBedrockAddress, setFormBedrockAddress] = useState('');
+  const [formTagline, setFormTagline] = useState('');
+  const [formDescription, setFormDescription] = useState('');
+  const [formTags, setFormTags] = useState<string[]>([]);
+  const [formWebsiteUrl, setFormWebsiteUrl] = useState('');
+  const [formDiscordUrl, setFormDiscordUrl] = useState('');
+
+  const syncListingForm = (data: OwnerServerListingResponse) => {
+    setListing(data);
+    setFormIsListed(data.isListed);
+    setFormJavaAddress(data.javaAddress || '');
+    setFormBedrockAddress(data.bedrockAddress || '');
+    setFormTagline(data.tagline || '');
+    setFormDescription(data.description || '');
+    setFormTags(data.tags || []);
+    setFormWebsiteUrl(data.websiteUrl || '');
+    setFormDiscordUrl(data.discordUrl || '');
+  };
+
+  const loadListing = useCallback(
+    async (serverId: number) => {
+      setLoadingListing(true);
+      try {
+        const res = await api.get<OwnerServerListingResponse>(
+          `/user/servers/${serverId}/listing`
+        );
+        syncListingForm(res.data);
+      } catch (err: any) {
+        onToast?.(err.response?.data?.error || 'Failed to load public listing settings', 'error');
+      } finally {
+        setLoadingListing(false);
+      }
+    },
+    [onToast]
+  );
 
   const loadServers = useCallback(async () => {
     setLoadingList(true);
@@ -180,6 +242,14 @@ export const LinkedServersSection: React.FC<{
       setDetail(null);
     }
   }, [loadDetail, range, selectedId]);
+
+  useEffect(() => {
+    if (selectedId != null) {
+      void loadListing(selectedId);
+    } else {
+      setListing(null);
+    }
+  }, [loadListing, selectedId]);
 
   const handleSelectServer = (id: number) => {
     setSelectedId(id);
@@ -236,6 +306,90 @@ export const LinkedServersSection: React.FC<{
       onToast?.('Server unlinked from your Pumpkin Account', 'success');
     } catch (err: any) {
       onToast?.(err.response?.data?.error || 'Failed to unlink server', 'error');
+    }
+  };
+
+  const handleSaveListing = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!activeServer) return;
+    setSavingListing(true);
+    try {
+      const res = await api.put<OwnerServerListingResponse>(
+        `/user/servers/${activeServer.id}/listing`,
+        {
+          isListed: formIsListed,
+          javaAddress: formJavaAddress.trim(),
+          bedrockAddress: formBedrockAddress.trim() || null,
+          tagline: formTagline.trim(),
+          description: formDescription,
+          tags: formTags,
+          websiteUrl: formWebsiteUrl.trim() || null,
+          discordUrl: formDiscordUrl.trim() || null,
+        }
+      );
+      syncListingForm(res.data);
+      setServers((prev) =>
+        prev.map((s) => (s.id === activeServer.id ? { ...s, isPublic: res.data.isListed } : s))
+      );
+      onToast?.(
+        res.data.isListed
+          ? 'Server published on Pumpkin Servers!'
+          : 'Server listing settings saved',
+        'success'
+      );
+    } catch (err: any) {
+      onToast?.(err.response?.data?.error || 'Failed to save public server listing', 'error');
+    } finally {
+      setSavingListing(false);
+    }
+  };
+
+  const handleIconFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    e.target.value = '';
+    if (!rawFile || !activeServer) return;
+
+    setUploadingIcon(true);
+    try {
+      const validated = await validateAndSanitizeImage(rawFile, {
+        maxWidth: 512,
+        maxHeight: 512,
+        minWidth: 32,
+        minHeight: 32,
+        quality: 0.9,
+      });
+      if (!validated.valid || !validated.file) {
+        onToast?.(validated.error || 'Invalid server icon image', 'error');
+        return;
+      }
+
+      const fd = new FormData();
+      fd.append('image', validated.file);
+      const res = await api.post<{ iconUrl: string }>(
+        `/user/servers/${activeServer.id}/icon`,
+        fd,
+        { headers: { 'Content-Type': 'multipart/form-data' } }
+      );
+      setListing((prev) => (prev ? { ...prev, iconUrl: res.data.iconUrl } : prev));
+      onToast?.('Server icon updated', 'success');
+    } catch (err: any) {
+      onToast?.(err.response?.data?.error || 'Failed to upload server icon', 'error');
+    } finally {
+      setUploadingIcon(false);
+    }
+  };
+
+  const handleRemoveIcon = async () => {
+    if (!activeServer) return;
+    setUploadingIcon(true);
+    try {
+      await api.delete(`/user/servers/${activeServer.id}/icon`);
+      setListing((prev) => (prev ? { ...prev, iconUrl: null } : prev));
+      onToast?.('Server icon removed', 'success');
+    } catch (err: any) {
+      onToast?.(err.response?.data?.error || 'Failed to remove server icon', 'error');
+    } finally {
+      setUploadingIcon(false);
     }
   };
 
@@ -400,6 +554,7 @@ export const LinkedServersSection: React.FC<{
 
           {/* Active Server Telemetry Dashboard */}
           {activeServer && (
+            <>
             <section className="panel">
               <header className="panel-head">
                 <div
@@ -854,6 +1009,394 @@ export const LinkedServersSection: React.FC<{
                 </div>
               </div>
             </section>
+
+            {/* Public Server Directory Listing Editor */}
+            <section className="panel">
+              <header className="panel-head">
+                <div
+                  className="row"
+                  style={{ width: '100%', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}
+                >
+                  <div className="row" style={{ gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <Globe size={18} className="pumpkin" />
+                    <h3 className="h3" style={{ margin: 0 }}>
+                      Public Server List
+                    </h3>
+                    {listing?.isListed && listing.moderationStatus === 'active' ? (
+                      <span className="sticker sticker-sm sticker-success">Listed Publicly</span>
+                    ) : listing?.moderationStatus === 'hidden' ? (
+                      <span className="tag tag-warning">Hidden by Staff</span>
+                    ) : listing?.moderationStatus === 'banned' ? (
+                      <span className="tag tag-danger">Banned</span>
+                    ) : (
+                      <span className="sticker sticker-sm">Unlisted</span>
+                    )}
+                    {listing && listing.upvotesCount > 0 && (
+                      <span className="tag tag-pumpkin">
+                        <ArrowBigUp size={13} /> {listing.upvotesCount.toLocaleString()} Upvotes
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="spacer" />
+
+                  <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
+                    {listing?.isListed &&
+                      listing.publicId &&
+                      listing.moderationStatus === 'active' &&
+                      (IS_ACCOUNTS_SURFACE || sso ? (
+                        <a
+                          href={getServerDetailUrl(listing.publicId, listing.slug)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="button button-sm"
+                        >
+                          View Public Page <ExternalLink size={13} />
+                        </a>
+                      ) : (
+                        <Link
+                          to={getServerDetailUrl(listing.publicId, listing.slug)}
+                          className="button button-sm"
+                        >
+                          View Public Page <ExternalLink size={13} />
+                        </Link>
+                      ))}
+                    <a
+                      href={getServersUrl('/')}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="button button-ghost button-sm"
+                    >
+                      servers.pumpkinmc.org <ExternalLink size={13} />
+                    </a>
+                  </div>
+                </div>
+              </header>
+
+              <div className="panel-body">
+                {loadingListing && !listing ? (
+                  <div style={{ textAlign: 'center', padding: '1.5rem 0' }}>
+                    <span className="loading" />
+                  </div>
+                ) : (
+                  <form onSubmit={handleSaveListing} className="stack">
+                    {listing?.moderationStatus === 'banned' && (
+                      <div className="notice notice-danger">
+                        <span className="mark-box mark-box-danger">
+                          <AlertTriangle />
+                        </span>
+                        <div className="stack" style={{ '--gap': '2px' } as React.CSSProperties}>
+                          <strong>This server listing has been banned by Pumpkin Staff.</strong>
+                          {listing.moderationReason && (
+                            <span className="small">Reason: {listing.moderationReason}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {listing?.moderationStatus === 'hidden' && (
+                      <div className="notice notice-warning">
+                        <span className="mark-box mark-box-warning">
+                          <AlertTriangle />
+                        </span>
+                        <div className="stack" style={{ '--gap': '2px' } as React.CSSProperties}>
+                          <strong>This server listing was hidden by Pumpkin Staff.</strong>
+                          {listing.moderationReason && (
+                            <span className="small">Reason: {listing.moderationReason}</span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {!activeServer.isOnline && (
+                      <div className="notice">
+                        <span className="mark-box">
+                          <Activity />
+                        </span>
+                        <p className="notice-text">
+                          To publish on <strong>servers.pumpkinmc.org</strong>, your server must be
+                          online with <code>[telemetry] enabled = true</code> in{' '}
+                          <code>pumpkin.toml</code>. You can still configure and save your draft
+                          listing details below.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Server Icon + Visibility Toggle Row */}
+                    <div
+                      className="row"
+                      style={{
+                        gap: '1.25rem',
+                        flexWrap: 'wrap',
+                        alignItems: 'center',
+                        paddingBottom: '1rem',
+                        borderBottom: '1px solid var(--line)',
+                      }}
+                    >
+                      <div className="row" style={{ gap: '0.85rem', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            width: 68,
+                            height: 68,
+                            border: '2px solid var(--line-2)',
+                            background: 'var(--sunk)',
+                            display: 'grid',
+                            placeItems: 'center',
+                            overflow: 'hidden',
+                            fontWeight: 800,
+                            fontSize: '1.5rem',
+                            color: 'var(--pumpkin)',
+                            flexShrink: 0,
+                          }}
+                        >
+                          {listing?.iconUrl ? (
+                            <img
+                              src={listing.iconUrl}
+                              alt="Server icon"
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            />
+                          ) : (
+                            <ImageIcon size={26} className="muted" />
+                          )}
+                        </div>
+
+                        <div className="stack" style={{ '--gap': '6px' } as React.CSSProperties}>
+                          <span className="field-label" style={{ margin: 0 }}>
+                            Server Icon
+                          </span>
+                          <div className="row" style={{ gap: '0.4rem', flexWrap: 'wrap' }}>
+                            <input
+                              ref={iconInputRef}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp"
+                              style={{ display: 'none' }}
+                              onChange={handleIconFileChange}
+                            />
+                            <button
+                              type="button"
+                              className="button button-sm"
+                              disabled={uploadingIcon}
+                              onClick={() => iconInputRef.current?.click()}
+                            >
+                              <Upload size={14} />{' '}
+                              {uploadingIcon
+                                ? 'Uploading…'
+                                : listing?.iconUrl
+                                  ? 'Change Icon'
+                                  : 'Upload Icon'}
+                            </button>
+                            {listing?.iconUrl && (
+                              <button
+                                type="button"
+                                className="button button-ghost button-sm"
+                                disabled={uploadingIcon}
+                                onClick={handleRemoveIcon}
+                              >
+                                Remove
+                              </button>
+                            )}
+                          </div>
+                          <span className="small muted">PNG, JPEG, or WebP (square recommended)</span>
+                        </div>
+                      </div>
+
+                      <span className="spacer" />
+
+                      <label
+                        className="panel row"
+                        style={{
+                          padding: '0.85rem 1rem',
+                          gap: '0.75rem',
+                          cursor:
+                            !activeServer.isOnline ||
+                            listing?.moderationStatus === 'banned' ||
+                            listing?.moderationStatus === 'hidden'
+                              ? 'not-allowed'
+                              : 'pointer',
+                          opacity:
+                            !activeServer.isOnline && !formIsListed
+                              ? 0.65
+                              : 1,
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formIsListed}
+                          disabled={
+                            (!activeServer.isOnline && !formIsListed) ||
+                            listing?.moderationStatus === 'banned' ||
+                            listing?.moderationStatus === 'hidden'
+                          }
+                          onChange={(e) => setFormIsListed(e.target.checked)}
+                        />
+                        <div>
+                          <strong style={{ display: 'block' }}>
+                            Publish on Pumpkin Server List
+                          </strong>
+                          <span className="small muted">
+                            Show live players, plugins, and join IP publicly
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Join Addresses */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))',
+                        gap: '1rem',
+                      }}
+                    >
+                      <label className="field">
+                        <span className="field-label">
+                          Java Join Address {formIsListed ? '*' : ''}
+                        </span>
+                        <span className="control">
+                          <input
+                            type="text"
+                            className="input mono"
+                            placeholder="play.example.com"
+                            value={formJavaAddress}
+                            onChange={(e) => setFormJavaAddress(e.target.value)}
+                            required={formIsListed}
+                            maxLength={253}
+                          />
+                        </span>
+                        <span className="small muted">
+                          Public domain or IPv4 (default port 25565 omitted automatically)
+                        </span>
+                      </label>
+
+                      <label className="field">
+                        <span className="field-label">Bedrock Address (Optional Crossplay)</span>
+                        <span className="control">
+                          <input
+                            type="text"
+                            className="input mono"
+                            placeholder="bedrock.example.com:19132"
+                            value={formBedrockAddress}
+                            onChange={(e) => setFormBedrockAddress(e.target.value)}
+                            maxLength={253}
+                          />
+                        </span>
+                        <span className="small muted">
+                          Adds a Crossplay badge for Bedrock players
+                        </span>
+                      </label>
+                    </div>
+
+                    {/* Tagline */}
+                    <label className="field">
+                      <div className="row" style={{ justifyContent: 'space-between' }}>
+                        <span className="field-label">
+                          Short Tagline {formIsListed ? '*' : ''}
+                        </span>
+                        <span className="small muted">{formTagline.length}/140</span>
+                      </div>
+                      <span className="control">
+                        <input
+                          type="text"
+                          className="input"
+                          placeholder="High-performance vanilla+ Survival SMP running on Rust…"
+                          value={formTagline}
+                          onChange={(e) => setFormTagline(e.target.value)}
+                          maxLength={140}
+                          required={formIsListed}
+                        />
+                      </span>
+                    </label>
+
+                    {/* Categorized Server Tags Picker */}
+                    <div className="field">
+                      <span className="field-label">Server Tags (Up to {MAX_SERVER_TAGS})</span>
+                      <ServerTagPicker
+                        value={formTags}
+                        onChange={setFormTags}
+                        maxTags={MAX_SERVER_TAGS}
+                        onMaxReached={() =>
+                          onToast?.(
+                            `You can select up to ${MAX_SERVER_TAGS} tags per server`,
+                            'error'
+                          )
+                        }
+                      />
+                    </div>
+
+                    {/* Full Description */}
+                    <label className="field">
+                      <div className="row" style={{ justifyContent: 'space-between' }}>
+                        <span className="field-label">Full Description (Markdown supported)</span>
+                        <span className="small muted">{formDescription.length}/4000</span>
+                      </div>
+                      <span className="control">
+                        <textarea
+                          className="input"
+                          rows={6}
+                          placeholder="Tell players what makes your Pumpkin server special, rules, custom WASM plugins, and community events…"
+                          value={formDescription}
+                          onChange={(e) => setFormDescription(e.target.value)}
+                          maxLength={4000}
+                        />
+                      </span>
+                    </label>
+
+                    {/* Community Links */}
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(16rem, 1fr))',
+                        gap: '1rem',
+                      }}
+                    >
+                      <label className="field">
+                        <span className="field-label">Website URL (Optional)</span>
+                        <span className="control">
+                          <input
+                            type="url"
+                            className="input"
+                            placeholder="https://example.com"
+                            value={formWebsiteUrl}
+                            onChange={(e) => setFormWebsiteUrl(e.target.value)}
+                            maxLength={255}
+                          />
+                        </span>
+                      </label>
+
+                      <label className="field">
+                        <span className="field-label">Discord Invite URL (Optional)</span>
+                        <span className="control">
+                          <input
+                            type="url"
+                            className="input"
+                            placeholder="https://discord.gg/yourserver"
+                            value={formDiscordUrl}
+                            onChange={(e) => setFormDiscordUrl(e.target.value)}
+                            maxLength={255}
+                          />
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className="row" style={{ justifyContent: 'flex-end' }}>
+                      <button
+                        type="submit"
+                        className="button button-primary"
+                        disabled={savingListing}
+                      >
+                        <Save size={15} />{' '}
+                        {savingListing
+                          ? 'Saving…'
+                          : formIsListed
+                            ? 'Save & Publish Server'
+                            : 'Save Listing Draft'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+              </div>
+            </section>
+            </>
           )}
         </>
       )}

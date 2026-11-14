@@ -33,6 +33,7 @@ import {
     Download,
     Clock,
     Layers,
+    Server,
     Star,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -45,6 +46,7 @@ import {
     parseRejectionReason,
     formatRejectionReasonSummary,
 } from '../../lib/guidelines';
+import { getServerDetailUrl } from '../../lib/domains';
 import { getPluginUrl } from '../../lib/url';
 import '../../styles/store.css';
 import '../../styles/studio.css';
@@ -81,11 +83,17 @@ const StaffChartTip = ({ active, payload, label }: any) => {
     );
 };
 
-type StaffTab = 'queue' | 'plugins' | 'reports' | 'users' | 'logs' | 'analytics';
+type StaffTab = 'queue' | 'plugins' | 'servers' | 'reports' | 'users' | 'logs' | 'analytics';
 type AnalyticsTimeframe = '7d' | '30d' | '365d';
 
 interface ActionModalState {
-    kind: 'reject_plugin' | 'delete_plugin' | 'delete_user' | 'resolve_report';
+    kind:
+        | 'reject_plugin'
+        | 'delete_plugin'
+        | 'delete_user'
+        | 'resolve_report'
+        | 'hide_server'
+        | 'ban_server';
     targetId: number;
     targetName: string;
     extra?: any;
@@ -141,6 +149,7 @@ const StaffPage = () => {
     const [activeTab, setActiveTab] = useState<StaffTab>('queue');
     const [users, setUsers] = useState<any[]>([]);
     const [plugins, setPlugins] = useState<any[]>([]);
+    const [serverListings, setServerListings] = useState<any[]>([]);
     const [reports, setReports] = useState<any[]>([]);
     const [logs, setLogs] = useState<any[]>([]);
     const [adminAnalytics, setAdminAnalytics] = useState<any | null>(null);
@@ -151,6 +160,7 @@ const StaffPage = () => {
     const [queueFilter, setQueueFilter] = useState('under_review');
     const [pluginStatusFilter, setPluginStatusFilter] = useState('all');
     const [pluginSortBy, setPluginSortBy] = useState('recently_updated');
+    const [serverStatusFilter, setServerStatusFilter] = useState('all');
     const [reportStatusFilter, setReportStatusFilter] = useState('open');
     const [logFilterAction, setLogFilterAction] = useState('all');
     const [logFilterModerator, setLogFilterModerator] = useState('all');
@@ -158,7 +168,7 @@ const StaffPage = () => {
     const [analyticsTimeframe, setAnalyticsTimeframe] = useState<AnalyticsTimeframe>('30d');
     const [recentActivityFilter, setRecentActivityFilter] = useState<'all' | 'updates' | 'uploads'>('all');
 
-    const [selectedItem, setSelectedItem] = useState<{ type: 'user' | 'plugin' | 'log' | 'report'; data: any } | null>(null);
+    const [selectedItem, setSelectedItem] = useState<{ type: 'user' | 'plugin' | 'server' | 'log' | 'report'; data: any } | null>(null);
 
     // Structured Moderation Action Modal state (replaces raw window.prompt)
     const [actionModal, setActionModal] = useState<ActionModalState | null>(null);
@@ -216,6 +226,7 @@ const StaffPage = () => {
             if (isStaff) {
                 requests.push(api.get('/admin/users'));
                 requests.push(api.get('/admin/reports'));
+                requests.push(api.get('/admin/servers'));
             }
             if (isAdmin) {
                 requests.push(api.get('/admin/analytics'));
@@ -234,8 +245,11 @@ const StaffPage = () => {
             if (isStaff && results[3]?.status === 'fulfilled') {
                 setReports(Array.isArray(results[3].value.data) ? results[3].value.data : []);
             }
-            if (isAdmin && results[4]?.status === 'fulfilled') {
-                setAdminAnalytics(results[4].value.data);
+            if (isStaff && results[4]?.status === 'fulfilled') {
+                setServerListings(Array.isArray(results[4].value.data) ? results[4].value.data : []);
+            }
+            if (isAdmin && results[5]?.status === 'fulfilled') {
+                setAdminAnalytics(results[5].value.data);
             }
             if (results[0].status === 'rejected') {
                 throw results[0].reason;
@@ -256,6 +270,9 @@ const StaffPage = () => {
             } else if (tab === 'queue' || tab === 'plugins') {
                 const res = await api.get('/admin/plugins');
                 setPlugins(Array.isArray(res.data) ? res.data : []);
+            } else if (tab === 'servers' && isStaff) {
+                const res = await api.get('/admin/servers');
+                setServerListings(Array.isArray(res.data) ? res.data : []);
             } else if (tab === 'reports' && isStaff) {
                 const res = await api.get('/admin/reports');
                 setReports(Array.isArray(res.data) ? res.data : []);
@@ -370,6 +387,40 @@ const StaffPage = () => {
                             : r
                     )
                 );
+            } else if (actionModal.kind === 'hide_server' || actionModal.kind === 'ban_server') {
+                const reason = actionReason.trim();
+                if (!reason) return;
+                const nextStatus = actionModal.kind === 'ban_server' ? 'banned' : 'hidden';
+                await api.post(`/admin/servers/${actionModal.targetId}/moderate`, {
+                    status: nextStatus,
+                    reason,
+                });
+                const nowIso = new Date().toISOString();
+                setServerListings(prev =>
+                    prev.map(s =>
+                        s.serverId === actionModal.targetId
+                            ? {
+                                  ...s,
+                                  isListed: false,
+                                  moderationStatus: nextStatus,
+                                  moderationReason: reason,
+                                  moderatedAt: nowIso,
+                              }
+                            : s
+                    )
+                );
+                if (selectedItem?.type === 'server' && selectedItem.data.serverId === actionModal.targetId) {
+                    setSelectedItem({
+                        type: 'server',
+                        data: {
+                            ...selectedItem.data,
+                            isListed: false,
+                            moderationStatus: nextStatus,
+                            moderationReason: reason,
+                            moderatedAt: nowIso,
+                        },
+                    });
+                }
             }
             setActionModal(null);
             setActionReason('');
@@ -377,6 +428,30 @@ const StaffPage = () => {
             alert(extractErrorMessage(err, 'Failed to complete moderation action'));
         } finally {
             setActionBusy(false);
+        }
+    };
+
+    const restoreServerListing = async (serverId: number) => {
+        try {
+            await api.post(`/admin/servers/${serverId}/moderate`, {
+                status: 'active',
+                reason: 'Restored by Pumpkin Staff',
+            });
+            setServerListings(prev =>
+                prev.map(s =>
+                    s.serverId === serverId
+                        ? { ...s, moderationStatus: 'active', moderationReason: null }
+                        : s
+                )
+            );
+            if (selectedItem?.type === 'server' && selectedItem.data.serverId === serverId) {
+                setSelectedItem({
+                    type: 'server',
+                    data: { ...selectedItem.data, moderationStatus: 'active', moderationReason: null },
+                });
+            }
+        } catch (err: any) {
+            alert(extractErrorMessage(err, 'Failed to restore server listing'));
         }
     };
 
@@ -566,6 +641,24 @@ const StaffPage = () => {
             r.review_comment?.toLowerCase().includes(q);
         const matchesStatus = reportStatusFilter === 'all' || r.status === reportStatusFilter;
         return matchesSearch && matchesStatus;
+    });
+
+    const filteredServers = serverListings.filter(s => {
+        const q = searchQuery.toLowerCase().trim();
+        const matchesSearch =
+            !q ||
+            s.name?.toLowerCase().includes(q) ||
+            s.ownerUsername?.toLowerCase().includes(q) ||
+            s.javaAddress?.toLowerCase().includes(q) ||
+            s.publicId?.toLowerCase().includes(q) ||
+            s.tagline?.toLowerCase().includes(q);
+        if (!matchesSearch) return false;
+        if (serverStatusFilter === 'listed') {
+            return Boolean(s.isListed) && s.moderationStatus === 'active';
+        }
+        if (serverStatusFilter === 'hidden') return s.moderationStatus === 'hidden';
+        if (serverStatusFilter === 'banned') return s.moderationStatus === 'banned';
+        return true;
     });
 
     const filteredLogs = logs.filter(l => {
@@ -785,7 +878,25 @@ const StaffPage = () => {
                       ? [[t('staff.inspection.fields.reviewer_feedback'), <RejectionReasonsList rejectionReason={selectedItem.data.rejection_reason} />] as [string, any]]
                       : []),
               ]
-            : selectedItem.type === 'report'
+            : selectedItem.type === 'server'
+              ? [
+                    ['Server ID', `${selectedItem.data.serverId} (${selectedItem.data.publicId})`],
+                    ['Name', selectedItem.data.name],
+                    ['Owner', `@${selectedItem.data.ownerUsername}`],
+                    ['Java Address', selectedItem.data.javaAddress || '—'],
+                    ['Bedrock Address', selectedItem.data.bedrockAddress || '—'],
+                    ['Tagline', selectedItem.data.tagline || '—'],
+                    ['Tags', selectedItem.data.tags?.length ? selectedItem.data.tags.join(', ') : '—'],
+                    ['Website', selectedItem.data.websiteUrl || '—'],
+                    ['Discord', selectedItem.data.discordUrl || '—'],
+                    ['Live Status', selectedItem.data.isOnline ? `Online (${selectedItem.data.onlinePlayers}/${selectedItem.data.maxPlayers})` : 'Offline'],
+                    ['Upvotes', (selectedItem.data.upvotesCount ?? 0).toLocaleString()],
+                    ['Moderation Status', selectedItem.data.moderationStatus],
+                    ...(selectedItem.data.moderationReason
+                        ? [['Moderation Reason', selectedItem.data.moderationReason] as [string, any]]
+                        : []),
+                ]
+              : selectedItem.type === 'report'
               ? [
                     [t('staff.inspection.fields.report_id'), selectedItem.data.id],
                     [t('staff.inspection.fields.target_type'), selectedItem.data.target_type],
@@ -829,6 +940,7 @@ const StaffPage = () => {
         ['plugins', t('staff.tabs.plugins', { count: kpis.totalActivePlugins })],
         ...(isStaff
             ? [
+                  ['servers', `Servers (${serverListings.length})`] as [StaffTab, string],
                   ['reports', kpis.openReports > 0 ? t('staff.tabs.reports_open', { count: kpis.openReports }) : t('staff.tabs.reports')] as [StaffTab, string],
                   ['users', t('staff.tabs.users')] as [StaffTab, string],
               ]
@@ -1174,11 +1286,13 @@ const StaffPage = () => {
                                 ? t('staff.search.queue')
                                 : activeTab === 'plugins'
                                   ? t('staff.search.plugins')
-                                  : activeTab === 'reports'
-                                    ? t('staff.search.reports')
-                                    : activeTab === 'users'
-                                      ? t('staff.search.users')
-                                      : t('staff.search.logs')
+                                  : activeTab === 'servers'
+                                    ? 'Search server listings by name, IP, or owner…'
+                                    : activeTab === 'reports'
+                                      ? t('staff.search.reports')
+                                      : activeTab === 'users'
+                                        ? t('staff.search.users')
+                                        : t('staff.search.logs')
                         }
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
@@ -1228,6 +1342,28 @@ const StaffPage = () => {
                             aria-label={t('staff.kpi.all_plugins')}
                         />
                     </>
+                )}
+                {activeTab === 'servers' && (
+                    <Select
+                        options={[
+                            { value: 'all', label: `All Listings (${serverListings.length})` },
+                            {
+                                value: 'listed',
+                                label: `Publicly Listed (${serverListings.filter(s => s.isListed && s.moderationStatus === 'active').length})`,
+                            },
+                            {
+                                value: 'hidden',
+                                label: `Hidden (${serverListings.filter(s => s.moderationStatus === 'hidden').length})`,
+                            },
+                            {
+                                value: 'banned',
+                                label: `Banned (${serverListings.filter(s => s.moderationStatus === 'banned').length})`,
+                            },
+                        ]}
+                        value={serverStatusFilter}
+                        onChange={setServerStatusFilter}
+                        aria-label="Filter server listings"
+                    />
                 )}
                 {activeTab === 'reports' && (
                     <Select
@@ -1363,6 +1499,157 @@ const StaffPage = () => {
                     </div>
                 ) : (
                     renderPluginsTable(filteredPlugins, 'catalog')
+                )
+            ) : activeTab === 'servers' ? (
+                filteredServers.length === 0 ? (
+                    <div className="blank">
+                        <Server size={28} className="muted" />
+                        <p className="h3">No server listings found</p>
+                        <p className="small muted">
+                            Public and draft server listings configured via Your Servers will appear here.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="scroll-x">
+                        <table className="ledger">
+                            <thead>
+                                <tr>
+                                    <th>Server</th>
+                                    <th>Owner</th>
+                                    <th>Join Address</th>
+                                    <th>Live Telemetry</th>
+                                    <th>Status</th>
+                                    <th className="end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredServers.map(s => (
+                                    <tr key={s.serverId}>
+                                        <td>
+                                            <div className="sf-plugin-cell">
+                                                <span className="avatar">
+                                                    {s.iconUrl ? (
+                                                        <img src={s.iconUrl} alt="" />
+                                                    ) : (
+                                                        s.name?.charAt(0)?.toUpperCase() || 'S'
+                                                    )}
+                                                </span>
+                                                <div className="sf-plugin-meta">
+                                                    <div className="row" style={{ '--gap': '6px' } as React.CSSProperties}>
+                                                        <strong>{s.name}</strong>
+                                                        <span className="small mono muted">{s.publicId}</span>
+                                                    </div>
+                                                    <span className="small muted">
+                                                        {s.tagline || 'No tagline'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <Link className="link" to={`/profile/${s.ownerUsername}`}>
+                                                @{s.ownerUsername}
+                                            </Link>
+                                        </td>
+                                        <td>
+                                            <div className="sf-plugin-meta">
+                                                <code className="mono">{s.javaAddress || '—'}</code>
+                                                {s.bedrockAddress && (
+                                                    <span className="small mono muted">
+                                                        Bedrock: {s.bedrockAddress}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div className="sf-plugin-meta">
+                                                <strong>
+                                                    {s.isOnline
+                                                        ? `${s.onlinePlayers}/${s.maxPlayers} online`
+                                                        : 'Offline'}
+                                                </strong>
+                                                <span className="small muted">
+                                                    {(s.upvotesCount ?? 0).toLocaleString()} upvotes
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {s.moderationStatus === 'banned' ? (
+                                                <span className="tag tag-danger">Banned</span>
+                                            ) : s.moderationStatus === 'hidden' ? (
+                                                <span className="tag tag-warning">Hidden</span>
+                                            ) : s.isListed ? (
+                                                <span className="tag tag-success">Listed</span>
+                                            ) : (
+                                                <span className="tag tag-fg">Unlisted</span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <div className="row sf-actions">
+                                                {s.isListed && s.moderationStatus === 'active' && (
+                                                    <a
+                                                        className="button button-sm"
+                                                        href={getServerDetailUrl(s.publicId, s.slug)}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <ExternalLink size={14} /> View
+                                                    </a>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    className="button button-sm"
+                                                    onClick={() => setSelectedItem({ type: 'server', data: s })}
+                                                >
+                                                    Details
+                                                </button>
+                                                {s.moderationStatus !== 'active' && (
+                                                    <button
+                                                        type="button"
+                                                        className="button button-primary button-sm"
+                                                        onClick={() => void restoreServerListing(s.serverId)}
+                                                    >
+                                                        Restore
+                                                    </button>
+                                                )}
+                                                {s.moderationStatus !== 'hidden' && (
+                                                    <button
+                                                        type="button"
+                                                        className="button button-sm"
+                                                        onClick={() =>
+                                                            openActionModal({
+                                                                kind: 'hide_server',
+                                                                targetId: s.serverId,
+                                                                targetName: s.name,
+                                                                extra: s,
+                                                            })
+                                                        }
+                                                    >
+                                                        Hide
+                                                    </button>
+                                                )}
+                                                {s.moderationStatus !== 'banned' && (
+                                                    <button
+                                                        type="button"
+                                                        className="button button-danger button-sm"
+                                                        onClick={() =>
+                                                            openActionModal({
+                                                                kind: 'ban_server',
+                                                                targetId: s.serverId,
+                                                                targetName: s.name,
+                                                                extra: s,
+                                                            })
+                                                        }
+                                                    >
+                                                        Ban
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )
             ) : activeTab === 'reports' ? (
                 filteredReports.length === 0 ? (
@@ -2189,7 +2476,11 @@ const StaffPage = () => {
                                           ? t('staff.modal.title_delete_plugin', { name: actionModal.targetName })
                                           : actionModal.kind === 'delete_user'
                                             ? t('staff.modal.title_delete_user', { name: actionModal.targetName })
-                                            : t('staff.modal.title_resolve_report', { name: actionModal.targetName })}
+                                            : actionModal.kind === 'hide_server'
+                                              ? `Hide Server Listing — ${actionModal.targetName}`
+                                              : actionModal.kind === 'ban_server'
+                                                ? `Ban Server Listing — ${actionModal.targetName}`
+                                                : t('staff.modal.title_resolve_report', { name: actionModal.targetName })}
                                 </h2>
                             </div>
                             <button className="button button-ghost button-icon" aria-label={t('common.close', 'Close')} onClick={closeActionModal}>

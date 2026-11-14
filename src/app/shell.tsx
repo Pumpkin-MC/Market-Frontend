@@ -1,12 +1,12 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Menu, Store, X } from 'lucide-react';
+import { LayoutDashboard, Menu, Plus, Server, Store, X } from 'lucide-react';
 import { Select } from '../components/Select';
 import SEO from '../components/SEO';
 import { openCookiePreferencesModal } from '../lib/consent';
 import api from '../lib/api';
-import { getAccountsUrl, getMarketUrl, useCrossSubdomainSso } from '../lib/domains';
+import { getAccountsUrl, getMarketUrl, getServersUrl, useCrossSubdomainSso } from '../lib/domains';
 import { NavSearch } from '../features/store/NavSearch';
 import { useAuth } from './auth';
 
@@ -86,9 +86,15 @@ const useMenu = () => {
 const Masthead = ({ user }: any) => {
   const { t } = useTranslation();
   const menu = useMenu();
+  const sso = useCrossSubdomainSso();
   const links = (
     <>
       <NavLink to="/search" onClick={menu.close}>{t('nav.browse')}</NavLink>
+      {sso ? (
+        <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
+      ) : (
+        <NavLink to="/servers" onClick={menu.close}>Servers</NavLink>
+      )}
       {user && (user.plugin_count > 0 || user.is_developer) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
       {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>{t('nav.publish', 'Publish')}</NavLink>}
       {isStaff(user) && <NavLink to="/staff" onClick={menu.close}>{t('nav.staff', 'Staff')}</NavLink>}
@@ -199,6 +205,7 @@ const AccountsMasthead = ({ user }: any) => {
       {user && (
         <>
           <NavLink to="/settings" end onClick={menu.close}>{t('nav.profile')}</NavLink>
+          <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
           <a href={getMarketUrl('/search')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
           {(user.plugin_count > 0 || user.is_developer) && (
             <a href={getMarketUrl('/dashboard')} onClick={menu.close}>
@@ -207,7 +214,12 @@ const AccountsMasthead = ({ user }: any) => {
           )}
         </>
       )}
-      {!user && <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>}
+      {!user && (
+        <>
+          <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
+          <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
+        </>
+      )}
     </>
   );
   const actions = user ? (
@@ -267,6 +279,7 @@ const AccountsFooter = () => {
             <span className="label">Ecosystem</span>
             <ul>
               <li><a href="https://pumpkinmc.org">PumpkinMC</a></li>
+              <li><a href={getServersUrl('/')}>Pumpkin Servers</a></li>
               <li><a href={getMarketUrl('/')}>Pumpkin Market</a></li>
             </ul>
           </div>
@@ -308,6 +321,144 @@ export const AccountsLayout = () => {
         </Suspense>
       </main>
       <AccountsFooter />
+    </>
+  );
+};
+
+const ServersMasthead = ({ user }: any) => {
+  const { t } = useTranslation();
+  const menu = useMenu();
+  const sso = useCrossSubdomainSso();
+  const listServerHref = sso ? getAccountsUrl('/settings?tab=servers') : '/settings?tab=servers';
+
+  const links = (
+    <>
+      <NavLink to="/" end onClick={menu.close}>{t('nav.browse')}</NavLink>
+      {sso ? (
+        <a href={listServerHref} onClick={menu.close}>Your Servers</a>
+      ) : (
+        <Link to={listServerHref} onClick={menu.close}>Your Servers</Link>
+      )}
+      <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
+    </>
+  );
+
+  const actions = (
+    <>
+      {sso ? (
+        <a href={listServerHref} className="button button-sm" onClick={menu.close}>
+          <Plus size={15} /> List Server
+        </a>
+      ) : (
+        <Link to={listServerHref} className="button button-sm" onClick={menu.close}>
+          <Plus size={15} /> List Server
+        </Link>
+      )}
+      {user ? (
+        <UserChip user={user} onNavigate={menu.close} />
+      ) : (
+        <>
+          <Link to="/login" className="button button-sm" onClick={menu.close}>{t('nav.login')}</Link>
+          <Link to="/register" className="button button-primary button-sm" onClick={menu.close}>{t('nav.register')}</Link>
+        </>
+      )}
+    </>
+  );
+
+  return (
+    <header className="masthead">
+      <div className="page">
+        <div className="masthead-bar">
+          <Link to="/" className="brand" onClick={menu.close}>
+            <img src="/icon.png" alt="Pumpkin" />
+            <span className="brand-name"><span>Servers</span></span>
+          </Link>
+          <nav className="navlinks" aria-label="Servers">{links}</nav>
+          <span className="spacer" />
+          <div className="masthead-actions">{actions}</div>
+          <MenuToggle open={menu.open} onToggle={menu.toggle} />
+        </div>
+      </div>
+      {menu.open && (
+        <nav className="mobile-menu" aria-label="Menu">
+          <div className="page">
+            {links}
+            <div className="mobile-menu-actions">{actions}</div>
+          </div>
+        </nav>
+      )}
+    </header>
+  );
+};
+
+const ServersFooter = () => {
+  const { t } = useTranslation();
+  const sso = useCrossSubdomainSso();
+  const listServerHref = sso ? getAccountsUrl('/settings?tab=servers') : '/settings?tab=servers';
+
+  return (
+    <footer className="colophon">
+      <div className="page">
+        <div className="colophon-grid">
+          <div>
+            <Link to="/" className="brand">
+              <img src="/icon.png" alt="" />
+              <span className="brand-name">Pumpkin <span>Servers</span></span>
+            </Link>
+          </div>
+          <div className="colophon-col">
+            <span className="label">Directory</span>
+            <ul>
+              <li><Link to="/"><Server size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Browse Servers</Link></li>
+              <li>
+                {sso ? (
+                  <a href={listServerHref}>List Your Server</a>
+                ) : (
+                  <Link to={listServerHref}>List Your Server</Link>
+                )}
+              </li>
+              <li><a href={getMarketUrl('/')}>Pumpkin Market</a></li>
+              <li><a href="https://pumpkinmc.org">PumpkinMC</a></li>
+            </ul>
+          </div>
+          <div className="colophon-col">
+            <span className="label">{t('nav.legal', 'Legal')}</span>
+            <ul>
+              <li><Link to="/terms">{t('nav.terms', 'Terms')}</Link></li>
+              <li><Link to="/privacy">{t('nav.privacy', 'Privacy')}</Link></li>
+              <li><Link to="/guidelines">{t('nav.guidelines', 'Guidelines')}</Link></li>
+              <li><Link to="/legal-notice">{t('nav.legal_notice', 'Legal Notice')}</Link></li>
+            </ul>
+          </div>
+          <div className="colophon-col">
+            <span className="label">Preferences</span>
+            <ul>
+              <li><button type="button" onClick={openCookiePreferencesModal}>{t('nav.cookie_preferences', 'Cookie Preferences')}</button></li>
+            </ul>
+          </div>
+        </div>
+        <div className="colophon-base">
+          <span>© 2026 PumpkinMC</span>
+          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span className="spacer" />
+          <LanguageSelector />
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export const ServersLayout = () => {
+  const { user } = useAuth();
+  return (
+    <>
+      <ServersMasthead user={user} />
+      <main className="shell-main">
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      <ServersFooter />
     </>
   );
 };
@@ -375,6 +526,7 @@ const Footer = () => {
             <span className="label">{t('nav.market', 'Market')}</span>
             <ul>
               <li><Link to="/search">{t('nav.browse')}</Link></li>
+              <li><a href={getServersUrl('/')}>Pumpkin Servers</a></li>
               <li><Link to="/dashboard/plugins">{t('nav.publish', 'Publish')}</Link></li>
               <li><a href="https://pumpkinmc.org">Pumpkin</a></li>
             </ul>
