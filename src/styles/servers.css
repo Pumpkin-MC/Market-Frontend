@@ -205,17 +205,6 @@ a.sv-tag-badge:hover {
   color: var(--fg);
 }
 
-.sv-tag-primary-mark {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 1px 5px;
-  background: var(--tag-accent);
-  color: #09090b;
-  font-weight: 800;
-  margin-left: 2px;
-}
-
 .sv-tag-count {
   font-family: var(--mono);
   font-size: 11px;
@@ -245,27 +234,6 @@ a.sv-tag-badge:hover {
 .sv-picker-selected {
   padding-bottom: var(--s-2);
   border-bottom: 1px solid var(--line);
-}
-
-.sv-selected-pill-wrap {
-  display: inline-flex;
-  align-items: stretch;
-}
-
-.sv-promote-btn {
-  display: inline-grid;
-  place-items: center;
-  padding: 0 6px;
-  background: var(--surface);
-  border: 1.5px solid var(--line-2);
-  border-right: 0;
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.sv-promote-btn:hover {
-  color: var(--pumpkin);
-  border-color: var(--pumpkin);
 }
 
 .sv-picker-controls {

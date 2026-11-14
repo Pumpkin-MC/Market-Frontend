@@ -1,6 +1,12 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { ACCOUNTS_ORIGIN, IS_ACCOUNTS_SURFACE, MARKET_ORIGIN } from '../lib/domains';
+import {
+  ACCOUNTS_ORIGIN,
+  IS_ACCOUNTS_SURFACE,
+  IS_SERVERS_SURFACE,
+  MARKET_ORIGIN,
+  SERVERS_ORIGIN,
+} from '../lib/domains';
 
 interface SEOProps {
   title?: string;
@@ -20,28 +26,51 @@ interface SEOProps {
   };
 }
 
-const SITE_ORIGIN = IS_ACCOUNTS_SURFACE ? ACCOUNTS_ORIGIN : MARKET_ORIGIN;
+const SITE_ORIGIN = IS_ACCOUNTS_SURFACE
+  ? ACCOUNTS_ORIGIN
+  : IS_SERVERS_SURFACE
+    ? SERVERS_ORIGIN
+    : MARKET_ORIGIN;
+
+const SITE_NAME = IS_ACCOUNTS_SURFACE
+  ? 'Pumpkin Account'
+  : IS_SERVERS_SURFACE
+    ? 'Pumpkin Servers'
+    : 'Pumpkin Market';
+
 const DEFAULT_DESCRIPTION = IS_ACCOUNTS_SURFACE
-  ? 'Manage your PumpkinMC identity, security, passkeys, and connected services.'
-  : 'Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.';
+  ? 'Single sign-on, passkeys, 2FA security, and server management across PumpkinMC services.'
+  : IS_SERVERS_SURFACE
+    ? 'Explore community Minecraft servers powered by Pumpkin, with live player counts and zero fake slots.'
+    : 'Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.';
+
+const DEFAULT_KEYWORDS = IS_ACCOUNTS_SURFACE
+  ? 'pumpkinmc, pumpkin account, minecraft sso, passkeys, server telemetry'
+  : IS_SERVERS_SURFACE
+    ? 'minecraft servers, pumpkin servers, pumpkinmc server list, rust minecraft server'
+    : 'minecraft, plugins, wasm, marketplace, mc plugins, development';
 
 const SEO = ({
   title,
   ogTitle,
   description = DEFAULT_DESCRIPTION,
   ogDescription,
-  keywords = "minecraft, plugins, wasm, marketplace, mc plugins, development",
+  keywords = DEFAULT_KEYWORDS,
   canonical,
-  ogType = "website",
-  ogImage = "/icon.png",
-  twitterCard = "summary_large_image",
+  ogType = 'website',
+  ogImage = '/icon.png',
+  twitterCard,
   twitterLabels,
 }: SEOProps) => {
   const location = useLocation();
-  const siteName = IS_ACCOUNTS_SURFACE ? "Pumpkin Account" : "Pumpkin Market";
-  const fullTitle = title ? `${title} | ${siteName}` : siteName;
+  const fullTitle =
+    !title || title === SITE_NAME || title.endsWith(`| ${SITE_NAME}`) || title.endsWith(`— ${SITE_NAME}`)
+      ? title || SITE_NAME
+      : `${title} | ${SITE_NAME}`;
   const resolvedOgTitle = ogTitle || fullTitle;
   const resolvedOgDesc = ogDescription || description;
+  const resolvedTwitterCard =
+    twitterCard ?? (ogImage === '/icon.png' ? 'summary' : 'summary_large_image');
   const url = canonical || `${SITE_ORIGIN}${location.pathname}`;
   const resolvedOgImage =
     ogImage.startsWith('http://') || ogImage.startsWith('https://')
@@ -49,10 +78,8 @@ const SEO = ({
       : `${SITE_ORIGIN}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
 
   useEffect(() => {
-    // Update Title
     document.title = fullTitle;
 
-    // Update Meta Description
     let metaDescription = document.querySelector('meta[name="description"]');
     if (!metaDescription) {
       metaDescription = document.createElement('meta');
@@ -61,7 +88,6 @@ const SEO = ({
     }
     metaDescription.setAttribute('content', description);
 
-    // Update Meta Keywords
     let metaKeywords = document.querySelector('meta[name="keywords"]');
     if (!metaKeywords) {
       metaKeywords = document.createElement('meta');
@@ -70,7 +96,6 @@ const SEO = ({
     }
     metaKeywords.setAttribute('content', keywords);
 
-    // Update Canonical
     let linkCanonical = document.querySelector('link[rel="canonical"]');
     if (!linkCanonical) {
       linkCanonical = document.createElement('link');
@@ -79,7 +104,6 @@ const SEO = ({
     }
     linkCanonical.setAttribute('href', url);
 
-    // Update Open Graph tags
     const updateOG = (property: string, content: string) => {
       let tag = document.querySelector(`meta[property="${property}"]`);
       if (!tag) {
@@ -95,9 +119,8 @@ const SEO = ({
     updateOG('og:url', url);
     updateOG('og:type', ogType);
     updateOG('og:image', resolvedOgImage);
-    updateOG('og:site_name', siteName);
+    updateOG('og:site_name', SITE_NAME);
 
-    // Update Twitter Card tags
     const updateTwitter = (name: string, content: string) => {
       let tag = document.querySelector(`meta[name="${name}"]`);
       if (!tag) {
@@ -108,7 +131,7 @@ const SEO = ({
       tag.setAttribute('content', content);
     };
 
-    updateTwitter('twitter:card', twitterCard);
+    updateTwitter('twitter:card', resolvedTwitterCard);
     updateTwitter('twitter:title', resolvedOgTitle);
     updateTwitter('twitter:description', resolvedOgDesc);
     updateTwitter('twitter:image', resolvedOgImage);
@@ -130,11 +153,8 @@ const SEO = ({
     url,
     ogType,
     resolvedOgImage,
-    twitterCard,
-    twitterLabels?.label1,
-    twitterLabels?.data1,
-    twitterLabels?.label2,
-    twitterLabels?.data2,
+    resolvedTwitterCard,
+    twitterLabels,
   ]);
 
   return null;

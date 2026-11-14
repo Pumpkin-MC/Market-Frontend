@@ -22,7 +22,6 @@ import {
   MessageCircle,
   Package,
   Server,
-  ShieldCheck,
   Smartphone,
   Users,
 } from 'lucide-react';
@@ -192,7 +191,12 @@ const ServerDetailPage = () => {
 
   return (
     <>
-      <SEO title={`${server.name} — Pumpkin Servers`} description={server.tagline} />
+      <SEO
+        title={server.name}
+        description={server.tagline}
+        ogImage={server.iconUrl || undefined}
+        twitterCard="summary"
+      />
 
       <section className="band">
         <div className="page stack" style={{ '--gap': '1.25rem' } as React.CSSProperties}>
@@ -230,9 +234,6 @@ const ServerDetailPage = () => {
                   >
                     {server.isOnline ? 'Online' : 'Offline'}
                   </span>
-                  <span className="tag tag-pumpkin" title="Live telemetry signed by server Ed25519 key">
-                    <ShieldCheck size={12} /> Verified Ed25519
-                  </span>
                 </div>
 
                 <p className="body" style={{ color: 'var(--fg-2)' }}>
@@ -240,18 +241,17 @@ const ServerDetailPage = () => {
                 </p>
 
                 <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-                  {server.tags.map((tag, idx) => (
+                  {server.tags.map((tag) => (
                     <ServerTagBadge
                       key={tag}
                       tag={tag}
                       size="md"
-                      primary={idx === 0}
                       onClick={() =>
                         navigate(`${backPath}?tags=${encodeURIComponent(tag)}`)
                       }
                     />
                   ))}
-                  {server.bedrockAddress && (
+                  {server.bedrockAddress && !server.tags.includes('crossplay') && (
                     <span className="tag tag-info">
                       <Smartphone size={11} /> Crossplay
                     </span>

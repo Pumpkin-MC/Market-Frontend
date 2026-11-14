@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ArrowUp, Check, Hash, Search, Sparkles, X } from 'lucide-react';
+import { Check, Hash, Search, X } from 'lucide-react';
 import {
   MAX_SERVER_TAGS,
   SERVER_TAGS,
@@ -11,7 +11,6 @@ import {
 interface ServerTagBadgeProps {
   tag: string;
   active?: boolean;
-  primary?: boolean;
   count?: number;
   removable?: boolean;
   size?: 'sm' | 'md';
@@ -22,7 +21,6 @@ interface ServerTagBadgeProps {
 export const ServerTagBadge: React.FC<ServerTagBadgeProps> = ({
   tag,
   active = false,
-  primary = false,
   count,
   removable = false,
   size = 'sm',
@@ -39,7 +37,6 @@ export const ServerTagBadge: React.FC<ServerTagBadgeProps> = ({
     <>
       <Icon size={size === 'sm' ? 12 : 14} className="sv-tag-icon" />
       <span>{label}</span>
-      {primary && <span className="sv-tag-primary-mark">Primary</span>}
       {typeof count === 'number' && count > 0 && (
         <span className="sv-tag-count">{count}</span>
       )}
@@ -102,11 +99,6 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
     onChange([...value, tagVal]);
   };
 
-  const promoteToPrimary = (tagVal: string) => {
-    const rest = value.filter((t) => t !== tagVal);
-    onChange([tagVal, ...rest]);
-  };
-
   const filteredGroups = useMemo(() => {
     const q = query.trim().toLowerCase();
     return SERVER_TAG_CATEGORIES.filter((cat) => activeCat === 'all' || cat.id === activeCat)
@@ -131,38 +123,25 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="small muted">
             {value.length === 0
-              ? 'Select up to 8 tags — your first tag is highlighted as your server’s Primary Tag.'
-              : 'Click a selected tag to remove it, or promote any tag to Primary (#1):'}
+              ? 'Select up to 8 tags that describe your server:'
+              : 'Selected tags (click to remove):'}
           </span>
-          <span className="tag tag-fg mono">
+          <span className="small muted mono">
             {value.length}/{maxTags}
           </span>
         </div>
 
         {value.length > 0 && (
           <div className="row" style={{ gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
-            {value.map((tagVal, idx) => (
-              <div key={tagVal} className="sv-selected-pill-wrap">
-                {idx > 0 && (
-                  <button
-                    type="button"
-                    className="sv-promote-btn"
-                    onClick={() => promoteToPrimary(tagVal)}
-                    title="Make primary tag"
-                    aria-label={`Make ${tagVal} primary tag`}
-                  >
-                    <ArrowUp size={11} />
-                  </button>
-                )}
-                <ServerTagBadge
-                  tag={tagVal}
-                  active
-                  primary={idx === 0}
-                  removable
-                  size="md"
-                  onClick={() => toggleTag(tagVal)}
-                />
-              </div>
+            {value.map((tagVal) => (
+              <ServerTagBadge
+                key={tagVal}
+                tag={tagVal}
+                active
+                removable
+                size="md"
+                onClick={() => toggleTag(tagVal)}
+              />
             ))}
           </div>
         )}
@@ -236,16 +215,7 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
                         {isSelected ? <Check size={14} /> : <Icon size={14} />}
                       </span>
                       <span className="sv-picker-opt-text">
-                        <strong>
-                          {item.label}
-                          {item.featured && !isSelected && (
-                            <Sparkles
-                              size={10}
-                              className="pumpkin"
-                              style={{ marginLeft: 4, verticalAlign: '1px' }}
-                            />
-                          )}
-                        </strong>
+                        <strong>{item.label}</strong>
                         <span>{item.description}</span>
                       </span>
                     </button>

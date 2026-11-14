@@ -1072,11 +1072,6 @@ const StaffPage = () => {
                                         <Link className="link" to={`/profile/${p.dev_name}`}>
                                             @{p.dev_name}
                                         </Link>
-                                        {p.dev_verified && (
-                                            <span className="tag tag-info">
-                                                {t('staff.table.verified')}
-                                            </span>
-                                        )}
                                     </div>
                                     <span className="small muted">
                                         {p.dev_secure_auth ? t('staff.table.mfa_ok') : t('staff.table.no_mfa')}
@@ -2263,7 +2258,6 @@ const StaffPage = () => {
                                                                 <Link className="link" to={`/profile/${p.dev_name}`}>
                                                                     @{p.dev_name}
                                                                 </Link>
-                                                                {p.dev_verified && <span className="tag tag-info">{t('staff.table.verified')}</span>}
                                                             </div>
                                                         </td>
                                                         <td>{pluginStatusBadge(p)}</td>

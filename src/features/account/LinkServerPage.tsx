@@ -9,6 +9,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import api from '../../lib/api';
+import SEO from '../../components/SEO';
 import '../../styles/account.css';
 
 interface ServerLinkPreview {
@@ -104,6 +105,10 @@ const LinkServerPage: React.FC = () => {
 
   return (
     <div className="ac-auth">
+      <SEO
+        title="Link Server"
+        description="Connect your Pumpkin server to your Pumpkin Account for live telemetry and server management."
+      />
       <div className="panel panel-fg ac-card" style={{ maxWidth: '34rem' }}>
         <div className="ac-card-head">
           <span className="ac-badge">

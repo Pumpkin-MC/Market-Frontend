@@ -10,9 +10,7 @@ import {
   Plus,
   Search,
   Server,
-  ShieldCheck,
   Smartphone,
-  Sparkles,
   Terminal,
   Users,
   X,
@@ -223,25 +221,19 @@ const ServersHomePage = () => {
     <>
       <SEO
         title="Pumpkin Servers"
-        description="Discover verified Pumpkin Minecraft servers with cryptographic live player counts, hardware-grade Rust performance, and community upvotes."
+        description="Discover community Pumpkin Minecraft servers with live player counts, Rust performance, and community upvotes."
       />
 
       <section className="band">
         <div className="page">
           <div className="sv-hero">
             <div className="stack" style={{ '--gap': '10px' } as React.CSSProperties}>
-              <div className="row" style={{ gap: 8, flexWrap: 'wrap' }}>
-                <span className="sticker sticker-sm sticker-success">
-                  <ShieldCheck size={13} /> Ed25519 Verified Telemetry
-                </span>
-                <span className="sticker sticker-sm">Official Directory</span>
-              </div>
               <h1 className="display-2">
                 <span className="mark">Pumpkin</span> Server List
               </h1>
               <p className="lede">
                 Explore community Minecraft servers powered by <strong>Pumpkin</strong>, with live
-                cryptographically signed player counts and zero fake slots.
+                player counts and zero fake slots.
               </p>
             </div>
 
@@ -277,7 +269,7 @@ const ServersHomePage = () => {
                 <Users size={22} className="pumpkin" />
                 {(data?.stats.onlinePlayers ?? 0).toLocaleString()}
               </span>
-              <span className="small muted">Verified across listed servers</span>
+              <span className="small muted">Across listed servers</span>
             </div>
 
             <div className="sv-stat">
@@ -352,7 +344,6 @@ const ServersHomePage = () => {
                 aria-pressed={tagTab === 'popular'}
                 onClick={() => setTagTab('popular')}
               >
-                <Sparkles size={11} style={{ verticalAlign: '-1px', marginRight: 4 }} />
                 Popular
               </button>
               {SERVER_TAG_CATEGORIES.map((cat) => (
@@ -485,7 +476,7 @@ const ServersHomePage = () => {
                 {data.servers.map((srv) => {
                   const detailPath = getServerDetailPath(srv.publicId, srv.slug);
                   const isCopied = copiedId === srv.publicId;
-                  const visibleCardTags = srv.tags.slice(0, 5);
+                  const visibleCardTags = srv.tags.slice(0, 4);
                   const extraTagsCount = Math.max(0, srv.tags.length - visibleCardTags.length);
 
                   return (
@@ -516,10 +507,7 @@ const ServersHomePage = () => {
                               ? `${srv.onlinePlayers}/${srv.maxPlayers} Players`
                               : 'Offline'}
                           </span>
-                          {srv.minecraftVersion && (
-                            <span className="tag tag-fg">MC {srv.minecraftVersion}</span>
-                          )}
-                          {srv.bedrockAddress && (
+                          {srv.bedrockAddress && !srv.tags.includes('crossplay') && (
                             <span className="tag tag-info" title={`Bedrock: ${srv.bedrockAddress}`}>
                               Crossplay
                             </span>
@@ -543,10 +531,13 @@ const ServersHomePage = () => {
                               to={detailPath}
                               className="tag tag-fg"
                               style={{ textDecoration: 'none' }}
-                              title={srv.tags.slice(5).join(', ')}
+                              title={srv.tags.slice(4).join(', ')}
                             >
                               +{extraTagsCount}
                             </Link>
+                          )}
+                          {srv.minecraftVersion && (
+                            <span className="muted mono">MC {srv.minecraftVersion}</span>
                           )}
                           {srv.countryName && (
                             <span className="muted">

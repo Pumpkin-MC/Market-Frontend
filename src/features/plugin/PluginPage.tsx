@@ -1197,7 +1197,6 @@ const PluginPage = () => {
               <h1 className="display-2">{plugin.name}</h1>
               <div className="row">
                 <span className="entry-by">by <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
-                {plugin.dev_verified && <span className="tag tag-info" title="Verified PumpkinMarket Developer"><ShieldCheck size={12} /> Verified</span>}
                 {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
                 {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
                 {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
@@ -1328,9 +1327,8 @@ const PluginPage = () => {
                 return (
                   <section className="stack" aria-label="WASM Capability & Permission Inspector">
                     <div className="notice notice-plain">
-                      <span className="sticker sticker-success"><ShieldCheck /> WIT Metadata &amp; Sandbox</span>
                       <p className="notice-text">
-                        Automatically extracted from the plugin's <code>pumpkin:plugin/metadata#get-metadata</code> WIT export inside a fuel-limited WebAssembly sandbox, combined with cryptographic provenance and server command permission nodes.
+                        Automatically extracted from the plugin's <code>pumpkin:plugin/metadata#get-metadata</code> WIT export inside a fuel-limited WebAssembly sandbox, combined with binary checksums and server command permission nodes.
                       </p>
                     </div>
 
@@ -1879,12 +1877,9 @@ const PluginPage = () => {
           </div>
 
           <div className="pd-safety-card" aria-label="WASM Safety & Permissions Summary">
-            <div className="row" style={{ justifyContent: 'space-between' }}>
+            <div className="row">
               <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <ShieldCheck size={15} className="pumpkin" /> Safety &amp; Permissions
-              </span>
-              <span className={`tag ${plugin.wasm_security?.sandbox_level === 'elevated' ? 'tag-warning' : 'tag-success'}`}>
-                {plugin.wasm_security?.sandbox_level === 'elevated' ? 'Host Capabilities' : 'Strict Sandbox'}
               </span>
             </div>
 
@@ -1894,17 +1889,6 @@ const PluginPage = () => {
                 <div>
                   <strong>{plugin.wasm_security?.binary_format || 'WASM Sandbox'}</strong>
                   <span className="muted">Isolated linear memory{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
-                </div>
-              </li>
-              <li className="pd-safety-item">
-                <Fingerprint />
-                <div>
-                  <strong>{plugin.wasm_security?.ed25519_signed ? 'Ed25519 Signed Binary' : 'Awaiting Binary Upload'}</strong>
-                  <span className="muted">
-                    {plugin.wasm_security?.sha256
-                      ? `SHA-256: ${plugin.wasm_security.sha256.slice(0, 10)}…${plugin.wasm_security.sha256.slice(-6)}`
-                      : 'Verified via W3C wasm_signature'}
-                  </span>
                 </div>
               </li>
               <li className="pd-safety-item">
