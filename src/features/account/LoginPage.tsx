@@ -1,11 +1,17 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { startAuthentication, browserSupportsWebAuthnAutofill } from '@simplewebauthn/browser';
 import { Fingerprint, AlertCircle, Check } from 'lucide-react';
 import '../../styles/account.css';
 import api from '../../lib/api';
+import {
+  IS_ACCOUNTS_SURFACE,
+  completePostAuthNavigation,
+  getServiceLabelFromRedirect,
+  rememberSsoRedirectTarget,
+} from '../../lib/domains';
 import { useAuth } from '../../app/auth';
 
 const LoginPage = () => {
@@ -26,9 +32,41 @@ const LoginPage = () => {
   const [codeError, setCodeError] = useState('');
 
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect_to');
+  const fromPath = (location.state as { from?: string } | null)?.from;
+  const serviceLabel = getServiceLabelFromRedirect(redirectTo);
+  const { user, login } = useAuth();
+  const ssoHandledRef = useRef(false);
+
+  const finishSignIn = useCallback(
+    async (token: string) => {
+      login(token);
+      await completePostAuthNavigation(redirectTo, navigate, fromPath);
+    },
+    [fromPath, login, navigate, redirectTo]
+  );
 
   useEffect(() => {
+    if (redirectTo) {
+      rememberSsoRedirectTarget(redirectTo);
+    }
+  }, [redirectTo]);
+
+  useEffect(() => {
+    if (!user || ssoHandledRef.current) return;
+    if (redirectTo) {
+      ssoHandledRef.current = true;
+      void completePostAuthNavigation(redirectTo, navigate, fromPath);
+    } else if (IS_ACCOUNTS_SURFACE) {
+      ssoHandledRef.current = true;
+      navigate(fromPath || '/settings', { replace: true });
+    }
+  }, [fromPath, navigate, redirectTo, user]);
+
+  useEffect(() => {
+    if (user) return;
     let active = true;
 
     const initAutofill = async () => {
@@ -63,8 +101,8 @@ const LoginPage = () => {
         });
 
         if (finishRes.data.token) {
-          login(finishRes.data.token);
-          navigate('/dashboard');
+          ssoHandledRef.current = true;
+          await finishSignIn(finishRes.data.token);
         }
       } catch (err: any) {
         if (
@@ -86,7 +124,7 @@ const LoginPage = () => {
     return () => {
       active = false;
     };
-  }, [login, navigate]);
+  }, [finishSignIn, user]);
 
   const validateEmail = (email: string) =>
     Boolean(String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/));
@@ -118,15 +156,15 @@ const LoginPage = () => {
             tempToken,
             code: recoveryCode.trim(),
           });
-          login(res.data.token);
-          navigate('/dashboard');
+          ssoHandledRef.current = true;
+          await finishSignIn(res.data.token);
         } else {
           const res = await api.post('/auth/login/2fa', {
             temp_token: tempToken,
             code: totpCode,
           });
-          login(res.data.token);
-          navigate('/dashboard');
+          ssoHandledRef.current = true;
+          await finishSignIn(res.data.token);
         }
       } catch (err: any) {
         setCodeError(err.response?.data?.error || (useRecoveryCode ? 'Invalid recovery code' : 'Invalid 2FA code'));
@@ -179,8 +217,8 @@ const LoginPage = () => {
         setRequires2fa(true);
         setTempToken(res.data.temp_token);
       } else {
-        login(res.data.token);
-        navigate('/dashboard');
+        ssoHandledRef.current = true;
+        await finishSignIn(res.data.token);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Invalid credentials.');
@@ -213,8 +251,8 @@ const LoginPage = () => {
       });
 
       if (finishRes.data.token) {
-        login(finishRes.data.token);
-        navigate('/dashboard');
+        ssoHandledRef.current = true;
+        await finishSignIn(finishRes.data.token);
       }
     } catch (err: any) {
       if (err.name !== 'NotAllowedError') {
@@ -233,7 +271,11 @@ const LoginPage = () => {
       <div className="panel panel-fg ac-card">
         <div className="ac-card-head">
           <h1 className="h1">Welcome <span className="mark">back</span></h1>
-          <p className="small">Sign in to your PumpkinMC account.</p>
+          <p className="small">
+            {serviceLabel
+              ? `Sign in with your Pumpkin Account to continue to ${serviceLabel}.`
+              : 'Sign in to your PumpkinMC account.'}
+          </p>
         </div>
 
         <form className="stack" onSubmit={handleSubmit} noValidate>
@@ -414,7 +456,13 @@ const LoginPage = () => {
         </form>
 
         <p className="ac-card-foot small">
-          {t('auth.no_account')} <Link to="/register" className="link link-pumpkin">{t('auth.create_account')}</Link>
+          {t('auth.no_account')}{' '}
+          <Link
+            to={redirectTo ? `/register?redirect_to=${encodeURIComponent(redirectTo)}` : '/register'}
+            className="link link-pumpkin"
+          >
+            {t('auth.create_account')}
+          </Link>
         </p>
       </div>
     </div>

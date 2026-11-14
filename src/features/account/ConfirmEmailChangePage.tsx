@@ -33,7 +33,7 @@ const ConfirmEmailChangePage = () => {
                 setStatus('success');
 
                 setTimeout(() => {
-                    navigate('/profile');
+                    navigate('/settings');
                 }, 3000);
 
             } catch (err: any) {

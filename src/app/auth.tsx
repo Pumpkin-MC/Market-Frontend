@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import api from '../lib/api';
 
@@ -159,11 +159,12 @@ const AuthConnectionError = ({ onRetry }: { onRetry: () => void }) => (
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authError, retryAuth } = useAuth();
+  const location = useLocation();
   if (!user && authError) {
     return <AuthConnectionError onRetry={retryAuth} />;
   }
   if (!user) {
-    return <Navigate to="/login" />;
+    return <Navigate to="/login" state={{ from: `${location.pathname}${location.search}` }} replace />;
   }
   return children;
 };

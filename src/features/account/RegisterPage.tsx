@@ -1,9 +1,10 @@
-import React, { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { AlertCircle, Check, Eye, EyeOff } from 'lucide-react';
 import api from '../../lib/api';
+import { getServiceLabelFromRedirect, rememberSsoRedirectTarget } from '../../lib/domains';
 import '../../styles/account.css';
 
 interface PasswordRequirement {
@@ -41,6 +42,15 @@ const RegisterPage = () => {
   const [passwordTouched, setPasswordTouched] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get('redirect_to');
+  const serviceLabel = getServiceLabelFromRedirect(redirectTo);
+
+  useEffect(() => {
+    if (redirectTo) {
+      rememberSsoRedirectTarget(redirectTo);
+    }
+  }, [redirectTo]);
 
   const validateEmail = (email: string) =>
     Boolean(String(email).toLowerCase().match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/));
@@ -123,6 +133,9 @@ const RegisterPage = () => {
       <div className="panel panel-fg ac-card">
         <div className="ac-card-head">
           <h1 className="h1">{title.slice(0, cut)}<span className="mark">{title.slice(cut)}</span></h1>
+          {serviceLabel && (
+            <p className="small">One Pumpkin Account works across {serviceLabel} and all PumpkinMC services.</p>
+          )}
         </div>
 
         <form className="stack" onSubmit={handleSubmit} noValidate>
@@ -247,7 +260,13 @@ const RegisterPage = () => {
         </p>
 
         <p className="ac-card-foot small">
-          {t('auth.have_account')} <Link to="/login" className="link link-pumpkin">{t('auth.sign_in')}</Link>
+          {t('auth.have_account')}{' '}
+          <Link
+            to={redirectTo ? `/login?redirect_to=${encodeURIComponent(redirectTo)}` : '/login'}
+            className="link link-pumpkin"
+          >
+            {t('auth.sign_in')}
+          </Link>
         </p>
       </div>
     </div>

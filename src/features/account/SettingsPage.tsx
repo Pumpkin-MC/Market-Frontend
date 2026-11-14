@@ -6,6 +6,7 @@ import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
 import { getCodeList } from 'country-list';
 import DeveloperOnboardingModal from '../studio/DeveloperOnboardingModal';
+import { IS_ACCOUNTS_SURFACE, getMarketUrl } from '../../lib/domains';
 import { getPluginUrl } from '../../lib/url';
 import { openCookiePreferencesModal } from '../../lib/consent';
 import { startRegistration } from '@simplewebauthn/browser';
@@ -2279,20 +2280,24 @@ const SettingsPage = () => {
                   <span className="ac-icon"><Package /></span>
                   <p className="h2">Your library is <span className="mark">empty</span></p>
                   <p className="small">Purchased plugins will appear here, ready to download anytime.</p>
-                  <Link to="/" className="button button-primary">
-                    Browse Plugins
-                  </Link>
+                  {IS_ACCOUNTS_SURFACE ? (
+                    <a href={getMarketUrl('/search')} className="button button-primary">
+                      Browse Plugins
+                    </a>
+                  ) : (
+                    <Link to="/" className="button button-primary">
+                      Browse Plugins
+                    </Link>
+                  )}
                 </div>
               )}
 
               {!libraryLoading && !libraryError && library.length > 0 && (
                 <div className="catalogue ac-library">
-                  {library.map(entry => (
-                    <Link
-                      key={entry.plugin_id}
-                      to={getPluginUrl({ id: entry.plugin_id, public_id: entry.public_id, name: entry.name })}
-                      className="entry"
-                    >
+                  {library.map(entry => {
+                    const pluginPath = getPluginUrl({ id: entry.plugin_id, public_id: entry.public_id, name: entry.name });
+                    const cardInner = (
+                      <>
                       <div className="entry-cover">
                         {entry.preview_path ? (
                           <img src={entry.preview_path} alt={entry.name} />
@@ -2324,8 +2329,19 @@ const SettingsPage = () => {
                           </span>
                         </div>
                       </div>
-                    </Link>
-                  ))}
+                      </>
+                    );
+
+                    return IS_ACCOUNTS_SURFACE ? (
+                      <a key={entry.plugin_id} href={getMarketUrl(pluginPath)} className="entry">
+                        {cardInner}
+                      </a>
+                    ) : (
+                      <Link key={entry.plugin_id} to={pluginPath} className="entry">
+                        {cardInner}
+                      </Link>
+                    );
+                  })}
                 </div>
               )}
             </>

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:accounts": "tsc -b && VITE_SURFACE=accounts vite build",
     "buildWithoutLints": "vite build",
     "lint": "eslint . && bun run check:i18n",
     "typecheck": "tsc -b",

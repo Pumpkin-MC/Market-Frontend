@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { ACCOUNTS_ORIGIN, IS_ACCOUNTS_SURFACE, MARKET_ORIGIN } from '../lib/domains';
 
 interface SEOProps {
   title?: string;
@@ -19,12 +20,15 @@ interface SEOProps {
   };
 }
 
-const SITE_ORIGIN = 'https://market.pumpkinmc.org';
+const SITE_ORIGIN = IS_ACCOUNTS_SURFACE ? ACCOUNTS_ORIGIN : MARKET_ORIGIN;
+const DEFAULT_DESCRIPTION = IS_ACCOUNTS_SURFACE
+  ? 'Manage your PumpkinMC identity, security, passkeys, and connected services.'
+  : 'Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.';
 
 const SEO = ({
   title,
   ogTitle,
-  description = "Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.",
+  description = DEFAULT_DESCRIPTION,
   ogDescription,
   keywords = "minecraft, plugins, wasm, marketplace, mc plugins, development",
   canonical,
@@ -34,7 +38,7 @@ const SEO = ({
   twitterLabels,
 }: SEOProps) => {
   const location = useLocation();
-  const siteName = "Pumpkin Market";
+  const siteName = IS_ACCOUNTS_SURFACE ? "Pumpkin Account" : "Pumpkin Market";
   const fullTitle = title ? `${title} | ${siteName}` : siteName;
   const resolvedOgTitle = ogTitle || fullTitle;
   const resolvedOgDesc = ogDescription || description;

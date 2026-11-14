@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import api from '../../lib/api';
+import { IS_ACCOUNTS_SURFACE, completePostAuthNavigation } from '../../lib/domains';
 import { SecuritySetupCards } from '../../components/SecuritySetupCards';
 import { Check, AlertCircle } from 'lucide-react';
 import '../../styles/account.css';
@@ -57,15 +58,15 @@ const VerifyEmailPage: React.FC = () => {
                 <div className="ac-wide stack">
                     <div className="notice notice-success ac-alert" role="status">
                         <span className="mark-box mark-box-success"><Check /></span>
-                        <p className="notice-text"><strong>Email verified successfully! Welcome to Pumpkin Market.</strong></p>
+                        <p className="notice-text"><strong>Email verified successfully! Welcome to PumpkinMC.</strong></p>
                     </div>
 
                     <SecuritySetupCards
                         title="Protect Your Account (Recommended)"
                         description="Add an extra layer of security before you get started. Choose passkeys (biometrics) or an authenticator app. You can also do this later."
                         canSkip={true}
-                        onSkip={() => navigate('/')}
-                        onComplete={() => navigate('/')}
+                        onSkip={() => { void completePostAuthNavigation(null, navigate, IS_ACCOUNTS_SURFACE ? '/settings' : '/'); }}
+                        onComplete={() => { void completePostAuthNavigation(null, navigate, IS_ACCOUNTS_SURFACE ? '/settings' : '/'); }}
                     />
                 </div>
             )}

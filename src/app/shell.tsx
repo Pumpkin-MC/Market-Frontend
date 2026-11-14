@@ -1,10 +1,12 @@
 import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Menu, Store, X } from 'lucide-react';
+import { LayoutDashboard, Menu, Store, X } from 'lucide-react';
 import { Select } from '../components/Select';
+import SEO from '../components/SEO';
 import { openCookiePreferencesModal } from '../lib/consent';
 import api from '../lib/api';
+import { getAccountsUrl, getMarketUrl, useCrossSubdomainSso } from '../lib/domains';
 import { NavSearch } from '../features/store/NavSearch';
 import { useAuth } from './auth';
 
@@ -39,18 +41,34 @@ export const MainLayout = () => {
 
 const isStaff = (user: any) => user && (user.role === 'admin' || user.role === 'moderator' || user.role === 'reviewer');
 
-const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) => (
-  <NavLink to="/settings" className="user-chip" onClick={onNavigate}>
-    <span className="avatar">
-      {user.avatar_url ? (
-        <img src={user.avatar_url} alt={user.username || ''} />
-      ) : (
-        (user.username || '?').charAt(0).toUpperCase()
-      )}
-    </span>
-    <span className="user-chip-name">{user.username}</span>
-  </NavLink>
-);
+const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) => {
+  const content = (
+    <>
+      <span className="avatar">
+        {user.avatar_url ? (
+          <img src={user.avatar_url} alt={user.username || ''} />
+        ) : (
+          (user.username || '?').charAt(0).toUpperCase()
+        )}
+      </span>
+      <span className="user-chip-name">{user.username}</span>
+    </>
+  );
+
+  if (useCrossSubdomainSso()) {
+    return (
+      <a href={getAccountsUrl('/settings')} className="user-chip" onClick={onNavigate}>
+        {content}
+      </a>
+    );
+  }
+
+  return (
+    <NavLink to="/settings" className="user-chip" onClick={onNavigate}>
+      {content}
+    </NavLink>
+  );
+};
 
 const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
   <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label="Toggle menu" aria-expanded={open}>
@@ -169,6 +187,127 @@ export const StudioLayout = () => {
           <Outlet />
         </Suspense>
       </main>
+    </>
+  );
+};
+
+const AccountsMasthead = ({ user }: any) => {
+  const { t } = useTranslation();
+  const menu = useMenu();
+  const links = (
+    <>
+      {user && (
+        <>
+          <NavLink to="/settings" end onClick={menu.close}>{t('nav.profile')}</NavLink>
+          <a href={getMarketUrl('/search')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
+          {(user.plugin_count > 0 || user.is_developer) && (
+            <a href={getMarketUrl('/dashboard')} onClick={menu.close}>
+              <LayoutDashboard size={15} /> {t('nav.dashboard', 'Studio')}
+            </a>
+          )}
+        </>
+      )}
+      {!user && <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>}
+    </>
+  );
+  const actions = user ? (
+    <>
+      <a href={getMarketUrl('/')} className="button button-sm" onClick={menu.close}>
+        <Store />
+        {t('nav.market', 'Market')}
+      </a>
+      <UserChip user={user} onNavigate={menu.close} />
+    </>
+  ) : (
+    <>
+      <Link to="/login" className="button button-sm" onClick={menu.close}>{t('nav.login')}</Link>
+      <Link to="/register" className="button button-primary button-sm" onClick={menu.close}>{t('nav.register')}</Link>
+    </>
+  );
+
+  return (
+    <header className="masthead">
+      <div className="page">
+        <div className="masthead-bar">
+          <Link to={user ? '/settings' : '/login'} className="brand" onClick={menu.close}>
+            <img src="/icon.png" alt="Pumpkin" />
+            <span className="brand-name"><span>Account</span></span>
+          </Link>
+          <nav className="navlinks" aria-label="Account">{links}</nav>
+          <span className="spacer" />
+          <div className="masthead-actions">{actions}</div>
+          <MenuToggle open={menu.open} onToggle={menu.toggle} />
+        </div>
+      </div>
+      {menu.open && (
+        <nav className="mobile-menu" aria-label="Menu">
+          <div className="page">
+            {links}
+            <div className="mobile-menu-actions">{actions}</div>
+          </div>
+        </nav>
+      )}
+    </header>
+  );
+};
+
+const AccountsFooter = () => {
+  const { t } = useTranslation();
+  return (
+    <footer className="colophon">
+      <div className="page">
+        <div className="colophon-grid">
+          <div>
+            <Link to="/" className="brand">
+              <img src="/icon.png" alt="" />
+              <span className="brand-name">Pumpkin <span>Account</span></span>
+            </Link>
+          </div>
+          <div className="colophon-col">
+            <span className="label">Ecosystem</span>
+            <ul>
+              <li><a href="https://pumpkinmc.org">PumpkinMC</a></li>
+              <li><a href={getMarketUrl('/')}>Pumpkin Market</a></li>
+            </ul>
+          </div>
+          <div className="colophon-col">
+            <span className="label">{t('nav.legal', 'Legal')}</span>
+            <ul>
+              <li><Link to="/terms">{t('nav.terms', 'Terms')}</Link></li>
+              <li><Link to="/privacy">{t('nav.privacy', 'Privacy')}</Link></li>
+              <li><Link to="/legal-notice">{t('nav.legal_notice', 'Legal Notice')}</Link></li>
+            </ul>
+          </div>
+          <div className="colophon-col">
+            <span className="label">Preferences</span>
+            <ul>
+              <li><button type="button" onClick={openCookiePreferencesModal}>{t('nav.cookie_preferences', 'Cookie Preferences')}</button></li>
+            </ul>
+          </div>
+        </div>
+        <div className="colophon-base">
+          <span>© 2026 PumpkinMC</span>
+          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span className="spacer" />
+          <LanguageSelector />
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export const AccountsLayout = () => {
+  const { user } = useAuth();
+  return (
+    <>
+      <SEO />
+      <AccountsMasthead user={user} />
+      <main className="shell-main">
+        <Suspense fallback={<PageLoader />}>
+          <Outlet />
+        </Suspense>
+      </main>
+      <AccountsFooter />
     </>
   );
 };
