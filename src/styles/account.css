@@ -1066,3 +1066,216 @@
     padding-inline: var(--s-3);
   }
 }
+
+/* ── Vine Proxy & Network Topology Node Graph ─────────────────────────────── */
+
+.ac-badge-vine {
+  border-color: var(--success);
+  background: var(--success);
+  color: #05180c;
+}
+
+.ac-sticker-vine {
+  border-color: var(--success);
+  background: rgb(0 200 83 / 0.14);
+  color: #4ade80;
+}
+
+.ac-topo-stage {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border: 2px solid var(--line);
+  background-color: var(--sunk);
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.ac-topo-canvas {
+  position: relative;
+  margin-inline: auto;
+}
+
+.ac-topo-svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+@keyframes ac-topo-flow {
+  from {
+    stroke-dashoffset: 28;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.ac-topo-edge-flow {
+  animation: ac-topo-flow 1.3s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ac-topo-edge-flow {
+    animation: none;
+  }
+}
+
+.ac-topo-edge-pill {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 180px;
+  padding: 2px 7px;
+  border: 1.5px solid var(--line-2);
+  background: var(--ink);
+  color: var(--fg);
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: nowrap;
+  z-index: 2;
+  box-shadow: 2px 2px 0 rgb(0 0 0 / 0.45);
+}
+
+.ac-topo-edge-pill-active {
+  border-color: var(--pumpkin);
+}
+
+.ac-topo-edge-pill-vine {
+  border-color: var(--success);
+}
+
+.ac-topo-edge-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ac-topo-edge-unlink {
+  display: inline-grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  margin-right: -3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.ac-topo-edge-unlink:hover {
+  color: var(--danger);
+}
+
+.ac-topo-node {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border: 2px solid var(--line-2);
+  background: var(--surface);
+  color: var(--fg);
+  text-align: left;
+  cursor: pointer;
+  z-index: 1;
+  transition:
+    transform var(--fast) var(--ease),
+    border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease);
+}
+
+.ac-topo-node:hover {
+  border-color: var(--fg-2);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--line-2);
+}
+
+.ac-topo-node-vine {
+  border-top: 4px solid var(--success);
+}
+
+.ac-topo-node-pumpkin {
+  border-top: 4px solid var(--pumpkin);
+}
+
+.ac-topo-node-selected {
+  border-color: var(--pumpkin);
+  box-shadow: 4px 4px 0 var(--pumpkin);
+  transform: translate(-2px, -2px);
+  z-index: 3;
+}
+
+.ac-topo-node-selected.ac-topo-node-vine {
+  border-color: var(--success);
+  box-shadow: 4px 4px 0 var(--success);
+}
+
+.ac-topo-node-ghost {
+  border-style: dashed;
+  border-color: var(--line-2);
+  background: rgb(17 17 17 / 0.88);
+  cursor: default;
+}
+
+.ac-topo-node-ghost:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--muted);
+}
+
+.ac-topo-port {
+  position: absolute;
+  left: 50%;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--line-2);
+  pointer-events: none;
+}
+
+.ac-topo-port-top {
+  top: -6px;
+  transform: translateX(-50%);
+}
+
+.ac-topo-port-bottom {
+  bottom: -6px;
+  transform: translateX(-50%);
+}
+
+.ac-topo-port-live-vine {
+  background: var(--success);
+}
+
+.ac-topo-port-live-pumpkin {
+  background: var(--pumpkin);
+}
+
+.ac-topo-standalone {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+}
+
+.ac-topo-standalone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border: 2px solid var(--line);
+  background: var(--surface);
+  font-size: var(--t-13);
+}
+
+.ac-topo-standalone-chip-active {
+  border-color: var(--pumpkin);
+  box-shadow: 2px 2px 0 var(--pumpkin);
+}

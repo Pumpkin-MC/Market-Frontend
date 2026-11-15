@@ -4,6 +4,7 @@ import {
   AlertCircle,
   Check,
   Cpu,
+  GitFork,
   Key,
   Server,
   ShieldCheck,
@@ -53,13 +54,16 @@ const LinkServerPage: React.FC = () => {
         const res = await api.get(`/user/servers/link/${encodeURIComponent(urlCode.trim())}`);
         if (cancelled) return;
         setPreview(res.data);
-        setDisplayName(res.data.serverName || 'Pumpkin Server');
+        setDisplayName(
+          res.data.serverName ||
+            (res.data.serverType === 'vine' ? 'Vine Proxy' : 'Pumpkin Server')
+        );
       } catch (err: any) {
         if (cancelled) return;
         setPreview(null);
         setError(
           err.response?.data?.error ||
-            'Invalid or expired server link code. Run `/pumpkin link` in your server console again.'
+            'Invalid or expired link code. Run `pumpkin link` or `vine link` in your console again.'
         );
       } finally {
         if (!cancelled) setLoadingPreview(false);
@@ -92,13 +96,15 @@ const LinkServerPage: React.FC = () => {
       navigate(`/settings?tab=servers&server=${res.data.serverId}`, { replace: true });
     } catch (err: any) {
       setError(
-        err.response?.data?.error || 'Failed to link server. Please generate a fresh `/pumpkin link` code.'
+        err.response?.data?.error ||
+          'Failed to link node. Please generate a fresh `pumpkin link` or `vine link` code.'
       );
     } finally {
       setSubmitting(false);
     }
   };
 
+  const isVine = preview?.serverType === 'vine';
   const shortKey = preview
     ? `${preview.serverPublicKey.slice(0, 12)}…${preview.serverPublicKey.slice(-8)}`
     : '';
@@ -106,26 +112,28 @@ const LinkServerPage: React.FC = () => {
   return (
     <div className="ac-auth">
       <SEO
-        title="Link Server"
-        description="Connect your Pumpkin server to your Pumpkin Account for live telemetry and server management."
+        title={isVine ? 'Link Vine Proxy' : 'Link Server'}
+        description="Connect your Pumpkin server or Vine proxy to your Pumpkin Account for live telemetry, network topology, and server management."
       />
       <div className="panel panel-fg ac-card" style={{ maxWidth: '34rem' }}>
         <div className="ac-card-head">
-          <span className="ac-badge">
-            <Server />
+          <span className={`ac-badge ${isVine ? 'ac-badge-vine' : ''}`}>
+            {isVine ? <GitFork /> : <Server />}
           </span>
           <h1 className="h1">
-            Link <span className="mark">Server</span>
+            Link <span className="mark">{isVine ? 'Vine Proxy' : 'Server'}</span>
           </h1>
           <p className="small">
-            Connect your Pumpkin server to your Pumpkin Account for live telemetry, crash monitoring, and verified ownership.
+            {isVine
+              ? 'Connect your Vine proxy to your Pumpkin Account to visualize your multi-server routing tree and monitor live proxy traffic.'
+              : 'Connect your Pumpkin server or Vine proxy to your Pumpkin Account for live telemetry, crash monitoring, and network topology.'}
           </p>
         </div>
 
         {loadingPreview ? (
           <div className="stack" style={{ alignItems: 'center', padding: '1.5rem 0' }}>
             <span className="loading" />
-            <p className="small">Verifying cryptographic server signature…</p>
+            <p className="small">Verifying cryptographic Ed25519 signature…</p>
           </div>
         ) : !preview ? (
           <form className="stack" onSubmit={handleLookupSubmit}>
@@ -140,12 +148,13 @@ const LinkServerPage: React.FC = () => {
 
             <div className="panel" style={{ padding: '0.875rem 1rem' }}>
               <p className="small" style={{ margin: 0 }}>
-                Run <code>pumpkin link</code> directly in your Pumpkin server console to generate an 8-character claim code.
+                Run <code>pumpkin link</code> in your Pumpkin server console or{' '}
+                <code>vine link</code> in your Vine proxy console to generate an 8-character claim code.
               </p>
             </div>
 
             <label className="field" htmlFor="serverLinkCode">
-              <span className="field-label">Server Link Code</span>
+              <span className="field-label">Server / Proxy Link Code</span>
               <span className="control">
                 <input
                   id="serverLinkCode"
@@ -187,7 +196,8 @@ const LinkServerPage: React.FC = () => {
                 <ShieldCheck />
               </span>
               <p className="notice-text">
-                <strong>Ed25519 Signature Verified</strong> — Key <code>{shortKey}</code> proved possession of <code>.pumpkin/identity.key</code>.
+                <strong>Ed25519 Signature Verified</strong> — Key <code>{shortKey}</code> proved possession of{' '}
+                <code>{isVine ? '.vine/identity.key' : '.pumpkin/identity.key'}</code>.
               </p>
             </div>
 
@@ -197,7 +207,7 @@ const LinkServerPage: React.FC = () => {
                   <AlertCircle />
                 </span>
                 <p className="notice-text">
-                  This server key was previously linked to another account. Confirming will transfer ownership to your Pumpkin Account.
+                  This {isVine ? 'proxy' : 'server'} key was previously linked to another account. Confirming will transfer ownership to your Pumpkin Account.
                 </p>
               </div>
             )}
@@ -206,14 +216,21 @@ const LinkServerPage: React.FC = () => {
               <div className="stack" style={{ gap: '0.5rem' }}>
                 <div className="row small">
                   <span className="muted">
-                    <Server size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
+                    {isVine ? (
+                      <GitFork size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
+                    ) : (
+                      <Server size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
+                    )}
                     Software
                   </span>
                   <span className="spacer" />
-                  <strong>
-                    {preview.serverType === 'vine' ? 'Vine' : 'Pumpkin'} {preview.serverVersion}
-                    {preview.minecraftVersion ? ` (MC ${preview.minecraftVersion})` : ''}
-                  </strong>
+                  <span className="row" style={{ gap: '0.4rem', alignItems: 'center' }}>
+                    {isVine && <span className="sticker sticker-sm ac-sticker-vine">Proxy</span>}
+                    <strong>
+                      {isVine ? 'Vine' : 'Pumpkin'} {preview.serverVersion}
+                      {preview.minecraftVersion ? ` (MC ${preview.minecraftVersion})` : ''}
+                    </strong>
+                  </span>
                 </div>
                 {(preview.os || preview.arch) && (
                   <div className="row small">
@@ -246,12 +263,14 @@ const LinkServerPage: React.FC = () => {
                   maxLength={64}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="My Pumpkin Survival Server"
+                  placeholder={isVine ? 'EU Edge Vine Proxy' : 'My Pumpkin Survival Server'}
                   required
                 />
               </span>
               <span className="field-hint">
-                Shown in your Pumpkin Account telemetry dashboard. You can rename it anytime.
+                {isVine
+                  ? 'Shown in your network topology graph and Pumpkin Account dashboard. You can rename it anytime.'
+                  : 'Shown in your Pumpkin Account telemetry dashboard. You can rename it anytime.'}
               </span>
             </label>
 
@@ -262,12 +281,18 @@ const LinkServerPage: React.FC = () => {
               aria-busy={submitting}
             >
               {submitting ? (
-                'Linking Server…'
+                isVine ? 'Linking Vine Proxy…' : 'Linking Server…'
               ) : (
                 <>
                   <Check />
                   <span>
-                    {preview.alreadyLinkedToYou ? 'Update Linked Server' : 'Confirm & Link Server'}
+                    {preview.alreadyLinkedToYou
+                      ? isVine
+                        ? 'Update Linked Proxy'
+                        : 'Update Linked Server'
+                      : isVine
+                        ? 'Confirm & Link Vine Proxy'
+                        : 'Confirm & Link Server'}
                   </span>
                 </>
               )}
