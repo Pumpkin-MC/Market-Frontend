@@ -183,7 +183,9 @@ const LANGUAGE_OPTIONS = [
   { value: 'tr', label: 'Türkçe (Turkish)' },
   { value: 'ja', label: '日本語 (Japanese)' },
   { value: 'ko', label: '한국어 (Korean)' },
-  { value: 'zh', label: '中文 (Chinese)' },
+  { value: 'zh', label: '简体中文 (Simplified Chinese)' },
+  { value: 'zh-HK', label: '繁體中文（香港）(Traditional Chinese - HK)' },
+  { value: 'zh-TW', label: '繁體中文（台灣）(Traditional Chinese - TW)' },
 ];
 
 const EXPIRY_OPTIONS = [
@@ -256,7 +258,9 @@ const SettingsPage = () => {
         username: user.username || '',
         email: user.email || '',
         country: user.country || '',
-        language: user.preferred_language || prev.language || (i18n.language ? i18n.language.split('-')[0] : 'en'),
+        language: (i18n.language === 'zh-HK' || i18n.language === 'zh-TW') && user.preferred_language === 'zh'
+          ? i18n.language
+          : (user.preferred_language || prev.language || (i18n.language ? i18n.language.split('-')[0] : 'en')),
       }));
       setIs2faEnabled(user.totp_enabled || false);
     }
@@ -880,16 +884,19 @@ const SettingsPage = () => {
         }
       }
 
-      if (formData.language && formData.language !== user?.preferred_language) {
+      if (formData.language && formData.language.split('-')[0] !== user?.preferred_language) {
         try {
-          const res = await api.post('/user/change-language', { newLanguage: formData.language });
-          if (res.data.token) login(res.data.token);
           i18n.changeLanguage(formData.language);
+          const res = await api.post('/user/change-language', { newLanguage: formData.language.split('-')[0] });
+          if (res.data.token) login(res.data.token);
           updatedAny = true;
         } catch (err: any) {
           showToast(translateApiMessage(t, err.response?.data?.error || t('profile.account.language_failed')), 'error');
           return;
         }
+      } else if (formData.language && formData.language !== i18n.language) {
+        i18n.changeLanguage(formData.language);
+        updatedAny = true;
       }
 
       if (updatedAny) {
@@ -1265,7 +1272,7 @@ const SettingsPage = () => {
                     <Field label={t('profile.account.language')}>
                       <Select
                         options={LANGUAGE_OPTIONS}
-                        value={formData.language ? formData.language.split('-')[0] : 'en'}
+                        value={formData.language === 'zh-HK' || formData.language === 'zh-TW' ? formData.language : (formData.language ? formData.language.split('-')[0] : 'en')}
                         onChange={v => setFormData({ ...formData, language: v })}
                       />
                     </Field>

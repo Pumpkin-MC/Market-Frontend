@@ -479,7 +479,9 @@ const LANGUAGES = [
   { value: 'tr', label: 'Türkçe' },
   { value: 'ja', label: '日本語' },
   { value: 'ko', label: '한국어' },
-  { value: 'zh', label: '中文' },
+  { value: 'zh', label: '简体中文' },
+  { value: 'zh-HK', label: '繁體中文（香港）' },
+  { value: 'zh-TW', label: '繁體中文（台灣）' },
 ];
 
 const LanguageSelector = () => {
@@ -490,7 +492,7 @@ const LanguageSelector = () => {
     i18n.changeLanguage(newLang);
     if (user) {
       try {
-        const res = await api.post('/user/change-language', { newLanguage: newLang });
+        const res = await api.post('/user/change-language', { newLanguage: newLang.split('-')[0] });
         if (res.data.token) {
           login(res.data.token);
         }
@@ -500,7 +502,9 @@ const LanguageSelector = () => {
     }
   };
 
-  const currentLang = i18n.language ? i18n.language.split('-')[0] : 'en';
+  const currentLang = i18n.language === 'zh-HK' || i18n.language === 'zh-TW'
+    ? i18n.language
+    : (i18n.language ? i18n.language.split('-')[0] : 'en');
 
   return (
     <Select
