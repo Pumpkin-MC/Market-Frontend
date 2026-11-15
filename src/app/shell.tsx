@@ -477,6 +477,7 @@ const LANGUAGES = [
   { value: 'ja', label: '日本語' },
   { value: 'ko', label: '한국어' },
   { value: 'zh', label: '中文' },
+  { value: 'vi', label: 'Tiếng Việt' },
 ];
 
 const LanguageSelector = () => {
