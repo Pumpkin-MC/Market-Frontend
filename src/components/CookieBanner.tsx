@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import { Cookie, Shield, Check, X, Sliders, Lock } from 'lucide-react';
 import {
@@ -68,7 +68,7 @@ export const CookieBanner: React.FC = () => {
   return (
     <>
       {showBanner && (
-        <div className="sf-cookie" role="region" aria-label="Cookie consent banner">
+        <div className="sf-cookie" role="region" aria-label={t('cookie.banner_label')}>
           <span className="sticker hide-sm">
             <Cookie size={14} />
           </span>
@@ -77,7 +77,7 @@ export const CookieBanner: React.FC = () => {
             <p className="small">
               {t('cookie.banner_desc')}{' '}
               <Link to="/privacy" className="link link-pumpkin">
-                Privacy Policy
+                {t('cookie.privacy_policy')}
               </Link>
             </p>
           </div>
@@ -110,13 +110,13 @@ export const CookieBanner: React.FC = () => {
             <div className="sheet-head">
               <div className="stack">
                 <span className="sticker sticker-sm"><Shield size={12} /></span>
-                <h2 id="cookie-modal-title" className="h2">Privacy & Cookie Preferences</h2>
+                <h2 id="cookie-modal-title" className="h2">{t('cookie.preferences_title')}</h2>
               </div>
               <button
                 type="button"
                 className="button button-ghost button-icon"
                 onClick={() => setShowModal(false)}
-                aria-label="Close preferences"
+                aria-label={t('cookie.close_preferences')}
               >
                 <X />
               </button>
@@ -124,23 +124,21 @@ export const CookieBanner: React.FC = () => {
 
             <div className="sheet-body">
               <p className="small">
-                Customize your cookie settings below. Strictly necessary cookies are required for authentication,
-                security, and basic site functionality and cannot be disabled.
+                {t('cookie.preferences_desc')}
               </p>
 
               <div className="panel">
                 <div className="panel-head">
                   <Lock className="pumpkin" />
-                  <p className="h3">Strictly Necessary Cookies & Storage</p>
-                  <span className="tag tag-solid tag-success">Always Active</span>
+                  <p className="h3">{t('cookie.necessary_title')}</p>
+                  <span className="tag tag-solid tag-success">{t('cookie.always_active')}</span>
                 </div>
                 <div className="panel-body">
                   <p className="small">
-                    Essential for security, user authentication sessions, bot protection (Cloudflare Turnstile), and
-                    remembering your preferences (such as selected language and currency).
+                    {t('cookie.necessary_desc')}
                   </p>
                   <p className="small">
-                    <strong>Providers:</strong> PumpkinMarket, Cloudflare · <strong>Storage:</strong> LocalStorage & Session Tokens
+                    <Trans t={t} i18nKey="cookie.necessary_details" components={{ providers: <strong />, storage: <strong /> }} />
                   </p>
                 </div>
               </div>
@@ -148,23 +146,22 @@ export const CookieBanner: React.FC = () => {
               <div className="panel">
                 <div className="panel-head">
                   <Cookie className="pumpkin" />
-                  <p className="h3">Analytics & Performance Cookies</p>
+                  <p className="h3">{t('cookie.analytics_title')}</p>
                   <input
                     type="checkbox"
                     role="switch"
                     className="toggle"
                     checked={analyticsAllowed}
                     onChange={e => setAnalyticsAllowed(e.target.checked)}
-                    aria-label="Toggle analytics cookies"
+                    aria-label={t('cookie.toggle_analytics')}
                   />
                 </div>
                 <div className="panel-body">
                   <p className="small">
-                    Collects anonymous aggregated statistical data about site usage (pages viewed, session lengths) to help
-                    us optimize Marketplace features and discover popular plugins. IP addresses are masked and anonymized.
+                    {t('cookie.analytics_desc')}
                   </p>
                   <p className="small">
-                    <strong>Provider:</strong> Google Analytics 4 (IP Anonymized) · <strong>Retention:</strong> Up to 14 months
+                    <Trans t={t} i18nKey="cookie.analytics_details" components={{ provider: <strong />, retention: <strong /> }} />
                   </p>
                 </div>
               </div>
@@ -172,10 +169,10 @@ export const CookieBanner: React.FC = () => {
 
             <div className="sheet-foot">
               <button type="button" className="button button-ghost" onClick={handleRejectNonEssential}>
-                Reject Non-Essential
+                {t('cookie.reject_optional')}
               </button>
               <button type="button" className="button button-primary" onClick={handleSaveCustom}>
-                Save Preferences
+                {t('cookie.save')}
               </button>
             </div>
           </div>

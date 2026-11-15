@@ -101,7 +101,7 @@ const AudiencePage = () => {
                         strokeWidth={0.5}
                         onMouseEnter={() => {
                           setHoveredInfo({
-                            name: d?.countryName || geo.properties?.name || countryCode || 'Unknown',
+                            name: d?.countryName || geo.properties?.name || countryCode || t('studio.audience.unknown'),
                             servers: d?.servers || 0,
                             players: d?.players || 0,
                             visitors: d?.visitors || 0,

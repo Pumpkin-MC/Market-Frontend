@@ -64,7 +64,7 @@ const Coupons = ({ plugin }: Props) => {
             setMaxRedemptions('');
             setExpiresAt('');
         } catch (err: any) {
-            alert(err.response?.data || 'Failed to create coupon.');
+            alert(err.response?.data || t('studio.coupons.create_failed'));
         } finally {
             setSubmitting(false);
         }
@@ -77,7 +77,7 @@ const Coupons = ({ plugin }: Props) => {
             await api.delete(`/plugins/${plugin.id}/coupons/${couponId}`);
             setCoupons(prev => prev.filter(c => c.id !== couponId));
         } catch (err) {
-            alert('Failed to delete coupon.');
+            alert(t('studio.coupons.delete_failed'));
         }
     };
 

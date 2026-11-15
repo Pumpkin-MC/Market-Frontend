@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   AlertCircle,
   Check,
@@ -27,6 +28,7 @@ interface ServerLinkPreview {
 }
 
 const LinkServerPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -53,13 +55,13 @@ const LinkServerPage: React.FC = () => {
         const res = await api.get(`/user/servers/link/${encodeURIComponent(urlCode.trim())}`);
         if (cancelled) return;
         setPreview(res.data);
-        setDisplayName(res.data.serverName || 'Pumpkin Server');
+        setDisplayName(res.data.serverName || t('servers.link.default_server_name'));
       } catch (err: any) {
         if (cancelled) return;
         setPreview(null);
         setError(
           err.response?.data?.error ||
-            'Invalid or expired server link code. Run `/pumpkin link` in your server console again.'
+            t('servers.link.invalid_code')
         );
       } finally {
         if (!cancelled) setLoadingPreview(false);
@@ -70,7 +72,7 @@ const LinkServerPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [urlCode]);
+  }, [t, urlCode]);
 
   const handleLookupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +94,7 @@ const LinkServerPage: React.FC = () => {
       navigate(`/settings?tab=servers&server=${res.data.serverId}`, { replace: true });
     } catch (err: any) {
       setError(
-        err.response?.data?.error || 'Failed to link server. Please generate a fresh `/pumpkin link` code.'
+        err.response?.data?.error || t('servers.link.link_failed')
       );
     } finally {
       setSubmitting(false);
@@ -106,8 +108,8 @@ const LinkServerPage: React.FC = () => {
   return (
     <div className="ac-auth">
       <SEO
-        title="Link Server"
-        description="Connect your Pumpkin server to your Pumpkin Account for live telemetry and server management."
+        title={t('servers.link.seo_title')}
+        description={t('servers.link.seo_description')}
       />
       <div className="panel panel-fg ac-card" style={{ maxWidth: '34rem' }}>
         <div className="ac-card-head">
@@ -115,17 +117,17 @@ const LinkServerPage: React.FC = () => {
             <Server />
           </span>
           <h1 className="h1">
-            Link <span className="mark">Server</span>
+            <Trans t={t} i18nKey="servers.link.title" components={{ mark: <span className="mark" /> }} />
           </h1>
           <p className="small">
-            Connect your Pumpkin server to your Pumpkin Account for live telemetry, crash monitoring, and verified ownership.
+            {t('servers.link.subtitle')}
           </p>
         </div>
 
         {loadingPreview ? (
           <div className="stack" style={{ alignItems: 'center', padding: '1.5rem 0' }}>
             <span className="loading" />
-            <p className="small">Verifying cryptographic server signature…</p>
+            <p className="small">{t('servers.link.verifying')}</p>
           </div>
         ) : !preview ? (
           <form className="stack" onSubmit={handleLookupSubmit}>
@@ -140,12 +142,12 @@ const LinkServerPage: React.FC = () => {
 
             <div className="panel" style={{ padding: '0.875rem 1rem' }}>
               <p className="small" style={{ margin: 0 }}>
-                Run <code>pumpkin link</code> directly in your Pumpkin server console to generate an 8-character claim code.
+                <Trans t={t} i18nKey="servers.link.console_hint" components={{ code: <code /> }} />
               </p>
             </div>
 
             <label className="field" htmlFor="serverLinkCode">
-              <span className="field-label">Server Link Code</span>
+              <span className="field-label">{t('servers.link.code_label')}</span>
               <span className="control">
                 <input
                   id="serverLinkCode"
@@ -162,12 +164,12 @@ const LinkServerPage: React.FC = () => {
             </label>
 
             <button type="submit" className="button button-primary button-lg button-block">
-              Verify Code
+              {t('auth.verify_code')}
             </button>
 
             <p className="ac-card-foot small">
               <Link to="/settings?tab=servers" className="link">
-                ← Back to Your Servers
+                {t('servers.link.back_to_servers')}
               </Link>
             </p>
           </form>
@@ -187,7 +189,12 @@ const LinkServerPage: React.FC = () => {
                 <ShieldCheck />
               </span>
               <p className="notice-text">
-                <strong>Ed25519 Signature Verified</strong> — Key <code>{shortKey}</code> proved possession of <code>.pumpkin/identity.key</code>.
+                <Trans
+                  t={t}
+                  i18nKey="servers.link.signature_verified"
+                  values={{ key: shortKey }}
+                  components={{ strong: <strong />, code: <code /> }}
+                />
               </p>
             </div>
 
@@ -197,7 +204,7 @@ const LinkServerPage: React.FC = () => {
                   <AlertCircle />
                 </span>
                 <p className="notice-text">
-                  This server key was previously linked to another account. Confirming will transfer ownership to your Pumpkin Account.
+                  {t('servers.link.transfer_warning')}
                 </p>
               </div>
             )}
@@ -207,7 +214,7 @@ const LinkServerPage: React.FC = () => {
                 <div className="row small">
                   <span className="muted">
                     <Server size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
-                    Software
+                    {t('servers.link.software')}
                   </span>
                   <span className="spacer" />
                   <strong>
@@ -219,7 +226,7 @@ const LinkServerPage: React.FC = () => {
                   <div className="row small">
                     <span className="muted">
                       <Cpu size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
-                      Platform
+                      {t('servers.link.platform')}
                     </span>
                     <span className="spacer" />
                     <span>{[preview.os, preview.arch].filter(Boolean).join(' • ')}</span>
@@ -228,7 +235,7 @@ const LinkServerPage: React.FC = () => {
                 <div className="row small">
                   <span className="muted">
                     <Key size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
-                    Identity Key
+                    {t('servers.link.identity_key')}
                   </span>
                   <span className="spacer" />
                   <code>{shortKey}</code>
@@ -237,7 +244,7 @@ const LinkServerPage: React.FC = () => {
             </div>
 
             <label className="field" htmlFor="displayName">
-              <span className="field-label">Display Name</span>
+              <span className="field-label">{t('servers.link.display_name')}</span>
               <span className="control">
                 <input
                   id="displayName"
@@ -246,12 +253,12 @@ const LinkServerPage: React.FC = () => {
                   maxLength={64}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder="My Pumpkin Survival Server"
+                  placeholder={t('servers.link.display_name_placeholder')}
                   required
                 />
               </span>
               <span className="field-hint">
-                Shown in your Pumpkin Account telemetry dashboard. You can rename it anytime.
+                {t('servers.link.display_name_hint')}
               </span>
             </label>
 
@@ -262,12 +269,12 @@ const LinkServerPage: React.FC = () => {
               aria-busy={submitting}
             >
               {submitting ? (
-                'Linking Server…'
+                t('servers.link.linking')
               ) : (
                 <>
                   <Check />
                   <span>
-                    {preview.alreadyLinkedToYou ? 'Update Linked Server' : 'Confirm & Link Server'}
+                    {preview.alreadyLinkedToYou ? t('servers.link.update_linked') : t('servers.link.confirm_link')}
                   </span>
                 </>
               )}
@@ -275,7 +282,7 @@ const LinkServerPage: React.FC = () => {
 
             <p className="ac-card-foot small">
               <Link to="/settings?tab=servers" className="link">
-                Cancel
+                {t('common.cancel')}
               </Link>
             </p>
           </form>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
@@ -10,6 +10,7 @@ import SEO from '../../components/SEO';
 import { PluginVideoPlayer } from './PluginVideoPlayer';
 import { GuidelineRejectionPicker, RejectionReasonsList } from '../../components/GuidelineRejectionPicker';
 import { serializeRejectionReason } from '../../lib/guidelines';
+import { translateCategory } from '../../lib/categories';
 import { Sparkles, History, ChevronRight, ChevronLeft, Star, Check, Trash2, Flag, MessageSquare, Copy, Key, ChevronDown, ChevronUp, Package, Play, X, ShieldCheck, AlertTriangle, Lock, Cpu, Globe, HardDrive, Terminal, Fingerprint } from 'lucide-react';
 import type { PluginDetail, PluginCommand } from '../../types/plugin';
 import '../../styles/plugin.css';
@@ -33,22 +34,22 @@ const getYoutubeVideoId = (url: string) => {
 };
 
 const REPORT_REASONS = [
-  'Malware or malicious code',
-  'Stolen or plagiarised content',
-  'Misleading description',
-  'Broken / non-functional',
-  'Inappropriate content',
-  'Spam or fake listing',
-  'Other',
-];
+  { value: 'Malware or malicious code', label: 'plugin.report.reason_malware' },
+  { value: 'Stolen or plagiarised content', label: 'plugin.report.plugin_reasons.stolen' },
+  { value: 'Misleading description', label: 'plugin.report.reason_misleading' },
+  { value: 'Broken / non-functional', label: 'plugin.report.reason_broken' },
+  { value: 'Inappropriate content', label: 'plugin.report.plugin_reasons.inappropriate' },
+  { value: 'Spam or fake listing', label: 'plugin.report.plugin_reasons.spam' },
+  { value: 'Other', label: 'plugin.report.reason_other' },
+] as const;
 
 const REVIEW_REPORT_REASONS = [
-  'Inappropriate language',
-  'Spam or advertising',
-  'Hate speech or harassment',
-  'Off-topic or irrelevant',
-  'Other',
-];
+  { value: 'Inappropriate language', label: 'plugin.report.review_reasons.language' },
+  { value: 'Spam or advertising', label: 'plugin.report.review_reasons.spam' },
+  { value: 'Hate speech or harassment', label: 'plugin.report.review_reasons.hate' },
+  { value: 'Off-topic or irrelevant', label: 'plugin.report.review_reasons.off_topic' },
+  { value: 'Other', label: 'plugin.report.reason_other' },
+] as const;
 const MAX_REVIEW_LENGTH = 2000;
 
 const safeMarkdownComponents = {
@@ -69,7 +70,8 @@ const safeMarkdownComponents = {
       </a>
     );
   },
-  img: ({ src, alt, ...props }: any) => {
+  img: function MarkdownImage({ src, alt, ...props }: any) {
+    const { t } = useTranslation();
     const isSafe = typeof src === 'string' && (src.startsWith('http://') || src.startsWith('https://') || src.startsWith('/'));
     if (!isSafe) {
       return null;
@@ -77,7 +79,7 @@ const safeMarkdownComponents = {
     return (
       <img
         src={src}
-        alt={alt || 'Plugin illustration'}
+        alt={alt || t('plugin.media.illustration')}
         loading="lazy"
         decoding="async"
         className="pd-md-img"
@@ -100,6 +102,7 @@ const Stars = ({ value, onRate }: { value: number; onRate?: (n: number) => void 
 );
 
 const ExpandableText = ({ text, limit = 500, className }: { text: string; limit?: number; className?: string }) => {
+  const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const shouldTruncate = text.length > limit;
   const displayText = isExpanded ? text : text.slice(0, limit) + (shouldTruncate ? '...' : '');
@@ -109,7 +112,7 @@ const ExpandableText = ({ text, limit = 500, className }: { text: string; limit?
       <p className="pd-pre">{displayText}</p>
       {shouldTruncate && (
         <button type="button" className="pd-textbtn" onClick={() => setIsExpanded(!isExpanded)}>
-          {isExpanded ? 'Show Less' : 'Expand'}
+          {isExpanded ? t('plugin.commands.show_less') : t('plugin.actions.expand')}
         </button>
       )}
     </div>
@@ -131,14 +134,6 @@ const getInitials = (username: string) => {
   const parts = username.trim().split(/[\s_\-\.]+/);
   if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
   return username.slice(0, 2).toUpperCase();
-};
-
-const formatDate = (dateStr: string) => {
-  const d = new Date(dateStr);
-  const day = d.getDate();
-  const month = d.toLocaleString('en-US', { month: 'short' });
-  const year = d.getFullYear();
-  return `${day} ${month}, ${year}`;
 };
 
 const getLocalizedCommandDescription = (
@@ -272,6 +267,10 @@ const PluginCommands = ({ commands }: { commands?: PluginCommand[] }) => {
 
 const PluginPage = () => {
   const { t, i18n } = useTranslation();
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(i18n.language || undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+  };
   const { id: rawId, slug } = useParams();
   const id = rawId ? rawId.split('-')[0] : rawId;
   const { user } = useAuth();
@@ -280,7 +279,7 @@ const PluginPage = () => {
 
   const [plugin, setPlugin] = useState<PluginDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [adShown, setAdShown] = useState(false);
   const [mainScreenshot, setMainScreenshot] = useState<string | null>(null);
@@ -307,12 +306,12 @@ const PluginPage = () => {
       } else {
         setAppliedCoupon(null);
         setCouponDiscount(0);
-        setCouponMessage({ text: res.data.message || 'Invalid coupon code', isError: true });
+        setCouponMessage({ text: res.data.message || t('plugin.purchase.invalid_coupon'), isError: true });
       }
     } catch {
       setAppliedCoupon(null);
       setCouponDiscount(0);
-      setCouponMessage({ text: 'Failed to validate coupon.', isError: true });
+      setCouponMessage({ text: t('plugin.purchase.validate_coupon_failed'), isError: true });
     } finally {
       setValidatingCoupon(false);
     }
@@ -383,7 +382,7 @@ const PluginPage = () => {
   // ── Fetch plugin ─────────────────────────────────────────────────────────
   const fetchPlugin = () => {
     setLoading(true);
-    setError(null);
+    setLoadFailed(false);
     api.get(`/plugins/${id}`).then(res => {
       setPlugin(res.data);
       if (res.data.youtube_video_url) {
@@ -404,7 +403,7 @@ const PluginPage = () => {
     })
     .catch(err => {
       console.error('Failed to load plugin:', err);
-      setError('Plugin not found or failed to load.');
+      setLoadFailed(true);
     })
     .finally(() => {
       setLoading(false);
@@ -490,7 +489,7 @@ const PluginPage = () => {
       return (
         <img
           src={src}
-          alt={alt || 'Plugin illustration'}
+          alt={alt || t('plugin.media.illustration')}
           loading="lazy"
           decoding="async"
           className="pd-md-img"
@@ -499,7 +498,7 @@ const PluginPage = () => {
         />
       );
     },
-  }), [openLightboxWithSrc]);
+  }), [openLightboxWithSrc, t]);
 
   const lightboxPrev = () => {
     if (!screenshots.length) return;
@@ -572,13 +571,13 @@ const PluginPage = () => {
       // Already owns it — download directly, no checkout
       if (ownsPlugin) {
         if (plugin.is_preorder) {
-          alert('You have successfully pre-ordered this plugin! You will receive an automated email notification the moment the developer releases the downloadable version.');
+          alert(t('plugin.messages.preorder_owned'));
           return;
         }
         try {
           await triggerDownload(`/plugins/${id}/download/premium`);
         } catch {
-          alert('Download failed. Please try again.');
+          alert(t('plugin.messages.download_failed'));
         }
         return;
       }
@@ -593,13 +592,13 @@ const PluginPage = () => {
           // Webhook already recorded purchase before redirect resolved
           setOwnsPlugin(true);
           if (plugin.is_preorder) {
-            alert('You have pre-ordered this plugin! You will receive an email as soon as it releases.');
+            alert(t('plugin.messages.preorder_confirmed'));
           } else {
-            alert('You already own this plugin — downloading now.');
+            alert(t('plugin.messages.already_owned'));
             await triggerDownload(`/plugins/${id}/download/premium`);
           }
         } else {
-          alert('Checkout failed. Please try again.');
+          alert(t('plugin.messages.checkout_failed'));
         }
       } finally {
       }
@@ -608,7 +607,7 @@ const PluginPage = () => {
 
     // Adwall
     if (plugin.type === 'adwall' && !adShown) {
-      alert('Wait 5 seconds to support the developer...');
+      alert(t('plugin.messages.ad_wait'));
       setTimeout(() => setAdShown(true), 5000);
       return;
     }
@@ -617,7 +616,7 @@ const PluginPage = () => {
     try {
       await triggerDownload(`/plugins/${id}/download`);
     } catch {
-      alert('Download failed. Please try again.');
+      alert(t('plugin.messages.download_failed'));
     }
   };
 
@@ -633,12 +632,12 @@ const PluginPage = () => {
   };
 
   const deleteReview = async () => {
-    if (!window.confirm('Are you sure you want to delete your review?')) return;
+    if (!window.confirm(t('plugin.reviews.delete_confirm'))) return;
     try {
       await api.delete(`/plugins/${id}/reviews`);
       fetchPlugin();
     } catch {
-      alert('Failed to delete review.');
+      alert(t('plugin.messages.delete_review_failed'));
     }
   };
 
@@ -652,7 +651,7 @@ const PluginPage = () => {
       setReplyText('');
       fetchPlugin();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to post reply.');
+      alert(err.response?.data?.error || t('plugin.messages.reply_failed'));
     } finally {
       setReplySubmitting(false);
     }
@@ -674,7 +673,7 @@ const PluginPage = () => {
       await api.post(`/plugins/${id}/report`, { reason });
       setReportDone(true);
     } catch {
-      alert('Failed to submit report. Please try again.');
+      alert(t('plugin.messages.report_failed'));
     } finally {
       setReportSubmitting(false);
     }
@@ -695,9 +694,9 @@ const PluginPage = () => {
       await api.post(`/plugins/${id}/reviews/${reviewId}/report`, { reason });
       setReportedReviews(prev => new Set(prev).add(reviewId));
       resetReviewReport();
-      alert('Thank you. The report has been submitted to moderators.');
+      alert(t('plugin.messages.review_report_success'));
     } catch {
-      alert('Failed to report review. Please try again.');
+      alert(t('plugin.messages.review_report_failed'));
     } finally {
       setReviewReportSubmitting(false);
     }
@@ -727,12 +726,12 @@ const PluginPage = () => {
     );
   }
 
-  if (error || !plugin) {
+  if (loadFailed || !plugin) {
     return (
       <div className="page pd">
         <div className="blank">
-          <h1 className="h1">Plugin Not <span className="mark">Found</span></h1>
-          <p className="small">{error || 'The requested plugin could not be found.'}</p>
+          <h1 className="h1"><Trans t={t} i18nKey="plugin.not_found_title" components={{ mark: <span className="mark" /> }} /></h1>
+          <p className="small">{loadFailed ? t('plugin.load_failed') : t('plugin.not_found_desc')}</p>
           <Link to="/" className="button">{t('common.back')}</Link>
         </div>
       </div>
@@ -752,7 +751,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/claim`);
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to claim plugin for review.');
+      alert(err?.response?.data || t('staff.actions.claim_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -765,7 +764,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/unclaim`);
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to release review claim.');
+      alert(err?.response?.data || t('staff.actions.unclaim_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -778,7 +777,7 @@ const PluginPage = () => {
       await api.post(`/admin/plugins/${plugin.id}/approve`, { reason: 'Approved during page inspection' });
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to approve plugin.');
+      alert(err?.response?.data || t('staff.actions.approve_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -811,7 +810,7 @@ const PluginPage = () => {
       setStaffRejectReason('');
       fetchPlugin();
     } catch (err: any) {
-      alert(err?.response?.data || 'Failed to request changes.');
+      alert(err?.response?.data || t('staff.actions.reject_failed'));
     } finally {
       setStaffBusy(false);
     }
@@ -819,27 +818,27 @@ const PluginPage = () => {
 
   const downloadLabel = (() => {
     if (!hasBinary && !plugin.is_preorder) {
-      return 'No Binary Uploaded Yet';
+      return t('plugin.no_binary');
     }
     const sizeStr = plugin?.file_size ? ` ${formatSize(plugin.file_size)}` : '';
 
     if (plugin.type === 'paid') {
-      if (!ownershipChecked) return 'Loading…';
+      if (!ownershipChecked) return t('common.loading');
       if (ownsPlugin) {
         if (plugin.is_preorder) {
-          return 'Pre-Ordered (Awaiting Release)';
+          return t('plugin.purchase.awaiting_release');
         }
-        return `Download ${sizeStr}`;
+        return t('plugin.purchase.download', { size: sizeStr });
       }
       if (plugin.is_preorder) {
-        return 'Pre-Order Now';
+        return t('plugin.purchase.preorder_now');
       }
-      return 'Purchase Plugin';
+      return t('plugin.purchase.purchase');
     }
 
-    if (plugin.type === 'adwall' && !adShown) return 'Watch Ad to Download';
+    if (plugin.type === 'adwall' && !adShown) return t('plugin.purchase.watch_ad');
 
-    return `Download ${sizeStr}`;
+    return t('plugin.purchase.download', { size: sizeStr });
   })();
 
   const cleanDesc = currentDescription
@@ -890,13 +889,13 @@ const PluginPage = () => {
           {
             "@type": "ListItem",
             "position": 1,
-            "name": "Home",
+            "name": t('home.page_title'),
             "item": "https://market.pumpkinmc.org"
           },
           {
             "@type": "ListItem",
             "position": 2,
-            "name": plugin.category || "Plugins",
+            "name": translateCategory(t, plugin.category) || t('nav.plugins'),
             "item": `https://market.pumpkinmc.org/search?category=${encodeURIComponent(plugin.category || '')}`
           },
           {
@@ -922,22 +921,22 @@ const PluginPage = () => {
   const trackTone: Record<string, string> = { stable: 'tag-success', beta: 'tag-warning', alpha: 'tag-danger' };
 
   const tabList: [typeof tab, string, number?][] = [
-    ['overview', 'Overview'],
+    ['overview', t('plugin.tabs.overview')],
     ...(commandCount > 0 ? [['commands', t('plugin.commands.title', 'Commands'), commandCount] as [typeof tab, string, number]] : []),
-    ['security', 'Security & Capabilities'],
+    ['security', t('plugin.tabs.security')],
   ];
 
   const activeTab = tabList.some(([key]) => key === tab) ? tab : 'overview';
 
   const reasonPicker = (
-    reasons: string[],
+    reasons: typeof REPORT_REASONS | typeof REVIEW_REPORT_REASONS,
     selected: string,
     onPick: (reason: string) => void,
   ) => (
     <div className="segmented pd-reasons">
-      {reasons.map(reason => (
-        <button key={reason} type="button" aria-pressed={selected === reason} onClick={() => onPick(reason)}>
-          {reason}
+      {reasons.map(({ value, label }) => (
+        <button key={value} type="button" aria-pressed={selected === value} onClick={() => onPick(value)}>
+          {t(label)}
         </button>
       ))}
     </div>
@@ -946,27 +945,30 @@ const PluginPage = () => {
   const seoPriceLabel = (() => {
     if (plugin.type === 'paid') {
       const priceText = saleDiscount > 0 ? `${euro(salePrice)} (-${saleDiscount}%)` : euro(basePrice);
-      return plugin.is_preorder ? `${priceText} (Pre-Order)` : priceText;
+      return plugin.is_preorder ? `${priceText} (${t('plugin.pre_order')})` : priceText;
     }
-    if (plugin.type === 'adwall') return 'Free (Ad-Supported)';
-    return 'Free';
+    if (plugin.type === 'adwall') return t('plugin.metadata.free_ad_supported');
+    return t('plugin.free');
   })();
 
   const seoStatsLine = [
-    plugin.category,
+    translateCategory(t, plugin.category),
     plugin.version ? `v${plugin.version.replace(/^v/, '')}` : null,
     seoPriceLabel,
-    plugin.is_early_access ? 'Early Access' : null,
-    `${(plugin.downloads ?? 0).toLocaleString()} ${(plugin.downloads ?? 0) === 1 ? 'download' : 'downloads'}`,
+    plugin.is_early_access ? t('plugin.early_access_badge') : null,
+    t('plugin.metadata.downloads_count', {
+      count: plugin.downloads ?? 0,
+      formatted: (plugin.downloads ?? 0).toLocaleString(),
+    }),
     stats ? `★ ${stats.avg}/5 (${stats.total})` : null,
   ].filter(Boolean).join(' • ');
 
-  const seoSummary = cleanDesc || `Download ${plugin.name} by ${plugin.dev_name} on Pumpkin Market.`;
+  const seoSummary = cleanDesc || t('plugin.metadata.description', { name: plugin.name, author: plugin.dev_name });
   const seoMetaDesc = `${seoSummary} — ${seoStatsLine}`;
   const seoOgDesc = `${seoSummary}\n\n${seoStatsLine}`;
   const seoOgTitle = plugin.version
-    ? `${plugin.name} (v${plugin.version.replace(/^v/, '')}) by ${plugin.dev_name}`
-    : `${plugin.name} by ${plugin.dev_name}`;
+    ? t('plugin.metadata.og_title_version', { name: plugin.name, version: plugin.version.replace(/^v/, ''), author: plugin.dev_name })
+    : t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name });
   const ytVideoId = plugin.youtube_video_url ? getYoutubeVideoId(plugin.youtube_video_url) : null;
   const seoOgImage =
     plugin.preview_path ||
@@ -993,19 +995,24 @@ const PluginPage = () => {
   return (
     <div className="page pd">
       <SEO
-        title={`${plugin.name} by ${plugin.dev_name}`}
+        title={t('plugin.metadata.og_title', { name: plugin.name, author: plugin.dev_name })}
         ogTitle={seoOgTitle}
         description={seoMetaDesc}
         ogDescription={seoOgDesc}
         canonical={canonicalUrl}
-        keywords={`${plugin.name}, ${plugin.dev_name}, minecraft plugin, pumpkinmc, wasm, ${plugin.category || ''}, ${plugin.keywords || ''}`}
+        keywords={t('plugin.metadata.keywords', {
+          name: plugin.name,
+          author: plugin.dev_name,
+          category: plugin.category || '',
+          keywords: plugin.keywords || '',
+        })}
         ogType="website"
         ogImage={seoOgImage}
         twitterCard={seoTwitterCard}
         twitterLabels={{
-          label1: 'Developer',
+          label1: t('plugin.author'),
           data1: plugin.dev_name,
-          label2: 'Price',
+          label2: t('plugin.metadata.price'),
           data2: seoPriceLabel,
         }}
       />
@@ -1013,12 +1020,12 @@ const PluginPage = () => {
         {JSON.stringify(productSchema)}
       </script>
 
-      <nav className="crumbs" aria-label="Breadcrumb">
-        <Link to="/">Market</Link>
+      <nav className="crumbs" aria-label={t('plugin.metadata.breadcrumb')}>
+        <Link to="/">{t('nav.market')}</Link>
         <ChevronRight />
         {plugin.category && (
           <>
-            <Link to={`/search?category=${encodeURIComponent(plugin.category)}`}>{plugin.category}</Link>
+            <Link to={`/search?category=${encodeURIComponent(plugin.category)}`}>{translateCategory(t, plugin.category)}</Link>
             <ChevronRight />
           </>
         )}
@@ -1145,11 +1152,11 @@ const PluginPage = () => {
 
           {showPaymentSuccess && (
             <div className="notice notice-success" role="status">
-              <span className="sticker sticker-success">Purchase successful!</span>
+              <span className="sticker sticker-success">{t('plugin.purchase.success_badge')}</span>
               <p className="notice-text">
-                You now own <strong>{plugin.name}</strong>. Click the download button to get your WASM file.
+                <Trans t={t} i18nKey="plugin.purchase.success_message" values={{ name: plugin.name }} components={{ strong: <strong /> }} />
               </p>
-              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setShowPaymentSuccess(false)} aria-label="Dismiss">
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setShowPaymentSuccess(false)} aria-label={t('common.dismiss')}>
                 <X />
               </button>
             </div>
@@ -1157,18 +1164,18 @@ const PluginPage = () => {
 
           {plugin.is_preorder && (
             <div className="notice notice-pumpkin">
-              <span className="sticker">Available for Pre-Order</span>
+              <span className="sticker">{t('plugin.purchase.preorder_available')}</span>
               <div className="notice-text pd-notice-body">
                 {plugin.preorder_release_date && (
-                  <span className="label label-fg">Expected: {formatDate(plugin.preorder_release_date)}</span>
+                  <span className="label label-fg">{t('plugin.purchase.expected', { date: formatDate(plugin.preorder_release_date) })}</span>
                 )}
                 {ownsPlugin ? (
                   <p className="pd-ok">
-                    <Check /> You have successfully pre-ordered this plugin! Your license key is reserved, and you will receive an automatic email notification the moment the download is released.
+                    <Check /> {t('plugin.purchase.preorder_owned_notice')}
                   </p>
                 ) : (
                   <p>
-                    Pre-order now to secure your license key and early access. You will receive an automatic email notification the moment the developer releases the downloadable version.
+                    {t('plugin.purchase.preorder_notice')}
                   </p>
                 )}
               </div>
@@ -1177,10 +1184,9 @@ const PluginPage = () => {
 
           {plugin.is_early_access && (
             <div className="notice notice-warning">
-              <span className="sticker sticker-warning">Early Access Plugin</span>
+              <span className="sticker sticker-warning">{t('plugin.early_access_title')}</span>
               <p className="notice-text">
-                This plugin is currently in <strong>Early Access</strong>. It is still under active development and may contain bugs or incomplete features.
-                Downloading it now helps support the developer and shape the future of the plugin!
+                <Trans t={t} i18nKey="plugin.early_access_notice" components={{ strong: <strong /> }} />
               </p>
             </div>
           )}
@@ -1196,16 +1202,16 @@ const PluginPage = () => {
             <div className="pd-title">
               <h1 className="display-2">{plugin.name}</h1>
               <div className="row">
-                <span className="entry-by">by <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
-                {plugin.category && <span className="tag tag-fg">{plugin.category}</span>}
-                {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
-                {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">Early Access</span>}
+                <span className="entry-by">{t('plugin.by')} <Link className="link" to={`/profile/${plugin.dev_name}`}>{plugin.dev_name}</Link></span>
+                {plugin.category && <span className="tag tag-fg">{translateCategory(t, plugin.category)}</span>}
+                {plugin.is_preorder && <span className="sticker sticker-sm">{t('plugin.purchase.preorder_badge')}</span>}
+                {plugin.is_early_access && <span className="sticker sticker-sm sticker-warning">{t('plugin.early_access_badge')}</span>}
                 {plugin.type === 'paid' && saleDiscount > 0 && <span className="sticker sticker-sm">-{saleDiscount}%</span>}
               </div>
               {stats && (
                 <div className="row pd-score">
                   <Stars value={Number(stats.avg)} />
-                  <span className="small"><strong>{stats.avg}</strong> · {stats.total.toLocaleString()} Ratings</span>
+                  <span className="small"><strong>{stats.avg}</strong> · {t('plugin.reviews.rating_count', { count: stats.total, formattedCount: stats.total.toLocaleString() })}</span>
                 </div>
               )}
             </div>
@@ -1237,23 +1243,23 @@ const PluginPage = () => {
                             openLightbox(idx >= 0 ? idx : 0);
                           }}
                         >
-                          <img src={mainScreenshot || screenshots[0]?.path} alt="Main" />
+                          <img src={mainScreenshot || screenshots[0]?.path} alt={t('plugin.media.main')} />
                         </button>
                       )}
                       <div className="pd-thumbs">
                         {plugin.youtube_video_url && (
                           <button type="button" className="pd-thumb" aria-pressed={mainScreenshot === 'video'} onClick={() => setMainScreenshot('video')}>
                             {getYoutubeVideoId(plugin.youtube_video_url) ? (
-                              <img src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} alt="Video Thumbnail" />
+                              <img src={`https://img.youtube.com/vi/${getYoutubeVideoId(plugin.youtube_video_url)}/hqdefault.jpg`} alt={t('plugin.media.video_thumbnail')} />
                             ) : (
-                              <span className="label">Video</span>
+                              <span className="label">{t('plugin.media.video')}</span>
                             )}
                             <span className="pd-play"><Play /></span>
                           </button>
                         )}
                         {screenshots.map((shot: any) => (
                           <button key={shot.id} type="button" className="pd-thumb" aria-pressed={mainScreenshot === shot.path} onClick={() => setMainScreenshot(shot.path)}>
-                            <img src={shot.path} alt="Thumbnail" />
+                            <img src={shot.path} alt={t('plugin.media.thumbnail')} />
                           </button>
                         ))}
                       </div>
@@ -1271,7 +1277,7 @@ const PluginPage = () => {
                       <section className="panel pd-news">
                         <div className="panel-head">
                           <Sparkles className="pumpkin" />
-                          <h2 className="h3">What's New</h2>
+                          <h2 className="h3">{t('plugin.versions.whats_new')}</h2>
                           <span className="tag tag-pumpkin">v{latest.version}</span>
                           {latest.api_version && <span className="tag tag-fg">API v{latest.api_version}</span>}
                           {latest.created_at && <span className="small">{formatDate(latest.created_at)}</span>}
@@ -1279,7 +1285,7 @@ const PluginPage = () => {
                           {versions.length > 1 && (
                             <button type="button" className="button button-flat button-sm" onClick={() => setVersionsOpen(true)}>
                               <History />
-                              Version History ({versions.length})
+                              {t('plugin.versions.history', { count: versions.length })}
                             </button>
                           )}
                         </div>
@@ -1289,13 +1295,13 @@ const PluginPage = () => {
                               {latest.release_notes}
                             </ReactMarkdown>
                           ) : (
-                            <p className="muted">Bug fixes and performance improvements.</p>
+                            <p className="muted">{t('plugin.versions.default_notes')}</p>
                           )}
                         </div>
                         {isLong && (
                           <div className="panel-foot">
                             <button type="button" className="button button-ghost button-sm" onClick={() => setVersionsOpen(true)}>
-                              View More
+                              {t('plugin.view_more')}
                               <ChevronRight />
                             </button>
                           </div>
@@ -1308,7 +1314,7 @@ const PluginPage = () => {
                     {currentDescription.trim() ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{currentDescription}</ReactMarkdown>
                     ) : (
-                      <p className="muted">No description has been written for this plugin yet.</p>
+                      <p className="muted">{t('plugin.no_description')}</p>
                     )}
                   </div>
                 </>
@@ -1325,93 +1331,94 @@ const PluginPage = () => {
                 const imports = sec?.imported_interfaces ?? [];
                 const exportsList = sec?.exported_interfaces ?? [];
                 return (
-                  <section className="stack" aria-label="WASM Capability & Permission Inspector">
+                  <section className="stack" aria-label={t('plugin.security.inspector_label')}>
                     <div className="notice notice-plain">
                       <p className="notice-text">
-                        Automatically extracted from the plugin's <code>pumpkin:plugin/metadata#get-metadata</code> WIT export inside a fuel-limited WebAssembly sandbox, combined with binary checksums and server command permission nodes.
+                        {t('plugin.security.wit_intro_before')}{' '}<code>pumpkin:plugin/metadata#get-metadata</code>{' '}{t('plugin.security.wit_intro_after')}
                       </p>
                     </div>
 
                     <div className="pd-safety-grid">
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Cpu /> Sandbox &amp; Memory</span>
-                          <span className="tag tag-success">Enforced</span>
+                          <span className="pd-cap-title"><Cpu /> {t('plugin.security.sandbox_title')}</span>
+                          <span className="tag tag-success">{t('plugin.security.enforced')}</span>
                         </div>
                         <p className="small muted">
-                          Executes inside an isolated Wasmtime linear memory sandbox. Host resources are denied by default unless explicitly requested in <code>PluginMetadata.permissions</code>.
+                          {t('plugin.security.sandbox_desc_before')}{' '}<code>PluginMetadata.permissions</code>{t('plugin.security.sandbox_desc_after')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Fingerprint /> Ed25519 Signature</span>
+                          <span className="pd-cap-title"><Fingerprint /> {t('plugin.security.signature_title')}</span>
                           <span className={`tag ${sec?.ed25519_signed ? 'tag-success' : 'tag-warning'}`}>
-                            {sec?.ed25519_signed ? 'Verified' : 'Pending Build'}
+                            {sec?.ed25519_signed ? t('staff.table.verified') : t('plugin.security.pending_build')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.ed25519_signed
-                            ? 'Cryptographically signed by PumpkinMarket on download using W3C wasm_signature (Ed25519) + pumpkin.metadata.'
-                            : 'No WASM binary uploaded yet. Binary will be signed automatically once uploaded.'}
+                            ? t('plugin.security.signature_verified_desc')
+                            : t('plugin.security.signature_pending_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Globe /> Network Access</span>
+                          <span className="pd-cap-title"><Globe /> {t('plugin.security.network_title')}</span>
                           <span className={`tag ${sec?.network_access ? 'tag-warning' : 'tag-success'}`}>
-                            {sec?.network_access ? 'Requested' : 'No Network'}
+                            {sec?.network_access ? t('plugin.security.requested') : t('plugin.security.no_network')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.network_access
-                            ? 'Requests network.* or http.outbound in PluginMetadata.permissions. Can be restricted via blocked_permissions.'
-                            : 'Does not request any network.dns, network.tcp, network.udp, or http.outbound permissions.'}
+                            ? t('plugin.security.network_requested_desc')
+                            : t('plugin.security.network_none_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><HardDrive /> Filesystem Access</span>
+                          <span className="pd-cap-title"><HardDrive /> {t('plugin.security.fs_title')}</span>
                           <span className={`tag ${sec?.filesystem_access ? 'tag-warning' : 'tag-success'}`}>
-                            {sec?.filesystem_access ? 'Scoped Data Folder' : 'Isolated'}
+                            {sec?.filesystem_access ? t('plugin.security.scoped_data_folder') : t('plugin.security.isolated')}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.filesystem_access
-                            ? 'Requests fs.read.data / fs.write.data scoped strictly to plugins/data/<name>/.'
-                            : 'Does not request fs.read.data or fs.write.data; no host directories are preopened.'}
+                            ? t('plugin.security.fs_scoped_desc')
+                            : t('plugin.security.fs_isolated_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Terminal /> System &amp; Commands</span>
+                          <span className="pd-cap-title"><Terminal /> {t('plugin.security.system_title')}</span>
                           <span className={`tag ${sec?.system_access ? 'tag-warning' : 'tag-fg'}`}>
-                            {sec?.system_access ? 'Host Env / Info' : `${commandCount} Cmd${commandCount === 1 ? '' : 's'}`}
+                            {sec?.system_access ? t('plugin.security.host_env_info') : t('plugin.security.cmd_count', { count: commandCount })}
                           </span>
                         </div>
                         <p className="small muted">
                           {sec?.system_access
-                            ? 'Requests sys.env or sys.info host telemetry in PluginMetadata.permissions.'
+                            ? t('plugin.security.system_requested_desc')
                             : commandCount > 0
-                              ? `Registers ${commandCount} in-game command(s) with ${cmdPerms.length} player permission node(s). No sys.env access.`
-                              : 'No host environment variable (sys.env) or system telemetry (sys.info) permissions requested.'}
+                              ? t('plugin.security.system_commands_desc', { commands: commandCount, permissions: cmdPerms.length })
+                              : t('plugin.security.system_none_desc')}
                         </p>
                       </div>
 
                       <div className="pd-cap-card">
                         <div className="pd-cap-head">
-                          <span className="pd-cap-title"><Package /> Binary Format &amp; ABI</span>
+                          <span className="pd-cap-title"><Package /> {t('plugin.security.format_title')}</span>
                           <span className="tag tag-pumpkin">
-                            {sec?.is_component ? 'Component (WIT)' : 'Core WASM'}
+                            {sec?.is_component ? t('plugin.security.component_wit') : t('plugin.security.core_wasm')}
                           </span>
                         </div>
                         <p className="small muted">
-                          {sec?.binary_format || 'WebAssembly Module'}
-                          {plugin.api_version ? ` targeting Pumpkin API v${plugin.api_version}.` : '.'}
-                          {deps.length > 0 ? ` Depends on ${deps.length} plugin(s).` : ' Zero external plugin dependencies.'}
+                          {sec?.binary_format || t('plugin.security.wasm_module')}
+                          {plugin.api_version ? ` ${t('plugin.security.targeting_api', { version: plugin.api_version })}` : '.'}
+                          {' '}
+                          {deps.length > 0 ? t('plugin.security.depends_on_count', { count: deps.length }) : t('plugin.security.zero_deps')}
                         </p>
                       </div>
                     </div>
@@ -1420,23 +1427,23 @@ const PluginPage = () => {
                       <div className="panel-head" style={{ justifyContent: 'space-between' }}>
                         <div className="row" style={{ gap: 8 }}>
                           <ShieldCheck className="pumpkin" />
-                          <h3 className="h3">Permissions</h3>
+                          <h3 className="h3">{t('staff.inspection.fields.permissions')}</h3>
                         </div>
                         <span className={`tag ${runtimePerms.length > 0 ? 'tag-warning' : 'tag-success'}`}>
                           {runtimePerms.length === 0
-                            ? '0 Requested (Strict Sandbox)'
-                            : `${runtimePerms.length} Permission${runtimePerms.length === 1 ? '' : 's'}`}
+                            ? t('plugin.security.zero_requested')
+                            : t('plugin.security.permissions_count', { count: runtimePerms.length })}
                         </span>
                       </div>
                       <div className="panel-body stack">
                         {runtimePerms.length === 0 ? (
                           <p className="small muted">
-                            This plugin declares no permissions (<code>permissions = []</code>). All DNS lookups, TCP/UDP sockets, outbound HTTP requests, filesystem preopens, and environment variables are blocked by default.
+                            {t('plugin.security.no_permissions_before')} (<code>permissions = []</code>). {t('plugin.security.no_permissions_after')}
                           </p>
                         ) : (
                           <>
                             <p className="small muted">
-                              Permissions declared by this plugin. Server administrators can block any of these in <code>advanced_config.plugins.blocked_permissions</code>:
+                              {t('plugin.security.declared_permissions_before')}{' '}<code>advanced_config.plugins.blocked_permissions</code>{t('plugin.security.declared_permissions_after')}
                             </p>
                             <div className="stack" style={{ gap: 8 }}>
                               {runtimePerms.map(rp => {
@@ -1462,7 +1469,7 @@ const PluginPage = () => {
                                             setCopiedPerm(rp.id);
                                             setTimeout(() => setCopiedPerm(null), 2000);
                                           }}
-                                          title="Copy permission constant"
+                                          title={t('plugin.security.copy_permission_constant')}
                                         >
                                           {copiedPerm === rp.id ? <Check /> : <Copy />}
                                         </button>
@@ -1480,7 +1487,7 @@ const PluginPage = () => {
                           <div className="row" style={{ gap: 16, flexWrap: 'wrap', paddingTop: 4 }}>
                             {deps.length > 0 && (
                               <div className="field" style={{ flex: 1, minWidth: 220 }}>
-                                <span className="field-label">Dependencies</span>
+                                <span className="field-label">{t('staff.inspection.fields.dependencies')}</span>
                                 <div className="pd-wit-list">
                                   {deps.map(dep => (
                                     <code key={dep} className="pd-chip">{dep}</code>
@@ -1490,7 +1497,7 @@ const PluginPage = () => {
                             )}
                             {metaAuthors.length > 0 && (
                               <div className="field" style={{ flex: 1, minWidth: 220 }}>
-                                <span className="field-label">Authors</span>
+                                <span className="field-label">{t('plugin.security.authors')}</span>
                                 <div className="pd-wit-list">
                                   {metaAuthors.map(author => (
                                     <span key={author} className="tag tag-fg">{author}</span>
@@ -1507,11 +1514,11 @@ const PluginPage = () => {
                       <div className="panel">
                         <div className="panel-head">
                           <Key className="pumpkin" />
-                          <h3 className="h3">In-Game Command Permission Nodes ({cmdPerms.length})</h3>
+                          <h3 className="h3">{t('plugin.security.command_permissions_title', { count: cmdPerms.length })}</h3>
                         </div>
                         <div className="panel-body stack">
                           <p className="small muted">
-                            Grant these permission nodes in your Pumpkin server configuration to control which players can invoke this plugin's slash commands:
+                            {t('plugin.security.command_permissions_desc')}
                           </p>
                           <div className="pd-wit-list">
                             {cmdPerms.map(perm => (
@@ -1526,7 +1533,7 @@ const PluginPage = () => {
                                     setCopiedPerm(perm);
                                     setTimeout(() => setCopiedPerm(null), 2000);
                                   }}
-                                  title="Copy permission node"
+                                  title={t('plugin.commands.copy_permission')}
                                 >
                                   {copiedPerm === perm ? <Check /> : <Copy />}
                                 </button>
@@ -1540,12 +1547,12 @@ const PluginPage = () => {
                     <div className="panel">
                       <div className="panel-head">
                         <Fingerprint className="pumpkin" />
-                        <h3 className="h3">WASM Binary Provenance &amp; WIT Interfaces</h3>
+                        <h3 className="h3">{t('plugin.security.provenance_title')}</h3>
                       </div>
                       <div className="panel-body stack">
                         {sec?.sha256 && (
                           <div className="field">
-                            <span className="field-label">SHA-256 Binary Checksum</span>
+                            <span className="field-label">{t('plugin.security.sha256_checksum')}</span>
                             <div className="pd-hash-box">
                               <code>{sec.sha256}</code>
                               <button
@@ -1558,7 +1565,7 @@ const PluginPage = () => {
                                 }}
                               >
                                 {copiedHash ? <Check /> : <Copy />}
-                                {copiedHash ? 'Copied' : 'Copy SHA-256'}
+                                {copiedHash ? t('plugin.copied') : t('plugin.security.copy_sha256')}
                               </button>
                             </div>
                           </div>
@@ -1566,7 +1573,7 @@ const PluginPage = () => {
 
                         {imports.length > 0 && (
                           <div className="field">
-                            <span className="field-label">Imported Host Interfaces (WIT / WASI)</span>
+                            <span className="field-label">{t('plugin.security.imported_interfaces')}</span>
                             <div className="pd-wit-list">
                               {imports.map(imp => (
                                 <code key={imp} className="pd-chip">{imp}</code>
@@ -1577,7 +1584,7 @@ const PluginPage = () => {
 
                         {exportsList.length > 0 && (
                           <div className="field">
-                            <span className="field-label">Exported Guest Entrypoints</span>
+                            <span className="field-label">{t('plugin.security.exported_entrypoints')}</span>
                             <div className="pd-wit-list">
                               {exportsList.map(exp => (
                                 <code key={exp} className="pd-chip">{exp}</code>
@@ -1593,11 +1600,11 @@ const PluginPage = () => {
             </div>
           </div>
 
-          <section className="pd-reviews" id="pd-reviews" aria-label="Ratings & Reviews">
+          <section className="pd-reviews" id="pd-reviews" aria-label={t('plugin.reviews.title')}>
             <div className="pd-reviews-head">
-              <h2 className="h2">Ratings &amp; Reviews</h2>
+              <h2 className="h2">{t('plugin.reviews.title')}</h2>
               {reviews.length > 0 && (
-                <span className="tag tag-fg">{reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}</span>
+                <span className="tag tag-fg">{t('plugin.reviews.reviews_count', { count: reviews.length })}</span>
               )}
             </div>
 
@@ -1606,7 +1613,7 @@ const PluginPage = () => {
                 <div className="pd-avg">
                   <span className="stat-value">{stats.avg}</span>
                   <Stars value={Number(stats.avg)} />
-                  <span className="small">{stats.total.toLocaleString()} Ratings</span>
+                  <span className="small">{t('plugin.reviews.rating_count', { count: stats.total, formattedCount: stats.total.toLocaleString() })}</span>
                 </div>
                 <div className="pd-bars">
                   {[5, 4, 3, 2, 1].map(num => (
@@ -1622,7 +1629,7 @@ const PluginPage = () => {
               </div>
             ) : (
               <div className="blank">
-                <p className="h3">No reviews yet. Be the first to leave one!</p>
+                <p className="h3">{t('plugin.reviews.no_reviews')}</p>
               </div>
             )}
 
@@ -1655,17 +1662,17 @@ const PluginPage = () => {
                     <div className="pd-review-actions">
                       {reportedReviews.has(r.id) ? (
                         <p className="small pd-ok">
-                          <Check /> Report submitted
+                          <Check /> {t('plugin.report.submitted')}
                         </p>
                       ) : reviewReportOpen === r.id ? (
                         <form onSubmit={(e) => submitReviewReport(e, r.id)} className="pd-form">
-                          <span className="field-label">Reason for reporting this review</span>
+                          <span className="field-label">{t('plugin.report.review_reason')}</span>
                           {reasonPicker(REVIEW_REPORT_REASONS, reviewReportSelected, reason => { setReviewReportSelected(reason); setReviewReportCustom(''); })}
                           {reviewReportSelected === 'Other' && (
                             <div className="control">
                               <textarea
                                 className="input"
-                                placeholder="Describe the issue…"
+                                placeholder={t('plugin.report.details_placeholder')}
                                 value={reviewReportCustom}
                                 onChange={e => setReviewReportCustom(e.target.value)}
                                 rows={2}
@@ -1675,7 +1682,7 @@ const PluginPage = () => {
                           )}
                           <div className="row">
                             <button type="button" className="button button-ghost button-sm" onClick={resetReviewReport}>
-                              Cancel
+                              {t('common.cancel')}
                             </button>
                             <button
                               type="submit"
@@ -1686,7 +1693,7 @@ const PluginPage = () => {
                                 (reviewReportSelected === 'Other' && !reviewReportCustom.trim())
                               }
                             >
-                              {reviewReportSubmitting ? 'Sending…' : 'Submit'}
+                              {reviewReportSubmitting ? t('plugin.actions.sending') : t('common.submit')}
                             </button>
                           </div>
                         </form>
@@ -1741,28 +1748,28 @@ const PluginPage = () => {
                 <div className="notice notice-success">
                   <span className="mark-box"><Check /></span>
                   <p className="notice-text">
-                    <strong>Review posted</strong> You've already reviewed this plugin. Thanks for the feedback!
+                    <Trans t={t} i18nKey="plugin.reviews.posted_notice" components={{ strong: <strong /> }} />
                   </p>
                   <button type="button" className="button button-danger button-sm" onClick={deleteReview}>
-                    Delete Review
+                    {t('plugin.reviews.delete_review')}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={submitReview} className="panel">
                   <div className="panel-head">
-                    <h3 className="h3">Leave a Review</h3>
+                    <h3 className="h3">{t('plugin.reviews.write_review')}</h3>
                   </div>
                   <div className="panel-body fields">
                     <div className="field">
-                      <span className="field-label">Your Rating</span>
+                      <span className="field-label">{t('plugin.reviews.rating_label')}</span>
                       <Stars value={reviewForm.rating} onRate={val => setReviewForm({ ...reviewForm, rating: val })} />
                     </div>
                     <label className="field">
-                      <span className="field-label">Your Experience</span>
+                      <span className="field-label">{t('plugin.reviews.experience')}</span>
                       <span className="control">
                         <textarea
                           className="input"
-                          placeholder="What did you like? What could be better?"
+                          placeholder={t('plugin.reviews.placeholder')}
                           value={reviewForm.comment}
                           maxLength={MAX_REVIEW_LENGTH}
                           onChange={e => setReviewForm({ ...reviewForm, comment: e.target.value })}
@@ -1772,14 +1779,14 @@ const PluginPage = () => {
                     </label>
                   </div>
                   <div className="panel-foot">
-                    <button className="button button-primary" type="submit">Post Review</button>
+                    <button className="button button-primary" type="submit">{t('plugin.reviews.submit')}</button>
                   </div>
                 </form>
               )
             ) : (
               <div className="notice notice-plain">
                 <p className="notice-text">
-                  Please <Link className="link link-pumpkin" to="/login">login</Link> to rate this plugin.
+                  <Trans t={t} i18nKey="plugin.reviews.login_required" components={{ login: <Link className="link link-pumpkin" to="/login" /> }} />
                 </p>
               </div>
             )}
@@ -1792,29 +1799,29 @@ const PluginPage = () => {
               {plugin.type === 'paid' && ownsPlugin ? (
                 <span className="status pd-owned">
                   <span className={`mark-box ${plugin.is_preorder ? 'mark-box-warning' : 'mark-box-success'}`}><Check /></span>
-                  {plugin.is_preorder ? 'Pre-Ordered (Awaiting Release)' : 'Purchased'}
+                  {plugin.is_preorder ? t('plugin.purchase.awaiting_release') : t('plugin.purchase.purchased')}
                 </span>
               ) : plugin.type === 'paid' ? (
                 <div className="stack pd-price">
-                  {plugin.is_preorder && <span className="sticker sticker-sm">PRE-ORDER</span>}
+                  {plugin.is_preorder && <span className="sticker sticker-sm">{t('plugin.purchase.preorder_badge')}</span>}
                   <span className={`cost cost-lg${discounted ? ' cost-sale' : ''}`}>
                     {discounted && <s>{euro(basePrice)}</s>}
                     {euro(finalPrice)}
                   </span>
                   {discounted && (
                     <div className="row">
-                      {saleDiscount > 0 && <span className="tag tag-danger">-{saleDiscount}% SALE</span>}
-                      {couponDiscount > 0 && <span className="tag tag-success">-{couponDiscount}% COUPON</span>}
+                      {saleDiscount > 0 && <span className="tag tag-danger">{t('plugin.purchase.sale_discount', { discount: saleDiscount })}</span>}
+                      {couponDiscount > 0 && <span className="tag tag-success">{t('plugin.purchase.coupon_discount', { discount: couponDiscount })}</span>}
                     </div>
                   )}
                 </div>
               ) : (
-                <span className={`cost cost-lg${plugin.type === 'adwall' ? '' : ' cost-free'}`}>{plugin.type === 'adwall' ? 'AD SUPPORTED' : 'FREE'}</span>
+                <span className={`cost cost-lg${plugin.type === 'adwall' ? '' : ' cost-free'}`}>{plugin.type === 'adwall' ? t('plugin.purchase.ad_supported') : t('plugin.purchase.free')}</span>
               )}
 
               {plugin.type === 'paid' && !ownsPlugin && (
                 <div className="field">
-                  <label className="field-label" htmlFor="detailPromoCode">Have a promo code?</label>
+                  <label className="field-label" htmlFor="detailPromoCode">{t('plugin.purchase.promo_prompt')}</label>
                   <div className="pd-coupon">
                     <span className="control">
                       <input
@@ -1824,7 +1831,7 @@ const PluginPage = () => {
                         className="input"
                         value={couponCode}
                         onChange={e => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="PROMOCODE"
+                        placeholder={t('plugin.purchase.promo_placeholder')}
                         disabled={validatingCoupon || appliedCoupon !== null}
                         autoComplete="off"
                         autoCapitalize="characters"
@@ -1833,11 +1840,11 @@ const PluginPage = () => {
                     </span>
                     {appliedCoupon ? (
                       <button type="button" className="button button-flat" onClick={handleClearCoupon}>
-                        Clear
+                        {t('plugin.purchase.clear')}
                       </button>
                     ) : (
                       <button type="button" className="button" onClick={handleApplyCoupon} disabled={validatingCoupon || !couponCode.trim()}>
-                        {validatingCoupon ? '…' : 'Apply'}
+                        {validatingCoupon ? '…' : t('plugin.purchase.apply')}
                       </button>
                     )}
                   </div>
@@ -1858,9 +1865,9 @@ const PluginPage = () => {
 
               <div className="cmd">
                 <code title={ppmCommand}>{ppmCommand}</code>
-                <button type="button" onClick={() => handleCopyPpm(ppmCommand)} title="Copy command" aria-label="Copy ppm install command">
+                <button type="button" onClick={() => handleCopyPpm(ppmCommand)} title={t('plugin.commands.copy_command')} aria-label={t('plugin.installation.copy_command')}>
                   {ppmCopied ? <Check /> : <Copy />}
-                  {ppmCopied ? 'Copied' : 'Copy'}
+                  {ppmCopied ? t('studio.crashes.copied') : t('common.copy')}
                 </button>
               </div>
               <a
@@ -1868,18 +1875,18 @@ const PluginPage = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="pd-ppm"
-                title="View ppm package manager on GitHub"
+                title={t('plugin.installation.github')}
               >
                 <Package />
-                Install with ppm package manager
+                {t('plugin.installation.install')}
               </a>
             </div>
           </div>
 
-          <div className="pd-safety-card" aria-label="WASM Safety & Permissions Summary">
+          <div className="pd-safety-card" aria-label={t('plugin.security.summary_label')}>
             <div className="row">
               <span className="label" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                <ShieldCheck size={15} className="pumpkin" /> Safety &amp; Permissions
+                <ShieldCheck size={15} className="pumpkin" /> {t('plugin.security.summary_title')}
               </span>
             </div>
 
@@ -1887,16 +1894,16 @@ const PluginPage = () => {
               <li className="pd-safety-item">
                 <Cpu />
                 <div>
-                  <strong>{plugin.wasm_security?.binary_format || 'WASM Sandbox'}</strong>
-                  <span className="muted">Isolated linear memory{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
+                  <strong>{plugin.wasm_security?.binary_format || t('plugin.security.wasm_sandbox')}</strong>
+                  <span className="muted">{t('plugin.security.isolated_linear_memory')}{plugin.api_version ? ` · API v${plugin.api_version}` : ''}</span>
                 </div>
               </li>
               <li className="pd-safety-item">
                 <Globe />
                 <div>
-                  <strong>{plugin.wasm_security?.network_access ? 'Requests Network Access' : 'No Outbound Network'}</strong>
+                  <strong>{plugin.wasm_security?.network_access ? t('plugin.security.requests_network') : t('plugin.security.no_outbound_network')}</strong>
                   <span className="muted">
-                    {plugin.wasm_security?.filesystem_access ? 'Uses scoped filesystem storage' : 'No raw filesystem access'}
+                    {plugin.wasm_security?.filesystem_access ? t('plugin.security.uses_scoped_fs') : t('plugin.security.no_raw_fs')}
                   </span>
                 </div>
               </li>
@@ -1905,14 +1912,13 @@ const PluginPage = () => {
                 <div>
                   <strong>
                     {(plugin.wasm_security?.runtime_permissions?.length ?? 0) === 0
-                      ? '0 Permissions'
-                      : `${plugin.wasm_security?.runtime_permissions?.length} Permission${plugin.wasm_security?.runtime_permissions?.length === 1 ? '' : 's'}`}
+                      ? t('plugin.security.zero_permissions')
+                      : t('plugin.security.permissions_count', { count: plugin.wasm_security?.runtime_permissions?.length ?? 0 })}
                   </strong>
                   <span className="muted">
-                    {commandCount} command{commandCount === 1 ? '' : 's'}
-                    {(plugin.wasm_security?.dependencies?.length ?? 0) > 0
-                      ? ` · ${plugin.wasm_security?.dependencies?.length} ${plugin.wasm_security?.dependencies?.length === 1 ? 'dependency' : 'dependencies'}`
-                      : ' · 0 dependencies'}
+                    {t('plugin.security.commands_count_inline', { count: commandCount })}
+                    {' · '}
+                    {t('plugin.security.dependencies_count_inline', { count: plugin.wasm_security?.dependencies?.length ?? 0 })}
                   </span>
                 </div>
               </li>
@@ -1924,7 +1930,7 @@ const PluginPage = () => {
               style={{ justifyContent: 'space-between' }}
               onClick={() => openTab('security')}
             >
-              <span>Inspect Capabilities &amp; Hashes</span>
+              <span>{t('plugin.security.inspect_btn')}</span>
               <ChevronRight size={14} />
             </button>
           </div>
@@ -1933,12 +1939,12 @@ const PluginPage = () => {
             <dl className="specs">
               {plugin.version && (
                 <>
-                  <dt>Version</dt>
+                  <dt>{t('plugin.version')}</dt>
                   <dd>
                     <span className="pd-spec-version">
                       <span className="mono">{plugin.version}</span>
                       {versions.length > 0 && (
-                        <button type="button" className="pd-textbtn" onClick={() => setVersionsOpen(true)}>Update History</button>
+                        <button type="button" className="pd-textbtn" onClick={() => setVersionsOpen(true)}>{t('plugin.update_history')}</button>
                       )}
                     </span>
                   </dd>
@@ -1950,21 +1956,21 @@ const PluginPage = () => {
                   <dd><span className="mono">v{plugin.api_version}</span></dd>
                 </>
               )}
-              <dt>Downloads</dt>
+              <dt>{t('plugin.downloads')}</dt>
               <dd>{(plugin.downloads ?? 0).toLocaleString()}</dd>
               {plugin.created_at && (
                 <>
-                  <dt>Released</dt>
+                  <dt>{t('plugin.released')}</dt>
                   <dd>{formatDate(plugin.created_at)}</dd>
                 </>
               )}
-              <dt>Category</dt>
-              <dd>{plugin.category}</dd>
+              <dt>{t('plugin.category')}</dt>
+              <dd>{translateCategory(t, plugin.category)}</dd>
               {plugin.source_link && (
                 <>
-                  <dt>Source</dt>
+                  <dt>{t('plugin.source')}</dt>
                   <dd>
-                    <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="link link-pumpkin">View Source Code</a>
+                    <a href={plugin.source_link} target="_blank" rel="noopener noreferrer" className="link link-pumpkin">{t('plugin.view_source')}</a>
                   </dd>
                 </>
               )}
@@ -1977,7 +1983,7 @@ const PluginPage = () => {
             >
               <span className="row" style={{ gap: 8 }}>
                 <History size={15} />
-                <span>Version History</span>
+                <span>{t('plugin.version_history')}</span>
                 {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
               </span>
               <ChevronRight size={14} />
@@ -1986,17 +1992,17 @@ const PluginPage = () => {
             {user && !reportDone && (
               !reportOpen ? (
                 <button type="button" className="button button-ghost button-sm pd-report-btn" onClick={() => setReportOpen(true)}>
-                  <Flag /> Report plugin
+                  <Flag /> {t('plugin.report.report_plugin')}
                 </button>
               ) : (
                 <form onSubmit={submitReport} className="pd-form">
-                  <span className="field-label">Reason for report</span>
+                  <span className="field-label">{t('plugin.report.reason')}</span>
                   {reasonPicker(REPORT_REASONS, reportSelected, reason => { setReportSelected(reason); setReportCustom(''); })}
                   {reportSelected === 'Other' && (
                     <div className="control">
                       <textarea
                         className="input"
-                        placeholder="Describe the issue…"
+                        placeholder={t('plugin.report.details_placeholder')}
                         value={reportCustom}
                         onChange={e => setReportCustom(e.target.value)}
                         rows={3}
@@ -2006,7 +2012,7 @@ const PluginPage = () => {
                   )}
                   <div className="row">
                     <button type="button" className="button button-ghost button-sm" onClick={resetReport}>
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -2017,7 +2023,7 @@ const PluginPage = () => {
                         (reportSelected === 'Other' && !reportCustom.trim())
                       }
                     >
-                      {reportSubmitting ? 'Sending…' : 'Submit'}
+                      {reportSubmitting ? t('plugin.actions.sending') : t('common.submit')}
                     </button>
                   </div>
                 </form>
@@ -2025,7 +2031,7 @@ const PluginPage = () => {
             )}
             {reportDone && (
               <p className="small pd-ok">
-                <Check /> Report submitted. Thanks for keeping the marketplace safe.
+                <Check /> {t('plugin.report.success')}
               </p>
             )}
           </div>
@@ -2072,15 +2078,15 @@ const PluginPage = () => {
       )}
 
       {versionsOpen && (
-        <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label="Version History">
+        <div className="overlay" onClick={() => setVersionsOpen(false)} role="dialog" aria-modal="true" aria-label={t('plugin.version_history')}>
           <div className="sheet pd-versions-sheet" onClick={e => e.stopPropagation()}>
             <div className="sheet-head">
               <div className="row" style={{ gap: 10 }}>
                 <History className="pumpkin" size={20} />
-                <h2 className="h2">Version History</h2>
+                <h2 className="h2">{t('plugin.version_history')}</h2>
                 {versions.length > 0 && <span className="tag tag-fg">{versions.length}</span>}
               </div>
-              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setVersionsOpen(false)} aria-label="Close">
+              <button type="button" className="button button-ghost button-sm button-icon" onClick={() => setVersionsOpen(false)} aria-label={t('common.close')}>
                 <X />
               </button>
             </div>
@@ -2093,13 +2099,13 @@ const PluginPage = () => {
                         <span className="pd-version-num">v{v.version}</span>
                         {v.track && <span className={`tag tag-solid ${trackTone[v.track] ?? 'tag-fg'}`}>{v.track}</span>}
                         {v.api_version && <span className="tag tag-fg">API v{v.api_version}</span>}
-                        <span className="small">Released {formatDate(v.created_at)}</span>
+                        <span className="small">{t('plugin.released_date', { date: formatDate(v.created_at) })}</span>
                       </div>
                       <div className="pd-prose">
                         {v.release_notes ? (
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>{v.release_notes}</ReactMarkdown>
                         ) : (
-                          <p className="muted">No specific release notes for this update.</p>
+                          <p className="muted">{t('plugin.no_release_notes')}</p>
                         )}
                       </div>
                     </li>
@@ -2112,16 +2118,16 @@ const PluginPage = () => {
                       <span className="pd-version-num">v{plugin.version}</span>
                       <span className="tag tag-solid tag-success">stable</span>
                       {plugin.api_version && <span className="tag tag-fg">API v{plugin.api_version}</span>}
-                      {plugin.created_at && <span className="small">Released {formatDate(plugin.created_at)}</span>}
+                      {plugin.created_at && <span className="small">{t('plugin.released_date', { date: formatDate(plugin.created_at) })}</span>}
                     </div>
                     <div className="pd-prose">
-                      <p className="muted">Initial release.</p>
+                      <p className="muted">{t('plugin.initial_release')}</p>
                     </div>
                   </li>
                 </ol>
               ) : (
                 <div className="blank">
-                  <p className="h3">No version history available yet.</p>
+                  <p className="h3">{t('plugin.no_version_history')}</p>
                 </div>
               )}
             </div>
@@ -2130,13 +2136,13 @@ const PluginPage = () => {
       )}
 
       {lightboxImage && (
-        <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label="Expanded view">
+        <div className="pd-lightbox" onClick={closeLightbox} role="dialog" aria-modal="true" aria-label={t('plugin.media.expanded_view')}>
           <div className="pd-lightbox-frame" onClick={(e) => e.stopPropagation()}>
-            <img src={lightboxImage} alt="Expanded view" />
+            <img src={lightboxImage} alt={t('plugin.media.expanded_view')} />
             <div className="pd-lightbox-bar">
               {isScreenshotInGallery && (
                 <>
-                  <button type="button" className="button button-sm button-icon" onClick={lightboxPrev} aria-label="Previous screenshot">
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxPrev} aria-label={t('plugin.media.previous')}>
                     <ChevronLeft />
                   </button>
                   <div className="pd-dots">
@@ -2146,17 +2152,17 @@ const PluginPage = () => {
                         type="button"
                         aria-current={i === lightboxIndex}
                         onClick={() => openLightbox(i)}
-                        aria-label={`Go to screenshot ${i + 1}`}
+                        aria-label={t('plugin.media.go_to_screenshot', { number: i + 1 })}
                       />
                     ))}
                   </div>
-                  <button type="button" className="button button-sm button-icon" onClick={lightboxNext} aria-label="Next screenshot">
+                  <button type="button" className="button button-sm button-icon" onClick={lightboxNext} aria-label={t('plugin.media.next')}>
                     <ChevronRight />
                   </button>
                 </>
               )}
               <span className="spacer" />
-              <button type="button" className="button button-sm button-icon" onClick={closeLightbox} aria-label="Close">
+              <button type="button" className="button button-sm button-icon" onClick={closeLightbox} aria-label={t('common.close')}>
                 <X />
               </button>
             </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   ArrowBigUp,
   Check,
@@ -40,11 +41,11 @@ import '../../styles/servers.css';
 const PAGE_LIMIT = 20;
 
 const SORT_OPTIONS = [
-  { value: 'popular', label: 'Sort: Trending & Active' },
-  { value: 'players', label: 'Sort: Most Players Online' },
-  { value: 'upvotes', label: 'Sort: Most Upvoted' },
-  { value: 'newest', label: 'Sort: Recently Listed' },
-];
+  { value: 'popular', label: 'servers.directory.sort_popular' },
+  { value: 'players', label: 'servers.directory.sort_players' },
+  { value: 'upvotes', label: 'servers.directory.sort_upvotes' },
+  { value: 'newest', label: 'servers.directory.sort_newest' },
+] as const;
 
 function parseSelectedTagsFromUrl(params: URLSearchParams): string[] {
   const out: string[] = [];
@@ -62,6 +63,7 @@ function parseSelectedTagsFromUrl(params: URLSearchParams): string[] {
 }
 
 const ServersHomePage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -148,7 +150,7 @@ const ServersHomePage = () => {
       });
       setData(res.data);
     } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to load Pumpkin Server List.');
+      setError(err?.response?.data?.error || t('servers.directory.load_failed'));
     } finally {
       setLoading(false);
     }
@@ -206,7 +208,7 @@ const ServersHomePage = () => {
           : prev
       );
     } catch (err: any) {
-      alert(err?.response?.data?.error || 'Could not update server upvote.');
+      alert(err?.response?.data?.error || t('servers.directory.upvote_failed'));
     } finally {
       setUpvotingId(null);
     }
@@ -220,8 +222,8 @@ const ServersHomePage = () => {
   return (
     <>
       <SEO
-        title="Pumpkin Servers"
-        description="Discover community Pumpkin Minecraft servers with live player counts, Rust performance, and community upvotes."
+        title={t('servers.directory.seo_title')}
+        description={t('servers.directory.seo_description')}
       />
 
       <section className="band">
@@ -229,22 +231,21 @@ const ServersHomePage = () => {
           <div className="sv-hero">
             <div className="stack" style={{ '--gap': '10px' } as React.CSSProperties}>
               <h1 className="display-2">
-                <span className="mark">Pumpkin</span> Server List
+                <Trans t={t} i18nKey="servers.directory.title" components={{ mark: <span className="mark" /> }} />
               </h1>
               <p className="lede">
-                Explore community Minecraft servers powered by <strong>Pumpkin</strong>, with live
-                player counts and zero fake slots.
+                <Trans t={t} i18nKey="servers.directory.lede" components={{ strong: <strong /> }} />
               </p>
             </div>
 
             <div className="row" style={{ gap: '0.6rem', flexWrap: 'wrap' }}>
               {sso ? (
                 <a href={listServerHref} className="button button-primary brutal">
-                  <Plus size={16} /> List Your Server
+                  <Plus size={16} /> {t('servers.directory.list_your_server')}
                 </a>
               ) : (
                 <Link to={listServerHref} className="button button-primary brutal">
-                  <Plus size={16} /> List Your Server
+                  <Plus size={16} /> {t('servers.directory.list_your_server')}
                 </Link>
               )}
             </div>
@@ -252,7 +253,7 @@ const ServersHomePage = () => {
 
           <div className="sv-stats">
             <div className="sv-stat">
-              <span className="label">Online Servers</span>
+              <span className="label">{t('servers.directory.online_servers')}</span>
               <span className="sv-stat-val">
                 <span
                   className="dot"
@@ -260,25 +261,25 @@ const ServersHomePage = () => {
                 />
                 {(data?.stats.onlineServers ?? 0).toLocaleString()}
               </span>
-              <span className="small muted">Active heartbeat in last 15m</span>
+              <span className="small muted">{t('servers.directory.online_servers_hint')}</span>
             </div>
 
             <div className="sv-stat">
-              <span className="label">Players Online Now</span>
+              <span className="label">{t('servers.directory.players_online_now')}</span>
               <span className="sv-stat-val">
                 <Users size={22} className="pumpkin" />
                 {(data?.stats.onlinePlayers ?? 0).toLocaleString()}
               </span>
-              <span className="small muted">Across listed servers</span>
+              <span className="small muted">{t('servers.directory.players_online_hint')}</span>
             </div>
 
             <div className="sv-stat">
-              <span className="label">Listed Servers</span>
+              <span className="label">{t('servers.directory.listed_servers')}</span>
               <span className="sv-stat-val">
                 <Server size={22} className="pumpkin" />
                 {(data?.stats.totalServers ?? 0).toLocaleString()}
               </span>
-              <span className="small muted">Linked via console pumpkin link</span>
+              <span className="small muted">{t('servers.directory.listed_servers_hint')}</span>
             </div>
           </div>
         </div>
@@ -293,7 +294,7 @@ const ServersHomePage = () => {
               <input
                 type="search"
                 className="input"
-                placeholder="Search servers by name, tagline, tag, owner, or IP…"
+                placeholder={t('servers.directory.search_placeholder')}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 autoComplete="off"
@@ -313,7 +314,7 @@ const ServersHomePage = () => {
                   background: onlineOnly ? 'var(--on-pumpkin)' : 'var(--success)',
                 }}
               />
-              Online Only
+              {t('servers.directory.online_only')}
             </button>
 
             <button
@@ -322,20 +323,20 @@ const ServersHomePage = () => {
               aria-pressed={bedrockOnly}
               onClick={() => updateFilterParam({ edition: bedrockOnly ? null : 'bedrock' })}
             >
-              <Smartphone size={13} /> Bedrock / Crossplay
+              <Smartphone size={13} /> {t('servers.directory.bedrock_crossplay')}
             </button>
 
             <Select
-              options={SORT_OPTIONS}
+              options={SORT_OPTIONS.map((o) => ({ value: o.value, label: t(o.label) }))}
               value={sort}
               onChange={(nextSort) => updateFilterParam({ sort: nextSort })}
-              aria-label="Sort servers"
+              aria-label={t('servers.directory.sort_aria')}
             />
           </div>
 
           {/* Categorized Multi-Tag Filter Box */}
-          <div className="sv-filter-box" role="region" aria-label="Filter servers by tags">
-            <div className="sv-cat-tabs" role="tablist" aria-label="Tag categories">
+          <div className="sv-filter-box" role="region" aria-label={t('servers.directory.filter_tags_aria')}>
+            <div className="sv-cat-tabs" role="tablist" aria-label={t('servers.directory.tag_categories_aria')}>
               <button
                 type="button"
                 role="tab"
@@ -344,7 +345,7 @@ const ServersHomePage = () => {
                 aria-pressed={tagTab === 'popular'}
                 onClick={() => setTagTab('popular')}
               >
-                Popular
+                {t('servers.directory.popular_tags')}
               </button>
               {SERVER_TAG_CATEGORIES.map((cat) => (
                 <button
@@ -356,7 +357,7 @@ const ServersHomePage = () => {
                   aria-pressed={tagTab === cat.id}
                   onClick={() => setTagTab(cat.id)}
                 >
-                  {cat.label}
+                  {t(`servers.tags.categories.${cat.id}` as any, cat.label)}
                 </button>
               ))}
               <button
@@ -367,7 +368,7 @@ const ServersHomePage = () => {
                 aria-pressed={tagTab === 'all'}
                 onClick={() => setTagTab('all')}
               >
-                All Tags ({SERVER_TAGS.length})
+                {t('servers.directory.all_tags', { count: SERVER_TAGS.length })}
               </button>
             </div>
 
@@ -386,7 +387,7 @@ const ServersHomePage = () => {
 
             {selectedTags.length > 0 && (
               <div className="sv-active-filters">
-                <span className="small muted">Matching tags:</span>
+                <span className="small muted">{t('servers.directory.matching_tags')}</span>
                 {selectedTags.map((tagVal) => (
                   <ServerTagBadge
                     key={tagVal}
@@ -402,7 +403,7 @@ const ServersHomePage = () => {
                   className="button button-ghost button-sm"
                   onClick={() => updateFilterParam({ tags: null })}
                 >
-                  <X size={13} /> Clear tags
+                  <X size={13} /> {t('servers.directory.clear_tags')}
                 </button>
               </div>
             )}
@@ -417,7 +418,7 @@ const ServersHomePage = () => {
           {loading && !data ? (
             <div className="sf-loader">
               <span className="loading" />
-              <p className="small">Loading Pumpkin servers…</p>
+              <p className="small">{t('servers.directory.loading')}</p>
             </div>
           ) : !data || data.servers.length === 0 ? (
             <div className="panel">
@@ -425,23 +426,16 @@ const ServersHomePage = () => {
                 <Server size={36} className="pumpkin" />
                 <p className="h2">
                   {hasActiveFilters ? (
-                    <>
-                      No matching <span className="mark">servers</span> found
-                    </>
+                    <Trans t={t} i18nKey="servers.directory.empty_filtered_title" components={{ mark: <span className="mark" /> }} />
                   ) : (
-                    <>
-                      Be the first to list your <span className="mark">Pumpkin</span> server
-                    </>
+                    <Trans t={t} i18nKey="servers.directory.empty_title" components={{ mark: <span className="mark" /> }} />
                   )}
                 </p>
                 <p className="small" style={{ maxWidth: '44ch' }}>
                   {hasActiveFilters ? (
-                    'Try removing one of your selected tag filters or clearing your search query.'
+                    t('servers.directory.empty_filtered_desc')
                   ) : (
-                    <>
-                      Run <code>pumpkin link</code> in your Pumpkin server console, claim it on your
-                      Pumpkin Account, and toggle your public listing on in seconds.
-                    </>
+                    <Trans t={t} i18nKey="servers.directory.empty_desc" components={{ code: <code /> }} />
                   )}
                 </p>
                 <div className="row" style={{ gap: '0.6rem', justifyContent: 'center', flexWrap: 'wrap' }}>
@@ -455,16 +449,16 @@ const ServersHomePage = () => {
                         setSearchParams({}, { replace: true });
                       }}
                     >
-                      Clear All Filters
+                      {t('search.clear_all')}
                     </button>
                   )}
                   {sso ? (
                     <a href={listServerHref} className="button button-primary">
-                      <Terminal size={15} /> Link &amp; List Your Server
+                      <Terminal size={15} /> {t('servers.directory.link_and_list')}
                     </a>
                   ) : (
                     <Link to={listServerHref} className="button button-primary">
-                      <Terminal size={15} /> Link &amp; List Your Server
+                      <Terminal size={15} /> {t('servers.directory.link_and_list')}
                     </Link>
                   )}
                 </div>
@@ -483,7 +477,7 @@ const ServersHomePage = () => {
                     <article key={srv.publicId} className="sv-card">
                       <Link to={detailPath} className="sv-icon" aria-label={srv.name}>
                         {srv.iconUrl ? (
-                          <img src={srv.iconUrl} alt={`${srv.name} icon`} loading="lazy" />
+                          <img src={srv.iconUrl} alt={t('servers.directory.server_icon_alt', { name: srv.name })} loading="lazy" />
                         ) : (
                           srv.name.charAt(0).toUpperCase()
                         )}
@@ -504,12 +498,12 @@ const ServersHomePage = () => {
                               }}
                             />
                             {srv.isOnline
-                              ? `${srv.onlinePlayers}/${srv.maxPlayers} Players`
-                              : 'Offline'}
+                              ? t('servers.directory.players_ratio', { online: srv.onlinePlayers, max: srv.maxPlayers })
+                              : t('servers.common.offline')}
                           </span>
                           {srv.bedrockAddress && !srv.tags.includes('crossplay') && (
                             <span className="tag tag-info" title={`Bedrock: ${srv.bedrockAddress}`}>
-                              Crossplay
+                              {t('servers.common.crossplay')}
                             </span>
                           )}
                         </div>
@@ -548,7 +542,7 @@ const ServersHomePage = () => {
                               {srv.countryName}
                             </span>
                           )}
-                          <span className="muted">by @{srv.ownerUsername}</span>
+                          <span className="muted">{t('servers.directory.by_owner', { owner: srv.ownerUsername })}</span>
                         </div>
                       </div>
 
@@ -557,7 +551,7 @@ const ServersHomePage = () => {
                           type="button"
                           className="sv-ip-btn"
                           onClick={() => handleCopyAddress(srv.publicId, srv.javaAddress)}
-                          title="Click to copy Java join IP"
+                          title={t('servers.directory.copy_java_ip')}
                         >
                           <span>{srv.javaAddress}</span>
                           {isCopied ? (
@@ -576,9 +570,9 @@ const ServersHomePage = () => {
                           title={
                             user
                               ? srv.hasUpvoted
-                                ? 'Remove upvote'
-                                : 'Upvote this server'
-                              : 'Sign in with Pumpkin Account to upvote'
+                                ? t('servers.directory.remove_upvote')
+                                : t('servers.directory.upvote_server')
+                              : t('servers.directory.sign_in_to_upvote')
                           }
                         >
                           <ArrowBigUp size={18} />
@@ -596,7 +590,7 @@ const ServersHomePage = () => {
                   style={{ justifyContent: 'space-between', alignItems: 'center', marginTop: '0.5rem' }}
                 >
                   <span className="small muted">
-                    Page {data.page} of {totalPages} ({data.total.toLocaleString()} servers)
+                    {t('servers.directory.pagination', { page: data.page, totalPages, total: data.total.toLocaleString() })}
                   </span>
                   <div className="row" style={{ gap: '0.5rem' }}>
                     <button
@@ -605,7 +599,7 @@ const ServersHomePage = () => {
                       disabled={data.page <= 1}
                       onClick={() => updateFilterParam({ page: String(data.page - 1) })}
                     >
-                      <ChevronLeft size={15} /> Previous
+                      <ChevronLeft size={15} /> {t('servers.directory.previous')}
                     </button>
                     <button
                       type="button"
@@ -613,7 +607,7 @@ const ServersHomePage = () => {
                       disabled={data.page >= totalPages}
                       onClick={() => updateFilterParam({ page: String(data.page + 1) })}
                     >
-                      Next <ChevronRight size={15} />
+                      {t('servers.directory.next')} <ChevronRight size={15} />
                     </button>
                   </div>
                 </div>

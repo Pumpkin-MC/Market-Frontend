@@ -425,7 +425,7 @@ const StaffPage = () => {
             setActionModal(null);
             setActionReason('');
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to complete moderation action'));
+            alert(extractErrorMessage(err, t('staff.actions.moderation_failed')));
         } finally {
             setActionBusy(false);
         }
@@ -451,7 +451,7 @@ const StaffPage = () => {
                 });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to restore server listing'));
+            alert(extractErrorMessage(err, t('staff.actions.restore_server_failed')));
         }
     };
 
@@ -460,7 +460,7 @@ const StaffPage = () => {
             await api.put(`/admin/users/${id}/role`, { role: newRole, reason: `Role updated to ${newRole}` });
             setUsers(users.map(u => (u.id === id ? { ...u, role: newRole } : u)));
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to update role'));
+            alert(extractErrorMessage(err, t('staff.actions.role_update_failed')));
         }
     };
 
@@ -481,7 +481,7 @@ const StaffPage = () => {
                 });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to approve plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.approve_failed')));
         }
     };
 
@@ -498,7 +498,7 @@ const StaffPage = () => {
                 setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, ...claimData } });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to claim plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.claim_failed')));
             fetchTabData(activeTab);
         }
     };
@@ -511,7 +511,7 @@ const StaffPage = () => {
                 setSelectedItem({ type: 'plugin', data: { ...selectedItem.data, claimed_by_id: null, claimed_by_name: null, claimed_at: null } });
             }
         } catch (err: any) {
-            alert(extractErrorMessage(err, 'Failed to unclaim plugin'));
+            alert(extractErrorMessage(err, t('staff.actions.unclaim_failed')));
         }
     };
 
@@ -880,20 +880,20 @@ const StaffPage = () => {
               ]
             : selectedItem.type === 'server'
               ? [
-                    ['Server ID', `${selectedItem.data.serverId} (${selectedItem.data.publicId})`],
-                    ['Name', selectedItem.data.name],
-                    ['Owner', `@${selectedItem.data.ownerUsername}`],
-                    ['Java Address', selectedItem.data.javaAddress || '—'],
-                    ['Bedrock Address', selectedItem.data.bedrockAddress || '—'],
-                    ['Tagline', selectedItem.data.tagline || '—'],
-                    ['Tags', selectedItem.data.tags?.length ? selectedItem.data.tags.join(', ') : '—'],
-                    ['Website', selectedItem.data.websiteUrl || '—'],
+                    [t('staff.inspection.fields.server_id'), `${selectedItem.data.serverId} (${selectedItem.data.publicId})`],
+                    [t('staff.inspection.fields.name'), selectedItem.data.name],
+                    [t('staff.inspection.fields.owner'), `@${selectedItem.data.ownerUsername}`],
+                    [t('staff.inspection.fields.java_address'), selectedItem.data.javaAddress || '—'],
+                    [t('staff.inspection.fields.bedrock_address'), selectedItem.data.bedrockAddress || '—'],
+                    [t('staff.inspection.fields.tagline'), selectedItem.data.tagline || '—'],
+                    [t('search.tags_title'), selectedItem.data.tags?.length ? selectedItem.data.tags.join(', ') : '—'],
+                    [t('staff.inspection.fields.website'), selectedItem.data.websiteUrl || '—'],
                     ['Discord', selectedItem.data.discordUrl || '—'],
-                    ['Live Status', selectedItem.data.isOnline ? `Online (${selectedItem.data.onlinePlayers}/${selectedItem.data.maxPlayers})` : 'Offline'],
-                    ['Upvotes', (selectedItem.data.upvotesCount ?? 0).toLocaleString()],
-                    ['Moderation Status', selectedItem.data.moderationStatus],
+                    [t('staff.inspection.fields.live_status'), selectedItem.data.isOnline ? `${t('servers.common.online')} (${selectedItem.data.onlinePlayers}/${selectedItem.data.maxPlayers})` : t('servers.common.offline')],
+                    [t('staff.inspection.fields.upvotes'), (selectedItem.data.upvotesCount ?? 0).toLocaleString()],
+                    [t('staff.inspection.fields.moderation_status'), selectedItem.data.moderationStatus],
                     ...(selectedItem.data.moderationReason
-                        ? [['Moderation Reason', selectedItem.data.moderationReason] as [string, any]]
+                        ? [[t('staff.inspection.fields.moderation_reason'), selectedItem.data.moderationReason] as [string, any]]
                         : []),
                 ]
               : selectedItem.type === 'report'
@@ -905,7 +905,7 @@ const StaffPage = () => {
                     [t('staff.inspection.fields.reason'), selectedItem.data.reason],
                     ...(selectedItem.data.review_comment
                         ? [
-                              [t('staff.inspection.fields.review_author'), `@${selectedItem.data.review_author_username || 'Unknown'}`] as [string, any],
+                              [t('staff.inspection.fields.review_author'), `@${selectedItem.data.review_author_username || t('common.unknown')}`] as [string, any],
                               [t('staff.inspection.fields.review_rating'), `${selectedItem.data.review_rating} / 5`] as [string, any],
                               [t('staff.inspection.fields.review_content'), selectedItem.data.review_comment] as [string, any],
                           ]
@@ -940,7 +940,7 @@ const StaffPage = () => {
         ['plugins', t('staff.tabs.plugins', { count: kpis.totalActivePlugins })],
         ...(isStaff
             ? [
-                  ['servers', `Servers (${serverListings.length})`] as [StaffTab, string],
+                  ['servers', t('staff.tabs.servers', { count: serverListings.length })] as [StaffTab, string],
                   ['reports', kpis.openReports > 0 ? t('staff.tabs.reports_open', { count: kpis.openReports }) : t('staff.tabs.reports')] as [StaffTab, string],
                   ['users', t('staff.tabs.users')] as [StaffTab, string],
               ]
@@ -1282,7 +1282,7 @@ const StaffPage = () => {
                                 : activeTab === 'plugins'
                                   ? t('staff.search.plugins')
                                   : activeTab === 'servers'
-                                    ? 'Search server listings by name, IP, or owner…'
+                                    ? t('staff.search.servers')
                                     : activeTab === 'reports'
                                       ? t('staff.search.reports')
                                       : activeTab === 'users'
@@ -1341,23 +1341,23 @@ const StaffPage = () => {
                 {activeTab === 'servers' && (
                     <Select
                         options={[
-                            { value: 'all', label: `All Listings (${serverListings.length})` },
+                            { value: 'all', label: t('staff.filters.servers_all', { count: serverListings.length }) },
                             {
                                 value: 'listed',
-                                label: `Publicly Listed (${serverListings.filter(s => s.isListed && s.moderationStatus === 'active').length})`,
+                                label: t('staff.filters.servers_listed', { count: serverListings.filter(s => s.isListed && s.moderationStatus === 'active').length }),
                             },
                             {
                                 value: 'hidden',
-                                label: `Hidden (${serverListings.filter(s => s.moderationStatus === 'hidden').length})`,
+                                label: t('staff.filters.servers_hidden', { count: serverListings.filter(s => s.moderationStatus === 'hidden').length }),
                             },
                             {
                                 value: 'banned',
-                                label: `Banned (${serverListings.filter(s => s.moderationStatus === 'banned').length})`,
+                                label: t('staff.filters.servers_banned', { count: serverListings.filter(s => s.moderationStatus === 'banned').length }),
                             },
                         ]}
                         value={serverStatusFilter}
                         onChange={setServerStatusFilter}
-                        aria-label="Filter server listings"
+                        aria-label={t('staff.filters.servers_aria')}
                     />
                 )}
                 {activeTab === 'reports' && (
@@ -1499,9 +1499,9 @@ const StaffPage = () => {
                 filteredServers.length === 0 ? (
                     <div className="blank">
                         <Server size={28} className="muted" />
-                        <p className="h3">No server listings found</p>
+                        <p className="h3">{t('staff.empty.no_servers_title')}</p>
                         <p className="small muted">
-                            Public and draft server listings configured via Your Servers will appear here.
+                            {t('staff.empty.no_servers_desc')}
                         </p>
                     </div>
                 ) : (
@@ -1509,12 +1509,12 @@ const StaffPage = () => {
                         <table className="ledger">
                             <thead>
                                 <tr>
-                                    <th>Server</th>
-                                    <th>Owner</th>
-                                    <th>Join Address</th>
-                                    <th>Live Telemetry</th>
-                                    <th>Status</th>
-                                    <th className="end">Actions</th>
+                                    <th>{t('staff.table.server')}</th>
+                                    <th>{t('staff.table.owner')}</th>
+                                    <th>{t('staff.table.join_address')}</th>
+                                    <th>{t('staff.table.live_telemetry')}</th>
+                                    <th>{t('staff.table.status')}</th>
+                                    <th className="end">{t('staff.table.actions')}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1535,7 +1535,7 @@ const StaffPage = () => {
                                                         <span className="small mono muted">{s.publicId}</span>
                                                     </div>
                                                     <span className="small muted">
-                                                        {s.tagline || 'No tagline'}
+                                                        {s.tagline || t('staff.servers.no_tagline')}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1559,23 +1559,23 @@ const StaffPage = () => {
                                             <div className="sf-plugin-meta">
                                                 <strong>
                                                     {s.isOnline
-                                                        ? `${s.onlinePlayers}/${s.maxPlayers} online`
-                                                        : 'Offline'}
+                                                        ? t('staff.servers.online_ratio', { online: s.onlinePlayers, max: s.maxPlayers })
+                                                        : t('servers.common.offline')}
                                                 </strong>
                                                 <span className="small muted">
-                                                    {(s.upvotesCount ?? 0).toLocaleString()} upvotes
+                                                    {t('staff.servers.upvotes_count', { count: s.upvotesCount ?? 0, formatted: (s.upvotesCount ?? 0).toLocaleString() })}
                                                 </span>
                                             </div>
                                         </td>
                                         <td>
                                             {s.moderationStatus === 'banned' ? (
-                                                <span className="tag tag-danger">Banned</span>
+                                                <span className="tag tag-danger">{t('staff.servers.status_banned')}</span>
                                             ) : s.moderationStatus === 'hidden' ? (
-                                                <span className="tag tag-warning">Hidden</span>
+                                                <span className="tag tag-warning">{t('staff.servers.status_hidden')}</span>
                                             ) : s.isListed ? (
-                                                <span className="tag tag-success">Listed</span>
+                                                <span className="tag tag-success">{t('staff.servers.status_listed')}</span>
                                             ) : (
-                                                <span className="tag tag-fg">Unlisted</span>
+                                                <span className="tag tag-fg">{t('staff.servers.status_unlisted')}</span>
                                             )}
                                         </td>
                                         <td>
@@ -1587,7 +1587,7 @@ const StaffPage = () => {
                                                         target="_blank"
                                                         rel="noreferrer"
                                                     >
-                                                        <ExternalLink size={14} /> View
+                                                        <ExternalLink size={14} /> {t('staff.actions.view')}
                                                     </a>
                                                 )}
                                                 <button
@@ -1595,7 +1595,7 @@ const StaffPage = () => {
                                                     className="button button-sm"
                                                     onClick={() => setSelectedItem({ type: 'server', data: s })}
                                                 >
-                                                    Details
+                                                    {t('staff.actions.details')}
                                                 </button>
                                                 {s.moderationStatus !== 'active' && (
                                                     <button
@@ -1603,7 +1603,7 @@ const StaffPage = () => {
                                                         className="button button-primary button-sm"
                                                         onClick={() => void restoreServerListing(s.serverId)}
                                                     >
-                                                        Restore
+                                                        {t('staff.actions.restore')}
                                                     </button>
                                                 )}
                                                 {s.moderationStatus !== 'hidden' && (
@@ -1619,7 +1619,7 @@ const StaffPage = () => {
                                                             })
                                                         }
                                                     >
-                                                        Hide
+                                                        {t('staff.actions.hide')}
                                                     </button>
                                                 )}
                                                 {s.moderationStatus !== 'banned' && (
@@ -1635,7 +1635,7 @@ const StaffPage = () => {
                                                             })
                                                         }
                                                     >
-                                                        Ban
+                                                        {t('staff.actions.ban')}
                                                     </button>
                                                 )}
                                             </div>
@@ -2471,9 +2471,9 @@ const StaffPage = () => {
                                           : actionModal.kind === 'delete_user'
                                             ? t('staff.modal.title_delete_user', { name: actionModal.targetName })
                                             : actionModal.kind === 'hide_server'
-                                              ? `Hide Server Listing — ${actionModal.targetName}`
+                                              ? t('staff.modal.title_hide_server', { name: actionModal.targetName })
                                               : actionModal.kind === 'ban_server'
-                                                ? `Ban Server Listing — ${actionModal.targetName}`
+                                                ? t('staff.modal.title_ban_server', { name: actionModal.targetName })
                                                 : t('staff.modal.title_resolve_report', { name: actionModal.targetName })}
                                 </h2>
                             </div>

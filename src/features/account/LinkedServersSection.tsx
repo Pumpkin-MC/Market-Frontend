@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import {
   Area,
   AreaChart,
@@ -183,29 +185,24 @@ interface LinkedServerTelemetryDetail {
   playerAnalytics?: PlayerAnalytics;
 }
 
-const WEEKDAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'] as const;
-const WEEKDAY_LONG = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday',
-] as const;
+const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
-const formatDuration = (secs: number | null | undefined): string => {
+const formatDuration = (t: TFunction, secs: number | null | undefined): string => {
   if (secs == null || secs <= 0) return '—';
   const rounded = Math.round(secs);
-  if (rounded < 60) return `${rounded}s`;
+  if (rounded < 60) return t('servers.duration.seconds', { count: rounded });
   const mins = Math.floor(rounded / 60);
   const remSecs = rounded % 60;
   if (mins < 60) {
-    return remSecs > 0 ? `${mins}m ${remSecs}s` : `${mins}m`;
+    return remSecs > 0
+      ? t('servers.duration.minutes_seconds', { minutes: mins, seconds: remSecs })
+      : t('servers.duration.minutes', { count: mins });
   }
   const hours = Math.floor(mins / 60);
   const remMins = mins % 60;
-  return remMins > 0 ? `${hours}h ${remMins}m` : `${hours}h`;
+  return remMins > 0
+    ? t('servers.duration.hours_minutes', { hours, minutes: remMins })
+    : t('servers.duration.hours', { count: hours });
 };
 
 const formatMemory = (mb: number | null | undefined): string => {
@@ -214,21 +211,22 @@ const formatMemory = (mb: number | null | undefined): string => {
   return `${mb} MB`;
 };
 
-const formatRelativeTime = (iso: string | null | undefined): string => {
-  if (!iso) return 'Never';
+const formatRelativeTime = (t: TFunction, iso: string | null | undefined): string => {
+  if (!iso) return t('servers.time.never');
   const diffSec = Math.max(0, Math.floor((Date.now() - new Date(iso).getTime()) / 1000));
-  if (diffSec < 60) return 'Just now';
+  if (diffSec < 60) return t('staff.time_just_now');
   const mins = Math.floor(diffSec / 60);
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 60) return t('staff.time_m_ago', { count: mins });
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return t('staff.time_h_ago', { count: hours });
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return t('staff.time_d_ago', { count: days });
 };
 
 export const LinkedServersSection: React.FC<{
   onToast?: (text: string, type: 'success' | 'error') => void;
 }> = ({ onToast }) => {
+  const { t, i18n } = useTranslation();
   const sso = useCrossSubdomainSso();
   const [searchParams, setSearchParams] = useSearchParams();
   const [servers, setServers] = useState<LinkedServerSummary[]>([]);
@@ -284,12 +282,12 @@ export const LinkedServersSection: React.FC<{
         );
         syncListingForm(res.data);
       } catch (err: any) {
-        onToast?.(err.response?.data?.error || 'Failed to load public listing settings', 'error');
+        onToast?.(err.response?.data?.error || t('servers.manage.load_listing_failed'), 'error');
       } finally {
         setLoadingListing(false);
       }
     },
-    [onToast]
+    [onToast, t]
   );
 
   const loadServers = useCallback(async () => {
@@ -303,11 +301,11 @@ export const LinkedServersSection: React.FC<{
         return list[0]?.id ?? null;
       });
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to load your servers', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.load_servers_failed'), 'error');
     } finally {
       setLoadingList(false);
     }
-  }, [onToast]);
+  }, [onToast, t]);
 
   const loadDetail = useCallback(
     async (serverId: number, selectedRange: '24h' | '7d' | '30d') => {
@@ -318,12 +316,12 @@ export const LinkedServersSection: React.FC<{
         );
         setDetail(res.data);
       } catch (err: any) {
-        onToast?.(err.response?.data?.error || 'Failed to load server telemetry', 'error');
+        onToast?.(err.response?.data?.error || t('servers.manage.load_telemetry_failed'), 'error');
       } finally {
         setLoadingDetail(false);
       }
     },
-    [onToast]
+    [onToast, t]
   );
 
   useEffect(() => {
@@ -381,9 +379,9 @@ export const LinkedServersSection: React.FC<{
           : prev
       );
       setRenamingId(null);
-      onToast?.('Server renamed', 'success');
+      onToast?.(t('servers.manage.renamed'), 'success');
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to rename server', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.rename_failed'), 'error');
     }
   };
 
@@ -398,9 +396,9 @@ export const LinkedServersSection: React.FC<{
         }
         return remaining;
       });
-      onToast?.('Server unlinked from your Pumpkin Account', 'success');
+      onToast?.(t('servers.manage.unlinked'), 'success');
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to unlink server', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.unlink_failed'), 'error');
     }
   };
 
@@ -428,12 +426,12 @@ export const LinkedServersSection: React.FC<{
       );
       onToast?.(
         res.data.isListed
-          ? 'Server published on Pumpkin Servers!'
-          : 'Server listing settings saved',
+          ? t('servers.manage.listing_published')
+          : t('servers.manage.listing_saved'),
         'success'
       );
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to save public server listing', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.listing_save_failed'), 'error');
     } finally {
       setSavingListing(false);
     }
@@ -454,7 +452,7 @@ export const LinkedServersSection: React.FC<{
         quality: 0.9,
       });
       if (!validated.valid || !validated.file) {
-        onToast?.(validated.error || 'Invalid server icon image', 'error');
+        onToast?.(validated.error || t('servers.manage.invalid_icon'), 'error');
         return;
       }
 
@@ -466,9 +464,9 @@ export const LinkedServersSection: React.FC<{
         { headers: { 'Content-Type': 'multipart/form-data' } }
       );
       setListing((prev) => (prev ? { ...prev, iconUrl: res.data.iconUrl } : prev));
-      onToast?.('Server icon updated', 'success');
+      onToast?.(t('servers.manage.icon_updated'), 'success');
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to upload server icon', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.icon_upload_failed'), 'error');
     } finally {
       setUploadingIcon(false);
     }
@@ -480,9 +478,9 @@ export const LinkedServersSection: React.FC<{
     try {
       await api.delete(`/user/servers/${activeServer.id}/icon`);
       setListing((prev) => (prev ? { ...prev, iconUrl: null } : prev));
-      onToast?.('Server icon removed', 'success');
+      onToast?.(t('servers.manage.icon_removed'), 'success');
     } catch (err: any) {
-      onToast?.(err.response?.data?.error || 'Failed to remove server icon', 'error');
+      onToast?.(err.response?.data?.error || t('servers.manage.icon_remove_failed'), 'error');
     } finally {
       setUploadingIcon(false);
     }
@@ -493,13 +491,14 @@ export const LinkedServersSection: React.FC<{
 
   const chartData = (detail?.samples || []).map((pt) => {
     const d = new Date(pt.timestamp);
+    const loc = i18n.language || undefined;
     const label =
       range === '24h'
-        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        : d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit' });
+        ? d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+        : d.toLocaleDateString(loc, { month: 'short', day: 'numeric', hour: '2-digit' });
     return {
       label,
-      fullTime: d.toLocaleString(),
+      fullTime: d.toLocaleString(loc),
       onlinePlayers: pt.onlinePlayers,
       ramGb: pt.ramAllocatedMb != null ? Number((pt.ramAllocatedMb / 1024).toFixed(2)) : null,
     };
@@ -516,15 +515,15 @@ export const LinkedServersSection: React.FC<{
         <div className="row" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h2 className="h1">
-              <span className="mark">Your</span> Servers
+              <Trans t={t} i18nKey="servers.manage.heading" components={{ mark: <span className="mark" /> }} />
             </h2>
             <p className="small">
-              Manage your Pumpkin servers and monitor live player counts, hardware telemetry, active plugins, and crash reports.
+              {t('servers.manage.subtitle')}
             </p>
           </div>
           <span className="spacer" />
           <Link to="/link" className="button button-primary button-sm">
-            <Plus size={16} /> Link Server
+            <Plus size={16} /> {t('servers.link.seo_title')}
           </Link>
         </div>
       </header>
@@ -537,14 +536,14 @@ export const LinkedServersSection: React.FC<{
               <Terminal />
             </span>
             <div style={{ flex: '1 1 16rem' }}>
-              <strong style={{ display: 'block' }}>Link a Pumpkin Server in Seconds</strong>
+              <strong style={{ display: 'block' }}>{t('servers.manage.quick_link_title')}</strong>
               <span className="small">
-                Run <code>pumpkin link</code> in your server terminal/console (restricted to console for security), then open the generated link.
+                <Trans t={t} i18nKey="servers.manage.quick_link_desc" components={{ code: <code /> }} />
               </span>
             </div>
             <button type="button" className="button button-sm" onClick={handleCopyCommand}>
               {copiedCmd ? <Check size={14} /> : <Copy size={14} />}
-              {copiedCmd ? 'Copied!' : 'Copy pumpkin link'}
+              {copiedCmd ? t('plugin.copied') : t('servers.manage.copy_cmd')}
             </button>
           </div>
         </div>
@@ -555,7 +554,7 @@ export const LinkedServersSection: React.FC<{
           <div className="panel-body" style={{ textAlign: 'center', padding: '2.5rem 1rem' }}>
             <span className="loading" />
             <p className="small" style={{ marginTop: '0.75rem' }}>
-              Loading your servers…
+              {t('servers.manage.loading_servers')}
             </p>
           </div>
         </div>
@@ -564,13 +563,13 @@ export const LinkedServersSection: React.FC<{
           <div className="blank">
             <Server size={32} style={{ opacity: 0.6 }} />
             <p className="h2">
-              No <span className="mark">servers</span> yet
+              <Trans t={t} i18nKey="servers.manage.empty_title" components={{ mark: <span className="mark" /> }} />
             </p>
             <p className="small">
-              Start any Pumpkin server, type <code>pumpkin link</code> in the console, and confirm the claim link to manage it and view real-time telemetry here.
+              <Trans t={t} i18nKey="servers.manage.empty_desc" components={{ code: <code /> }} />
             </p>
             <Link to="/link" className="button button-primary">
-              Link Existing Server
+              {t('servers.manage.link_existing')}
             </Link>
           </div>
         </div>
@@ -624,7 +623,7 @@ export const LinkedServersSection: React.FC<{
                     </strong>
                     <span className="spacer" />
                     <span className={`sticker sticker-sm ${srv.isOnline ? 'sticker-success' : ''}`}>
-                      {srv.isOnline ? 'Online' : 'Offline'}
+                      {srv.isOnline ? t('servers.common.online') : t('servers.common.offline')}
                     </span>
                   </div>
 
@@ -690,7 +689,7 @@ export const LinkedServersSection: React.FC<{
                         <button
                           type="button"
                           className="button button-icon button-sm"
-                          title="Rename server"
+                          title={t('servers.manage.rename_server')}
                           onClick={() => {
                             setRenamingId(activeServer.id);
                             setRenameValue(activeServer.displayName);
@@ -701,14 +700,14 @@ export const LinkedServersSection: React.FC<{
                       </>
                     )}
                     <span className="small muted">
-                      Last heartbeat: {formatRelativeTime(activeServer.lastPing)}
+                      {t('servers.manage.last_heartbeat', { time: formatRelativeTime(t, activeServer.lastPing) })}
                     </span>
                   </div>
 
                   <span className="spacer" />
 
                   <div className="row" style={{ gap: '0.5rem', flexWrap: 'wrap' }}>
-                    <div className="segmented" role="group" aria-label="Telemetry time range">
+                    <div className="segmented" role="group" aria-label={t('servers.manage.time_range_aria')}>
                       {(['24h', '7d', '30d'] as const).map((r) => (
                         <button
                           key={r}
@@ -725,7 +724,7 @@ export const LinkedServersSection: React.FC<{
                     <button
                       type="button"
                       className="button button-icon button-sm"
-                      title="Refresh telemetry"
+                      title={t('servers.manage.refresh_telemetry')}
                       onClick={() => {
                         void loadServers();
                         void loadDetail(activeServer.id, range);
@@ -741,14 +740,14 @@ export const LinkedServersSection: React.FC<{
                           className="button button-danger button-sm"
                           onClick={() => void handleUnlink(activeServer.id)}
                         >
-                          Confirm Unlink
+                          {t('servers.manage.confirm_unlink')}
                         </button>
                         <button
                           type="button"
                           className="button button-sm"
                           onClick={() => setConfirmUnlinkId(null)}
                         >
-                          Cancel
+                          {t('common.cancel')}
                         </button>
                       </div>
                     ) : (
@@ -756,9 +755,9 @@ export const LinkedServersSection: React.FC<{
                         type="button"
                         className="button button-sm"
                         onClick={() => setConfirmUnlinkId(activeServer.id)}
-                        title="Unlink server"
+                        title={t('servers.manage.unlink_server')}
                       >
-                        <Trash2 size={14} /> Unlink
+                        <Trash2 size={14} /> {t('servers.manage.unlink')}
                       </button>
                     )}
                   </div>
@@ -772,9 +771,7 @@ export const LinkedServersSection: React.FC<{
                       <Activity />
                     </span>
                     <p className="notice-text">
-                      Waiting for the first telemetry heartbeat from this server. Make sure{' '}
-                      <code>[telemetry] enabled = true</code> is active in your server&apos;s{' '}
-                      <code>pumpkin.toml</code>.
+                      <Trans t={t} i18nKey="servers.manage.awaiting_telemetry" components={{ code: <code /> }} />
                     </p>
                   </div>
                 )}
@@ -790,17 +787,20 @@ export const LinkedServersSection: React.FC<{
                   <div className="panel" style={{ padding: '0.9rem 1rem' }}>
                     <span className="label">
                       <Users size={13} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
-                      Online Players
+                      {t('servers.detail.players_online')}
                     </span>
                     <div className="h2" style={{ marginTop: '0.35rem' }}>
                       {activeServer.onlinePlayers}{' '}
                       <span className="small muted">/ {activeServer.maxPlayers}</span>
                     </div>
                     <span className="small muted">
-                      Peak ({range}): {detail?.peakPlayers ?? activeServer.onlinePlayers} • Avg:{' '}
-                      {detail?.avgPlayers ?? activeServer.onlinePlayers}
+                      {t('servers.manage.peak_avg_line', {
+                        range,
+                        peak: detail?.peakPlayers ?? activeServer.onlinePlayers,
+                        avg: detail?.avgPlayers ?? activeServer.onlinePlayers,
+                      })}
                       {detail?.playerBreakdown && detail.playerBreakdown.uniquePlayers > 0
-                        ? ` • Unique: ${detail.playerBreakdown.uniquePlayers.toLocaleString()}`
+                        ? ` • ${t('servers.manage.unique_count', { count: detail.playerBreakdown.uniquePlayers.toLocaleString() })}`
                         : ''}
                     </span>
                   </div>
@@ -808,7 +808,7 @@ export const LinkedServersSection: React.FC<{
                   <div className="panel" style={{ padding: '0.9rem 1rem' }}>
                     <span className="label">
                       <HardDrive size={13} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
-                      System Memory
+                      {t('servers.manage.system_memory')}
                     </span>
                     <div className="h2" style={{ marginTop: '0.35rem' }}>
                       {formatMemory(activeServer.ramAllocatedMb)}
@@ -817,14 +817,14 @@ export const LinkedServersSection: React.FC<{
                       ) : null}
                     </div>
                     <span className="small muted">
-                      {ramPct != null ? `${ramPct}% host memory utilized` : 'Reported via heartbeat'}
+                      {ramPct != null ? t('servers.manage.memory_pct', { pct: ramPct }) : t('servers.manage.reported_via_heartbeat')}
                     </span>
                   </div>
 
                   <div className="panel" style={{ padding: '0.9rem 1rem' }}>
                     <span className="label">
                       <Cpu size={13} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
-                      Host Hardware
+                      {t('servers.manage.host_hardware')}
                     </span>
                     <div
                       style={{
@@ -836,11 +836,11 @@ export const LinkedServersSection: React.FC<{
                       }}
                       title={activeServer.cpuModel || undefined}
                     >
-                      {activeServer.cpuModel || 'Unknown CPU'}
+                      {activeServer.cpuModel || t('servers.manage.unknown_cpu')}
                     </div>
                     <span className="small muted">
                       {[
-                        activeServer.cpuCores ? `${activeServer.cpuCores} cores` : null,
+                        activeServer.cpuCores ? t('servers.manage.cores_count', { count: activeServer.cpuCores }) : null,
                         activeServer.os,
                         activeServer.arch,
                       ]
@@ -852,7 +852,7 @@ export const LinkedServersSection: React.FC<{
                   <div className="panel" style={{ padding: '0.9rem 1rem' }}>
                     <span className="label">
                       <ShieldCheck size={13} style={{ verticalAlign: 'text-bottom', marginRight: 5 }} />
-                      Runtime & Region
+                      {t('servers.manage.runtime_region')}
                     </span>
                     <div style={{ marginTop: '0.35rem', fontWeight: 600 }}>
                       {activeServer.serverType === 'vine' ? 'Vine' : 'Pumpkin'}{' '}
@@ -862,9 +862,9 @@ export const LinkedServersSection: React.FC<{
                       {[
                         activeServer.minecraftVersion ? `MC ${activeServer.minecraftVersion}` : null,
                         activeServer.onlineMode === true
-                          ? 'Online Mode'
+                          ? t('servers.manage.online_mode')
                           : activeServer.onlineMode === false
-                            ? 'Offline Mode'
+                            ? t('servers.manage.offline_mode')
                             : null,
                         activeServer.countryName || activeServer.country,
                       ]
@@ -889,7 +889,7 @@ export const LinkedServersSection: React.FC<{
                   >
                     <div className="panel" style={{ padding: '1rem' }}>
                       <div className="row" style={{ marginBottom: '0.75rem' }}>
-                        <span className="label">Player Activity ({range.toUpperCase()})</span>
+                        <span className="label">{t('servers.manage.player_activity_range', { range: range.toUpperCase() })}</span>
                       </div>
                       <div style={{ width: '100%', height: 200 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -908,7 +908,7 @@ export const LinkedServersSection: React.FC<{
                             <Area
                               type="monotone"
                               dataKey="onlinePlayers"
-                              name="Players"
+                              name={t('servers.manage.players_series')}
                               stroke="var(--pumpkin)"
                               fill="var(--pumpkin)"
                               fillOpacity={0.2}
@@ -921,7 +921,7 @@ export const LinkedServersSection: React.FC<{
 
                     <div className="panel" style={{ padding: '1rem' }}>
                       <div className="row" style={{ marginBottom: '0.75rem' }}>
-                        <span className="label">Memory Usage GB ({range.toUpperCase()})</span>
+                        <span className="label">{t('servers.manage.memory_usage_range', { range: range.toUpperCase() })}</span>
                       </div>
                       <div style={{ width: '100%', height: 200 }}>
                         <ResponsiveContainer width="100%" height="100%">
@@ -940,7 +940,7 @@ export const LinkedServersSection: React.FC<{
                             <Area
                               type="monotone"
                               dataKey="ramGb"
-                              name="RAM (GB)"
+                              name={t('servers.manage.ram_series')}
                               stroke="#38bdf8"
                               fill="#38bdf8"
                               fillOpacity={0.18}
@@ -953,7 +953,7 @@ export const LinkedServersSection: React.FC<{
                   </div>
                 ) : (
                   <p className="small muted">
-                    Historical player & memory trend points will populate automatically as your server sends periodic 5-minute heartbeats.
+                    {t('servers.manage.charts_empty')}
                   </p>
                 )}
 
@@ -965,10 +965,11 @@ export const LinkedServersSection: React.FC<{
 
                   const nvrChartData = pa.newVsReturning.map((pt) => {
                     const d = new Date(pt.timestamp);
+                    const loc = i18n.language || undefined;
                     const label =
                       pa.bucketUnit === 'hour'
-                        ? d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        : d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+                        ? d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit' })
+                        : d.toLocaleDateString(loc, { month: 'short', day: 'numeric' });
                     return {
                       label,
                       newPlayers: pt.newPlayers,
@@ -1035,11 +1036,11 @@ export const LinkedServersSection: React.FC<{
                         style={{ gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}
                       >
                         <h4 className="h3" style={{ margin: 0 }}>
-                          Audience, Retention &amp; Sessions
+                          {t('servers.manage.audience_heading')}
                         </h4>
                         {stickiness != null && (
                           <span className="sticker sticker-sm">
-                            {stickiness.toFixed(1)}% DAU/MAU stickiness
+                            {t('servers.manage.stickiness', { pct: stickiness.toFixed(1) })}
                           </span>
                         )}
                       </div>
@@ -1053,7 +1054,7 @@ export const LinkedServersSection: React.FC<{
                         }}
                       >
                         <div className="panel" style={{ padding: '0.9rem 1rem' }}>
-                          <span className="label">Active Unique Players</span>
+                          <span className="label">{t('servers.manage.active_unique_players')}</span>
                           <div
                             style={{
                               display: 'grid',
@@ -1066,25 +1067,25 @@ export const LinkedServersSection: React.FC<{
                               <div className="h3" style={{ margin: 0 }}>
                                 {pa.dau.toLocaleString()}
                               </div>
-                              <span className="small muted mono">DAU (24h)</span>
+                              <span className="small muted mono">{t('servers.manage.dau_label')}</span>
                             </div>
                             <div>
                               <div className="h3" style={{ margin: 0 }}>
                                 {pa.wau.toLocaleString()}
                               </div>
-                              <span className="small muted mono">WAU (7d)</span>
+                              <span className="small muted mono">{t('servers.manage.wau_label')}</span>
                             </div>
                             <div>
                               <div className="h3" style={{ margin: 0 }}>
                                 {pa.mau.toLocaleString()}
                               </div>
-                              <span className="small muted mono">MAU (30d)</span>
+                              <span className="small muted mono">{t('servers.manage.mau_label')}</span>
                             </div>
                           </div>
                         </div>
 
                         <div className="panel" style={{ padding: '0.9rem 1rem' }}>
-                          <span className="label">First-Join Bounce Rate (&lt; 2m)</span>
+                          <span className="label">{t('servers.manage.bounce_rate_label')}</span>
                           <div
                             className="h2"
                             style={{ marginTop: '0.35rem', color: bounceTone }}
@@ -1093,26 +1094,32 @@ export const LinkedServersSection: React.FC<{
                           </div>
                           <span className="small muted">
                             {pa.bounceRate.firstTimeJoins > 0
-                              ? `${pa.bounceRate.bouncedPlayers.toLocaleString()} of ${pa.bounceRate.firstTimeJoins.toLocaleString()} new joins (${range}) left in < 2m`
-                              : `No resolved first-time joins in ${range} yet`}
+                              ? t('servers.manage.bounce_rate_detail', {
+                                  bounced: pa.bounceRate.bouncedPlayers.toLocaleString(),
+                                  total: pa.bounceRate.firstTimeJoins.toLocaleString(),
+                                  range,
+                                })
+                              : t('servers.manage.bounce_rate_empty', { range })}
                           </span>
                         </div>
 
                         <div className="panel" style={{ padding: '0.9rem 1rem' }}>
-                          <span className="label">Session Duration ({range.toUpperCase()})</span>
+                          <span className="label">{t('servers.manage.session_duration_label', { range: range.toUpperCase() })}</span>
                           <div className="h2" style={{ marginTop: '0.35rem' }}>
-                            {formatDuration(pa.playtime.avgSessionSecs)}{' '}
-                            <span className="small muted">avg</span>
+                            {formatDuration(t, pa.playtime.avgSessionSecs)}{' '}
+                            <span className="small muted">{t('servers.manage.avg_abbr')}</span>
                           </div>
                           <span className="small muted">
-                            Median: <strong>{formatDuration(pa.playtime.medianSessionSecs)}</strong>{' '}
-                            • {pa.playtime.totalSessions.toLocaleString()}{' '}
-                            {pa.playtime.totalSessions === 1 ? 'session' : 'sessions'}
+                            {t('servers.manage.median_prefix')}: <strong>{formatDuration(t, pa.playtime.medianSessionSecs)}</strong>{' '}
+                            • {t('servers.manage.sessions_count', {
+                              count: pa.playtime.totalSessions,
+                              formatted: pa.playtime.totalSessions.toLocaleString(),
+                            })}
                           </span>
                         </div>
 
                         <div className="panel" style={{ padding: '0.9rem 1rem' }}>
-                          <span className="label">Cohort Retention</span>
+                          <span className="label">{t('servers.manage.cohort_retention')}</span>
                           <div
                             style={{
                               display: 'grid',
@@ -1123,17 +1130,17 @@ export const LinkedServersSection: React.FC<{
                           >
                             {(
                               [
-                                { label: 'D1', cohort: pa.retention.d1 },
-                                { label: 'D7', cohort: pa.retention.d7 },
-                                { label: 'D30', cohort: pa.retention.d30 },
+                                { label: 'D1', days: '1', cohort: pa.retention.d1 },
+                                { label: 'D7', days: '7', cohort: pa.retention.d7 },
+                                { label: 'D30', days: '30', cohort: pa.retention.d30 },
                               ] as const
-                            ).map(({ label, cohort }) => (
+                            ).map(({ label, days, cohort }) => (
                               <div
                                 key={label}
                                 title={
                                   cohort.eligible > 0
-                                    ? `${cohort.retained} of ${cohort.eligible} eligible players returned`
-                                    : `Cohort maturing — needs ${label.slice(1)}d history`
+                                    ? t('servers.manage.cohort_tooltip_ready', { retained: cohort.retained, eligible: cohort.eligible })
+                                    : t('servers.manage.cohort_tooltip_maturing', { days })
                                 }
                               >
                                 <div className="h3" style={{ margin: 0 }}>
@@ -1172,7 +1179,9 @@ export const LinkedServersSection: React.FC<{
                             }}
                           >
                             <span className="label">
-                              New vs. Returning Players (per {pa.bucketUnit})
+                              {t('servers.manage.nvr_chart_title', {
+                                unit: pa.bucketUnit === 'hour' ? t('servers.manage.unit_hour') : t('servers.manage.unit_day'),
+                              })}
                             </span>
                             <span className="small muted mono">{range.toUpperCase()}</span>
                           </div>
@@ -1199,13 +1208,13 @@ export const LinkedServersSection: React.FC<{
                                   <Legend wrapperStyle={{ fontSize: 12 }} />
                                   <Bar
                                     dataKey="returningPlayers"
-                                    name="Returning"
+                                    name={t('servers.manage.returning_series')}
                                     stackId="players"
                                     fill="var(--pumpkin)"
                                   />
                                   <Bar
                                     dataKey="newPlayers"
-                                    name="New"
+                                    name={t('servers.manage.new_series')}
                                     stackId="players"
                                     fill="#22c55e"
                                   />
@@ -1214,7 +1223,7 @@ export const LinkedServersSection: React.FC<{
                             </div>
                           ) : (
                             <p className="small muted" style={{ margin: '2rem 0' }}>
-                              New vs. returning player buckets will populate once sessions are recorded in this range.
+                              {t('servers.manage.nvr_empty')}
                             </p>
                           )}
                         </div>
@@ -1229,8 +1238,8 @@ export const LinkedServersSection: React.FC<{
                               gap: '0.4rem',
                             }}
                           >
-                            <span className="label">Playtime Tiers ({range.toUpperCase()})</span>
-                            <span className="small muted">Cumulative per player</span>
+                            <span className="label">{t('servers.manage.playtime_tiers_title', { range: range.toUpperCase() })}</span>
+                            <span className="small muted">{t('servers.manage.cumulative_per_player')}</span>
                           </div>
                           {pa.playtime.tiers.length > 0 ? (
                             <div
@@ -1245,8 +1254,10 @@ export const LinkedServersSection: React.FC<{
                                   >
                                     <strong>{tier.label}</strong>
                                     <span className="muted mono">
-                                      {tier.count.toLocaleString()} players (
-                                      {tier.percentage.toFixed(1)}%)
+                                      {t('servers.manage.players_pct', {
+                                        count: tier.count.toLocaleString(),
+                                        pct: tier.percentage.toFixed(1),
+                                      })}
                                     </span>
                                   </div>
                                   <div
@@ -1269,7 +1280,7 @@ export const LinkedServersSection: React.FC<{
                             </div>
                           ) : (
                             <p className="small muted" style={{ margin: '2rem 0' }}>
-                              Casual (&lt; 1h), Regular (1–10h), and Core (10h+) player tiers will appear once sessions are recorded.
+                              {t('servers.manage.playtime_tiers_empty')}
                             </p>
                           )}
                         </div>
@@ -1288,16 +1299,19 @@ export const LinkedServersSection: React.FC<{
                         >
                           <div>
                             <span className="label" style={{ display: 'block' }}>
-                              7×24 Peak Concurrency Heatmap (Last 30 Days)
+                              {t('servers.manage.heatmap_title')}
                             </span>
                             <span className="small muted">
-                              Hours shown in {tzName}
+                              {t('servers.manage.heatmap_tz', { tz: tzName })}
                             </span>
                           </div>
                           {bestSlot && (
                             <span className="tag tag-pumpkin">
-                              Best Window: {WEEKDAY_LONG[bestSlot.day]}{' '}
-                              {String(bestSlot.hour).padStart(2, '0')}:00 ({bestSlot.peak} peak)
+                              {t('servers.manage.best_window', {
+                                day: t(`servers.weekdays.long.${WEEKDAY_KEYS[bestSlot.day]}` as any),
+                                hour: `${String(bestSlot.hour).padStart(2, '0')}:00`,
+                                peak: bestSlot.peak,
+                              })}
                             </span>
                           )}
                         </div>
@@ -1331,9 +1345,9 @@ export const LinkedServersSection: React.FC<{
 
                             {/* 7 Day Rows */}
                             <div className="stack" style={{ '--gap': '3px' } as React.CSSProperties}>
-                              {WEEKDAY_SHORT.map((dayLabel, dayIdx) => (
+                              {WEEKDAY_KEYS.map((dayKey, dayIdx) => (
                                 <div
-                                  key={dayLabel}
+                                  key={dayKey}
                                   style={{
                                     display: 'grid',
                                     gridTemplateColumns: '2.6rem repeat(24, minmax(18px, 1fr))',
@@ -1342,7 +1356,7 @@ export const LinkedServersSection: React.FC<{
                                   }}
                                 >
                                   <span className="small muted mono" style={{ fontSize: 11 }}>
-                                    {dayLabel}
+                                    {t(`servers.weekdays.short.${dayKey}` as any)}
                                   </span>
                                   {localGrid[dayIdx].map((slot, hr) => {
                                     const ratio =
@@ -1354,7 +1368,12 @@ export const LinkedServersSection: React.FC<{
                                     return (
                                       <div
                                         key={hr}
-                                        title={`${WEEKDAY_LONG[dayIdx]} ${String(hr).padStart(2, '0')}:00 — Peak: ${slot.peak} players, Avg: ${slot.avg.toFixed(1)}`}
+                                        title={t('servers.manage.heatmap_cell_tooltip', {
+                                          day: t(`servers.weekdays.long.${dayKey}` as any),
+                                          hour: `${String(hr).padStart(2, '0')}:00`,
+                                          peak: slot.peak,
+                                          avg: slot.avg.toFixed(1),
+                                        })}
                                         style={{
                                           height: 18,
                                           borderRadius: 2,
@@ -1394,12 +1413,14 @@ export const LinkedServersSection: React.FC<{
                     }}
                   >
                     <h4 className="h3" style={{ margin: 0 }}>
-                      Player Breakdown ({range.toUpperCase()})
+                      {t('servers.manage.player_breakdown_title', { range: range.toUpperCase() })}
                     </h4>
                     {detail?.playerBreakdown && detail.playerBreakdown.uniquePlayers > 0 && (
                       <span className="sticker sticker-sm">
-                        {detail.playerBreakdown.uniquePlayers.toLocaleString()} unique{' '}
-                        {detail.playerBreakdown.uniquePlayers === 1 ? 'player' : 'players'}
+                        {t('servers.manage.unique_players_badge', {
+                          count: detail.playerBreakdown.uniquePlayers,
+                          formatted: detail.playerBreakdown.uniquePlayers.toLocaleString(),
+                        })}
                       </span>
                     )}
                   </div>
@@ -1414,10 +1435,10 @@ export const LinkedServersSection: React.FC<{
                     >
                       {(
                         [
-                          { title: 'Editions', items: detail.playerBreakdown.editions },
-                          { title: 'Client Brands', items: detail.playerBreakdown.clientBrands },
-                          { title: 'Player Locales', items: detail.playerBreakdown.locales },
-                          { title: 'View Distance', items: detail.playerBreakdown.viewDistances },
+                          { title: t('servers.manage.breakdown_editions'), items: detail.playerBreakdown.editions },
+                          { title: t('servers.manage.breakdown_brands'), items: detail.playerBreakdown.clientBrands },
+                          { title: t('servers.manage.breakdown_locales'), items: detail.playerBreakdown.locales },
+                          { title: t('servers.manage.breakdown_view_distance'), items: detail.playerBreakdown.viewDistances },
                         ] as const
                       ).map((group) => (
                         <div key={group.title} className="panel" style={{ padding: '0.9rem 1rem' }}>
@@ -1466,14 +1487,14 @@ export const LinkedServersSection: React.FC<{
                               ))}
                             </div>
                           ) : (
-                            <span className="small muted">No data yet</span>
+                            <span className="small muted">{t('servers.manage.no_data_yet')}</span>
                           )}
                         </div>
                       ))}
                     </div>
                   ) : (
                     <p className="small muted">
-                      Anonymous player edition, client brand, locale, and view distance stats will appear once players join your server.
+                      {t('servers.manage.breakdown_empty')}
                     </p>
                   )}
                 </div>
@@ -1481,17 +1502,17 @@ export const LinkedServersSection: React.FC<{
                 {/* Active Plugins List */}
                 <div>
                   <h4 className="h3" style={{ marginBottom: '0.6rem' }}>
-                    Loaded Plugins ({detail?.plugins.length ?? activeServer.pluginsCount})
+                    {t('servers.manage.loaded_plugins', { count: detail?.plugins.length ?? activeServer.pluginsCount })}
                   </h4>
                   {detail && detail.plugins.length > 0 ? (
                     <div className="scroll-x">
                       <table className="ledger">
                         <thead>
                           <tr>
-                            <th>Plugin</th>
-                            <th>Version</th>
-                            <th>Runtime</th>
-                            <th className="end">Marketplace</th>
+                            <th>{t('staff.table.plugin')}</th>
+                            <th>{t('plugin.version')}</th>
+                            <th>{t('servers.detail.runtime')}</th>
+                            <th className="end">{t('servers.manage.col_marketplace')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1526,15 +1547,15 @@ export const LinkedServersSection: React.FC<{
                                         href={getMarketUrl(marketPath)}
                                         className="link link-pumpkin small"
                                       >
-                                        View on Market <ExternalLink size={12} />
+                                        {t('servers.manage.view_on_market')} <ExternalLink size={12} />
                                       </a>
                                     ) : (
                                       <Link to={marketPath} className="link link-pumpkin small">
-                                        View on Market
+                                        {t('servers.manage.view_on_market')}
                                       </Link>
                                     )
                                   ) : (
-                                    <span className="small muted">Custom / Local</span>
+                                    <span className="small muted">{t('servers.manage.custom_local')}</span>
                                   )}
                                 </td>
                               </tr>
@@ -1544,25 +1565,25 @@ export const LinkedServersSection: React.FC<{
                       </table>
                     </div>
                   ) : (
-                    <p className="small muted">No active plugins reported in the latest heartbeat.</p>
+                    <p className="small muted">{t('servers.manage.no_active_plugins')}</p>
                   )}
                 </div>
 
                 {/* Plugin Crashes on This Server */}
                 <div>
                   <h4 className="h3" style={{ marginBottom: '0.6rem' }}>
-                    Recent Plugin Crashes on This Server
+                    {t('servers.manage.recent_crashes')}
                   </h4>
                   {detail && detail.crashes.length > 0 ? (
                     <div className="scroll-x">
                       <table className="ledger">
                         <thead>
                           <tr>
-                            <th>Plugin</th>
-                            <th>Trap / Error</th>
-                            <th>Status</th>
-                            <th className="end">Hits</th>
-                            <th className="end">Last Seen</th>
+                            <th>{t('staff.table.plugin')}</th>
+                            <th>{t('servers.manage.col_trap_error')}</th>
+                            <th>{t('staff.table.status')}</th>
+                            <th className="end">{t('servers.manage.col_hits')}</th>
+                            <th className="end">{t('servers.manage.col_last_seen')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1587,7 +1608,7 @@ export const LinkedServersSection: React.FC<{
                               </td>
                               <td className="end">{cr.occurrences}</td>
                               <td className="end small muted">
-                                {formatRelativeTime(cr.lastSeen)}
+                                {formatRelativeTime(t, cr.lastSeen)}
                               </td>
                             </tr>
                           ))}
@@ -1600,7 +1621,7 @@ export const LinkedServersSection: React.FC<{
                         <Check />
                       </span>
                       <p className="notice-text">
-                        Zero WASM plugin crashes reported from this server.
+                        {t('servers.manage.zero_crashes')}
                       </p>
                     </div>
                   )}
@@ -1618,7 +1639,7 @@ export const LinkedServersSection: React.FC<{
                 >
                   <span className="muted">
                     <AlertTriangle size={13} style={{ display: 'none' }} />
-                    Ed25519 Public Key:
+                    {t('servers.manage.ed25519_key')}
                   </span>
                   <code style={{ wordBreak: 'break-all' }}>{activeServer.serverPublicKey}</code>
                   <span className="spacer" />
@@ -1628,7 +1649,7 @@ export const LinkedServersSection: React.FC<{
                     onClick={() => handleCopyKey(activeServer.serverPublicKey)}
                   >
                     {copiedKey ? <Check size={13} /> : <Copy size={13} />}
-                    {copiedKey ? 'Copied' : 'Copy Key'}
+                    {copiedKey ? t('studio.crashes.copied') : t('plugin.copy_license')}
                   </button>
                 </div>
               </div>
@@ -1644,20 +1665,20 @@ export const LinkedServersSection: React.FC<{
                   <div className="row" style={{ gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Globe size={18} className="pumpkin" />
                     <h3 className="h3" style={{ margin: 0 }}>
-                      Public Server List
+                      {t('servers.manage.public_list_title')}
                     </h3>
                     {listing?.isListed && listing.moderationStatus === 'active' ? (
-                      <span className="sticker sticker-sm sticker-success">Listed Publicly</span>
+                      <span className="sticker sticker-sm sticker-success">{t('servers.manage.listed_publicly')}</span>
                     ) : listing?.moderationStatus === 'hidden' ? (
-                      <span className="tag tag-warning">Hidden by Staff</span>
+                      <span className="tag tag-warning">{t('servers.manage.hidden_by_staff')}</span>
                     ) : listing?.moderationStatus === 'banned' ? (
-                      <span className="tag tag-danger">Banned</span>
+                      <span className="tag tag-danger">{t('staff.servers.status_banned')}</span>
                     ) : (
-                      <span className="sticker sticker-sm">Unlisted</span>
+                      <span className="sticker sticker-sm">{t('staff.servers.status_unlisted')}</span>
                     )}
                     {listing && listing.upvotesCount > 0 && (
                       <span className="tag tag-pumpkin">
-                        <ArrowBigUp size={13} /> {listing.upvotesCount.toLocaleString()} Upvotes
+                        <ArrowBigUp size={13} /> {t('staff.servers.upvotes_count', { count: listing.upvotesCount, formatted: listing.upvotesCount.toLocaleString() })}
                       </span>
                     )}
                   </div>
@@ -1675,14 +1696,14 @@ export const LinkedServersSection: React.FC<{
                           rel="noopener noreferrer"
                           className="button button-sm"
                         >
-                          View Public Page <ExternalLink size={13} />
+                          {t('servers.manage.view_public_page')} <ExternalLink size={13} />
                         </a>
                       ) : (
                         <Link
                           to={getServerDetailUrl(listing.publicId, listing.slug)}
                           className="button button-sm"
                         >
-                          View Public Page <ExternalLink size={13} />
+                          {t('servers.manage.view_public_page')} <ExternalLink size={13} />
                         </Link>
                       ))}
                     <a
@@ -1710,9 +1731,9 @@ export const LinkedServersSection: React.FC<{
                           <AlertTriangle />
                         </span>
                         <div className="stack" style={{ '--gap': '2px' } as React.CSSProperties}>
-                          <strong>This server listing has been banned by Pumpkin Staff.</strong>
+                          <strong>{t('servers.manage.banned_notice')}</strong>
                           {listing.moderationReason && (
-                            <span className="small">Reason: {listing.moderationReason}</span>
+                            <span className="small">{t('servers.manage.moderation_reason', { reason: listing.moderationReason })}</span>
                           )}
                         </div>
                       </div>
@@ -1724,9 +1745,9 @@ export const LinkedServersSection: React.FC<{
                           <AlertTriangle />
                         </span>
                         <div className="stack" style={{ '--gap': '2px' } as React.CSSProperties}>
-                          <strong>This server listing was hidden by Pumpkin Staff.</strong>
+                          <strong>{t('servers.manage.hidden_notice')}</strong>
                           {listing.moderationReason && (
-                            <span className="small">Reason: {listing.moderationReason}</span>
+                            <span className="small">{t('servers.manage.moderation_reason', { reason: listing.moderationReason })}</span>
                           )}
                         </div>
                       </div>
@@ -1738,10 +1759,7 @@ export const LinkedServersSection: React.FC<{
                           <Activity />
                         </span>
                         <p className="notice-text">
-                          To publish on <strong>servers.pumpkinmc.org</strong>, your server must be
-                          online with <code>[telemetry] enabled = true</code> in{' '}
-                          <code>pumpkin.toml</code>. You can still configure and save your draft
-                          listing details below.
+                          <Trans t={t} i18nKey="servers.manage.offline_listing_notice" components={{ strong: <strong />, code: <code /> }} />
                         </p>
                       </div>
                     )}
@@ -1776,7 +1794,7 @@ export const LinkedServersSection: React.FC<{
                           {listing?.iconUrl ? (
                             <img
                               src={listing.iconUrl}
-                              alt="Server icon"
+                              alt={t('servers.manage.icon_alt')}
                               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                             />
                           ) : (
@@ -1786,7 +1804,7 @@ export const LinkedServersSection: React.FC<{
 
                         <div className="stack" style={{ '--gap': '6px' } as React.CSSProperties}>
                           <span className="field-label" style={{ margin: 0 }}>
-                            Server Icon
+                            {t('servers.manage.server_icon')}
                           </span>
                           <div className="row" style={{ gap: '0.4rem', flexWrap: 'wrap' }}>
                             <input
@@ -1804,10 +1822,10 @@ export const LinkedServersSection: React.FC<{
                             >
                               <Upload size={14} />{' '}
                               {uploadingIcon
-                                ? 'Uploading…'
+                                ? t('studio.onboarding.uploading')
                                 : listing?.iconUrl
-                                  ? 'Change Icon'
-                                  : 'Upload Icon'}
+                                  ? t('studio.listing.change_icon')
+                                  : t('studio.readiness.fix_icon')}
                             </button>
                             {listing?.iconUrl && (
                               <button
@@ -1816,11 +1834,11 @@ export const LinkedServersSection: React.FC<{
                                 disabled={uploadingIcon}
                                 onClick={handleRemoveIcon}
                               >
-                                Remove
+                                {t('studio.onboarding.remove_picture')}
                               </button>
                             )}
                           </div>
-                          <span className="small muted">PNG, JPEG, or WebP (square recommended)</span>
+                          <span className="small muted">{t('servers.manage.icon_hint')}</span>
                         </div>
                       </div>
 
@@ -1855,10 +1873,10 @@ export const LinkedServersSection: React.FC<{
                         />
                         <div>
                           <strong style={{ display: 'block' }}>
-                            Publish on Pumpkin Server List
+                            {t('servers.manage.publish_toggle_title')}
                           </strong>
                           <span className="small muted">
-                            Show live players, plugins, and join IP publicly
+                            {t('servers.manage.publish_toggle_desc')}
                           </span>
                         </div>
                       </label>
@@ -1874,7 +1892,7 @@ export const LinkedServersSection: React.FC<{
                     >
                       <label className="field">
                         <span className="field-label">
-                          Java Join Address {formIsListed ? '*' : ''}
+                          {t('servers.manage.java_address_label')} {formIsListed ? '*' : ''}
                         </span>
                         <span className="control">
                           <input
@@ -1888,12 +1906,12 @@ export const LinkedServersSection: React.FC<{
                           />
                         </span>
                         <span className="small muted">
-                          Public domain or IPv4 (default port 25565 omitted automatically)
+                          {t('servers.manage.java_address_hint')}
                         </span>
                       </label>
 
                       <label className="field">
-                        <span className="field-label">Bedrock Address (Optional Crossplay)</span>
+                        <span className="field-label">{t('servers.manage.bedrock_address_label')}</span>
                         <span className="control">
                           <input
                             type="text"
@@ -1905,7 +1923,7 @@ export const LinkedServersSection: React.FC<{
                           />
                         </span>
                         <span className="small muted">
-                          Adds a Crossplay badge for Bedrock players
+                          {t('servers.manage.bedrock_address_hint')}
                         </span>
                       </label>
                     </div>
@@ -1914,7 +1932,7 @@ export const LinkedServersSection: React.FC<{
                     <label className="field">
                       <div className="row" style={{ justifyContent: 'space-between' }}>
                         <span className="field-label">
-                          Short Tagline {formIsListed ? '*' : ''}
+                          {t('servers.manage.tagline_label')} {formIsListed ? '*' : ''}
                         </span>
                         <span className="small muted">{formTagline.length}/140</span>
                       </div>
@@ -1922,7 +1940,7 @@ export const LinkedServersSection: React.FC<{
                         <input
                           type="text"
                           className="input"
-                          placeholder="High-performance vanilla+ Survival SMP running on Rust…"
+                          placeholder={t('servers.manage.tagline_placeholder')}
                           value={formTagline}
                           onChange={(e) => setFormTagline(e.target.value)}
                           maxLength={140}
@@ -1933,14 +1951,14 @@ export const LinkedServersSection: React.FC<{
 
                     {/* Categorized Server Tags Picker */}
                     <div className="field">
-                      <span className="field-label">Server Tags (Up to {MAX_SERVER_TAGS})</span>
+                      <span className="field-label">{t('servers.manage.server_tags_label', { max: MAX_SERVER_TAGS })}</span>
                       <ServerTagPicker
                         value={formTags}
                         onChange={setFormTags}
                         maxTags={MAX_SERVER_TAGS}
                         onMaxReached={() =>
                           onToast?.(
-                            `You can select up to ${MAX_SERVER_TAGS} tags per server`,
+                            t('servers.manage.max_tags_toast', { max: MAX_SERVER_TAGS }),
                             'error'
                           )
                         }
@@ -1950,14 +1968,14 @@ export const LinkedServersSection: React.FC<{
                     {/* Full Description */}
                     <label className="field">
                       <div className="row" style={{ justifyContent: 'space-between' }}>
-                        <span className="field-label">Full Description (Markdown supported)</span>
+                        <span className="field-label">{t('servers.manage.description_label')}</span>
                         <span className="small muted">{formDescription.length}/4000</span>
                       </div>
                       <span className="control">
                         <textarea
                           className="input"
                           rows={6}
-                          placeholder="Tell players what makes your Pumpkin server special, rules, custom WASM plugins, and community events…"
+                          placeholder={t('servers.manage.description_placeholder')}
                           value={formDescription}
                           onChange={(e) => setFormDescription(e.target.value)}
                           maxLength={4000}
@@ -1974,7 +1992,7 @@ export const LinkedServersSection: React.FC<{
                       }}
                     >
                       <label className="field">
-                        <span className="field-label">Website URL (Optional)</span>
+                        <span className="field-label">{t('servers.manage.website_label')}</span>
                         <span className="control">
                           <input
                             type="url"
@@ -1988,7 +2006,7 @@ export const LinkedServersSection: React.FC<{
                       </label>
 
                       <label className="field">
-                        <span className="field-label">Discord Invite URL (Optional)</span>
+                        <span className="field-label">{t('servers.manage.discord_label')}</span>
                         <span className="control">
                           <input
                             type="url"
@@ -2010,10 +2028,10 @@ export const LinkedServersSection: React.FC<{
                       >
                         <Save size={15} />{' '}
                         {savingListing
-                          ? 'Saving…'
+                          ? t('studio.listing.saving')
                           : formIsListed
-                            ? 'Save & Publish Server'
-                            : 'Save Listing Draft'}
+                            ? t('servers.manage.save_publish')
+                            : t('servers.manage.save_draft')}
                       </button>
                     </div>
                   </form>

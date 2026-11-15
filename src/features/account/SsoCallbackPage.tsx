@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import { AlertCircle } from 'lucide-react';
 import api from '../../lib/api';
 import { useAuth } from '../../app/auth';
@@ -7,6 +8,7 @@ import { getSsoAuthorizeUrl } from '../../lib/domains';
 import '../../styles/account.css';
 
 const SsoCallbackPage = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -22,7 +24,7 @@ const SsoCallbackPage = () => {
 
     const code = searchParams.get('code');
     if (!code) {
-      setError('Missing single sign-on authorization code.');
+      setError(t('auth.sso.missing_code'));
       return;
     }
 
@@ -33,18 +35,18 @@ const SsoCallbackPage = () => {
           login(res.data.token);
           navigate(safeNext, { replace: true });
         } else {
-          setError('Authentication response was incomplete.');
+          setError(t('auth.sso.incomplete_response'));
         }
       } catch (err: any) {
         setError(
           err.response?.data?.error ||
-            'Your sign-in link has expired or was already used. Please try signing in again.'
+            t('auth.sso.expired_error')
         );
       }
     };
 
     exchange();
-  }, [login, navigate, safeNext, searchParams]);
+  }, [login, navigate, safeNext, searchParams, t]);
 
   if (error) {
     return (
@@ -55,7 +57,7 @@ const SsoCallbackPage = () => {
               <AlertCircle />
             </span>
             <h1 className="h1">
-              Sign-in <span className="mark ac-mark-danger">Expired</span>
+              <Trans t={t} i18nKey="auth.sso.expired_title" components={{ highlight: <span className="mark ac-mark-danger" /> }} />
             </h1>
             <p className="small">{error}</p>
           </div>
@@ -63,7 +65,7 @@ const SsoCallbackPage = () => {
             href={getSsoAuthorizeUrl(safeNext)}
             className="button button-primary button-block"
           >
-            Try Signing In Again
+            {t('auth.sso.try_again')}
           </a>
         </div>
       </div>
@@ -75,8 +77,8 @@ const SsoCallbackPage = () => {
       <div className="panel panel-fg ac-card" role="status">
         <div className="ac-card-head">
           <span className="loading" />
-          <h1 className="h1">Signing you in…</h1>
-          <p className="small">Completing your Pumpkin Account handoff.</p>
+          <h1 className="h1">{t('auth.sso.signing_in')}</h1>
+          <p className="small">{t('auth.sso.completing_handoff')}</p>
         </div>
       </div>
     </div>
