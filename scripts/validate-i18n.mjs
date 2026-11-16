@@ -102,7 +102,83 @@ for (const [lang, data] of Object.entries(locales)) {
   }
 }
 
-// 3. Scan source code for t('...') and <Trans i18nKey="..." /> usages
+// 3. Verify every locale keeps the same i18next interpolation placeholders and
+//    react-i18next <Trans> markup tags as the reference locale. A mismatch makes
+//    i18next render the raw placeholder / tag text instead of the value or element
+//    (e.g. a zh translation of "Plugins by <author />" written as "{{name}} 的所有作品"
+//    renders a literal "{{name}}" because the page passes a component, not a value).
+logInfo('Checking interpolation placeholders and Trans tags against en.json...');
+
+const PLACEHOLDER_RE = /\{\{\s*([^{}]+?)\s*\}\}/g;
+const MARKUP_TAG_RE = /<\s*(\/?)\s*([A-Za-z][A-Za-z0-9_.-]*)\s*(\/?)\s*>/g;
+
+function placeholderNames(value) {
+  const names = new Set();
+  let match;
+  PLACEHOLDER_RE.lastIndex = 0;
+  while ((match = PLACEHOLDER_RE.exec(value)) !== null) {
+    names.add(match[1].split(',')[0].trim());
+  }
+  return names;
+}
+
+function markupTags(value) {
+  const tags = new Set();
+  let match;
+  MARKUP_TAG_RE.lastIndex = 0;
+  while ((match = MARKUP_TAG_RE.exec(value)) !== null) {
+    tags.add((match[1] ? '</' : '<') + match[2]);
+  }
+  return tags;
+}
+
+function setsEqual(a, b) {
+  return a.size === b.size && [...a].every((item) => b.has(item));
+}
+
+function formatPlaceholders(names) {
+  return names.size ? [...names].map((name) => `{{${name}}}`).join(' ') : '(none)';
+}
+
+function formatTags(tags) {
+  if (!tags.size) return '(none)';
+  return [...tags]
+    .map((tag) => (tag.startsWith('</') ? `</${tag.slice(2)}>` : `<${tag.slice(1)}>`))
+    .join(' ');
+}
+
+for (const [lang, data] of Object.entries(locales)) {
+  if (lang === 'en') continue;
+  const langFlat = flattenKeys(data);
+
+  for (const key of enLeafKeys) {
+    const translated = langFlat[key];
+    if (!translated || translated.type !== 'string') continue;
+
+    const reference = enFlat[key].value;
+    const referencePlaceholders = placeholderNames(reference);
+    const placeholders = placeholderNames(translated.value);
+    if (!setsEqual(referencePlaceholders, placeholders)) {
+      logError(
+        `[${lang}.json] Key "${key}" uses different interpolation placeholders than en.json ` +
+          `(en_us: ${formatPlaceholders(referencePlaceholders)}, ${lang}: ${formatPlaceholders(placeholders)}). ` +
+          `Every locale must keep the reference {{variables}} so i18next can interpolate them. Value: "${translated.value}"`
+      );
+    }
+
+    const referenceTags = markupTags(reference);
+    const tags = markupTags(translated.value);
+    if (!setsEqual(referenceTags, tags)) {
+      logError(
+        `[${lang}.json] Key "${key}" uses different Trans markup tags than en.json ` +
+          `(en_us: ${formatTags(referenceTags)}, ${lang}: ${formatTags(tags)}). ` +
+          `Keep the reference <tags> so react-i18next can render the components. Value: "${translated.value}"`
+      );
+    }
+  }
+}
+
+// 4. Scan source code for t('...') and <Trans i18nKey="..." /> usages
 logInfo('Scanning source code for t(...) translation calls...');
 const tRegex = /(?:\bt\(\s*|\bi18nKey\s*=\s*)['"`]([^'"`]+)['"`]/g;
 
