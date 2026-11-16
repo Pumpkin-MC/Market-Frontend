@@ -44,21 +44,21 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
         try {
             const res = await validateWasmFile(file);
             if (!res.valid) {
-                setWasmValidationErr(res.error || 'Invalid WebAssembly binary.');
+                setWasmValidationErr(res.error || t('studio.update.invalid_wasm'));
                 setWasmFile(null);
                 setWasmFormatInfo(null);
                 setDetectedApiVersion(null);
                 return;
             }
             setWasmFile(file);
-            setWasmFormatInfo(res.details?.format || 'WebAssembly Binary');
+            setWasmFormatInfo(res.details?.format || t('studio.update.wasm_binary'));
             setDetectedApiVersion(res.details?.apiVersion || null);
             if (res.details?.pluginVersion && !version.trim()) {
                 setVersion(res.details.pluginVersion);
             }
             setWasmValidationErr(null);
         } catch (err: any) {
-            setWasmValidationErr(err.message || 'Failed to inspect file.');
+            setWasmValidationErr(err.message || t('studio.update.inspect_failed'));
             setWasmFile(null);
             setWasmFormatInfo(null);
             setDetectedApiVersion(null);
@@ -99,7 +99,7 @@ const PublishUpdate = ({ plugin, onSaved }: Props) => {
                 setReleaseNotes('');
             }, 3000);
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Publish failed. Please check your inputs and try again.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.update.publish_failed');
             setPublishError(msg);
         } finally {
             setUploading(false);

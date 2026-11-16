@@ -1,10 +1,12 @@
+import i18n from './i18n';
+
 /**
  * Returns a human-friendly default name for a passkey based on the current platform and browser.
  * e.g. "Mac (Chrome)", "iPhone (Safari)", "Windows (Edge)", "Android (Chrome)"
  */
 export function getDevicePasskeyName(): string {
   if (typeof window === 'undefined' || !navigator?.userAgent) {
-    return 'Passkey';
+    return i18n.t('profile.passkeys.default_name');
   }
 
   const ua = navigator.userAgent;
@@ -29,5 +31,5 @@ export function getDevicePasskeyName(): string {
   if (os && browser) {
     return `${os} (${browser})`;
   }
-  return os || browser || 'Passkey';
+  return os || browser || i18n.t('profile.passkeys.default_name');
 }

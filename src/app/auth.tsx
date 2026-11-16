@@ -35,6 +35,16 @@ const saveCachedUser = (payload: any) => {
 const AuthContext = createContext<any>(null);
 export const useAuth = () => useContext(AuthContext);
 
+const applyPreferredLanguage = (preferred: string | undefined, current: string | undefined, i18n: any) => {
+  if (!preferred) return;
+  const currentBase = current ? current.split('-')[0] : '';
+  const targetBase = preferred.split('-')[0];
+  if (current === preferred) return;
+  // Preserve regional Traditional Chinese variants (zh-HK / zh-TW) when the API stores only "zh".
+  if (currentBase === targetBase && (current === 'zh-HK' || current === 'zh-TW')) return;
+  i18n.changeLanguage(preferred);
+};
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<any>(() => loadCachedUser());
   const [loading, setLoading] = useState(true);
@@ -67,9 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (payload && payload.exp * 1000 > Date.now()) {
           setUser(payload);
           saveCachedUser(payload);
-          if (payload.preferred_language && i18n.language !== payload.preferred_language) {
-            i18n.changeLanguage(payload.preferred_language);
-          }
+          applyPreferredLanguage(payload.preferred_language, i18n.language, i18n);
         } else {
           setUser(null);
           saveCachedUser(null);
@@ -107,9 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(payload);
     saveCachedUser(payload);
     setAuthError(false);
-    if (payload?.preferred_language && i18n.language !== payload.preferred_language) {
-      i18n.changeLanguage(payload.preferred_language);
-    }
+    applyPreferredLanguage(payload?.preferred_language, i18n.language, i18n);
   };
 
   const logout = async () => {
@@ -143,19 +149,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-const AuthConnectionError = ({ onRetry }: { onRetry: () => void }) => (
-  <div className="page sect">
-    <div className="blank">
-      <p className="h2">Unable to reach the server</p>
-      <p className="small">A temporary gateway error occurred while verifying your session.</p>
-      <div className="row" style={{ justifyContent: 'center', marginTop: '1rem' }}>
-        <button type="button" className="button button-primary" onClick={onRetry}>
-          Retry Connection
-        </button>
+const AuthConnectionError = ({ onRetry }: { onRetry: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <div className="page sect">
+      <div className="blank">
+        <p className="h2">{t('auth.connection_error_title')}</p>
+        <p className="small">{t('auth.connection_error_desc')}</p>
+        <div className="row" style={{ justifyContent: 'center', marginTop: '1rem' }}>
+          <button type="button" className="button button-primary" onClick={onRetry}>
+            {t('auth.retry_connection')}
+          </button>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, authError, retryAuth } = useAuth();

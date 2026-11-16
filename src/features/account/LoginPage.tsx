@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { startAuthentication, browserSupportsWebAuthnAutofill } from '@simplewebauthn/browser';
 import { Fingerprint, AlertCircle, Check } from 'lucide-react';
@@ -167,7 +167,7 @@ const LoginPage = () => {
           await finishSignIn(res.data.token);
         }
       } catch (err: any) {
-        setCodeError(err.response?.data?.error || (useRecoveryCode ? 'Invalid recovery code' : 'Invalid 2FA code'));
+        setCodeError(err.response?.data?.error || (useRecoveryCode ? t('auth.login.invalid_recovery_code') : t('auth.invalid_2fa_code')));
       } finally {
         setIsSubmitting(false);
       }
@@ -179,7 +179,7 @@ const LoginPage = () => {
     setEmailValid(isEmailValid);
 
     if (!isEmailValid) {
-      setError('Please enter a valid email address.');
+      setError(t('auth.errors.invalid_email'));
       return;
     }
 
@@ -201,7 +201,7 @@ const LoginPage = () => {
     }
 
     if (!currentToken) {
-      setError('Please complete the security check.');
+      setError(t('auth.errors.security_check'));
       setIsSubmitting(false);
       return;
     }
@@ -221,7 +221,7 @@ const LoginPage = () => {
         await finishSignIn(res.data.token);
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid credentials.');
+      setError(err.response?.data?.error || t('auth.login.invalid_credentials'));
     } finally {
       setIsSubmitting(false);
     }
@@ -256,7 +256,7 @@ const LoginPage = () => {
       }
     } catch (err: any) {
       if (err.name !== 'NotAllowedError') {
-        setError(err.response?.data?.error || err.message || 'Passkey authentication failed.');
+        setError(err.response?.data?.error || err.message || t('auth.login.passkey_failed'));
       }
     } finally {
       setIsSubmitting(false);
@@ -270,11 +270,11 @@ const LoginPage = () => {
     <div className="ac-auth">
       <div className="panel panel-fg ac-card">
         <div className="ac-card-head">
-          <h1 className="h1">Welcome <span className="mark">back</span></h1>
+          <h1 className="h1"><Trans t={t} i18nKey="auth.login.title" components={{ highlight: <span className="mark" /> }} /></h1>
           <p className="small">
             {serviceLabel
-              ? `Sign in with your Pumpkin Account to continue to ${serviceLabel}.`
-              : 'Sign in to your PumpkinMC account.'}
+              ? t('auth.sso.login_service_subtitle', { service: serviceLabel })
+              : t('auth.login.subtitle')}
           </p>
         </div>
 
@@ -293,8 +293,8 @@ const LoginPage = () => {
             !useRecoveryCode ? (
               <>
                 <label className="field" htmlFor="totpCode">
-                  <span className="field-label">Authentication Code</span>
-                  <span className="field-hint">Enter the 6-digit code from your authenticator app.</span>
+                  <span className="field-label">{t('auth.authentication_code')}</span>
+                  <span className="field-hint">{t('auth.two_factor_prompt')}</span>
                   <span className="control">
                     <input
                       id="totpCode"
@@ -323,14 +323,14 @@ const LoginPage = () => {
                   className="ac-text-button"
                   onClick={() => { setUseRecoveryCode(true); setCodeError(''); setError(''); }}
                 >
-                  Lost access to your phone? Use a recovery code →
+                  {t('auth.login.use_recovery')}
                 </button>
               </>
             ) : (
               <>
                 <label className="field" htmlFor="recoveryCode">
-                  <span className="field-label">Emergency Recovery Code</span>
-                  <span className="field-hint">Enter one of your 12-character backup recovery codes.</span>
+                  <span className="field-label">{t('auth.login.recovery_code')}</span>
+                  <span className="field-hint">{t('auth.login.recovery_hint')}</span>
                   <span className="control">
                     <input
                       id="recoveryCode"
@@ -356,7 +356,7 @@ const LoginPage = () => {
                   className="ac-text-button ac-text-button-muted"
                   onClick={() => { setUseRecoveryCode(false); setCodeError(''); setError(''); }}
                 >
-                  ← Back to authenticator app code
+                  {t('auth.login.use_authenticator')}
                 </button>
               </>
             )
@@ -368,10 +368,10 @@ const LoginPage = () => {
                 onClick={handlePasskeyLogin}
                 disabled={isSubmitting}
               >
-                <Fingerprint /> Sign in with a Passkey
+                <Fingerprint /> {t('auth.login.passkey')}
               </button>
 
-              <div className="ac-or label">or email & password</div>
+              <div className="ac-or label">{t('auth.login.email_password')}</div>
 
               <div className="field">
                 <label className="field-label" htmlFor="email">{t('auth.email')}</label>
@@ -381,7 +381,7 @@ const LoginPage = () => {
                     name="email"
                     className="input"
                     type="email"
-                    placeholder="you@company.com"
+                    placeholder={t('auth.email_placeholder')}
                     value={form.email}
                     onChange={handleEmailChange}
                     onBlur={handleEmailBlur}
@@ -393,7 +393,7 @@ const LoginPage = () => {
                   {emailIsValid && <Check className="ac-ok" />}
                 </span>
                 {emailIsInvalid && (
-                  <span className="field-error"><AlertCircle size={14} />Please enter a valid email address</span>
+                  <span className="field-error"><AlertCircle size={14} />{t('auth.invalid_email_hint')}</span>
                 )}
               </div>
 
@@ -401,7 +401,7 @@ const LoginPage = () => {
                 <div className="ac-label-row">
                   <label className="field-label" htmlFor="password">{t('auth.password')}</label>
                   <Link to="/forgot-password" className="link link-pumpkin">
-                    Forgot password?
+                    {t('auth.forgot_password')}
                   </Link>
                 </div>
                 <span className="control">
@@ -445,10 +445,10 @@ const LoginPage = () => {
             ) : codeError ? (
               <>
                 <AlertCircle />
-                <span>{codeError} — Try Again</span>
+                <span>{t('common.retry_error', { error: codeError })}</span>
               </>
             ) : requires2fa ? (
-              useRecoveryCode ? 'Verify Recovery Code' : 'Verify & Sign In'
+              useRecoveryCode ? t('auth.login.verify_recovery') : t('auth.login.verify_sign_in')
             ) : (
               t('auth.sign_in')
             )}

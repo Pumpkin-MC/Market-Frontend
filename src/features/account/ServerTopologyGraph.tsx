@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   Check,
   GitFork,
@@ -492,6 +493,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
   onConnectServer,
   onDisconnectServer,
 }) => {
+  const { t } = useTranslation();
   const vineProxies = useMemo(
     () => servers.filter((s) => s.serverType === 'vine'),
     [servers]
@@ -596,12 +598,12 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
 
   const proxyOptions = vineProxies.map((v) => ({
     value: String(v.id),
-    label: `${v.displayName} (Vine ${v.serverVersion || 'Proxy'})`,
+    label: `${v.displayName} (Vine ${v.serverVersion || t('servers.topology.proxy_unknown_version')})`,
   }));
 
   const backendOptions = candidateBackends.map((b) => ({
     value: String(b.id),
-    label: `${b.displayName} (${b.serverType === 'vine' ? 'Vine Proxy' : 'Pumpkin'})`,
+    label: `${b.displayName} (${b.serverType === 'vine' ? t('servers.topology.vine_proxy') : 'Pumpkin'})`,
   }));
 
   return (
@@ -614,18 +616,20 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
           <div className="row" style={{ gap: '0.6rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <GitFork size={18} style={{ color: 'var(--success)' }} />
             <h3 className="h3" style={{ margin: 0 }}>
-              Network Topology
+              {t('servers.topology.title')}
             </h3>
             <span className="sticker sticker-sm ac-sticker-vine">
-              {vineProxies.length} {vineProxies.length === 1 ? 'Vine Proxy' : 'Vine Proxies'}
+              {t('servers.topology.proxy_count', { count: vineProxies.length })}
             </span>
             <span className="sticker sticker-sm">
-              {connectedBackendCount} Linked{' '}
-              {connectedBackendCount === 1 ? 'Backend' : 'Backends'}
+              {t('servers.topology.backend_count', { count: connectedBackendCount })}
             </span>
             {proxyIngressPlayers > 0 && (
               <span className="tag tag-pumpkin">
-                <Users size={12} /> {proxyIngressPlayers.toLocaleString()} Routed Online
+                <Users size={12} />{' '}
+                {t('servers.topology.routed_online', {
+                  players: proxyIngressPlayers.toLocaleString(),
+                })}
               </span>
             )}
           </div>
@@ -640,11 +644,11 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
             >
               {showBuilder ? (
                 <>
-                  <X size={14} /> Close
+                  <X size={14} /> {t('common.close')}
                 </>
               ) : (
                 <>
-                  <Link2 size={14} /> Connect Server
+                  <Link2 size={14} /> {t('servers.topology.connect_server')}
                 </>
               )}
             </button>
@@ -669,7 +673,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
               }}
             >
               <div className="field" style={{ margin: 0 }}>
-                <span className="field-label">Vine Proxy (Upstream)</span>
+                <span className="field-label">{t('servers.topology.proxy_upstream')}</span>
                 <Select
                   value={resolvedProxyId}
                   onChange={setProxyIdInput}
@@ -678,7 +682,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
               </div>
 
               <div className="field" style={{ margin: 0 }}>
-                <span className="field-label">Backend Node (Downstream)</span>
+                <span className="field-label">{t('servers.topology.backend_downstream')}</span>
                 <Select
                   value={resolvedBackendId}
                   onChange={setBackendIdInput}
@@ -687,12 +691,12 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
               </div>
 
               <label className="field" style={{ margin: 0 }}>
-                <span className="field-label">Route Name (Optional)</span>
+                <span className="field-label">{t('servers.topology.route_name')}</span>
                 <span className="control">
                   <input
                     type="text"
                     className="input mono"
-                    placeholder="lobby, survival-1…"
+                    placeholder={t('servers.topology.route_name_placeholder')}
                     maxLength={48}
                     value={routeLabelInput}
                     onChange={(e) => setRouteLabelInput(e.target.value)}
@@ -720,7 +724,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                   checked={isDefaultInput}
                   onChange={(e) => setIsDefaultInput(e.target.checked)}
                 />
-                <span>Default / fallback route on this Vine proxy</span>
+                <span>{t('servers.topology.default_route')}</span>
               </label>
 
               <div className="row" style={{ gap: '0.5rem' }}>
@@ -729,14 +733,15 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                   className="button button-ghost button-sm"
                   onClick={() => setShowBuilder(false)}
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="button button-primary button-sm"
                   disabled={savingEdge || !resolvedProxyId || !resolvedBackendId}
                 >
-                  <Check size={14} /> {savingEdge ? 'Connecting…' : 'Save Route'}
+                  <Check size={14} />{' '}
+                  {savingEdge ? t('servers.topology.connecting') : t('servers.topology.save_route')}
                 </button>
               </div>
             </div>
@@ -744,7 +749,11 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
         )}
 
         {/* Interactive Tree / Node Graph Canvas */}
-        <div className="ac-topo-stage" role="region" aria-label="Vine and Pumpkin network topology">
+        <div
+          className="ac-topo-stage"
+          role="region"
+          aria-label={t('servers.topology.aria')}
+        >
           <div
             className="ac-topo-canvas"
             style={{ width: Math.max(stageWidth, 300), height: Math.max(stageHeight, 148) }}
@@ -820,14 +829,14 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                   style={{ left: edge.pillX, top: edge.pillY }}
                   title={
                     edge.source === 'verified'
-                      ? 'Verified by both Vine telemetry and dashboard route'
+                      ? t('servers.topology.edge_title_verified')
                       : edge.source === 'telemetry_key'
-                        ? 'Auto-discovered via Ed25519 key in telemetry'
+                        ? t('servers.topology.edge_title_telemetry_key')
                         : edge.source === 'telemetry_name'
-                          ? 'Auto-matched from Vine backend route name'
+                          ? t('servers.topology.edge_title_telemetry_name')
                           : edge.source === 'ghost'
-                            ? 'Reported by Vine telemetry (server not linked yet)'
-                            : 'Configured in your Pumpkin Account'
+                            ? t('servers.topology.edge_title_ghost')
+                            : t('servers.topology.edge_title_manual')
                   }
                 >
                   {edge.isDefault && (
@@ -837,7 +846,12 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                     />
                   )}
                   <span className="ac-topo-edge-label">
-                    {edge.routeLabel || (edge.isDefault ? 'default' : 'route')}
+                    {edge.routeLabel ||
+                      t(
+                        edge.isDefault
+                          ? 'servers.topology.edge_label_default'
+                          : 'servers.topology.edge_label_route'
+                      )}
                   </span>
                   {(edge.source === 'telemetry_key' || edge.source === 'verified') && (
                     <Sparkles
@@ -849,7 +863,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                     <button
                       type="button"
                       className="ac-topo-edge-unlink"
-                      title="Disconnect route"
+                      title={t('servers.topology.disconnect_route')}
                       disabled={removingThis}
                       onClick={(ev) =>
                         void handleRemoveEdge(ev, edge.proxyServerId, edge.backendServerId!)
@@ -892,7 +906,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                         {g.name}
                       </strong>
                       <span className="spacer" />
-                      <span className="sticker sticker-sm">Unlinked</span>
+                      <span className="sticker sticker-sm">{t('servers.topology.unlinked')}</span>
                     </div>
 
                     <div
@@ -900,10 +914,12 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                       style={{ justifyContent: 'space-between', alignItems: 'center' }}
                     >
                       <span className="muted" style={{ fontSize: '0.75rem' }}>
-                        {g.onlinePlayers != null ? `${g.onlinePlayers} players` : 'Telemetry route'}
+                        {g.onlinePlayers != null
+                          ? t('servers.topology.player_count', { count: g.onlinePlayers })
+                          : t('servers.topology.telemetry_route')}
                       </span>
                       <Link to="/link" className="link link-pumpkin" style={{ fontSize: '0.75rem' }}>
-                        Claim →
+                        {t('servers.topology.claim')}
                       </Link>
                     </div>
                   </div>
@@ -999,10 +1015,10 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                     <span className="muted mono" style={{ fontSize: '0.7rem' }}>
                       {isVine
                         ? node.outCount > 0
-                          ? `${node.outCount} ${node.outCount === 1 ? 'node' : 'nodes'}`
+                          ? t('servers.topology.node_count', { count: node.outCount })
                           : srv.serverVersion
                             ? `v${srv.serverVersion}`
-                            : 'proxy'
+                            : t('servers.topology.proxy_fallback')
                         : srv.minecraftVersion || srv.serverVersion || ''}
                     </span>
                   </div>
@@ -1016,13 +1032,19 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
         {edges.length === 0 && unlinkedBackends.length === 0 && (
           <div className="row small" style={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
             <span className="muted">
-              {servers.length > 1
-                ? 'Connect your linked Pumpkin servers below to visualize your proxy routing tree, or report `backends` in your Vine telemetry heartbeat for automatic discovery.'
-                : 'Link one or more backend Pumpkin servers (`pumpkin link`) to see them branch under your Vine proxy automatically.'}
+              <Trans
+                t={t}
+                i18nKey={
+                  servers.length > 1
+                    ? 'servers.topology.empty_multi'
+                    : 'servers.topology.empty_single'
+                }
+                components={{ code: <code /> }}
+              />
             </span>
             {servers.length <= 1 && (
               <Link to="/link" className="link link-pumpkin small">
-                + Link a Pumpkin Server
+                {t('servers.topology.link_pumpkin_server')}
               </Link>
             )}
           </div>
@@ -1041,7 +1063,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
             }
           >
             <span className="label">
-              Standalone Linked Servers ({standaloneServers.length})
+              {t('servers.topology.standalone', { count: standaloneServers.length })}
             </span>
             <div className="ac-topo-standalone">
               {standaloneServers.map((srv) => {
@@ -1085,7 +1107,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                         type="button"
                         className="button button-ghost button-sm"
                         style={{ height: '1.5rem', padding: '0 0.45rem', fontSize: '0.72rem' }}
-                        title="Attach to Vine proxy"
+                        title={t('servers.topology.attach_title')}
                         onClick={() =>
                           handleOpenBuilderForBackend(
                             srv.id,
@@ -1093,7 +1115,7 @@ export const ServerTopologyGraph: React.FC<ServerTopologyGraphProps> = ({
                           )
                         }
                       >
-                        <Plus size={12} /> Attach
+                        <Plus size={12} /> {t('servers.topology.attach')}
                       </button>
                     )}
                   </div>

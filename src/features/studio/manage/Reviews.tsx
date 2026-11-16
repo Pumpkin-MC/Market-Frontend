@@ -84,7 +84,7 @@ const Reviews = ({ plugin }: Props) => {
             );
             setReplyText(t => ({ ...t, [reviewId]: '' }));
         } catch (err: any) {
-            alert(err.response?.data?.error || err.response?.data || 'Failed to submit reply.');
+            alert(err.response?.data?.error || err.response?.data || t('plugin.messages.reply_failed'));
         } finally {
             setSubmitting(s => ({ ...s, [reviewId]: false }));
         }

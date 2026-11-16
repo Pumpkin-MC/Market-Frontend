@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   ACCOUNTS_ORIGIN,
   IS_ACCOUNTS_SURFACE,
@@ -38,37 +39,45 @@ const SITE_NAME = IS_ACCOUNTS_SURFACE
     ? 'Pumpkin Servers'
     : 'Pumpkin Market';
 
-const DEFAULT_DESCRIPTION = IS_ACCOUNTS_SURFACE
-  ? 'Single sign-on, passkeys, 2FA security, and server management across PumpkinMC services.'
-  : IS_SERVERS_SURFACE
-    ? 'Explore community Minecraft servers powered by Pumpkin, with live player counts and zero fake slots.'
-    : 'Discover, download, and publish high-performance WebAssembly plugins for PumpkinMC Minecraft servers.';
-
-const DEFAULT_KEYWORDS = IS_ACCOUNTS_SURFACE
-  ? 'pumpkinmc, pumpkin account, minecraft sso, passkeys, server telemetry'
-  : IS_SERVERS_SURFACE
-    ? 'minecraft servers, pumpkin servers, pumpkinmc server list, rust minecraft server'
-    : 'minecraft, plugins, wasm, marketplace, mc plugins, development';
-
 const SEO = ({
   title,
   ogTitle,
-  description = DEFAULT_DESCRIPTION,
+  description,
   ogDescription,
-  keywords = DEFAULT_KEYWORDS,
+  keywords,
   canonical,
   ogType = 'website',
   ogImage = '/icon.png',
   twitterCard,
   twitterLabels,
 }: SEOProps) => {
+  const { t } = useTranslation();
   const location = useLocation();
+  const siteName = IS_ACCOUNTS_SURFACE
+    ? t('seo.accounts.site_name')
+    : IS_SERVERS_SURFACE
+      ? t('seo.servers.site_name')
+      : t('seo.site_name');
+  const resolvedDescription = description ?? (
+    IS_ACCOUNTS_SURFACE
+      ? t('seo.accounts.default_description')
+      : IS_SERVERS_SURFACE
+        ? t('seo.servers.default_description')
+        : t('seo.default_description')
+  );
+  const resolvedKeywords = keywords ?? (
+    IS_ACCOUNTS_SURFACE
+      ? t('seo.accounts.keywords')
+      : IS_SERVERS_SURFACE
+        ? t('seo.servers.keywords')
+        : t('seo.keywords')
+  );
   const fullTitle =
-    !title || title === SITE_NAME || title.endsWith(`| ${SITE_NAME}`) || title.endsWith(`— ${SITE_NAME}`)
-      ? title || SITE_NAME
-      : `${title} | ${SITE_NAME}`;
+    !title || title === SITE_NAME || title === siteName || title.endsWith(`| ${SITE_NAME}`) || title.endsWith(`| ${siteName}`) || title.endsWith(`— ${SITE_NAME}`) || title.endsWith(`— ${siteName}`)
+      ? title || siteName
+      : t('seo.title_suffix', { title, site: siteName });
   const resolvedOgTitle = ogTitle || fullTitle;
-  const resolvedOgDesc = ogDescription || description;
+  const resolvedOgDesc = ogDescription || resolvedDescription;
   const resolvedTwitterCard =
     twitterCard ?? (ogImage === '/icon.png' ? 'summary' : 'summary_large_image');
   const url = canonical || `${SITE_ORIGIN}${location.pathname}`;
@@ -86,7 +95,7 @@ const SEO = ({
       metaDescription.setAttribute('name', 'description');
       document.head.appendChild(metaDescription);
     }
-    metaDescription.setAttribute('content', description);
+    metaDescription.setAttribute('content', resolvedDescription);
 
     let metaKeywords = document.querySelector('meta[name="keywords"]');
     if (!metaKeywords) {
@@ -94,7 +103,7 @@ const SEO = ({
       metaKeywords.setAttribute('name', 'keywords');
       document.head.appendChild(metaKeywords);
     }
-    metaKeywords.setAttribute('content', keywords);
+    metaKeywords.setAttribute('content', resolvedKeywords);
 
     let linkCanonical = document.querySelector('link[rel="canonical"]');
     if (!linkCanonical) {
@@ -119,7 +128,7 @@ const SEO = ({
     updateOG('og:url', url);
     updateOG('og:type', ogType);
     updateOG('og:image', resolvedOgImage);
-    updateOG('og:site_name', SITE_NAME);
+    updateOG('og:site_name', siteName);
 
     const updateTwitter = (name: string, content: string) => {
       let tag = document.querySelector(`meta[name="${name}"]`);
@@ -147,14 +156,15 @@ const SEO = ({
   }, [
     fullTitle,
     resolvedOgTitle,
-    description,
+    resolvedDescription,
     resolvedOgDesc,
-    keywords,
+    resolvedKeywords,
     url,
     ogType,
     resolvedOgImage,
     resolvedTwitterCard,
     twitterLabels,
+    siteName,
   ]);
 
   return null;

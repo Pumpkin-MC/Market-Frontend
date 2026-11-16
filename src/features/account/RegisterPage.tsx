@@ -1,6 +1,7 @@
+import type { TFunction } from 'i18next';
 import React, { useEffect, useState, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { AlertCircle, Check, Eye, EyeOff } from 'lucide-react';
 import api from '../../lib/api';
@@ -8,26 +9,26 @@ import { getServiceLabelFromRedirect, rememberSsoRedirectTarget } from '../../li
 import '../../styles/account.css';
 
 interface PasswordRequirement {
-  label: string;
+  label: `auth.password_requirements.${'length' | 'uppercase' | 'lowercase' | 'number' | 'special'}`;
   test: (pw: string) => boolean;
 }
 
 const PASSWORD_REQUIREMENTS: PasswordRequirement[] = [
-  { label: 'At least 8 characters',           test: pw => pw.length >= 8 },
-  { label: 'At least one uppercase letter',   test: pw => /[A-Z]/.test(pw) },
-  { label: 'At least one lowercase letter',   test: pw => /[a-z]/.test(pw) },
-  { label: 'At least one number',             test: pw => /[0-9]/.test(pw) },
-  { label: 'At least one special character',  test: pw => /[^A-Za-z0-9]/.test(pw) },
+  { label: 'auth.password_requirements.length',           test: pw => pw.length >= 8 },
+  { label: 'auth.password_requirements.uppercase',   test: pw => /[A-Z]/.test(pw) },
+  { label: 'auth.password_requirements.lowercase',   test: pw => /[a-z]/.test(pw) },
+  { label: 'auth.password_requirements.number',             test: pw => /[0-9]/.test(pw) },
+  { label: 'auth.password_requirements.special',  test: pw => /[^A-Za-z0-9]/.test(pw) },
 ];
 
-function getStrength(pw: string): { score: number; label: string; color: string } {
+function getStrength(pw: string, t: TFunction): { score: number; label: string; color: string } {
   if (!pw) return { score: 0, label: '', color: 'var(--line-2)' };
   const passed = PASSWORD_REQUIREMENTS.filter(r => r.test(pw)).length;
-  if (passed <= 1) return { score: 1, label: 'Very weak',  color: 'var(--danger)' };
-  if (passed === 2) return { score: 2, label: 'Weak',       color: 'var(--pumpkin)' };
-  if (passed === 3) return { score: 3, label: 'Fair',       color: 'var(--warning)' };
-  if (passed === 4) return { score: 4, label: 'Strong',     color: 'var(--success)' };
-  return              { score: 5, label: 'Very strong', color: 'var(--success)' };
+  if (passed <= 1) return { score: 1, label: t('auth.password_strength.very_weak'),  color: 'var(--danger)' };
+  if (passed === 2) return { score: 2, label: t('auth.password_strength.weak'),       color: 'var(--pumpkin)' };
+  if (passed === 3) return { score: 3, label: t('auth.password_strength.fair'),       color: 'var(--warning)' };
+  if (passed === 4) return { score: 4, label: t('auth.password_strength.strong'),     color: 'var(--success)' };
+  return              { score: 5, label: t('auth.password_strength.very_strong'), color: 'var(--success)' };
 }
 
 const RegisterPage = () => {
@@ -71,7 +72,7 @@ const RegisterPage = () => {
     if (!passwordTouched && e.target.value.length > 0) setPasswordTouched(true);
   };
 
-  const strength = getStrength(form.password);
+  const strength = getStrength(form.password, t);
   const allRequirementsMet = PASSWORD_REQUIREMENTS.every(r => r.test(form.password));
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,8 +84,8 @@ const RegisterPage = () => {
     setEmailValid(isEmailValid);
     setPasswordTouched(true);
 
-    if (!isEmailValid) { setError('Please enter a valid email address.'); return; }
-    if (!allRequirementsMet) { setError('Please meet all password requirements.'); return; }
+    if (!isEmailValid) { setError(t('auth.errors.invalid_email')); return; }
+    if (!allRequirementsMet) { setError(t('auth.register.password_requirements_error')); return; }
 
     setIsSubmitting(true);
     setError('');
@@ -104,7 +105,7 @@ const RegisterPage = () => {
     }
 
     if (!currentToken) {
-      setError('Please complete the security check.');
+      setError(t('auth.errors.security_check'));
       setIsSubmitting(false);
       return;
     }
@@ -114,7 +115,7 @@ const RegisterPage = () => {
       await api.post('/auth/register', { ...form, captchaToken: currentToken, language });
       navigate('/check-email', { state: { email: form.email } });
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed. Please try again.');
+      setError(err.response?.data?.error || t('auth.register.failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -134,7 +135,7 @@ const RegisterPage = () => {
         <div className="ac-card-head">
           <h1 className="h1">{title.slice(0, cut)}<span className="mark">{title.slice(cut)}</span></h1>
           {serviceLabel && (
-            <p className="small">One Pumpkin Account works across {serviceLabel} and all PumpkinMC services.</p>
+            <p className="small">{t('auth.sso.service_subtitle', { service: serviceLabel })}</p>
           )}
         </div>
 
@@ -153,7 +154,7 @@ const RegisterPage = () => {
             <span className="field-label">{t('auth.username')}</span>
             <span className="control">
               <input
-                id="username" name="username" className="input" type="text" placeholder="johndoe"
+                id="username" name="username" className="input" type="text" placeholder={t('auth.username_placeholder')}
                 onChange={e => setForm({ ...form, username: e.target.value })}
                 required disabled={isSubmitting} autoComplete="username"
                 autoCapitalize="none" spellCheck={false}
@@ -168,7 +169,7 @@ const RegisterPage = () => {
                 id="email"
                 name="email"
                 className="input"
-                type="email" placeholder="you@company.com"
+                type="email" placeholder={t('auth.email_placeholder')}
                 value={form.email}
                 onChange={handleEmailChange}
                 onBlur={handleEmailBlur}
@@ -178,10 +179,10 @@ const RegisterPage = () => {
               {emailIsValid && <Check className="ac-ok" />}
             </span>
             {emailIsInvalid && (
-              <span className="field-error"><AlertCircle size={14} />Please enter a valid email address</span>
+              <span className="field-error"><AlertCircle size={14} />{t('auth.invalid_email_hint')}</span>
             )}
             {emailIsValid && (
-              <span className="field-hint ac-hint-ok">Looks good!</span>
+              <span className="field-hint ac-hint-ok">{t('auth.register.email_valid')}</span>
             )}
           </label>
 
@@ -193,7 +194,7 @@ const RegisterPage = () => {
                 name="password"
                 className="input"
                 type={showPassword ? 'text' : 'password'}
-                placeholder="Create a strong password"
+                placeholder={t('auth.register.password_placeholder')}
                 value={form.password}
                 onChange={handlePasswordChange}
                 required disabled={isSubmitting} autoComplete="new-password"
@@ -202,7 +203,7 @@ const RegisterPage = () => {
                 type="button"
                 className="ac-eye"
                 onClick={() => setShowPassword(p => !p)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-label={showPassword ? t('common.hide_password') : t('common.show_password')}
                 tabIndex={-1}
               >
                 {showPassword ? <EyeOff /> : <Eye />}
@@ -220,7 +221,7 @@ const RegisterPage = () => {
                 <div className="row small">
                   <span className="ac-strength-label">{strength.label}</span>
                   <span className="spacer" />
-                  <span>{metCount}/{PASSWORD_REQUIREMENTS.length} requirements met</span>
+                  <span>{t('auth.password_requirements.requirements_met', { met: metCount, total: PASSWORD_REQUIREMENTS.length })}</span>
                 </div>
 
                 <ul className="ac-reqs">
@@ -229,7 +230,7 @@ const RegisterPage = () => {
                     return (
                       <li key={idx} data-state={met ? 'met' : passwordTouched ? 'unmet' : undefined}>
                         <span className="mark-box mark-box-success">{met && <Check />}</span>
-                        {req.label}
+                        {t(req.label)}
                       </li>
                     );
                   })}
@@ -250,13 +251,12 @@ const RegisterPage = () => {
           </div>
 
           <button className="button button-primary button-lg button-block" type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            {isSubmitting ? 'Creating account…' : t('auth.create_account')}
+            {isSubmitting ? t('auth.register.creating') : t('auth.create_account')}
           </button>
         </form>
 
         <p className="small ac-center">
-          By creating an account, you agree to our{' '}
-          <Link to="/terms" className="link">Terms of Service</Link> and <Link to="/privacy" className="link">Privacy Policy</Link>
+          <Trans t={t} i18nKey="auth.register.agreement" components={{ terms: <Link to="/terms" className="link" />, privacy: <Link to="/privacy" className="link" /> }} />
         </p>
 
         <p className="ac-card-foot small">

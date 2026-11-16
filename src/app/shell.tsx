@@ -70,11 +70,14 @@ const UserChip = ({ user, onNavigate }: { user: any; onNavigate: () => void }) =
   );
 };
 
-const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => (
-  <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label="Toggle menu" aria-expanded={open}>
-    {open ? <X /> : <Menu />}
-  </button>
-);
+const MenuToggle = ({ open, onToggle }: { open: boolean; onToggle: () => void }) => {
+  const { t } = useTranslation();
+  return (
+    <button type="button" className="button button-icon button-sm menu-toggle" onClick={onToggle} aria-label={t('nav.toggle_menu')} aria-expanded={open}>
+      {open ? <X /> : <Menu />}
+    </button>
+  );
+};
 
 const useMenu = () => {
   const [open, setOpen] = useState(false);
@@ -91,9 +94,9 @@ const Masthead = ({ user }: any) => {
     <>
       <NavLink to="/search" onClick={menu.close}>{t('nav.browse')}</NavLink>
       {sso ? (
-        <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
+        <a href={getServersUrl('/')} onClick={menu.close}>{t('nav.servers')}</a>
       ) : (
-        <NavLink to="/servers" onClick={menu.close}>Servers</NavLink>
+        <NavLink to="/servers" onClick={menu.close}>{t('nav.servers')}</NavLink>
       )}
       {user && (user.plugin_count > 0 || user.is_developer) && <NavLink to="/dashboard" onClick={menu.close}>{t('nav.dashboard')}</NavLink>}
       {user && <NavLink to={user.is_developer ? '/dashboard/plugins?create=true' : '/dashboard/plugins'} onClick={menu.close}>{t('nav.publish', 'Publish')}</NavLink>}
@@ -117,7 +120,7 @@ const Masthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Market</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Main">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.main_navigation')}>{links}</nav>
           <div className="masthead-search">
             <NavSearch onNavigate={menu.close} />
           </div>
@@ -126,7 +129,7 @@ const Masthead = ({ user }: any) => {
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -166,13 +169,13 @@ const StudioMasthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Studio</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Studio">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.studio')}>{links}</nav>
           <div className="masthead-actions">{actions}</div>
           <MenuToggle open={menu.open} onToggle={menu.toggle} />
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -205,7 +208,7 @@ const AccountsMasthead = ({ user }: any) => {
       {user && (
         <>
           <NavLink to="/settings" end onClick={menu.close}>{t('nav.profile')}</NavLink>
-          <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
+          <a href={getServersUrl('/')} onClick={menu.close}>{t('nav.servers')}</a>
           <a href={getMarketUrl('/search')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
           {(user.plugin_count > 0 || user.is_developer) && (
             <a href={getMarketUrl('/dashboard')} onClick={menu.close}>
@@ -216,7 +219,7 @@ const AccountsMasthead = ({ user }: any) => {
       )}
       {!user && (
         <>
-          <a href={getServersUrl('/')} onClick={menu.close}>Servers</a>
+          <a href={getServersUrl('/')} onClick={menu.close}>{t('nav.servers')}</a>
           <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
         </>
       )}
@@ -245,14 +248,14 @@ const AccountsMasthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Account</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Account">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.account')}>{links}</nav>
           <span className="spacer" />
           <div className="masthead-actions">{actions}</div>
           <MenuToggle open={menu.open} onToggle={menu.toggle} />
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -276,11 +279,11 @@ const AccountsFooter = () => {
             </Link>
           </div>
           <div className="colophon-col">
-            <span className="label">Ecosystem</span>
+            <span className="label">{t('nav.footer.ecosystem')}</span>
             <ul>
               <li><a href="https://pumpkinmc.org">PumpkinMC</a></li>
-              <li><a href={getServersUrl('/')}>Pumpkin Servers</a></li>
-              <li><a href={getMarketUrl('/')}>Pumpkin Market</a></li>
+              <li><a href={getServersUrl('/')}>{t('nav.footer.pumpkin_servers')}</a></li>
+              <li><a href={getMarketUrl('/')}>{t('nav.footer.pumpkin_market')}</a></li>
             </ul>
           </div>
           <div className="colophon-col">
@@ -292,7 +295,7 @@ const AccountsFooter = () => {
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Preferences</span>
+            <span className="label">{t('nav.footer.preferences')}</span>
             <ul>
               <li><button type="button" onClick={openCookiePreferencesModal}>{t('nav.cookie_preferences', 'Cookie Preferences')}</button></li>
             </ul>
@@ -300,7 +303,7 @@ const AccountsFooter = () => {
         </div>
         <div className="colophon-base">
           <span>© 2026 PumpkinMC</span>
-          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span>{t('nav.footer.minecraft_disclaimer')}</span>
           <span className="spacer" />
           <LanguageSelector />
         </div>
@@ -335,9 +338,9 @@ const ServersMasthead = ({ user }: any) => {
     <>
       <NavLink to="/" end onClick={menu.close}>{t('nav.browse')}</NavLink>
       {sso ? (
-        <a href={listServerHref} onClick={menu.close}>Your Servers</a>
+        <a href={listServerHref} onClick={menu.close}>{t('nav.your_servers')}</a>
       ) : (
-        <Link to={listServerHref} onClick={menu.close}>Your Servers</Link>
+        <Link to={listServerHref} onClick={menu.close}>{t('nav.your_servers')}</Link>
       )}
       <a href={getMarketUrl('/')} onClick={menu.close}>{t('nav.market', 'Market')}</a>
     </>
@@ -347,11 +350,11 @@ const ServersMasthead = ({ user }: any) => {
     <>
       {sso ? (
         <a href={listServerHref} className="button button-sm" onClick={menu.close}>
-          <Plus size={15} /> List Server
+          <Plus size={15} /> {t('nav.list_server')}
         </a>
       ) : (
         <Link to={listServerHref} className="button button-sm" onClick={menu.close}>
-          <Plus size={15} /> List Server
+          <Plus size={15} /> {t('nav.list_server')}
         </Link>
       )}
       {user ? (
@@ -373,14 +376,14 @@ const ServersMasthead = ({ user }: any) => {
             <img src="/icon.png" alt="Pumpkin" />
             <span className="brand-name"><span>Servers</span></span>
           </Link>
-          <nav className="navlinks" aria-label="Servers">{links}</nav>
+          <nav className="navlinks" aria-label={t('nav.servers_aria')}>{links}</nav>
           <span className="spacer" />
           <div className="masthead-actions">{actions}</div>
           <MenuToggle open={menu.open} onToggle={menu.toggle} />
         </div>
       </div>
       {menu.open && (
-        <nav className="mobile-menu" aria-label="Menu">
+        <nav className="mobile-menu" aria-label={t('nav.menu')}>
           <div className="page">
             {links}
             <div className="mobile-menu-actions">{actions}</div>
@@ -407,17 +410,17 @@ const ServersFooter = () => {
             </Link>
           </div>
           <div className="colophon-col">
-            <span className="label">Directory</span>
+            <span className="label">{t('nav.footer.directory')}</span>
             <ul>
-              <li><Link to="/"><Server size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />Browse Servers</Link></li>
+              <li><Link to="/"><Server size={13} style={{ verticalAlign: '-2px', marginRight: 4 }} />{t('nav.footer.browse_servers')}</Link></li>
               <li>
                 {sso ? (
-                  <a href={listServerHref}>List Your Server</a>
+                  <a href={listServerHref}>{t('nav.footer.list_your_server')}</a>
                 ) : (
-                  <Link to={listServerHref}>List Your Server</Link>
+                  <Link to={listServerHref}>{t('nav.footer.list_your_server')}</Link>
                 )}
               </li>
-              <li><a href={getMarketUrl('/')}>Pumpkin Market</a></li>
+              <li><a href={getMarketUrl('/')}>{t('nav.footer.pumpkin_market')}</a></li>
               <li><a href="https://pumpkinmc.org">PumpkinMC</a></li>
             </ul>
           </div>
@@ -431,7 +434,7 @@ const ServersFooter = () => {
             </ul>
           </div>
           <div className="colophon-col">
-            <span className="label">Preferences</span>
+            <span className="label">{t('nav.footer.preferences')}</span>
             <ul>
               <li><button type="button" onClick={openCookiePreferencesModal}>{t('nav.cookie_preferences', 'Cookie Preferences')}</button></li>
             </ul>
@@ -439,7 +442,7 @@ const ServersFooter = () => {
         </div>
         <div className="colophon-base">
           <span>© 2026 PumpkinMC</span>
-          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span>{t('nav.footer.minecraft_disclaimer')}</span>
           <span className="spacer" />
           <LanguageSelector />
         </div>
@@ -476,18 +479,20 @@ const LANGUAGES = [
   { value: 'tr', label: 'Türkçe' },
   { value: 'ja', label: '日本語' },
   { value: 'ko', label: '한국어' },
-  { value: 'zh', label: '中文' },
+  { value: 'zh', label: '简体中文' },
+  { value: 'zh-HK', label: '繁體中文（香港）' },
+  { value: 'zh-TW', label: '繁體中文（台灣）' },
 ];
 
 const LanguageSelector = () => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user, login } = useAuth();
 
   const handleLanguageChange = async (newLang: string) => {
     i18n.changeLanguage(newLang);
     if (user) {
       try {
-        const res = await api.post('/user/change-language', { newLanguage: newLang });
+        const res = await api.post('/user/change-language', { newLanguage: newLang.split('-')[0] });
         if (res.data.token) {
           login(res.data.token);
         }
@@ -497,14 +502,16 @@ const LanguageSelector = () => {
     }
   };
 
-  const currentLang = i18n.language ? i18n.language.split('-')[0] : 'en';
+  const currentLang = i18n.language === 'zh-HK' || i18n.language === 'zh-TW'
+    ? i18n.language
+    : (i18n.language ? i18n.language.split('-')[0] : 'en');
 
   return (
     <Select
       options={LANGUAGES}
       value={currentLang}
       onChange={handleLanguageChange}
-      aria-label="Language selection"
+      aria-label={t('nav.language_selection')}
       className="language-select"
     />
   );
@@ -526,7 +533,7 @@ const Footer = () => {
             <span className="label">{t('nav.market', 'Market')}</span>
             <ul>
               <li><Link to="/search">{t('nav.browse')}</Link></li>
-              <li><a href={getServersUrl('/')}>Pumpkin Servers</a></li>
+              <li><a href={getServersUrl('/')}>{t('nav.footer.pumpkin_servers')}</a></li>
               <li><Link to="/dashboard/plugins">{t('nav.publish', 'Publish')}</Link></li>
               <li><a href="https://pumpkinmc.org">Pumpkin</a></li>
             </ul>
@@ -550,7 +557,7 @@ const Footer = () => {
         </div>
         <div className="colophon-base">
           <span>© 2026 PumpkinMC</span>
-          <span>Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft.</span>
+          <span>{t('nav.footer.minecraft_disclaimer')}</span>
           <span className="spacer" />
           <LanguageSelector />
         </div>

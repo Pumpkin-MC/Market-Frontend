@@ -12,11 +12,11 @@ const AuthorPage = () => {
   const [author, setAuthor] = useState<any>(null);
   const [plugins, setPlugins] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     setLoading(true);
-    setError(null);
+    setLoadFailed(false);
 
     api.get(`/user/public/${username}`)
       .then(res => {
@@ -28,7 +28,7 @@ const AuthorPage = () => {
       })
       .catch(err => {
         console.error('Fetch error:', err);
-        setError('User not found or failed to load plugins.');
+        setLoadFailed(true);
       })
       .finally(() => {
         setLoading(false);
@@ -36,17 +36,17 @@ const AuthorPage = () => {
   }, [username]);
 
   if (loading) return <div className="page-loader"><span className="loading" /></div>;
-  if (error || !author) return (
+  if (loadFailed || !author) return (
     <div className="page sf-pad">
-      <div className="blank"><h2 className="h2">{error || 'User not found'}</h2></div>
+      <div className="blank"><h2 className="h2">{loadFailed ? t('profile.author.load_failed') : t('profile.author.not_found')}</h2></div>
     </div>
   );
 
   return (
     <>
       <SEO
-        title={`${author.username}'s Profile`}
-        description={`Check out all Minecraft plugins created by ${author.username} on Pumpkin Market.`}
+        title={t('profile.author.page_title', { username: author.username })}
+        description={t('profile.author.page_description', { username: author.username })}
       />
 
       <section className="sf-hero">
@@ -62,7 +62,7 @@ const AuthorPage = () => {
             <h1 className="display-1 sf-profile-name">{author.display_name || author.username}</h1>
             <p className="small">
               {t('studio.author_page.member_since', {
-                date: author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : 'N/A',
+                date: author.created_at ? new Date(author.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long' }) : t('common.not_available'),
                 defaultValue: 'Member since {{date}}',
               })}
             </p>

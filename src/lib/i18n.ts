@@ -10,6 +10,8 @@ import frTranslation from '../locales/fr.json';
 import esTranslation from '../locales/es.json';
 import ruTranslation from '../locales/ru.json';
 import zhTranslation from '../locales/zh.json';
+import zhHkTranslation from '../locales/zh-HK.json';
+import zhTwTranslation from '../locales/zh-TW.json';
 import ptTranslation from '../locales/pt.json';
 import plTranslation from '../locales/pl.json';
 import trTranslation from '../locales/tr.json';
@@ -25,6 +27,8 @@ const resources = {
   es: { translation: esTranslation },
   ru: { translation: ruTranslation },
   zh: { translation: zhTranslation },
+  'zh-HK': { translation: zhHkTranslation },
+  'zh-TW': { translation: zhTwTranslation },
   pt: { translation: ptTranslation },
   pl: { translation: plTranslation },
   tr: { translation: trTranslation },
@@ -34,15 +38,26 @@ const resources = {
   nl: { translation: nlTranslation },
 };
 
+const normalizeDetectedLanguage = (lang: string): string => {
+  const lower = lang.toLowerCase().replace('_', '-');
+  if (lower.startsWith('zh')) {
+    if (lower.includes('hk') || lower.includes('hant-hk')) return 'zh-HK';
+    if (lower.includes('tw') || lower.includes('hant-tw')) return 'zh-TW';
+    if (lower.includes('hant') || lower.includes('mo')) return 'zh-HK';
+    return 'zh';
+  }
+  return lang.split('-')[0];
+};
+
 i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
     resources,
     fallbackLng: 'en',
-    supportedLngs: ['en', 'de', 'fr', 'es', 'ru', 'zh', 'pt', 'pl', 'tr', 'ja', 'ko', 'it', 'nl'],
+    supportedLngs: ['en', 'de', 'fr', 'es', 'ru', 'zh', 'zh-HK', 'zh-TW', 'pt', 'pl', 'tr', 'ja', 'ko', 'it', 'nl'],
     nonExplicitSupportedLngs: true,
-    load: 'languageOnly',
+    load: 'all',
     interpolation: {
       escapeValue: false, // React already escapes values
     },
@@ -50,6 +65,7 @@ i18n
       order: ['localStorage', 'navigator', 'htmlTag'],
       lookupLocalStorage: 'i18nextLng',
       caches: ['localStorage'],
+      convertDetectedLanguage: normalizeDetectedLanguage,
     },
   });
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   AlertCircle,
   Check,
@@ -28,6 +29,7 @@ interface ServerLinkPreview {
 }
 
 const LinkServerPage: React.FC = () => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -56,14 +58,16 @@ const LinkServerPage: React.FC = () => {
         setPreview(res.data);
         setDisplayName(
           res.data.serverName ||
-            (res.data.serverType === 'vine' ? 'Vine Proxy' : 'Pumpkin Server')
+            (res.data.serverType === 'vine'
+              ? t('servers.link.default_proxy_name')
+              : t('servers.link.default_server_name'))
         );
       } catch (err: any) {
         if (cancelled) return;
         setPreview(null);
         setError(
           err.response?.data?.error ||
-            'Invalid or expired link code. Run `pumpkin link` or `vine link` in your console again.'
+            t('servers.link.invalid_code')
         );
       } finally {
         if (!cancelled) setLoadingPreview(false);
@@ -74,7 +78,7 @@ const LinkServerPage: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [urlCode]);
+  }, [urlCode, t]);
 
   const handleLookupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +101,7 @@ const LinkServerPage: React.FC = () => {
     } catch (err: any) {
       setError(
         err.response?.data?.error ||
-          'Failed to link node. Please generate a fresh `pumpkin link` or `vine link` code.'
+          t('servers.link.link_failed')
       );
     } finally {
       setSubmitting(false);
@@ -112,8 +116,8 @@ const LinkServerPage: React.FC = () => {
   return (
     <div className="ac-auth">
       <SEO
-        title={isVine ? 'Link Vine Proxy' : 'Link Server'}
-        description="Connect your Pumpkin server or Vine proxy to your Pumpkin Account for live telemetry, network topology, and server management."
+        title={t(isVine ? 'servers.link.seo_title_proxy' : 'servers.link.seo_title')}
+        description={t('servers.link.seo_description')}
       />
       <div className="panel panel-fg ac-card" style={{ maxWidth: '34rem' }}>
         <div className="ac-card-head">
@@ -121,19 +125,21 @@ const LinkServerPage: React.FC = () => {
             {isVine ? <GitFork /> : <Server />}
           </span>
           <h1 className="h1">
-            Link <span className="mark">{isVine ? 'Vine Proxy' : 'Server'}</span>
+            <Trans
+              t={t}
+              i18nKey={isVine ? 'servers.link.title_proxy' : 'servers.link.title'}
+              components={{ mark: <span className="mark" /> }}
+            />
           </h1>
           <p className="small">
-            {isVine
-              ? 'Connect your Vine proxy to your Pumpkin Account to visualize your multi-server routing tree and monitor live proxy traffic.'
-              : 'Connect your Pumpkin server or Vine proxy to your Pumpkin Account for live telemetry, crash monitoring, and network topology.'}
+            {t(isVine ? 'servers.link.subtitle_proxy' : 'servers.link.subtitle')}
           </p>
         </div>
 
         {loadingPreview ? (
           <div className="stack" style={{ alignItems: 'center', padding: '1.5rem 0' }}>
             <span className="loading" />
-            <p className="small">Verifying cryptographic Ed25519 signature…</p>
+            <p className="small">{t('servers.link.verifying')}</p>
           </div>
         ) : !preview ? (
           <form className="stack" onSubmit={handleLookupSubmit}>
@@ -148,13 +154,12 @@ const LinkServerPage: React.FC = () => {
 
             <div className="panel" style={{ padding: '0.875rem 1rem' }}>
               <p className="small" style={{ margin: 0 }}>
-                Run <code>pumpkin link</code> in your Pumpkin server console or{' '}
-                <code>vine link</code> in your Vine proxy console to generate an 8-character claim code.
+                <Trans t={t} i18nKey="servers.link.console_hint" components={{ code: <code /> }} />
               </p>
             </div>
 
             <label className="field" htmlFor="serverLinkCode">
-              <span className="field-label">Server / Proxy Link Code</span>
+              <span className="field-label">{t('servers.link.code_label')}</span>
               <span className="control">
                 <input
                   id="serverLinkCode"
@@ -171,12 +176,12 @@ const LinkServerPage: React.FC = () => {
             </label>
 
             <button type="submit" className="button button-primary button-lg button-block">
-              Verify Code
+              {t('auth.verify_code')}
             </button>
 
             <p className="ac-card-foot small">
               <Link to="/settings?tab=servers" className="link">
-                ← Back to Your Servers
+                {t('servers.link.back_to_servers')}
               </Link>
             </p>
           </form>
@@ -196,8 +201,16 @@ const LinkServerPage: React.FC = () => {
                 <ShieldCheck />
               </span>
               <p className="notice-text">
-                <strong>Ed25519 Signature Verified</strong> — Key <code>{shortKey}</code> proved possession of{' '}
-                <code>{isVine ? '.vine/identity.key' : '.pumpkin/identity.key'}</code>.
+                <Trans
+                  t={t}
+                  i18nKey={
+                    isVine
+                      ? 'servers.link.signature_verified_proxy'
+                      : 'servers.link.signature_verified'
+                  }
+                  values={{ key: shortKey }}
+                  components={{ strong: <strong />, code: <code /> }}
+                />
               </p>
             </div>
 
@@ -207,7 +220,11 @@ const LinkServerPage: React.FC = () => {
                   <AlertCircle />
                 </span>
                 <p className="notice-text">
-                  This {isVine ? 'proxy' : 'server'} key was previously linked to another account. Confirming will transfer ownership to your Pumpkin Account.
+                  {t(
+                    isVine
+                      ? 'servers.link.transfer_warning_proxy'
+                      : 'servers.link.transfer_warning'
+                  )}
                 </p>
               </div>
             )}
@@ -221,11 +238,15 @@ const LinkServerPage: React.FC = () => {
                     ) : (
                       <Server size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
                     )}
-                    Software
+                    {t('servers.link.software')}
                   </span>
                   <span className="spacer" />
                   <span className="row" style={{ gap: '0.4rem', alignItems: 'center' }}>
-                    {isVine && <span className="sticker sticker-sm ac-sticker-vine">Proxy</span>}
+                    {isVine && (
+                      <span className="sticker sticker-sm ac-sticker-vine">
+                        {t('servers.link.proxy_badge')}
+                      </span>
+                    )}
                     <strong>
                       {isVine ? 'Vine' : 'Pumpkin'} {preview.serverVersion}
                       {preview.minecraftVersion ? ` (MC ${preview.minecraftVersion})` : ''}
@@ -236,7 +257,7 @@ const LinkServerPage: React.FC = () => {
                   <div className="row small">
                     <span className="muted">
                       <Cpu size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
-                      Platform
+                      {t('servers.link.platform')}
                     </span>
                     <span className="spacer" />
                     <span>{[preview.os, preview.arch].filter(Boolean).join(' • ')}</span>
@@ -245,7 +266,7 @@ const LinkServerPage: React.FC = () => {
                 <div className="row small">
                   <span className="muted">
                     <Key size={14} style={{ verticalAlign: 'text-bottom', marginRight: 6 }} />
-                    Identity Key
+                    {t('servers.link.identity_key')}
                   </span>
                   <span className="spacer" />
                   <code>{shortKey}</code>
@@ -254,7 +275,7 @@ const LinkServerPage: React.FC = () => {
             </div>
 
             <label className="field" htmlFor="displayName">
-              <span className="field-label">Display Name</span>
+              <span className="field-label">{t('servers.link.display_name')}</span>
               <span className="control">
                 <input
                   id="displayName"
@@ -263,14 +284,20 @@ const LinkServerPage: React.FC = () => {
                   maxLength={64}
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder={isVine ? 'EU Edge Vine Proxy' : 'My Pumpkin Survival Server'}
+                  placeholder={t(
+                    isVine
+                      ? 'servers.link.display_name_placeholder_proxy'
+                      : 'servers.link.display_name_placeholder'
+                  )}
                   required
                 />
               </span>
               <span className="field-hint">
-                {isVine
-                  ? 'Shown in your network topology graph and Pumpkin Account dashboard. You can rename it anytime.'
-                  : 'Shown in your Pumpkin Account telemetry dashboard. You can rename it anytime.'}
+                {t(
+                  isVine
+                    ? 'servers.link.display_name_hint_proxy'
+                    : 'servers.link.display_name_hint'
+                )}
               </span>
             </label>
 
@@ -281,18 +308,18 @@ const LinkServerPage: React.FC = () => {
               aria-busy={submitting}
             >
               {submitting ? (
-                isVine ? 'Linking Vine Proxy…' : 'Linking Server…'
+                t(isVine ? 'servers.link.linking_proxy' : 'servers.link.linking')
               ) : (
                 <>
                   <Check />
                   <span>
                     {preview.alreadyLinkedToYou
-                      ? isVine
-                        ? 'Update Linked Proxy'
-                        : 'Update Linked Server'
-                      : isVine
-                        ? 'Confirm & Link Vine Proxy'
-                        : 'Confirm & Link Server'}
+                      ? t(
+                          isVine
+                            ? 'servers.link.update_linked_proxy'
+                            : 'servers.link.update_linked'
+                        )
+                      : t(isVine ? 'servers.link.confirm_link_proxy' : 'servers.link.confirm_link')}
                   </span>
                 </>
               )}
@@ -300,7 +327,7 @@ const LinkServerPage: React.FC = () => {
 
             <p className="ac-card-foot small">
               <Link to="/settings?tab=servers" className="link">
-                Cancel
+                {t('common.cancel')}
               </Link>
             </p>
           </form>

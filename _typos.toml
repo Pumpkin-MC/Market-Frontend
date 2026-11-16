@@ -12,6 +12,8 @@ extend-exclude = [
   "src/locales/ru.json",
   "src/locales/tr.json",
   "src/locales/zh.json",
+  "src/locales/zh-HK.json",
+  "src/locales/zh-TW.json",
   "dist/**",
   "bun.lock"
 ]

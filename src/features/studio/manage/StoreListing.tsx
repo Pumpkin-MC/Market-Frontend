@@ -6,16 +6,11 @@ import api from '../../../lib/api';
 import { useAuth } from '../../../app/auth';
 import type { PluginData } from './ManagePluginPage';
 import { validateAndSanitizeImage } from '../../../lib/fileValidation';
+import { getCategoryOptions } from '../../../lib/categories';
 import { Select } from '../../../components/Select';
 import '../../../styles/studio.css';
 
-const PLUGIN_CATEGORIES = [
-    "Admin Tools","Economy","Fun","World Management","Utilities","Chat","Other"
-];
-
-const DISPLAY_NAMES = new Intl.DisplayNames(['en'], { type: 'language' });
-
-const ALL_LOCALES: { code: string; name: string }[] = [
+const LOCALE_CODES = [
     'af','sq','am','ar','ar-SA','ar-EG','ar-AE','ar-MA','hy','az',
     'eu','be','bn','bs','bg','ca',
     'zh','zh-CN','zh-TW','zh-HK',
@@ -34,13 +29,18 @@ const ALL_LOCALES: { code: string; name: string }[] = [
     'es','es-ES','es-MX','es-AR','es-CO','es-CL',
     'su','sw','sv','tg','tl','ta','tt','te','th','tr','tk',
     'uk','ur','ug','uz','vi','cy','xh','yi','yo','zu',
-].map(code => {
-    try {
-        return { code, name: DISPLAY_NAMES.of(code) ?? code };
-    } catch {
-        return { code, name: code };
-    }
-}).sort((a, b) => a.name.localeCompare(b.name));
+];
+
+const getLocalesForLang = (lang: string): { code: string; name: string }[] => {
+    const dn = new Intl.DisplayNames([lang || 'en'], { type: 'language' });
+    return LOCALE_CODES.map(code => {
+        try {
+            return { code, name: dn.of(code) ?? code };
+        } catch {
+            return { code, name: code };
+        }
+    }).sort((a, b) => a.name.localeCompare(b.name));
+};
 
 const DEFAULT_LOCALE = 'en-US';
 
@@ -51,7 +51,8 @@ type PickerProps = {
 };
 
 const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
+    const allLocales = React.useMemo(() => getLocalesForLang(i18n.language), [i18n.language]);
     const [search, setSearch] = useState('');
     const inputRef = useRef<HTMLInputElement>(null);
     const ref = useRef<HTMLDivElement>(null);
@@ -65,7 +66,7 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
         return () => document.removeEventListener('mousedown', handler);
     }, [onClose]);
 
-    const filtered = ALL_LOCALES.filter(
+    const filtered = allLocales.filter(
         l => !usedCodes.includes(l.code) &&
              (l.name.toLowerCase().includes(search.toLowerCase()) ||
               l.code.toLowerCase().includes(search.toLowerCase()))
@@ -104,9 +105,10 @@ const LangPicker = ({ usedCodes, onAdd, onClose }: PickerProps) => {
 type Props = { plugin: PluginData; onSaved: () => void };
 
 const StoreListing = ({ plugin, onSaved }: Props) => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { user } = useAuth();
     const navigate = useNavigate();
+    const displayNames = React.useMemo(() => new Intl.DisplayNames([i18n.language || 'en'], { type: 'language' }), [i18n.language]);
     const [saving, setSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
@@ -160,7 +162,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
     };
 
     const getLocaleName = (code: string) => {
-        try { return DISPLAY_NAMES.of(code) ?? code; } catch { return code; }
+        try { return displayNames.of(code) ?? code; } catch { return code; }
     };
 
     const [iconFile, setIconFile] = useState<File | null>(null);
@@ -260,13 +262,13 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     minHeight: 32,
                 });
                 if (!res.valid || !res.file) {
-                    setIconValidationErr(res.error || 'Invalid icon file.');
+                    setIconValidationErr(res.error || t('studio.listing.invalid_icon'));
                     return;
                 }
                 setIconFile(res.file);
                 setIconPreview(res.previewUrl || URL.createObjectURL(res.file));
             } catch (err: any) {
-                setIconValidationErr(err.message || 'Could not process icon.');
+                setIconValidationErr(err.message || t('studio.listing.icon_process_failed'));
             } finally {
                 setProcessingImage(false);
             }
@@ -316,7 +318,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
             onSaved();
             setTimeout(() => setSaveSuccess(false), 3000);
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to save plugin details.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.listing.save_failed');
             setSaveError(msg);
         } finally {
             setSaving(false);
@@ -329,7 +331,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
             await api.delete(`/plugins/screenshots/${screenId}`);
             setScreenshots(prev => prev.filter(s => s.id !== screenId));
         } catch (err: any) {
-            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || 'Failed to delete screenshot.';
+            const msg = err.response?.data?.error || err.response?.data?.message || (typeof err.response?.data === 'string' ? err.response.data : null) || t('studio.listing.delete_screenshot_failed');
             setSaveError(msg);
         }
     };
@@ -350,7 +352,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     minHeight: 100,
                 });
                 if (!res.valid || !res.file) {
-                    setScreenshotValidationErr(res.error || `Invalid screenshot "${f.name}".`);
+                    setScreenshotValidationErr(res.error || t('studio.listing.invalid_screenshot', { name: f.name }));
                     continue;
                 }
                 validFiles.push(res.file);
@@ -363,7 +365,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                 setScreenshots(prev => [...prev, ...(res.data.screenshots || [])]);
             }
         } catch {
-            setScreenshotValidationErr('Screenshot upload failed.');
+            setScreenshotValidationErr(t('studio.listing.screenshot_upload_failed'));
         } finally {
             setProcessingImage(false);
             e.target.value = '';
@@ -429,7 +431,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
 
                             <div className="field">
                                 <span className="field-label" id="listingPluginCategory">{t('studio.listing.category')}</span>
-                                <Select options={PLUGIN_CATEGORIES} value={category} onChange={setCategory} aria-labelledby="listingPluginCategory" />
+                                <Select options={getCategoryOptions(t)} value={category} onChange={setCategory} aria-labelledby="listingPluginCategory" />
                             </div>
 
                             <label className="field">
@@ -458,7 +460,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                                         type="text"
                                         value={keywords}
                                         onChange={e => setKeywords(e.target.value)}
-                                        placeholder="economy, shop, currency"
+                                        placeholder={t('studio.listing.keywords_placeholder')}
                                         autoComplete="off"
                                     />
                                 </span>
@@ -690,7 +692,7 @@ const StoreListing = ({ plugin, onSaved }: Props) => {
                     <div className="st-listing-shots">
                         {screenshots.map(s => (
                             <div key={s.id} className="st-listing-shot">
-                                <img className="st-thumb" src={s.path} alt="screenshot" />
+                                <img className="st-thumb" src={s.path} alt={t('studio.listing.screenshot_alt')} />
                                 <button
                                     className="button button-danger button-sm button-icon"
                                     type="button"

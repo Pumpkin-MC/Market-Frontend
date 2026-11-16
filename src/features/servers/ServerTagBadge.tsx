@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Check, Hash, Search, X } from 'lucide-react';
 import {
   MAX_SERVER_TAGS,
@@ -27,11 +28,13 @@ export const ServerTagBadge: React.FC<ServerTagBadgeProps> = ({
   onClick,
   title,
 }) => {
+  const { t } = useTranslation();
   const meta = SERVER_TAG_MAP[tag];
   const Icon = meta?.icon || Hash;
-  const label = meta?.label || tag;
+  const label = meta ? t(`servers.tags.items.${meta.value}.label` as any, meta.label) : tag;
   const category = meta?.category || 'core';
-  const resolvedTitle = title ?? meta?.description ?? label;
+  const desc = meta ? t(`servers.tags.items.${meta.value}.description` as any, meta.description) : label;
+  const resolvedTitle = title ?? desc;
 
   const content = (
     <>
@@ -84,12 +87,13 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
   maxTags = MAX_SERVER_TAGS,
   onMaxReached,
 }) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [activeCat, setActiveCat] = useState<'all' | ServerTagCategory>('all');
 
   const toggleTag = (tagVal: string) => {
     if (value.includes(tagVal)) {
-      onChange(value.filter((t) => t !== tagVal));
+      onChange(value.filter((v) => v !== tagVal));
       return;
     }
     if (value.length >= maxTags) {
@@ -104,17 +108,23 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
     return SERVER_TAG_CATEGORIES.filter((cat) => activeCat === 'all' || cat.id === activeCat)
       .map((cat) => ({
         ...cat,
-        items: SERVER_TAGS.filter(
-          (t) =>
-            t.category === cat.id &&
-            (!q ||
-              t.label.toLowerCase().includes(q) ||
-              t.value.includes(q) ||
-              t.description.toLowerCase().includes(q))
-        ),
+        translatedLabel: t(`servers.tags.categories.${cat.id}` as any, cat.label),
+        items: SERVER_TAGS.filter((item) => {
+          if (item.category !== cat.id) return false;
+          if (!q) return true;
+          const localizedLabel = t(`servers.tags.items.${item.value}.label` as any, item.label).toLowerCase();
+          const localizedDesc = t(`servers.tags.items.${item.value}.description` as any, item.description).toLowerCase();
+          return (
+            localizedLabel.includes(q) ||
+            item.label.toLowerCase().includes(q) ||
+            item.value.includes(q) ||
+            localizedDesc.includes(q) ||
+            item.description.toLowerCase().includes(q)
+          );
+        }),
       }))
       .filter((group) => group.items.length > 0);
-  }, [activeCat, query]);
+  }, [activeCat, query, t]);
 
   return (
     <div className="sv-picker">
@@ -123,8 +133,8 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
         <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
           <span className="small muted">
             {value.length === 0
-              ? 'Select up to 8 tags that describe your server:'
-              : 'Selected tags (click to remove):'}
+              ? t('servers.tags.picker_select_hint', { max: maxTags })
+              : t('servers.tags.picker_selected_hint')}
           </span>
           <span className="small muted mono">
             {value.length}/{maxTags}
@@ -154,7 +164,7 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
           <input
             type="search"
             className="input"
-            placeholder="Filter tags (e.g. SMP, LifeSteal, Economy, Voice Chat)…"
+            placeholder={t('servers.tags.picker_filter_placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             autoComplete="off"
@@ -168,7 +178,7 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
             aria-pressed={activeCat === 'all'}
             onClick={() => setActiveCat('all')}
           >
-            All ({SERVER_TAGS.length})
+            {t('studio.plugins.filter_all', { count: SERVER_TAGS.length })}
           </button>
           {SERVER_TAG_CATEGORIES.map((cat) => (
             <button
@@ -178,7 +188,7 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
               aria-pressed={activeCat === cat.id}
               onClick={() => setActiveCat(cat.id)}
             >
-              {cat.label}
+              {t(`servers.tags.categories.${cat.id}` as any, cat.label)}
             </button>
           ))}
         </div>
@@ -187,20 +197,22 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
       {/* Categorized Tag Grid */}
       {filteredGroups.length === 0 ? (
         <p className="small muted" style={{ padding: '0.5rem 0' }}>
-          No tags match &ldquo;{query}&rdquo;.
+          {t('servers.tags.no_matches', { query })}
         </p>
       ) : (
         <div className="stack" style={{ '--gap': '0.9rem' } as React.CSSProperties}>
           {filteredGroups.map((group) => (
             <div key={group.id} className="sv-picker-group">
               <span className="label" style={{ fontSize: 11, marginBottom: 6, display: 'block' }}>
-                {group.label}
+                {group.translatedLabel}
               </span>
               <div className="sv-picker-grid">
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isSelected = value.includes(item.value);
                   const atLimit = !isSelected && value.length >= maxTags;
+                  const itemLabel = t(`servers.tags.items.${item.value}.label` as any, item.label);
+                  const itemDesc = t(`servers.tags.items.${item.value}.description` as any, item.description);
                   return (
                     <button
                       key={item.value}
@@ -215,8 +227,8 @@ export const ServerTagPicker: React.FC<ServerTagPickerProps> = ({
                         {isSelected ? <Check size={14} /> : <Icon size={14} />}
                       </span>
                       <span className="sv-picker-opt-text">
-                        <strong>{item.label}</strong>
-                        <span>{item.description}</span>
+                        <strong>{itemLabel}</strong>
+                        <span>{itemDesc}</span>
                       </span>
                     </button>
                   );

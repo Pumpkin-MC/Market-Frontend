@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { Trans, useTranslation } from 'react-i18next';
 import {
   Search,
   X,
@@ -395,9 +395,9 @@ export const NavSearch: React.FC<NavSearchProps> = ({
       </label>
 
       <div className="sf-nav-search-end">
-        {loading && <span className="loading" aria-label="Loading suggestions" />}
+        {loading && <span className="loading" aria-label={t('search.loading_suggestions')} />}
         {query && (
-          <button type="button" className="sf-icon-btn" onClick={handleClear} aria-label="Clear search input">
+          <button type="button" className="sf-icon-btn" onClick={handleClear} aria-label={t('search.clear_input')}>
             <X />
           </button>
         )}
@@ -423,7 +423,7 @@ export const NavSearch: React.FC<NavSearchProps> = ({
                       type="button"
                       className="sf-icon-btn"
                       onClick={(e) => handleRemoveRecent(e, term)}
-                      aria-label={`Remove ${term} from recent searches`}
+                      aria-label={t('search.remove_recent', { term })}
                     >
                       <X />
                     </button>
@@ -495,7 +495,7 @@ export const NavSearch: React.FC<NavSearchProps> = ({
                             {plugin.is_preorder && <> <span className="tag tag-info">{t('plugin.pre_order')}</span></>}
                           </span>
                           <span className="small">
-                            by {plugin.dev_name}
+                            <Trans t={t} i18nKey="common.by_author" components={{ author: <span>{plugin.dev_name}</span> }} />
                             {plugin.category && <> · {plugin.category}</>}
                           </span>
                         </span>
