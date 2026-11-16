@@ -22,6 +22,7 @@ import {
   Copy,
   Cpu,
   ExternalLink,
+  GitFork,
   Globe,
   HardDrive,
   Image as ImageIcon,
@@ -52,6 +53,11 @@ import {
   MAX_SERVER_TAGS,
   type OwnerServerListingResponse,
 } from '../servers/constants';
+import {
+  ServerTopologyGraph,
+  type ServerTopologyEdge,
+  type UnlinkedProxyBackend,
+} from './ServerTopologyGraph';
 
 export interface LinkedServerSummary {
   id: number;
@@ -185,6 +191,12 @@ interface LinkedServerTelemetryDetail {
   playerAnalytics?: PlayerAnalytics;
 }
 
+interface ServerNetworkTopologyResponse {
+  servers: LinkedServerSummary[];
+  edges: ServerTopologyEdge[];
+  unlinkedBackends: UnlinkedProxyBackend[];
+}
+
 const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 
 const formatDuration = (t: TFunction, secs: number | null | undefined): string => {
@@ -230,6 +242,8 @@ export const LinkedServersSection: React.FC<{
   const sso = useCrossSubdomainSso();
   const [searchParams, setSearchParams] = useSearchParams();
   const [servers, setServers] = useState<LinkedServerSummary[]>([]);
+  const [topologyEdges, setTopologyEdges] = useState<ServerTopologyEdge[]>([]);
+  const [unlinkedBackends, setUnlinkedBackends] = useState<UnlinkedProxyBackend[]>([]);
   const [loadingList, setLoadingList] = useState(true);
   const [selectedId, setSelectedId] = useState<number | null>(() => {
     const raw = searchParams.get('server');
@@ -240,7 +254,7 @@ export const LinkedServersSection: React.FC<{
   const [detail, setDetail] = useState<LinkedServerTelemetryDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
 
-  const [copiedCmd, setCopiedCmd] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState<'pumpkin' | 'vine' | null>(null);
   const [copiedKey, setCopiedKey] = useState(false);
   const [renamingId, setRenamingId] = useState<number | null>(null);
   const [renameValue, setRenameValue] = useState('');
@@ -293,12 +307,16 @@ export const LinkedServersSection: React.FC<{
   const loadServers = useCallback(async () => {
     setLoadingList(true);
     try {
-      const res = await api.get<LinkedServerSummary[]>('/user/servers');
-      const list = res.data || [];
+      const res = await api.get<ServerNetworkTopologyResponse>('/user/servers/topology');
+      const list = res.data?.servers || [];
       setServers(list);
+      setTopologyEdges(res.data?.edges || []);
+      setUnlinkedBackends(res.data?.unlinkedBackends || []);
       setSelectedId((prev) => {
         if (prev && list.some((s) => s.id === prev)) return prev;
-        return list[0]?.id ?? null;
+        // Prefer selecting a root Vine proxy first when present so network overview is front-and-center
+        const firstVine = list.find((s) => s.serverType === 'vine');
+        return firstVine?.id ?? list[0]?.id ?? null;
       });
     } catch (err: any) {
       onToast?.(err.response?.data?.error || t('servers.manage.load_servers_failed'), 'error');
@@ -352,10 +370,47 @@ export const LinkedServersSection: React.FC<{
     setSearchParams(next, { replace: true });
   };
 
-  const handleCopyCommand = () => {
-    navigator.clipboard.writeText('pumpkin link');
-    setCopiedCmd(true);
-    setTimeout(() => setCopiedCmd(false), 2000);
+  const handleCopyCommand = (kind: 'pumpkin' | 'vine') => {
+    navigator.clipboard.writeText(kind === 'vine' ? 'vine link' : 'pumpkin link');
+    setCopiedCmd(kind);
+    setTimeout(() => setCopiedCmd((prev) => (prev === kind ? null : prev)), 2000);
+  };
+
+  const handleConnectServer = async (
+    proxyServerId: number,
+    backendServerId: number,
+    routeLabel: string | null,
+    isDefault: boolean
+  ): Promise<boolean> => {
+    try {
+      await api.post(`/user/servers/${proxyServerId}/connections`, {
+        backendServerId,
+        routeLabel,
+        isDefault,
+      });
+      await loadServers();
+      onToast?.(t('servers.manage.connect_route_success'), 'success');
+      return true;
+    } catch (err: any) {
+      onToast?.(
+        err.response?.data?.error || t('servers.manage.connect_route_failed'),
+        'error'
+      );
+      return false;
+    }
+  };
+
+  const handleDisconnectServer = async (
+    proxyServerId: number,
+    backendServerId: number
+  ): Promise<void> => {
+    try {
+      await api.delete(`/user/servers/${proxyServerId}/connections/${backendServerId}`);
+      await loadServers();
+      onToast?.(t('servers.manage.disconnect_route_success'), 'success');
+    } catch (err: any) {
+      onToast?.(err.response?.data?.error || t('servers.manage.disconnect_route_failed'), 'error');
+    }
   };
 
   const handleCopyKey = (key: string) => {
@@ -379,6 +434,7 @@ export const LinkedServersSection: React.FC<{
           : prev
       );
       setRenamingId(null);
+      void loadServers();
       onToast?.(t('servers.manage.renamed'), 'success');
     } catch (err: any) {
       onToast?.(err.response?.data?.error || t('servers.manage.rename_failed'), 'error');
@@ -389,6 +445,10 @@ export const LinkedServersSection: React.FC<{
     try {
       await api.delete(`/user/servers/${serverId}`);
       setConfirmUnlinkId(null);
+      setTopologyEdges((prev) =>
+        prev.filter((e) => e.proxyServerId !== serverId && e.backendServerId !== serverId)
+      );
+      setUnlinkedBackends((prev) => prev.filter((u) => u.proxyServerId !== serverId));
       setServers((prev) => {
         const remaining = prev.filter((s) => s.id !== serverId);
         if (selectedId === serverId) {
@@ -523,7 +583,7 @@ export const LinkedServersSection: React.FC<{
           </div>
           <span className="spacer" />
           <Link to="/link" className="button button-primary button-sm">
-            <Plus size={16} /> {t('servers.link.seo_title')}
+            <Plus size={16} /> {t('servers.manage.link_node')}
           </Link>
         </div>
       </header>
@@ -541,10 +601,24 @@ export const LinkedServersSection: React.FC<{
                 <Trans t={t} i18nKey="servers.manage.quick_link_desc" components={{ code: <code /> }} />
               </span>
             </div>
-            <button type="button" className="button button-sm" onClick={handleCopyCommand}>
-              {copiedCmd ? <Check size={14} /> : <Copy size={14} />}
-              {copiedCmd ? t('plugin.copied') : t('servers.manage.copy_cmd')}
-            </button>
+            <div className="row" style={{ gap: '0.45rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="button button-sm"
+                onClick={() => handleCopyCommand('pumpkin')}
+              >
+                {copiedCmd === 'pumpkin' ? <Check size={14} /> : <Copy size={14} />}
+                {copiedCmd === 'pumpkin' ? t('plugin.copied') : t('servers.manage.copy_cmd')}
+              </button>
+              <button
+                type="button"
+                className="button button-sm"
+                onClick={() => handleCopyCommand('vine')}
+              >
+                {copiedCmd === 'vine' ? <Check size={14} /> : <GitFork size={14} />}
+                {copiedCmd === 'vine' ? t('plugin.copied') : t('servers.manage.copy_vine_cmd')}
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -575,7 +649,18 @@ export const LinkedServersSection: React.FC<{
         </div>
       ) : (
         <>
-          {/* Server Selector Cards */}
+          {/* Interactive Network Topology Tree / Node Graph (shown whenever a Vine proxy or route exists) */}
+          <ServerTopologyGraph
+            servers={servers}
+            edges={topologyEdges}
+            unlinkedBackends={unlinkedBackends}
+            selectedId={selectedId}
+            onSelectServer={handleSelectServer}
+            onConnectServer={handleConnectServer}
+            onDisconnectServer={handleDisconnectServer}
+          />
+
+          {/* Server & Proxy Selector Cards */}
           <div
             style={{
               display: 'grid',
@@ -585,6 +670,8 @@ export const LinkedServersSection: React.FC<{
           >
             {servers.map((srv) => {
               const isSelected = srv.id === selectedId;
+              const isVine = srv.serverType === 'vine';
+              const accentColor = isVine ? 'var(--success)' : 'var(--pumpkin)';
               return (
                 <div
                   key={srv.id}
@@ -600,8 +687,8 @@ export const LinkedServersSection: React.FC<{
                   className="panel"
                   style={{
                     cursor: 'pointer',
-                    borderColor: isSelected ? 'var(--pumpkin)' : undefined,
-                    boxShadow: isSelected ? '0 0 0 1px var(--pumpkin)' : undefined,
+                    borderColor: isSelected ? accentColor : undefined,
+                    boxShadow: isSelected ? `0 0 0 1px ${accentColor}` : undefined,
                     padding: '1rem',
                   }}
                 >
@@ -622,6 +709,9 @@ export const LinkedServersSection: React.FC<{
                       {srv.displayName}
                     </strong>
                     <span className="spacer" />
+                    {isVine && (
+                      <span className="sticker sticker-sm ac-sticker-vine">Vine</span>
+                    )}
                     <span className={`sticker sticker-sm ${srv.isOnline ? 'sticker-success' : ''}`}>
                       {srv.isOnline ? t('servers.common.online') : t('servers.common.offline')}
                     </span>
@@ -638,7 +728,11 @@ export const LinkedServersSection: React.FC<{
                     </span>
                     <span className="spacer" />
                     <span className="muted">
-                      {srv.minecraftVersion ? `MC ${srv.minecraftVersion}` : srv.serverVersion || 'Pumpkin'}
+                      {srv.minecraftVersion
+                        ? `MC ${srv.minecraftVersion}`
+                        : isVine
+                          ? `Vine ${srv.serverVersion || ''}`.trim()
+                          : srv.serverVersion || 'Pumpkin'}
                     </span>
                   </div>
                 </div>
@@ -683,6 +777,11 @@ export const LinkedServersSection: React.FC<{
                       </div>
                     ) : (
                       <>
+                        {activeServer.serverType === 'vine' && (
+                          <span className="sticker sticker-sm ac-sticker-vine">
+                            <GitFork size={12} style={{ marginRight: 4 }} /> {t('servers.common.vine_proxy')}
+                          </span>
+                        )}
                         <h3 className="h3" style={{ margin: 0 }}>
                           {activeServer.displayName}
                         </h3>
@@ -771,7 +870,19 @@ export const LinkedServersSection: React.FC<{
                       <Activity />
                     </span>
                     <p className="notice-text">
-                      <Trans t={t} i18nKey="servers.manage.awaiting_telemetry" components={{ code: <code /> }} />
+                      {activeServer.serverType === 'vine' ? (
+                        <Trans
+                          t={t}
+                          i18nKey="servers.manage.awaiting_telemetry_proxy"
+                          components={{ code: <code /> }}
+                        />
+                      ) : (
+                        <Trans
+                          t={t}
+                          i18nKey="servers.manage.awaiting_telemetry"
+                          components={{ code: <code /> }}
+                        />
+                      )}
                     </p>
                   </div>
                 )}
@@ -1759,7 +1870,19 @@ export const LinkedServersSection: React.FC<{
                           <Activity />
                         </span>
                         <p className="notice-text">
-                          <Trans t={t} i18nKey="servers.manage.offline_listing_notice" components={{ strong: <strong />, code: <code /> }} />
+                          {activeServer.serverType === 'vine' ? (
+                            <Trans
+                              t={t}
+                              i18nKey="servers.manage.offline_listing_notice_proxy"
+                              components={{ strong: <strong />, code: <code /> }}
+                            />
+                          ) : (
+                            <Trans
+                              t={t}
+                              i18nKey="servers.manage.offline_listing_notice"
+                              components={{ strong: <strong />, code: <code /> }}
+                            />
+                          )}
                         </p>
                       </div>
                     )}
